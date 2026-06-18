@@ -14,7 +14,7 @@ class Logout
      */
     public function __invoke(): Redirector|RedirectResponse
     {
-        Auth::guard('web')->logout();
+        Auth::guard('customer')->logout();
 
         Session::invalidate();
         Session::regenerateToken();

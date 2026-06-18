@@ -1,83 +1,46 @@
 <?php
 
-use App\Concerns\ProfileValidationRules;
-/* @chisel-email-verification */
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-/* @end-chisel-email-verification */
+use App\Models\Customer;
+use App\Services\PhoneNumberNormalizer;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Livewire\Attributes\Computed;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('Profile settings')] class extends Component {
-    use ProfileValidationRules;
-
     public string $name = '';
-    public string $email = '';
+    public ?string $email = null;
+    public ?string $phone_number = null;
 
-    /**
-     * Mount the component.
-     */
     public function mount(): void
     {
-        $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $customer = Auth::guard('customer')->user();
+
+        $this->name = $customer->name;
+        $this->email = $customer->email;
+        $this->phone_number = $customer->phone_number;
     }
 
-    /**
-     * Update the profile information for the currently authenticated user.
-     */
-    public function updateProfileInformation(): void
+    public function updateProfileInformation(PhoneNumberNormalizer $phoneNumberNormalizer): void
     {
-        $user = Auth::user();
+        $customer = Auth::guard('customer')->user();
+        $this->phone_number = $phoneNumberNormalizer->normalize($this->phone_number);
 
-        $validated = $this->validate($this->profileRules($user->id));
+        $validated = $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'required_without:phone_number', 'string', 'email', 'max:255', Rule::unique(Customer::class)->ignore($customer->id)],
+            'phone_number' => ['nullable', 'required_without:email', 'string', 'phone:OM', Rule::unique(Customer::class)->ignore($customer->id)],
+        ]);
 
-        $user->fill($validated);
-
-        if ($user->isDirty('email')) {
-            $user->email_verified_at = null;
-        }
-
-        $user->save();
+        $customer->forceFill([
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?: null,
+            'phone_number' => $validated['phone_number'] ?: null,
+        ])->save();
 
         Flux::toast(variant: 'success', text: __('Profile updated.'));
     }
-
-    /* @chisel-email-verification */
-    /**
-     * Send an email verification notification to the current user.
-     */
-    public function resendVerificationNotification(): void
-    {
-        $user = Auth::user();
-
-        if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false));
-
-            return;
-        }
-
-        $user->sendEmailVerificationNotification();
-
-        Session::flash('status', 'verification-link-sent');
-    }
-
-    #[Computed]
-    public function hasUnverifiedEmail(): bool
-    {
-        return Auth::user() instanceof MustVerifyEmail && ! Auth::user()->hasVerifiedEmail();
-    }
-
-    #[Computed]
-    public function showDeleteUser(): bool
-    {
-        return ! Auth::user() instanceof MustVerifyEmail
-            || (Auth::user() instanceof MustVerifyEmail && Auth::user()->hasVerifiedEmail());
-    }
-    /* @end-chisel-email-verification */
 }; ?>
 
 <section class="w-full">
@@ -85,50 +48,17 @@ new #[Title('Profile settings')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
+    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your customer account details')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
-
-            <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
-
-                {{-- @chisel-email-verification --}}
-                @if ($this->hasUnverifiedEmail)
-                    <div>
-                        <flux:text class="mt-4">
-                            {{ __('Your email address is unverified.') }}
-
-                            <flux:link class="text-sm cursor-pointer" wire:click.prevent="resendVerificationNotification">
-                                {{ __('Click here to re-send the verification email.') }}
-                            </flux:link>
-                        </flux:text>
-
-                        @if (session('status') === 'verification-link-sent')
-                            <flux:text class="mt-2 font-medium !dark:text-green-400 !text-green-600">
-                                {{ __('A new verification link has been sent to your email address.') }}
-                            </flux:text>
-                        @endif
-                    </div>
-                @endif
-                {{-- @end-chisel-email-verification --}}
-            </div>
+            <flux:input wire:model="email" :label="__('Email address')" type="email" autocomplete="email" />
+            <flux:input wire:model="phone_number" :label="__('Phone number')" type="tel" autocomplete="tel" />
 
             <div class="flex items-center gap-4">
-                <div class="flex items-center justify-end">
-                    <flux:button variant="primary" type="submit" class="w-full" data-test="update-profile-button">
-                        {{ __('Save') }}
-                    </flux:button>
-                </div>
-
+                <flux:button variant="primary" type="submit" data-test="update-profile-button">
+                    {{ __('Save') }}
+                </flux:button>
             </div>
         </form>
-
-        {{-- @chisel-email-verification --}}
-        @if ($this->showDeleteUser)
-        {{-- @end-chisel-email-verification --}}
-            <livewire:pages::settings.delete-user-form />
-        {{-- @chisel-email-verification --}}
-        @endif
-        {{-- @end-chisel-email-verification --}}
     </x-pages::settings.layout>
 </section>

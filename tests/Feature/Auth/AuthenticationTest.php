@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Customer;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
@@ -9,11 +9,11 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
-test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+test('customers can authenticate using the login screen', function () {
+    $customer = Customer::factory()->create();
 
     $response = $this->post(route('login.store'), [
-        'email' => $user->email,
+        'login' => $customer->email,
         'password' => 'password',
     ]);
 
@@ -21,20 +21,20 @@ test('users can authenticate using the login screen', function () {
         ->assertSessionHasNoErrors()
         ->assertRedirect(route('dashboard', absolute: false));
 
-    $this->assertAuthenticated();
+    $this->assertAuthenticated('customer');
 });
 
-test('users can not authenticate with invalid password', function () {
-    $user = User::factory()->create();
+test('customers can not authenticate with invalid password', function () {
+    $customer = Customer::factory()->create();
 
     $response = $this->post(route('login.store'), [
-        'email' => $user->email,
+        'login' => $customer->email,
         'password' => 'wrong-password',
     ]);
 
-    $response->assertSessionHasErrorsIn('email');
+    $response->assertSessionHasErrorsIn('login');
 
-    $this->assertGuest();
+    $this->assertGuest('customer');
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
@@ -45,23 +45,23 @@ test('users with two factor enabled are redirected to two factor challenge', fun
         'confirmPassword' => true,
     ]);
 
-    $user = User::factory()->withTwoFactor()->create();
+    $user = Customer::factory()->create();
 
     $response = $this->post(route('login.store'), [
-        'email' => $user->email,
+        'login' => $user->email,
         'password' => 'password',
     ]);
 
     $response->assertRedirect(route('two-factor.login'));
-    $this->assertGuest();
+    $this->assertGuest('customer');
 });
 
-test('users can logout', function () {
-    $user = User::factory()->create();
+test('customers can logout', function () {
+    $customer = Customer::factory()->create();
 
-    $response = $this->actingAs($user)->post(route('logout'));
+    $response = $this->actingAs($customer, 'customer')->post(route('logout'));
 
     $response->assertRedirect(route('home'));
 
-    $this->assertGuest();
+    $this->assertGuest('customer');
 });

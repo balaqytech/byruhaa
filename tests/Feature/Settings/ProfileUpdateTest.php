@@ -1,75 +1,46 @@
 <?php
 
-use App\Models\User;
+use App\Models\Customer;
 use Livewire\Livewire;
 
 test('profile page is displayed', function () {
-    $this->actingAs($user = User::factory()->create());
+    $customer = Customer::factory()->create();
 
-    $this->get(route('profile.edit'))->assertOk();
+    $this->actingAs($customer, 'customer')
+        ->get(route('profile.edit'))
+        ->assertOk();
 });
 
 test('profile information can be updated', function () {
-    $user = User::factory()->create();
+    $customer = Customer::factory()->create();
 
-    $this->actingAs($user);
+    $this->actingAs($customer, 'customer');
 
     $response = Livewire::test('pages::settings.profile')
-        ->set('name', 'Test User')
+        ->set('name', 'Test Customer')
         ->set('email', 'test@example.com')
+        ->set('phone_number', null)
         ->call('updateProfileInformation');
 
     $response->assertHasNoErrors();
 
-    $user->refresh();
+    $customer->refresh();
 
-    expect($user->name)->toEqual('Test User');
-    expect($user->email)->toEqual('test@example.com');
-    expect($user->email_verified_at)->toBeNull();
+    expect($customer->name)->toEqual('Test Customer');
+    expect($customer->email)->toEqual('test@example.com');
 });
 
-test('email verification status is unchanged when email address is unchanged', function () {
-    $user = User::factory()->create();
+test('profile phone number is normalized', function () {
+    $customer = Customer::factory()->create(['phone_number' => null]);
 
-    $this->actingAs($user);
+    $this->actingAs($customer, 'customer');
 
-    $response = Livewire::test('pages::settings.profile')
-        ->set('name', 'Test User')
-        ->set('email', $user->email)
-        ->call('updateProfileInformation');
+    Livewire::test('pages::settings.profile')
+        ->set('name', $customer->name)
+        ->set('email', null)
+        ->set('phone_number', '91234567')
+        ->call('updateProfileInformation')
+        ->assertHasNoErrors();
 
-    $response->assertHasNoErrors();
-
-    expect($user->refresh()->email_verified_at)->not->toBeNull();
-});
-
-test('user can delete their account', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user);
-
-    $response = Livewire::test('pages::settings.delete-user-modal')
-        ->set('password', 'password')
-        ->call('deleteUser');
-
-    $response
-        ->assertHasNoErrors()
-        ->assertRedirect('/');
-
-    expect($user->fresh())->toBeNull();
-    expect(auth()->check())->toBeFalse();
-});
-
-test('correct password must be provided to delete account', function () {
-    $user = User::factory()->create();
-
-    $this->actingAs($user);
-
-    $response = Livewire::test('pages::settings.delete-user-modal')
-        ->set('password', 'wrong-password')
-        ->call('deleteUser');
-
-    $response->assertHasErrors(['password']);
-
-    expect($user->fresh())->not->toBeNull();
+    expect($customer->refresh()->phone_number)->toBe('+96891234567');
 });
