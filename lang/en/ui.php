@@ -60,6 +60,7 @@ return [
 
     'bookings' => [
         'contract_pending' => 'Contract pending',
+        'contract_terms' => 'Contract terms',
         'details_title' => 'Booking details',
         'empty' => 'You have not submitted any booking requests yet.',
         'family_member_count' => ':count family member(s)',
@@ -87,6 +88,7 @@ return [
         'empty' => 'No published events are available right now.',
         'family_members' => 'Family members',
         'heading' => 'Events',
+        'price_per_family_member' => 'Price per family member',
         'seats_left' => 'seats left',
         'subheading' => 'Browse published trips, camps, and festivals.',
     ],

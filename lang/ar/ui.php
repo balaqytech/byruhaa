@@ -60,6 +60,7 @@ return [
 
     'bookings' => [
         'contract_pending' => 'العقد قيد الانتظار',
+        'contract_terms' => 'بنود العقد',
         'details_title' => 'تفاصيل الحجز',
         'empty' => 'لم ترسل أي طلبات حجز بعد.',
         'family_member_count' => ':count فرد من العائلة',
@@ -87,6 +88,7 @@ return [
         'empty' => 'لا توجد فعاليات منشورة حالياً.',
         'family_members' => 'أفراد العائلة',
         'heading' => 'الفعاليات',
+        'price_per_family_member' => 'السعر لكل فرد من العائلة',
         'seats_left' => 'مقاعد متبقية',
         'subheading' => 'تصفح الرحلات والمخيمات والمهرجانات المنشورة.',
     ],

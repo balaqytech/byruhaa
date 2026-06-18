@@ -97,7 +97,10 @@ test('bookings page renders existing bookings in a table', function () {
 test('booking details page renders the improved hugeicons contract layout', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create();
-    $event = Event::factory()->create(['name' => 'Desert Camp']);
+    $event = Event::factory()->create([
+        'name' => 'Desert Camp',
+        'contract_terms_html' => '<p>Safety terms must be reviewed before signature.</p>',
+    ]);
     $familyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Maha Al Harthy']);
     $booking = Booking::factory()
         ->for($customer)
@@ -117,6 +120,8 @@ test('booking details page renders the improved hugeicons contract layout', func
         ->assertSee('BRH-20002')
         ->assertSee('Desert Camp')
         ->assertSee('Maha Al Harthy')
+        ->assertSee(__('ui.bookings.contract_terms'))
+        ->assertSee('Safety terms must be reviewed before signature.')
         ->assertSee('hgi-stroke', false)
         ->assertSee('hgi-contracts', false)
         ->assertSee(__('ui.actions.sign_contract'));

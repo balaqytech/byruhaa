@@ -13,7 +13,6 @@ use Livewire\Component;
 new #[Title('تفاصيل الحجز')] class extends Component {
     public Booking $booking;
     public string $signedName = '';
-    public string $signatureDataUrl = '';
 
     public function mount(Booking $booking): void
     {
@@ -23,20 +22,22 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         $this->signedName = Auth::guard('customer')->user()->name;
     }
 
-    public function signContract(int $contractId): void
+    public function signContract(int $contractId, string $signatureDataUrl): void
     {
         $contract = $this->ownedContract($contractId);
 
         abort_unless($contract->state instanceof AwaitingSignature, 403);
 
-        $this->validate([
+        validator([
+            'signedName' => $this->signedName,
+            'signatureDataUrl' => $signatureDataUrl,
+        ], [
             'signedName' => ['required', 'string', 'max:255'],
             'signatureDataUrl' => ['required', 'string'],
-        ]);
+        ])->validate();
 
-        $contract->sign($this->signatureDataUrl, $this->signedName, request()->ip());
+        $contract->sign($signatureDataUrl, $this->signedName, request()->ip());
 
-        $this->signatureDataUrl = '';
         $this->booking->refresh()->load(['event', 'familyMembers.familyMember', 'familyMembers.contract']);
 
         Flux::toast(variant: 'success', text: __('ui.messages.contract_signed'));
@@ -184,36 +185,84 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                     </div>
 
                     @if ($bookingFamilyMember->contract && $bookingFamilyMember->contract->state instanceof AwaitingSignature)
+                        <div class="mt-5 rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <div class="mb-3 flex items-center gap-2 text-emerald-800 dark:text-emerald-100">
+                                <x-hugeicon name="file-view" class="text-xl" />
+                                <flux:heading class="text-base">{{ __('ui.bookings.contract_terms') }}</flux:heading>
+                            </div>
+                            <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
+                                {!! $bookingFamilyMember->contract->contract_html !!}
+                            </div>
+                        </div>
+
                         <form
-                            wire:submit="signContract({{ $bookingFamilyMember->contract->id }})"
+                            x-on:submit.prevent="submitSignature"
                             x-data="{
                                 drawing: false,
+                                hasSignature: false,
+                                context: null,
                                 init() {
                                     const canvas = this.$refs.canvas;
-                                    const ctx = canvas.getContext('2d');
-                                    ctx.lineWidth = 2;
-                                    ctx.lineCap = 'round';
+                                    this.context = canvas.getContext('2d');
+                                    this.resizeCanvas();
+                                    this.context.lineWidth = 2.5;
+                                    this.context.lineCap = 'round';
+                                    this.context.lineJoin = 'round';
+                                    this.context.strokeStyle = '#17382f';
+
                                     const point = (event) => {
                                         const rect = canvas.getBoundingClientRect();
-                                        return { x: event.offsetX ?? event.touches[0].clientX - rect.left, y: event.offsetY ?? event.touches[0].clientY - rect.top };
+                                        const source = event.touches?.[0] ?? event.changedTouches?.[0] ?? event;
+
+                                        return {
+                                            x: source.clientX - rect.left,
+                                            y: source.clientY - rect.top,
+                                        };
                                     };
-                                    canvas.addEventListener('mousedown', event => { this.drawing = true; const p = point(event); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-                                    canvas.addEventListener('mousemove', event => { if (! this.drawing) return; const p = point(event); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-                                    window.addEventListener('mouseup', () => this.drawing = false);
-                                    canvas.addEventListener('touchstart', event => { event.preventDefault(); this.drawing = true; const p = point(event); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
-                                    canvas.addEventListener('touchmove', event => { event.preventDefault(); if (! this.drawing) return; const p = point(event); ctx.lineTo(p.x, p.y); ctx.stroke(); });
-                                    window.addEventListener('touchend', () => this.drawing = false);
+
+                                    canvas.addEventListener('pointerdown', event => {
+                                        event.preventDefault();
+                                        canvas.setPointerCapture(event.pointerId);
+                                        this.drawing = true;
+                                        const p = point(event);
+                                        this.context.beginPath();
+                                        this.context.moveTo(p.x, p.y);
+                                    });
+
+                                    canvas.addEventListener('pointermove', event => {
+                                        if (! this.drawing) return;
+
+                                        event.preventDefault();
+                                        const p = point(event);
+                                        this.context.lineTo(p.x, p.y);
+                                        this.context.stroke();
+                                        this.hasSignature = true;
+                                    });
+
+                                    window.addEventListener('pointerup', () => this.drawing = false);
+                                    window.addEventListener('resize', () => this.resizeCanvas());
+                                },
+                                resizeCanvas() {
+                                    const canvas = this.$refs.canvas;
+                                    const rect = canvas.getBoundingClientRect();
+                                    const ratio = window.devicePixelRatio || 1;
+
+                                    canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+                                    canvas.height = Math.max(1, Math.floor(rect.height * ratio));
+
+                                    this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
                                 },
                                 clear() {
                                     const canvas = this.$refs.canvas;
-                                    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                                    $wire.set('signatureDataUrl', '');
+                                    const rect = canvas.getBoundingClientRect();
+                                    this.context.clearRect(0, 0, rect.width, rect.height);
+                                    this.hasSignature = false;
                                 },
-                                capture() {
-                                    $wire.set('signatureDataUrl', this.$refs.canvas.toDataURL('image/png'));
+                                submitSignature() {
+                                    const signatureDataUrl = this.hasSignature ? this.$refs.canvas.toDataURL('image/png') : '';
+                                    $wire.signContract({{ $bookingFamilyMember->contract->id }}, signatureDataUrl);
                                 }
                             }"
-                            x-on:submit="capture()"
                             class="mt-5 space-y-4 rounded-xl border border-amber-200 bg-white p-4 dark:border-amber-300/20 dark:bg-white/5"
                         >
                             <div class="flex items-center gap-2 text-amber-800 dark:text-amber-100">
@@ -224,7 +273,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                             <flux:input wire:model="signedName" :label="__('ui.bookings.signer_name')" required />
                             <div>
                                 <flux:text class="mb-2">{{ __('ui.bookings.signature') }}</flux:text>
-                                <canvas x-ref="canvas" width="520" height="160" class="h-40 w-full rounded-xl border border-emerald-900/20 bg-white"></canvas>
+                                <canvas x-ref="canvas" class="h-40 w-full touch-none rounded-xl border border-emerald-900/20 bg-white"></canvas>
                                 <flux:error name="signatureDataUrl" />
                             </div>
                             <div class="flex flex-wrap gap-3">
@@ -239,6 +288,16 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                             </div>
                         </form>
                     @elseif ($bookingFamilyMember->contract)
+                        <div class="mt-5 rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <div class="mb-3 flex items-center gap-2 text-emerald-800 dark:text-emerald-100">
+                                <x-hugeicon name="file-view" class="text-xl" />
+                                <flux:heading class="text-base">{{ __('ui.bookings.contract_terms') }}</flux:heading>
+                            </div>
+                            <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
+                                {!! $bookingFamilyMember->contract->contract_html !!}
+                            </div>
+                        </div>
+
                         <div class="mt-4">
                             <flux:button wire:click="downloadContract({{ $bookingFamilyMember->contract->id }})">
                                 <x-hugeicon name="download-01" class="text-lg" />
