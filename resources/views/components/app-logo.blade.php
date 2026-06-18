@@ -2,16 +2,10 @@
     'sidebar' => false,
 ])
 
-@if($sidebar)
-    <flux:sidebar.brand :name="__('ui.brand')" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-9 items-center justify-center rounded-xl bg-emerald-800 text-amber-300 shadow-sm">
-            <x-app-logo-icon class="size-6" />
-        </x-slot>
-    </flux:sidebar.brand>
-@else
-    <flux:brand :name="__('ui.brand')" {{ $attributes }}>
-        <x-slot name="logo" class="flex aspect-square size-9 items-center justify-center rounded-xl bg-emerald-800 text-amber-300 shadow-sm">
-            <x-app-logo-icon class="size-6" />
-        </x-slot>
-    </flux:brand>
-@endif
+<a {{ $attributes->merge(['class' => 'inline-flex items-center rounded-xl bg-[#9fd4c2] p-1 shadow-sm ring-1 ring-emerald-900/10']) }}>
+    <img
+        src="{{ asset('logo.png') }}"
+        alt="{{ __('ui.brand') }}"
+        class="{{ $sidebar ? 'h-10' : 'h-11' }} w-auto rounded-lg object-contain"
+    >
+</a>

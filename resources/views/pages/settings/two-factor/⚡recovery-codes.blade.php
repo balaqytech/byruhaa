@@ -52,7 +52,7 @@ new class extends Component {
 >
     <div class="px-6 space-y-2">
         <div class="flex items-center gap-2">
-            <flux:icon.lock-closed variant="outline" class="size-4"/>
+            <x-hugeicon name="lock-key" class="text-lg" />
             <flux:heading size="lg" level="3">{{ __('2FA recovery codes') }}</flux:heading>
         </div>
         <flux:text variant="subtle">
@@ -64,35 +64,33 @@ new class extends Component {
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <flux:button
                 x-show="!showRecoveryCodes"
-                icon="eye"
-                icon:variant="outline"
                 variant="primary"
                 @click="showRecoveryCodes = true;"
                 aria-expanded="false"
                 aria-controls="recovery-codes-section"
             >
+                <x-hugeicon name="view" class="text-lg" />
                 {{ __('View recovery codes') }}
             </flux:button>
 
             <flux:button
                 x-show="showRecoveryCodes"
-                icon="eye-slash"
-                icon:variant="outline"
                 variant="primary"
                 @click="showRecoveryCodes = false"
                 aria-expanded="true"
                 aria-controls="recovery-codes-section"
             >
+                <x-hugeicon name="view-off" class="text-lg" />
                 {{ __('Hide recovery codes') }}
             </flux:button>
 
             @if (filled($recoveryCodes))
                 <flux:button
                     x-show="showRecoveryCodes"
-                    icon="arrow-path"
                     variant="filled"
                     wire:click="regenerateRecoveryCodes"
                 >
+                    <x-hugeicon name="reload" class="text-lg" />
                     {{ __('Regenerate codes') }}
                 </flux:button>
             @endif
@@ -107,7 +105,10 @@ new class extends Component {
         >
             <div class="mt-3 space-y-3">
                 @error('recoveryCodes')
-                    <flux:callout variant="danger" icon="x-circle" heading="{{$message}}"/>
+                    <div class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-100">
+                        <x-hugeicon name="cancel-circle" class="text-lg" />
+                        <span>{{ $message }}</span>
+                    </div>
                 @enderror
 
                 @if (filled($recoveryCodes))

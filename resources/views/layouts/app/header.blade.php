@@ -11,37 +11,63 @@
                 <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
 
                 <flux:navbar class="ms-8 hidden gap-1 lg:flex">
-                    <flux:navbar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('ui.labels.dashboard') }}
+                    <flux:navbar.item :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                        <span class="inline-flex items-center gap-2">
+                            <x-hugeicon name="home-01" class="text-lg" />
+                            {{ __('ui.labels.dashboard') }}
+                        </span>
                     </flux:navbar.item>
-                    <flux:navbar.item icon="calendar-days" :href="route('events.index')" :current="request()->routeIs('events.*')" wire:navigate>
-                        {{ __('ui.labels.events') }}
+                    <flux:navbar.item :href="route('events.index')" :current="request()->routeIs('events.*')" wire:navigate>
+                        <span class="inline-flex items-center gap-2">
+                            <x-hugeicon name="calendar-03" class="text-lg" />
+                            {{ __('ui.labels.events') }}
+                        </span>
                     </flux:navbar.item>
-                    <flux:navbar.item icon="users" :href="route('family-members.index')" :current="request()->routeIs('family-members.*')" wire:navigate>
-                        {{ __('ui.labels.family') }}
+                    <flux:navbar.item :href="route('family-members.index')" :current="request()->routeIs('family-members.*')" wire:navigate>
+                        <span class="inline-flex items-center gap-2">
+                            <x-hugeicon name="user-group" class="text-lg" />
+                            {{ __('ui.labels.family') }}
+                        </span>
                     </flux:navbar.item>
-                    <flux:navbar.item icon="clipboard-document-list" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>
-                        {{ __('ui.labels.bookings') }}
+                    <flux:navbar.item :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>
+                        <span class="inline-flex items-center gap-2">
+                            <x-hugeicon name="contracts" class="text-lg" />
+                            {{ __('ui.labels.bookings') }}
+                        </span>
                     </flux:navbar.item>
                 </flux:navbar>
 
                 <flux:spacer />
 
                 <flux:dropdown position="bottom" align="end" class="lg:hidden">
-                    <flux:button variant="ghost" icon="bars-3" />
+                    <flux:button variant="ghost" aria-label="{{ __('ui.labels.dashboard') }}">
+                        <x-hugeicon name="menu-01" class="text-xl" />
+                    </flux:button>
 
                     <flux:menu>
-                        <flux:menu.item icon="home" :href="route('dashboard')" wire:navigate>
-                            {{ __('ui.labels.dashboard') }}
+                        <flux:menu.item :href="route('dashboard')" wire:navigate>
+                            <span class="inline-flex items-center gap-2">
+                                <x-hugeicon name="home-01" class="text-lg" />
+                                {{ __('ui.labels.dashboard') }}
+                            </span>
                         </flux:menu.item>
-                        <flux:menu.item icon="calendar-days" :href="route('events.index')" wire:navigate>
-                            {{ __('ui.labels.events') }}
+                        <flux:menu.item :href="route('events.index')" wire:navigate>
+                            <span class="inline-flex items-center gap-2">
+                                <x-hugeicon name="calendar-03" class="text-lg" />
+                                {{ __('ui.labels.events') }}
+                            </span>
                         </flux:menu.item>
-                        <flux:menu.item icon="users" :href="route('family-members.index')" wire:navigate>
-                            {{ __('ui.labels.family') }}
+                        <flux:menu.item :href="route('family-members.index')" wire:navigate>
+                            <span class="inline-flex items-center gap-2">
+                                <x-hugeicon name="user-group" class="text-lg" />
+                                {{ __('ui.labels.family') }}
+                            </span>
                         </flux:menu.item>
-                        <flux:menu.item icon="clipboard-document-list" :href="route('bookings.index')" wire:navigate>
-                            {{ __('ui.labels.bookings') }}
+                        <flux:menu.item :href="route('bookings.index')" wire:navigate>
+                            <span class="inline-flex items-center gap-2">
+                                <x-hugeicon name="contracts" class="text-lg" />
+                                {{ __('ui.labels.bookings') }}
+                            </span>
                         </flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
@@ -50,7 +76,6 @@
                     <flux:profile
                         :name="$customer->name"
                         :initials="$customer->initials()"
-                        icon-trailing="chevron-down"
                     />
 
                     <flux:menu>
@@ -61,8 +86,11 @@
 
                         <flux:menu.separator />
 
-                        <flux:menu.item :href="route('profile.edit')" icon="cog-6-tooth" wire:navigate>
-                            {{ __('ui.labels.settings') }}
+                        <flux:menu.item :href="route('profile.edit')" wire:navigate>
+                            <span class="inline-flex items-center gap-2">
+                                <x-hugeicon name="account-setting-01" class="text-lg" />
+                                {{ __('ui.labels.settings') }}
+                            </span>
                         </flux:menu.item>
 
                         <form method="POST" action="{{ route('logout') }}" class="w-full">
@@ -70,11 +98,13 @@
                             <flux:menu.item
                                 as="button"
                                 type="submit"
-                                icon="arrow-right-start-on-rectangle"
                                 class="w-full cursor-pointer"
                                 data-test="logout-button"
                             >
-                                {{ __('ui.actions.log_out') }}
+                                <span class="inline-flex items-center gap-2">
+                                    <x-hugeicon name="logout-01" class="text-lg" />
+                                    {{ __('ui.actions.log_out') }}
+                                </span>
                             </flux:menu.item>
                         </form>
                     </flux:menu>

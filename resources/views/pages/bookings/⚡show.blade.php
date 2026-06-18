@@ -69,41 +69,111 @@ new #[Title('تفاصيل الحجز')] class extends Component {
 }; ?>
 
 <section class="flex flex-col gap-6">
-    <div class="rounded-2xl bg-emerald-900 p-6 text-white shadow-sm md:p-8">
-        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-                <flux:heading size="xl" class="text-white">{{ $booking->event->name }}</flux:heading>
-                <flux:text class="mt-2 text-emerald-50">{{ $booking->reference }} · {{ $booking->state->label() }}</flux:text>
-            </div>
-            <a href="{{ route('bookings.index') }}" wire:navigate class="inline-flex min-h-10 items-center rounded-lg px-4 py-2 text-sm font-medium text-emerald-50 transition hover:bg-white/10 hover:text-white">
-                {{ __('ui.actions.view_bookings') }}
-            </a>
-        </div>
-    </div>
-
-    <div class="grid gap-3 md:grid-cols-3">
-        <div class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <flux:text>{{ __('ui.labels.event') }}</flux:text>
-            <flux:heading>{{ $booking->event->name }}</flux:heading>
-        </div>
-        <div class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <flux:text>{{ __('ui.labels.status') }}</flux:text>
-            <flux:heading>{{ $booking->state->label() }}</flux:heading>
-        </div>
-        <div class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <flux:text>{{ __('ui.bookings.submitted') }}</flux:text>
-            <flux:heading dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</flux:heading>
-        </div>
-    </div>
-
-    <div class="space-y-4">
-        @foreach ($booking->familyMembers as $bookingFamilyMember)
-            <div wire:key="booking-family-member-{{ $bookingFamilyMember->id }}" class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+    <div class="overflow-hidden rounded-2xl bg-emerald-900 text-white shadow-sm">
+        <div class="p-6 md:p-8">
+            <div class="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
                 <div class="space-y-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/15 px-3 py-1 text-sm font-medium text-amber-100">
+                            <x-hugeicon name="contracts" class="text-lg" />
+                            {{ $booking->reference }}
+                        </span>
+                        <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-emerald-50">
+                            <x-hugeicon name="checkmark-badge-01" class="text-lg" />
+                            {{ $booking->state->label() }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <flux:heading size="xl" class="text-white">{{ $booking->event->name }}</flux:heading>
+                        <flux:text class="mt-2 text-emerald-50">
+                            {{ __('ui.bookings.submitted') }}
+                            <span dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</span>
+                        </flux:text>
+                    </div>
+                </div>
+
+                <flux:button :href="route('bookings.index')" wire:navigate variant="ghost" class="text-emerald-50 hover:bg-white/10 hover:text-white">
+                    <x-hugeicon name="arrow-left-02" class="text-lg" />
+                    {{ __('ui.actions.view_bookings') }}
+                </flux:button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-4">
+        <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div class="flex items-center gap-3">
+                <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
+                    <x-hugeicon name="calendar-03" class="text-xl" />
+                </span>
+                <div>
+                    <flux:text>{{ __('ui.labels.event') }}</flux:text>
+                    <flux:heading class="text-base">{{ $booking->event->name }}</flux:heading>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div class="flex items-center gap-3">
+                <span class="flex size-10 items-center justify-center rounded-xl bg-sky-100 text-sky-800 dark:bg-sky-300/15 dark:text-sky-200">
+                    <x-hugeicon name="checkmark-badge-01" class="text-xl" />
+                </span>
+                <div>
+                    <flux:text>{{ __('ui.labels.status') }}</flux:text>
+                    <flux:heading class="text-base">{{ $booking->state->label() }}</flux:heading>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div class="flex items-center gap-3">
+                <span class="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-300/15 dark:text-amber-100">
+                    <x-hugeicon name="user-group" class="text-xl" />
+                </span>
+                <div>
+                    <flux:text>{{ __('ui.events.family_members') }}</flux:text>
+                    <flux:heading class="text-base">{{ trans_choice('ui.bookings.family_member_count', $booking->familyMembers->count(), ['count' => $booking->familyMembers->count()]) }}</flux:heading>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <div class="flex items-center gap-3">
+                <span class="flex size-10 items-center justify-center rounded-xl bg-rose-100 text-rose-800 dark:bg-rose-300/15 dark:text-rose-100">
+                    <x-hugeicon name="clock-01" class="text-xl" />
+                </span>
+                <div>
+                    <flux:text>{{ __('ui.bookings.submitted') }}</flux:text>
+                    <flux:heading class="text-base" dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</flux:heading>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <div class="mb-5 flex items-center justify-between gap-3">
+            <div>
+                <flux:heading>{{ __('ui.events.family_members') }}</flux:heading>
+                <flux:text>{{ __('ui.bookings.subheading') }}</flux:text>
+            </div>
+            <span class="flex size-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
+                <x-hugeicon name="signature" class="text-2xl" />
+            </span>
+        </div>
+
+        <div class="space-y-4">
+            @foreach ($booking->familyMembers as $bookingFamilyMember)
+                <div wire:key="booking-family-member-{{ $bookingFamilyMember->id }}" class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
                     <div class="flex flex-col justify-between gap-3 md:flex-row md:items-center">
-                        <div>
-                            <flux:heading>{{ $bookingFamilyMember->familyMember->name }}</flux:heading>
-                            <flux:text>{{ __('ui.family.age') }} {{ $bookingFamilyMember->familyMember->ageAt($booking->event->starts_at ?? now()) }}</flux:text>
+                        <div class="flex items-start gap-3">
+                            <span class="mt-1 flex size-10 items-center justify-center rounded-xl bg-white text-emerald-800 shadow-sm dark:bg-white/10 dark:text-emerald-100">
+                                <x-hugeicon name="student" class="text-xl" />
+                            </span>
+                            <div>
+                                <flux:heading>{{ $bookingFamilyMember->familyMember->name }}</flux:heading>
+                                <flux:text>{{ __('ui.family.age') }} {{ $bookingFamilyMember->familyMember->ageAt($booking->event->starts_at ?? now()) }}</flux:text>
+                            </div>
                         </div>
 
                         @if ($bookingFamilyMember->contract)
@@ -144,8 +214,13 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                                 }
                             }"
                             x-on:submit="capture()"
-                            class="space-y-4"
+                            class="mt-5 space-y-4 rounded-xl border border-amber-200 bg-white p-4 dark:border-amber-300/20 dark:bg-white/5"
                         >
+                            <div class="flex items-center gap-2 text-amber-800 dark:text-amber-100">
+                                <x-hugeicon name="signature" class="text-xl" />
+                                <flux:heading class="text-base">{{ __('ui.actions.sign_contract') }}</flux:heading>
+                            </div>
+
                             <flux:input wire:model="signedName" :label="__('ui.bookings.signer_name')" required />
                             <div>
                                 <flux:text class="mb-2">{{ __('ui.bookings.signature') }}</flux:text>
@@ -153,21 +228,26 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                                 <flux:error name="signatureDataUrl" />
                             </div>
                             <div class="flex flex-wrap gap-3">
-                                <flux:button type="submit" variant="primary" icon="pencil-square">
+                                <flux:button type="submit" variant="primary">
+                                    <x-hugeicon name="signature" class="text-lg" />
                                     {{ __('ui.actions.sign_contract') }}
                                 </flux:button>
                                 <flux:button type="button" x-on:click="clear()">
+                                    <x-hugeicon name="delete-02" class="text-lg" />
                                     {{ __('ui.actions.clear') }}
                                 </flux:button>
                             </div>
                         </form>
                     @elseif ($bookingFamilyMember->contract)
-                        <flux:button wire:click="downloadContract({{ $bookingFamilyMember->contract->id }})" icon="arrow-down-tray">
-                            {{ __('ui.actions.download_contract') }}
-                        </flux:button>
+                        <div class="mt-4">
+                            <flux:button wire:click="downloadContract({{ $bookingFamilyMember->contract->id }})">
+                                <x-hugeicon name="download-01" class="text-lg" />
+                                {{ __('ui.actions.download_contract') }}
+                            </flux:button>
+                        </div>
                     @endif
                 </div>
-            </div>
-        @endforeach
+            @endforeach
+        </div>
     </div>
 </section>

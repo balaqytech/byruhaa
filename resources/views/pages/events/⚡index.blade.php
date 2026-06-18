@@ -24,7 +24,8 @@ new #[Title('الفعاليات')] class extends Component {
             <flux:subheading>{{ __('ui.events.subheading') }}</flux:subheading>
         </div>
 
-        <flux:button :href="route('family-members.index')" wire:navigate icon="users" variant="outline">
+        <flux:button :href="route('family-members.index')" wire:navigate variant="outline">
+            <x-hugeicon name="user-group" class="text-lg" />
             {{ __('ui.actions.manage_family') }}
         </flux:button>
     </div>
@@ -47,20 +48,21 @@ new #[Title('الفعاليات')] class extends Component {
                     <div class="mt-auto grid gap-2 text-sm text-emerald-950/70 dark:text-emerald-50/70">
                         @if ($event->location)
                             <div class="flex items-center gap-2">
-                                <flux:icon.map-pin class="size-4" />
+                                <x-hugeicon name="map-pin" class="text-base" />
                                 <span>{{ $event->location }}</span>
                             </div>
                         @endif
                         @if ($event->starts_at)
                             <div class="flex items-center gap-2">
-                                <flux:icon.clock class="size-4" />
+                                <x-hugeicon name="clock-01" class="text-base" />
                                 <span dir="ltr">{{ $event->starts_at->format('Y-m-d H:i') }}</span>
                             </div>
                         @endif
                     </div>
 
                     <div class="flex justify-end">
-                        <flux:button :href="route('events.show', $event)" wire:navigate icon="arrow-left">
+                        <flux:button :href="route('events.show', $event)" wire:navigate>
+                            <x-hugeicon name="arrow-left-02" class="text-lg" />
                             {{ __('ui.actions.view') }}
                         </flux:button>
                     </div>

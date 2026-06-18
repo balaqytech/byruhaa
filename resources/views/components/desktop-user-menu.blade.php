@@ -4,7 +4,6 @@
     <flux:sidebar.profile
         :name="$customer->name"
         :initials="$customer->initials()"
-        icon:trailing="chevrons-up-down"
         data-test="sidebar-menu-button"
     />
 
@@ -21,19 +20,24 @@
         </div>
         <flux:menu.separator />
         <flux:menu.radio.group>
-            <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                {{ __('ui.labels.settings') }}
+            <flux:menu.item :href="route('profile.edit')" wire:navigate>
+                <span class="inline-flex items-center gap-2">
+                    <x-hugeicon name="account-setting-01" class="text-lg" />
+                    {{ __('ui.labels.settings') }}
+                </span>
             </flux:menu.item>
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item
                     as="button"
                     type="submit"
-                    icon="arrow-right-start-on-rectangle"
                     class="w-full cursor-pointer"
                     data-test="logout-button"
                 >
-                    {{ __('ui.actions.log_out') }}
+                    <span class="inline-flex items-center gap-2">
+                        <x-hugeicon name="logout-01" class="text-lg" />
+                        {{ __('ui.actions.log_out') }}
+                    </span>
                 </flux:menu.item>
             </form>
         </flux:menu.radio.group>

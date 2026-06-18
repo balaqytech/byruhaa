@@ -128,7 +128,8 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                 <flux:error name="familyMemberIds" />
 
                 <div class="flex flex-wrap gap-3">
-                    <flux:button type="submit" variant="primary" icon="clipboard-document-check" :disabled="$familyMembers->isEmpty()">
+                    <flux:button type="submit" variant="primary" :disabled="$familyMembers->isEmpty()">
+                        <x-hugeicon name="check-list" class="text-lg" />
                         {{ __('ui.actions.submit_request') }}
                     </flux:button>
                     <flux:button :href="route('family-members.index')" wire:navigate>

@@ -24,31 +24,48 @@ new #[Title('الحجوزات')] class extends Component {
             <flux:subheading>{{ __('ui.bookings.subheading') }}</flux:subheading>
         </div>
 
-        <flux:button :href="route('events.index')" wire:navigate icon="calendar-days" variant="outline">
+        <flux:button :href="route('events.index')" wire:navigate variant="outline">
+            <x-hugeicon name="calendar-03" class="text-lg" />
             {{ __('ui.actions.view_events') }}
         </flux:button>
     </div>
 
-    <div class="space-y-3">
-        @forelse ($bookings as $booking)
-            <div wire:key="booking-{{ $booking->id }}" class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
-                <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-                    <div>
-                        <flux:heading>{{ $booking->event->name }}</flux:heading>
-                        <flux:text>{{ $booking->reference }} · {{ trans_choice('ui.bookings.family_member_count', $booking->familyMembers->count(), ['count' => $booking->familyMembers->count()]) }}</flux:text>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <flux:badge>{{ $booking->state->label() }}</flux:badge>
-                        <flux:button :href="route('bookings.show', $booking)" wire:navigate icon="arrow-left">
-                            {{ __('ui.actions.open') }}
-                        </flux:button>
-                    </div>
-                </div>
-            </div>
-        @empty
-            <div class="rounded-2xl border border-dashed border-emerald-900/20 bg-white p-8 text-center dark:border-white/15 dark:bg-white/5">
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+        @if ($bookings->isNotEmpty())
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column>{{ __('admin.fields.reference') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.labels.event') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.events.family_members') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.labels.status') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.bookings.submitted') }}</flux:table.column>
+                    <flux:table.column align="end">{{ __('ui.actions.open') }}</flux:table.column>
+                </flux:table.columns>
+
+                <flux:table.rows>
+                    @foreach ($bookings as $booking)
+                        <flux:table.row wire:key="booking-row-{{ $booking->id }}">
+                            <flux:table.cell variant="strong">{{ $booking->reference }}</flux:table.cell>
+                            <flux:table.cell>{{ $booking->event->name }}</flux:table.cell>
+                            <flux:table.cell>{{ trans_choice('ui.bookings.family_member_count', $booking->familyMembers->count(), ['count' => $booking->familyMembers->count()]) }}</flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge>{{ $booking->state->label() }}</flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</flux:table.cell>
+                            <flux:table.cell align="end">
+                                <flux:button :href="route('bookings.show', $booking)" wire:navigate size="sm">
+                                    <x-hugeicon name="arrow-left-02" class="text-base" />
+                                    {{ __('ui.actions.open') }}
+                                </flux:button>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @else
+            <div class="rounded-xl border border-dashed border-emerald-900/20 p-8 text-center dark:border-white/15">
                 <flux:text>{{ __('ui.bookings.empty') }}</flux:text>
             </div>
-        @endforelse
+        @endif
     </div>
 </section>

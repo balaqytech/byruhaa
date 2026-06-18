@@ -2,11 +2,13 @@
 
 use App\Models\FamilyMember;
 use Flux\Flux;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('العائلة')] class extends Component {
+    public ?int $editingFamilyMemberId = null;
     public string $name = '';
     public string $birth_date = '';
     public ?string $school_name = null;
@@ -15,29 +17,56 @@ new #[Title('العائلة')] class extends Component {
     public ?string $emergency_contact_name = null;
     public ?string $emergency_contact_phone = null;
 
-    public function addFamilyMember(): void
+    public function openCreateFamilyMemberModal(): void
     {
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'birth_date' => ['required', 'date', 'before:today'],
-            'school_name' => ['nullable', 'string', 'max:255'],
-            'grade' => ['nullable', 'string', 'max:50'],
-            'medical_notes' => ['nullable', 'string', 'max:2000'],
-            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_phone' => ['nullable', 'string', 'max:255'],
-        ]);
+        $this->resetFamilyMemberForm();
 
-        Auth::guard('customer')->user()->familyMembers()->create($validated);
+        Flux::modal('family-member-form')->show();
+    }
 
-        $this->reset('name', 'birth_date', 'school_name', 'grade', 'medical_notes', 'emergency_contact_name', 'emergency_contact_phone');
+    public function editFamilyMember(int $familyMemberId): void
+    {
+        $familyMember = $this->familyMemberQuery()
+            ->whereKey($familyMemberId)
+            ->firstOrFail();
 
-        Flux::toast(variant: 'success', text: __('ui.messages.family_member_added'));
+        $this->editingFamilyMemberId = $familyMember->id;
+        $this->name = $familyMember->name;
+        $this->birth_date = $familyMember->birth_date->format('Y-m-d');
+        $this->school_name = $familyMember->school_name;
+        $this->grade = $familyMember->grade;
+        $this->medical_notes = $familyMember->medical_notes;
+        $this->emergency_contact_name = $familyMember->emergency_contact_name;
+        $this->emergency_contact_phone = $familyMember->emergency_contact_phone;
+
+        Flux::modal('family-member-form')->show();
+    }
+
+    public function saveFamilyMember(): void
+    {
+        $validated = $this->validate($this->familyMemberRules());
+
+        if ($this->editingFamilyMemberId) {
+            $this->familyMemberQuery()
+                ->whereKey($this->editingFamilyMemberId)
+                ->firstOrFail()
+                ->update($validated);
+
+            Flux::toast(variant: 'success', text: __('ui.messages.family_member_updated'));
+        } else {
+            Auth::guard('customer')->user()->familyMembers()->create($validated);
+
+            Flux::toast(variant: 'success', text: __('ui.messages.family_member_added'));
+        }
+
+        $this->resetFamilyMemberForm();
+
+        Flux::modal('family-member-form')->close();
     }
 
     public function deleteFamilyMember(int $familyMemberId): void
     {
-        FamilyMember::query()
-            ->whereBelongsTo(Auth::guard('customer')->user())
+        $this->familyMemberQuery()
             ->whereKey($familyMemberId)
             ->delete();
 
@@ -47,11 +76,38 @@ new #[Title('العائلة')] class extends Component {
     public function with(): array
     {
         return [
-            'familyMembers' => Auth::guard('customer')->user()
-                ->familyMembers()
+            'familyMembers' => $this->familyMemberQuery()
                 ->latest()
                 ->get(),
         ];
+    }
+
+    /**
+     * @return array<string, array<int, string>>
+     */
+    private function familyMemberRules(): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'birth_date' => ['required', 'date', 'before:today'],
+            'school_name' => ['nullable', 'string', 'max:255'],
+            'grade' => ['nullable', 'string', 'max:50'],
+            'medical_notes' => ['nullable', 'string', 'max:2000'],
+            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
+            'emergency_contact_phone' => ['nullable', 'string', 'max:255'],
+        ];
+    }
+
+    private function familyMemberQuery(): Builder
+    {
+        return FamilyMember::query()
+            ->whereBelongsTo(Auth::guard('customer')->user());
+    }
+
+    public function resetFamilyMemberForm(): void
+    {
+        $this->reset('editingFamilyMemberId', 'name', 'birth_date', 'school_name', 'grade', 'medical_notes', 'emergency_contact_name', 'emergency_contact_phone');
+        $this->resetValidation();
     }
 }; ?>
 
@@ -62,44 +118,89 @@ new #[Title('العائلة')] class extends Component {
             <flux:subheading>{{ __('ui.family.subheading') }}</flux:subheading>
         </div>
 
-        <flux:button :href="route('events.index')" wire:navigate icon="calendar-days" variant="outline">
-            {{ __('ui.actions.view_events') }}
-        </flux:button>
+        <div class="flex flex-wrap gap-3">
+            <flux:button wire:click="openCreateFamilyMemberModal" variant="primary">
+                <x-hugeicon name="add-01" class="text-lg" />
+                {{ __('ui.family.add_family_member') }}
+            </flux:button>
+            <flux:button :href="route('events.index')" wire:navigate variant="outline">
+                <x-hugeicon name="calendar-03" class="text-lg" />
+                {{ __('ui.actions.view_events') }}
+            </flux:button>
+        </div>
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-        <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <form wire:submit="addFamilyMember" class="space-y-4">
-                <flux:heading>{{ __('ui.family.add_family_member') }}</flux:heading>
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+        @if ($familyMembers->isNotEmpty())
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column>{{ __('ui.fields.name') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.family.age') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.family.school') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.family.grade') }}</flux:table.column>
+                    <flux:table.column align="end">{{ __('ui.actions.manage_family') }}</flux:table.column>
+                </flux:table.columns>
+
+                <flux:table.rows>
+                    @foreach ($familyMembers as $familyMember)
+                        <flux:table.row wire:key="family-member-row-{{ $familyMember->id }}">
+                            <flux:table.cell variant="strong">{{ $familyMember->name }}</flux:table.cell>
+                            <flux:table.cell>{{ $familyMember->birth_date->age }}</flux:table.cell>
+                            <flux:table.cell>{{ $familyMember->school_name ?: __('ui.family.no_school_set') }}</flux:table.cell>
+                            <flux:table.cell>{{ $familyMember->grade ?: '-' }}</flux:table.cell>
+                            <flux:table.cell align="end">
+                                <div class="flex justify-end gap-2">
+                                    <flux:button wire:click="editFamilyMember({{ $familyMember->id }})" size="sm">
+                                        <x-hugeicon name="pencil-edit-02" class="text-base" />
+                                        {{ __('ui.actions.edit') }}
+                                    </flux:button>
+                                    <flux:button wire:click="deleteFamilyMember({{ $familyMember->id }})" variant="danger" size="sm" aria-label="{{ __('ui.actions.delete') }}">
+                                        <x-hugeicon name="delete-02" class="text-base" />
+                                    </flux:button>
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @else
+            <div class="rounded-xl border border-dashed border-emerald-900/20 p-8 text-center dark:border-white/15">
+                <flux:text>{{ __('ui.family.empty') }}</flux:text>
+            </div>
+        @endif
+    </div>
+
+    <flux:modal name="family-member-form" class="w-full max-w-2xl" @close="resetFamilyMemberForm">
+        <form wire:submit="saveFamilyMember" class="space-y-5">
+            <div>
+                <flux:heading>
+                    {{ $editingFamilyMemberId ? __('ui.family.edit_family_member') : __('ui.family.add_family_member') }}
+                </flux:heading>
+            </div>
+
+            <div class="grid gap-4 md:grid-cols-2">
                 <flux:input wire:model="name" :label="__('ui.fields.name')" required />
                 <flux:input wire:model="birth_date" :label="__('ui.family.birth_date')" type="date" required />
                 <flux:input wire:model="school_name" :label="__('ui.family.school')" />
                 <flux:input wire:model="grade" :label="__('ui.family.grade')" />
                 <flux:input wire:model="emergency_contact_name" :label="__('ui.family.emergency_contact')" />
                 <flux:input wire:model="emergency_contact_phone" :label="__('ui.family.emergency_phone')" />
-                <flux:textarea wire:model="medical_notes" :label="__('ui.family.medical_notes')" />
-                <flux:button variant="primary" type="submit" icon="plus">
-                    {{ __('ui.actions.add') }}
-                </flux:button>
-            </form>
-        </div>
+            </div>
 
-        <div class="space-y-3">
-            @forelse ($familyMembers as $familyMember)
-                <div wire:key="family-member-{{ $familyMember->id }}" class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <flux:heading>{{ $familyMember->name }}</flux:heading>
-                            <flux:text>{{ __('ui.family.age') }} {{ $familyMember->birth_date->age }} · {{ $familyMember->school_name ?: __('ui.family.no_school_set') }}</flux:text>
-                        </div>
-                        <flux:button wire:click="deleteFamilyMember({{ $familyMember->id }})" variant="danger" icon="trash" size="sm" />
-                    </div>
-                </div>
-            @empty
-                <div class="rounded-2xl border border-dashed border-emerald-900/20 bg-white p-8 text-center dark:border-white/15 dark:bg-white/5">
-                    <flux:text>{{ __('ui.family.empty') }}</flux:text>
-                </div>
-            @endforelse
-        </div>
-    </div>
+            <flux:textarea wire:model="medical_notes" :label="__('ui.family.medical_notes')" />
+
+            <div class="flex justify-end gap-3">
+                <flux:modal.close>
+                    <flux:button type="button" variant="ghost">
+                        {{ __('ui.actions.cancel') }}
+                    </flux:button>
+                </flux:modal.close>
+
+                <flux:button variant="primary" type="submit">
+                    <x-hugeicon :name="$editingFamilyMemberId ? 'checkmark-badge-01' : 'add-01'" class="text-lg" />
+                    {{ $editingFamilyMemberId ? __('ui.actions.update') : __('ui.actions.add') }}
+                </flux:button>
+            </div>
+        </form>
+    </flux:modal>
 </section>

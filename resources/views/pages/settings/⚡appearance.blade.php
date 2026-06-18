@@ -14,9 +14,24 @@ new #[Title('إعدادات المظهر')] class extends Component {
 
     <x-pages::settings.layout :heading="__('ui.appearance.heading')" :subheading="__('ui.appearance.subheading')">
         <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
-            <flux:radio value="light" icon="sun">{{ __('ui.appearance.light') }}</flux:radio>
-            <flux:radio value="dark" icon="moon">{{ __('ui.appearance.dark') }}</flux:radio>
-            <flux:radio value="system" icon="computer-desktop">{{ __('ui.appearance.system') }}</flux:radio>
+            <flux:radio value="light">
+                <span class="inline-flex items-center gap-2">
+                    <x-hugeicon name="sun-01" class="text-lg" />
+                    {{ __('ui.appearance.light') }}
+                </span>
+            </flux:radio>
+            <flux:radio value="dark">
+                <span class="inline-flex items-center gap-2">
+                    <x-hugeicon name="moon-02" class="text-lg" />
+                    {{ __('ui.appearance.dark') }}
+                </span>
+            </flux:radio>
+            <flux:radio value="system">
+                <span class="inline-flex items-center gap-2">
+                    <x-hugeicon name="computer" class="text-lg" />
+                    {{ __('ui.appearance.system') }}
+                </span>
+            </flux:radio>
         </flux:radio.group>
     </x-pages::settings.layout>
 </section>

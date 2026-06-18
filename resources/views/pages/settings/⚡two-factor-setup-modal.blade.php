@@ -173,7 +173,7 @@ new class extends Component {
                             @endfor
                         </div>
 
-                        <flux:icon.qr-code class="relative z-20 dark:text-accent-foreground"/>
+                        <x-hugeicon name="qr-code" class="relative z-20 text-2xl dark:text-accent-foreground" />
                     </div>
                 </div>
 
@@ -221,14 +221,17 @@ new class extends Component {
                 </div>
             @else
                 @error('setupData')
-                    <flux:callout variant="danger" icon="x-circle" heading="{{ $message }}"/>
+                    <div class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-100">
+                        <x-hugeicon name="cancel-circle" class="text-lg" />
+                        <span>{{ $message }}</span>
+                    </div>
                 @enderror
 
                 <div class="flex justify-center">
                     <div class="relative w-64 overflow-hidden border rounded-lg border-stone-200 dark:border-stone-700 aspect-square">
                         @empty($qrCodeSvg)
                             <div class="absolute inset-0 flex items-center justify-center bg-white dark:bg-stone-700 animate-pulse">
-                                <flux:icon.loading/>
+                                <x-hugeicon name="loading-03" class="animate-spin text-2xl" />
                             </div>
                         @else
                             <div x-data class="flex items-center justify-center h-full p-4">
@@ -280,7 +283,7 @@ new class extends Component {
                         <div class="flex items-stretch w-full border rounded-xl dark:border-stone-700">
                             @empty($manualSetupKey)
                                 <div class="flex items-center justify-center w-full p-3 bg-stone-100 dark:bg-stone-700">
-                                    <flux:icon.loading variant="mini"/>
+                                    <x-hugeicon name="loading-03" class="animate-spin text-lg" />
                                 </div>
                             @else
                                 <input
@@ -294,12 +297,8 @@ new class extends Component {
                                     @click="copy()"
                                     class="px-3 transition-colors border-l cursor-pointer border-stone-200 dark:border-stone-600"
                                 >
-                                    <flux:icon.document-duplicate x-show="!copied" variant="outline"></flux:icon>
-                                    <flux:icon.check
-                                        x-show="copied"
-                                        variant="solid"
-                                        class="text-green-500"
-                                    ></flux:icon>
+                                    <x-hugeicon name="copy-01" x-show="!copied" class="text-lg" />
+                                    <x-hugeicon name="checkmark-circle-01" x-show="copied" class="text-lg text-green-500" />
                                 </button>
                             @endempty
                         </div>
