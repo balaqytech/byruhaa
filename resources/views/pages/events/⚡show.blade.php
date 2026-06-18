@@ -1,11 +1,13 @@
 <?php
 
+use App\Actions\CalculateBookingPrice;
 use App\Enums\EventStatus;
 use App\Models\Booking;
 use App\Models\Event;
 use App\Models\FamilyMember;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -23,7 +25,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
         $this->event = $event;
     }
 
-    public function book(): void
+    public function book(CalculateBookingPrice $calculateBookingPrice): void
     {
         $customer = Auth::guard('customer')->user();
 
@@ -59,16 +61,23 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
             ]);
         }
 
-        $booking = Booking::create([
-            'customer_id' => $customer->id,
-            'event_id' => $this->event->id,
-        ]);
+        $booking = DB::transaction(function () use ($customer, $familyMembers, $calculateBookingPrice): Booking {
+            $priceSnapshot = $calculateBookingPrice->execute($this->event, $familyMembers->count());
 
-        foreach ($familyMembers as $familyMember) {
-            $booking->familyMembers()->create([
-                'family_member_id' => $familyMember->id,
+            $booking = Booking::create([
+                'customer_id' => $customer->id,
+                'event_id' => $this->event->id,
+                ...$priceSnapshot->toBookingAttributes(),
             ]);
-        }
+
+            foreach ($familyMembers as $familyMember) {
+                $booking->familyMembers()->create([
+                    'family_member_id' => $familyMember->id,
+                ]);
+            }
+
+            return $booking;
+        });
 
         Flux::toast(variant: 'success', text: __('ui.messages.booking_request_submitted'));
 
@@ -98,6 +107,10 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                 <flux:text class="text-emerald-50">{{ __('ui.events.approved_seats_remain') }}</flux:text>
                 <div class="text-2xl font-semibold text-white">{{ $event->remainingSeats() }}</div>
             </div>
+            <div class="rounded-xl bg-white/10 px-4 py-3">
+                <flux:text class="text-emerald-50">{{ __('ui.events.price_per_family_member') }}</flux:text>
+                <div class="text-2xl font-semibold text-white" dir="ltr">{{ number_format($event->price_baisa / 1000, 3) }} {{ $event->currency }}</div>
+            </div>
         </div>
     </div>
 
@@ -115,6 +128,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                 <div>
                     <flux:heading>{{ __('ui.events.book_this_event') }}</flux:heading>
                     <flux:text>{{ $event->remainingSeats() }} {{ __('ui.events.approved_seats_remain') }}</flux:text>
+                    <flux:text>{{ __('ui.events.price_per_family_member') }}: <span dir="ltr">{{ number_format($event->price_baisa / 1000, 3) }} {{ $event->currency }}</span></flux:text>
                 </div>
 
                 <flux:checkbox.group wire:model="familyMemberIds" :label="__('ui.events.family_members')">

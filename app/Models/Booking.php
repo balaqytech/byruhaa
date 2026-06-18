@@ -22,12 +22,32 @@ use Spatie\ModelStates\HasStates;
  * @property int|null $reviewed_by_user_id
  * @property Carbon|null $reviewed_at
  * @property string|null $review_notes
+ * @property int $unit_price_baisa
+ * @property string $currency
+ * @property int $family_member_count
+ * @property int $subtotal_baisa
+ * @property int|null $discount_id
+ * @property string|null $discount_name
+ * @property int $discount_amount_baisa
+ * @property int $total_baisa
  */
-#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes'])]
+#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal_baisa', 'discount_id', 'discount_name', 'discount_amount_baisa', 'total_baisa'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
     use HasFactory, HasStates;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'unit_price_baisa' => 0,
+        'currency' => 'OMR',
+        'family_member_count' => 0,
+        'subtotal_baisa' => 0,
+        'discount_amount_baisa' => 0,
+        'total_baisa' => 0,
+    ];
 
     protected static function booted(): void
     {
@@ -61,6 +81,14 @@ class Booking extends Model
     }
 
     /**
+     * @return BelongsTo<Discount, $this>
+     */
+    public function discount(): BelongsTo
+    {
+        return $this->belongsTo(Discount::class);
+    }
+
+    /**
      * @return HasMany<BookingFamilyMember, $this>
      */
     public function familyMembers(): HasMany
@@ -76,6 +104,11 @@ class Booking extends Model
         return [
             'state' => BookingState::class,
             'reviewed_at' => 'datetime',
+            'unit_price_baisa' => 'integer',
+            'family_member_count' => 'integer',
+            'subtotal_baisa' => 'integer',
+            'discount_amount_baisa' => 'integer',
+            'total_baisa' => 'integer',
         ];
     }
 }

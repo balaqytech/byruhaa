@@ -46,6 +46,18 @@ class EventForm
                     ->required()
                     ->numeric()
                     ->minValue(1),
+                TextInput::make('price_baisa')
+                    ->label(__('admin.fields.price'))
+                    ->required()
+                    ->numeric()
+                    ->minValue(0)
+                    ->default(0)
+                    ->suffix('baisa'),
+                TextInput::make('currency')
+                    ->label(__('admin.fields.currency'))
+                    ->required()
+                    ->default('OMR')
+                    ->maxLength(3),
                 TextInput::make('minimum_age')
                     ->label(__('admin.fields.minimum_age'))
                     ->required()

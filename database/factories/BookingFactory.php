@@ -24,6 +24,7 @@ class BookingFactory extends Factory
             'customer_id' => Customer::factory(),
             'event_id' => Event::factory(),
             'state' => PendingReview::$name,
+            'currency' => 'OMR',
         ];
     }
 }

@@ -35,6 +35,8 @@ class EventFactory extends Factory
             'minimum_age' => 9,
             'maximum_age' => 16,
             'seat_capacity' => 30,
+            'price_baisa' => 0,
+            'currency' => 'OMR',
         ];
     }
 

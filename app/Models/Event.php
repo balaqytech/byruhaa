@@ -26,12 +26,22 @@ use Illuminate\Support\Carbon;
  * @property int $minimum_age
  * @property int $maximum_age
  * @property int $seat_capacity
+ * @property int $price_baisa
+ * @property string $currency
  */
-#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity'])]
+#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price_baisa', 'currency'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
     use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'price_baisa' => 0,
+        'currency' => 'OMR',
+    ];
 
     /**
      * @return HasMany<Booking, $this>
@@ -39,6 +49,14 @@ class Event extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * @return HasMany<Discount, $this>
+     */
+    public function discounts(): HasMany
+    {
+        return $this->hasMany(Discount::class);
     }
 
     public function approvedSeatsCount(): int
@@ -77,6 +95,7 @@ class Event extends Model
             'minimum_age' => 'integer',
             'maximum_age' => 'integer',
             'seat_capacity' => 'integer',
+            'price_baisa' => 'integer',
         ];
     }
 }

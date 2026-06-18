@@ -30,6 +30,10 @@ class EventsTable
                 TextColumn::make('seat_capacity')
                     ->label(__('admin.fields.seats'))
                     ->sortable(),
+                TextColumn::make('price_baisa')
+                    ->label(__('admin.fields.price'))
+                    ->money('OMR', divideBy: 1000, decimalPlaces: 3)
+                    ->sortable(),
                 TextColumn::make('starts_at')
                     ->label(__('admin.fields.starts_at'))
                     ->dateTime()

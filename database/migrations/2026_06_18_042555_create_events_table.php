@@ -26,6 +26,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('minimum_age')->default(9);
             $table->unsignedTinyInteger('maximum_age')->default(16);
             $table->unsignedInteger('seat_capacity');
+            $table->unsignedInteger('price_baisa')->default(0);
+            $table->string('currency', 3)->default('OMR');
             $table->timestamps();
 
             $table->index(['status', 'starts_at']);

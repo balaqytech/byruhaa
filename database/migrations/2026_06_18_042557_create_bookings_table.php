@@ -20,6 +20,14 @@ return new class extends Migration
             $table->foreignId('reviewed_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable();
             $table->text('review_notes')->nullable();
+            $table->unsignedInteger('unit_price_baisa')->default(0);
+            $table->string('currency', 3)->default('OMR');
+            $table->unsignedSmallInteger('family_member_count')->default(0);
+            $table->unsignedInteger('subtotal_baisa')->default(0);
+            $table->foreignId('discount_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('discount_name')->nullable();
+            $table->unsignedInteger('discount_amount_baisa')->default(0);
+            $table->unsignedInteger('total_baisa')->default(0);
             $table->timestamps();
 
             $table->index(['customer_id', 'state']);

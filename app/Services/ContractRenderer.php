@@ -33,6 +33,23 @@ class ContractRenderer
             'customer' => $contract->bookingFamilyMember->booking->customer,
             'event' => $contract->bookingFamilyMember->booking->event,
             'familyMember' => $contract->bookingFamilyMember->familyMember,
+        ], [], [
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'default_font' => 'xbriyaz',
+            'default_font_size' => 13,
+            'margin_left' => 16,
+            'margin_right' => 16,
+            'margin_top' => 18,
+            'margin_bottom' => 18,
+            'margin_header' => 7,
+            'margin_footer' => 7,
+            'orientation' => 'P',
+            'title' => 'عقد مشاركة - '.$contract->bookingFamilyMember->booking->reference,
+            'author' => 'بيرحاء للفعاليات',
+            'auto_language_detection' => true,
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
         ])->output();
     }
 }

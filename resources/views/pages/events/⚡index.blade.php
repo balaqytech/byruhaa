@@ -58,6 +58,11 @@ new #[Title('الفعاليات')] class extends Component {
                                 <span dir="ltr">{{ $event->starts_at->format('Y-m-d H:i') }}</span>
                             </div>
                         @endif
+                        <div class="flex items-center gap-2">
+                            <x-hugeicon name="wallet-02" class="text-base" />
+                            <span>{{ __('ui.events.price_per_family_member') }}:</span>
+                            <span dir="ltr">{{ number_format($event->price_baisa / 1000, 3) }} {{ $event->currency }}</span>
+                        </div>
                     </div>
 
                     <div class="flex justify-end">
