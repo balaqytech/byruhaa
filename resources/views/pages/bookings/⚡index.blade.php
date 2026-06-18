@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Bookings')] class extends Component {
+new #[Title('الحجوزات')] class extends Component {
     public function with(): array
     {
         return [
@@ -17,32 +17,38 @@ new #[Title('Bookings')] class extends Component {
     }
 }; ?>
 
-<section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ __('Bookings') }}</flux:heading>
-        <flux:subheading>{{ __('Track event booking requests and contracts.') }}</flux:subheading>
+<section class="flex flex-col gap-6">
+    <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <div>
+            <flux:heading size="xl">{{ __('ui.bookings.heading') }}</flux:heading>
+            <flux:subheading>{{ __('ui.bookings.subheading') }}</flux:subheading>
+        </div>
+
+        <flux:button :href="route('events.index')" wire:navigate icon="calendar-days" variant="outline">
+            {{ __('ui.actions.view_events') }}
+        </flux:button>
     </div>
 
     <div class="space-y-3">
         @forelse ($bookings as $booking)
-            <flux:card wire:key="booking-{{ $booking->id }}">
+            <div wire:key="booking-{{ $booking->id }}" class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
                 <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div>
                         <flux:heading>{{ $booking->event->name }}</flux:heading>
-                        <flux:text>{{ $booking->reference }} · {{ $booking->familyMembers->count() }} {{ __('family member(s)') }}</flux:text>
+                        <flux:text>{{ $booking->reference }} · {{ trans_choice('ui.bookings.family_member_count', $booking->familyMembers->count(), ['count' => $booking->familyMembers->count()]) }}</flux:text>
                     </div>
                     <div class="flex items-center gap-3">
                         <flux:badge>{{ $booking->state->label() }}</flux:badge>
-                        <flux:button :href="route('bookings.show', $booking)" wire:navigate icon="arrow-right">
-                            {{ __('Open') }}
+                        <flux:button :href="route('bookings.show', $booking)" wire:navigate icon="arrow-left">
+                            {{ __('ui.actions.open') }}
                         </flux:button>
                     </div>
                 </div>
-            </flux:card>
+            </div>
         @empty
-            <flux:card>
-                <flux:text>{{ __('You have not submitted any booking requests yet.') }}</flux:text>
-            </flux:card>
+            <div class="rounded-2xl border border-dashed border-emerald-900/20 bg-white p-8 text-center dark:border-white/15 dark:bg-white/5">
+                <flux:text>{{ __('ui.bookings.empty') }}</flux:text>
+            </div>
         @endforelse
     </div>
 </section>

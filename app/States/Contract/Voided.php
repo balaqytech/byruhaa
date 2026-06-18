@@ -8,6 +8,6 @@ class Voided extends ContractState
 
     public function label(): string
     {
-        return 'Voided';
+        return __('admin.statuses.voided');
     }
 }

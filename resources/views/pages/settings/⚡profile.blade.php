@@ -8,7 +8,7 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Profile settings')] class extends Component {
+new #[Title('إعدادات الملف الشخصي')] class extends Component {
     public string $name = '';
     public ?string $email = null;
     public ?string $phone_number = null;
@@ -39,24 +39,24 @@ new #[Title('Profile settings')] class extends Component {
             'phone_number' => $validated['phone_number'] ?: null,
         ])->save();
 
-        Flux::toast(variant: 'success', text: __('Profile updated.'));
+        Flux::toast(variant: 'success', text: __('ui.messages.profile_updated'));
     }
 }; ?>
 
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading class="sr-only">{{ __('Profile settings') }}</flux:heading>
+    <flux:heading class="sr-only">{{ __('ui.profile.settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your customer account details')">
+    <x-pages::settings.layout :heading="__('ui.profile.heading')" :subheading="__('ui.profile.subheading')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
-            <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
-            <flux:input wire:model="email" :label="__('Email address')" type="email" autocomplete="email" />
-            <flux:input wire:model="phone_number" :label="__('Phone number')" type="tel" autocomplete="tel" />
+            <flux:input wire:model="name" :label="__('ui.fields.name')" type="text" required autofocus autocomplete="name" />
+            <flux:input wire:model="email" :label="__('ui.fields.email_address')" type="email" autocomplete="email" />
+            <flux:input wire:model="phone_number" :label="__('ui.fields.phone_number')" type="tel" autocomplete="tel" />
 
             <div class="flex items-center gap-4">
                 <flux:button variant="primary" type="submit" data-test="update-profile-button">
-                    {{ __('Save') }}
+                    {{ __('ui.actions.save') }}
                 </flux:button>
             </div>
         </form>

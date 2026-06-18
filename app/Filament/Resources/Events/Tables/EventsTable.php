@@ -16,27 +16,32 @@ class EventsTable
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('admin.fields.name'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('type')
+                    ->label(__('admin.fields.type'))
                     ->badge()
                     ->sortable(),
                 TextColumn::make('status')
+                    ->label(__('admin.fields.status'))
                     ->badge()
                     ->sortable(),
                 TextColumn::make('seat_capacity')
-                    ->label('Seats')
+                    ->label(__('admin.fields.seats'))
                     ->sortable(),
                 TextColumn::make('starts_at')
+                    ->label(__('admin.fields.starts_at'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->label(__('admin.fields.status'))
                     ->options([
-                        'draft' => 'Draft',
-                        'published' => 'Published',
-                        'archived' => 'Archived',
+                        'draft' => __('admin.statuses.draft'),
+                        'published' => __('admin.statuses.published'),
+                        'archived' => __('admin.statuses.archived'),
                     ]),
             ])
             ->recordActions([

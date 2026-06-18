@@ -8,6 +8,6 @@ class Rejected extends BookingState
 
     public function label(): string
     {
-        return 'Rejected';
+        return __('admin.statuses.rejected');
     }
 }

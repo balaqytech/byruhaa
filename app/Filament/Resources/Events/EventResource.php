@@ -20,11 +20,24 @@ class EventResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
-    protected static ?string $navigationLabel = 'Events';
-
     public static function form(Schema $schema): Schema
     {
         return EventForm::configure($schema);
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.resources.events.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.resources.events.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.resources.events.navigation_label');
     }
 
     public static function table(Table $table): Table

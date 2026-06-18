@@ -8,6 +8,6 @@ class PendingReview extends BookingState
 
     public function label(): string
     {
-        return 'Pending review';
+        return __('admin.statuses.pending_review');
     }
 }

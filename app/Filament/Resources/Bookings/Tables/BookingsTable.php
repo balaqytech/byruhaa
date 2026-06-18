@@ -24,33 +24,40 @@ class BookingsTable
         return $table
             ->columns([
                 TextColumn::make('reference')
+                    ->label(__('admin.fields.reference'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('customer.name')
+                    ->label(__('admin.fields.customer'))
                     ->searchable(),
                 TextColumn::make('event.name')
+                    ->label(__('admin.fields.event'))
                     ->searchable(),
                 TextColumn::make('family_members_count')
-                    ->label('Family members')
+                    ->label(__('admin.fields.family_members'))
                     ->counts('familyMembers'),
                 TextColumn::make('state')
+                    ->label(__('admin.fields.state'))
                     ->formatStateUsing(fn (mixed $state): string => $state instanceof BookingState ? $state->label() : (string) $state)
                     ->badge(),
                 TextColumn::make('created_at')
+                    ->label(__('admin.fields.created_at'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('state')
+                    ->label(__('admin.fields.state'))
                     ->options([
-                        'pending_review' => 'Pending review',
-                        'approved' => 'Approved',
-                        'rejected' => 'Rejected',
-                        'cancelled' => 'Cancelled',
+                        'pending_review' => __('admin.statuses.pending_review'),
+                        'approved' => __('admin.statuses.approved'),
+                        'rejected' => __('admin.statuses.rejected'),
+                        'cancelled' => __('admin.statuses.cancelled'),
                     ]),
             ])
             ->recordActions([
                 Action::make('approve')
+                    ->label(__('admin.actions.approve'))
                     ->visible(fn (Booking $record): bool => $record->state instanceof PendingReview)
                     ->requiresConfirmation()
                     ->action(function (Booking $record, BookingApprovalService $approvalService): void {
@@ -63,6 +70,7 @@ class BookingsTable
                         $approvalService->approve($record, $reviewer);
                     }),
                 Action::make('reject')
+                    ->label(__('admin.actions.reject'))
                     ->visible(fn (Booking $record): bool => $record->state instanceof PendingReview)
                     ->color('danger')
                     ->requiresConfirmation()
@@ -75,6 +83,7 @@ class BookingsTable
                         $record->state->transitionTo(Rejected::class);
                     }),
                 Action::make('cancel')
+                    ->label(__('admin.actions.cancel'))
                     ->visible(fn (Booking $record): bool => ! $record->state instanceof Cancelled)
                     ->color('warning')
                     ->requiresConfirmation()

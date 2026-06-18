@@ -8,6 +8,6 @@ class AwaitingSignature extends ContractState
 
     public function label(): string
     {
-        return 'Awaiting signature';
+        return __('admin.statuses.awaiting_signature');
     }
 }

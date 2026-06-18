@@ -42,7 +42,7 @@ class EventContract extends Model
     {
         if (! preg_match('/^data:image\/png;base64,(?<payload>.+)$/', $signatureDataUrl, $matches)) {
             throw ValidationException::withMessages([
-                'signature' => __('The signature must be a PNG image.'),
+                'signature' => __('ui.messages.signature_must_be_png'),
             ]);
         }
 
@@ -50,7 +50,7 @@ class EventContract extends Model
 
         if ($signature === false) {
             throw ValidationException::withMessages([
-                'signature' => __('The signature is invalid.'),
+                'signature' => __('ui.messages.invalid_signature'),
             ]);
         }
 

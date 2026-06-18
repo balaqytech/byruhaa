@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Booking details')] class extends Component {
+new #[Title('تفاصيل الحجز')] class extends Component {
     public Booking $booking;
     public string $signedName = '';
     public string $signatureDataUrl = '';
@@ -39,7 +39,7 @@ new #[Title('Booking details')] class extends Component {
         $this->signatureDataUrl = '';
         $this->booking->refresh()->load(['event', 'familyMembers.familyMember', 'familyMembers.contract']);
 
-        Flux::toast(variant: 'success', text: __('Contract signed.'));
+        Flux::toast(variant: 'success', text: __('ui.messages.contract_signed'));
     }
 
     public function downloadContract(int $contractId, ContractRenderer $contractRenderer)
@@ -68,43 +68,48 @@ new #[Title('Booking details')] class extends Component {
     }
 }; ?>
 
-<section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <div>
-        <flux:heading size="xl">{{ $booking->event->name }}</flux:heading>
-        <flux:subheading>{{ $booking->reference }} · {{ $booking->state->label() }}</flux:subheading>
+<section class="flex flex-col gap-6">
+    <div class="rounded-2xl bg-emerald-900 p-6 text-white shadow-sm md:p-8">
+        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+                <flux:heading size="xl" class="text-white">{{ $booking->event->name }}</flux:heading>
+                <flux:text class="mt-2 text-emerald-50">{{ $booking->reference }} · {{ $booking->state->label() }}</flux:text>
+            </div>
+            <a href="{{ route('bookings.index') }}" wire:navigate class="inline-flex min-h-10 items-center rounded-lg px-4 py-2 text-sm font-medium text-emerald-50 transition hover:bg-white/10 hover:text-white">
+                {{ __('ui.actions.view_bookings') }}
+            </a>
+        </div>
     </div>
 
-    <flux:card>
-        <div class="grid gap-3 md:grid-cols-3">
-            <div>
-                <flux:text>{{ __('Event') }}</flux:text>
-                <flux:heading>{{ $booking->event->name }}</flux:heading>
-            </div>
-            <div>
-                <flux:text>{{ __('Status') }}</flux:text>
-                <flux:heading>{{ $booking->state->label() }}</flux:heading>
-            </div>
-            <div>
-                <flux:text>{{ __('Submitted') }}</flux:text>
-                <flux:heading>{{ $booking->created_at->format('Y-m-d') }}</flux:heading>
-            </div>
+    <div class="grid gap-3 md:grid-cols-3">
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <flux:text>{{ __('ui.labels.event') }}</flux:text>
+            <flux:heading>{{ $booking->event->name }}</flux:heading>
         </div>
-    </flux:card>
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <flux:text>{{ __('ui.labels.status') }}</flux:text>
+            <flux:heading>{{ $booking->state->label() }}</flux:heading>
+        </div>
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <flux:text>{{ __('ui.bookings.submitted') }}</flux:text>
+            <flux:heading dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</flux:heading>
+        </div>
+    </div>
 
     <div class="space-y-4">
         @foreach ($booking->familyMembers as $bookingFamilyMember)
-            <flux:card wire:key="booking-family-member-{{ $bookingFamilyMember->id }}">
+            <div wire:key="booking-family-member-{{ $bookingFamilyMember->id }}" class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
                 <div class="space-y-4">
                     <div class="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                         <div>
                             <flux:heading>{{ $bookingFamilyMember->familyMember->name }}</flux:heading>
-                            <flux:text>{{ __('Age') }} {{ $bookingFamilyMember->familyMember->ageAt($booking->event->starts_at ?? now()) }}</flux:text>
+                            <flux:text>{{ __('ui.family.age') }} {{ $bookingFamilyMember->familyMember->ageAt($booking->event->starts_at ?? now()) }}</flux:text>
                         </div>
 
                         @if ($bookingFamilyMember->contract)
                             <flux:badge>{{ $bookingFamilyMember->contract->state->label() }}</flux:badge>
                         @elseif ($booking->state instanceof Approved)
-                            <flux:badge>{{ __('Contract pending') }}</flux:badge>
+                            <flux:badge>{{ __('ui.bookings.contract_pending') }}</flux:badge>
                         @endif
                     </div>
 
@@ -141,28 +146,28 @@ new #[Title('Booking details')] class extends Component {
                             x-on:submit="capture()"
                             class="space-y-4"
                         >
-                            <flux:input wire:model="signedName" :label="__('Signer name')" required />
+                            <flux:input wire:model="signedName" :label="__('ui.bookings.signer_name')" required />
                             <div>
-                                <flux:text class="mb-2">{{ __('Signature') }}</flux:text>
-                                <canvas x-ref="canvas" width="520" height="160" class="h-40 w-full rounded-lg border border-zinc-300 bg-white"></canvas>
+                                <flux:text class="mb-2">{{ __('ui.bookings.signature') }}</flux:text>
+                                <canvas x-ref="canvas" width="520" height="160" class="h-40 w-full rounded-xl border border-emerald-900/20 bg-white"></canvas>
                                 <flux:error name="signatureDataUrl" />
                             </div>
-                            <div class="flex gap-3">
+                            <div class="flex flex-wrap gap-3">
                                 <flux:button type="submit" variant="primary" icon="pencil-square">
-                                    {{ __('Sign contract') }}
+                                    {{ __('ui.actions.sign_contract') }}
                                 </flux:button>
                                 <flux:button type="button" x-on:click="clear()">
-                                    {{ __('Clear') }}
+                                    {{ __('ui.actions.clear') }}
                                 </flux:button>
                             </div>
                         </form>
                     @elseif ($bookingFamilyMember->contract)
                         <flux:button wire:click="downloadContract({{ $bookingFamilyMember->contract->id }})" icon="arrow-down-tray">
-                            {{ __('Download contract') }}
+                            {{ __('ui.actions.download_contract') }}
                         </flux:button>
                     @endif
                 </div>
-            </flux:card>
+            </div>
         @endforeach
     </div>
 </section>

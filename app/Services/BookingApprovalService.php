@@ -25,13 +25,13 @@ class BookingApprovalService
 
             if ($requestedSeats < 1) {
                 throw ValidationException::withMessages([
-                    'booking' => __('A booking must include at least one family member.'),
+                    'booking' => __('ui.messages.booking_requires_family_member'),
                 ]);
             }
 
             if ($booking->event->remainingSeats() < $requestedSeats) {
                 throw ValidationException::withMessages([
-                    'booking' => __('This event does not have enough remaining seats.'),
+                    'booking' => __('ui.messages.not_enough_seats'),
                 ]);
             }
 

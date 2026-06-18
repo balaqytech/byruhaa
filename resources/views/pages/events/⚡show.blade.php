@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Event details')] class extends Component {
+new #[Title('تفاصيل الفعالية')] class extends Component {
     public Event $event;
 
     /** @var array<int> */
@@ -39,7 +39,7 @@ new #[Title('Event details')] class extends Component {
 
         if ($familyMembers->count() !== count(array_unique($validated['familyMemberIds']))) {
             throw ValidationException::withMessages([
-                'familyMemberIds' => __('One or more selected family members are invalid.'),
+                'familyMemberIds' => __('ui.messages.invalid_family_member_selection'),
             ]);
         }
 
@@ -48,14 +48,14 @@ new #[Title('Event details')] class extends Component {
 
             if ($age < $this->event->minimum_age || $age > $this->event->maximum_age) {
                 throw ValidationException::withMessages([
-                    'familyMemberIds' => __('All selected family members must be within the event age range.'),
+                    'familyMemberIds' => __('ui.messages.all_family_members_age_range'),
                 ]);
             }
         }
 
         if ($familyMembers->count() > $this->event->remainingSeats()) {
             throw ValidationException::withMessages([
-                'familyMemberIds' => __('This event does not have enough remaining seats.'),
+                'familyMemberIds' => __('ui.messages.not_enough_seats'),
             ]);
         }
 
@@ -70,7 +70,7 @@ new #[Title('Event details')] class extends Component {
             ]);
         }
 
-        Flux::toast(variant: 'success', text: __('Booking request submitted.'));
+        Flux::toast(variant: 'success', text: __('ui.messages.booking_request_submitted'));
 
         $this->redirectRoute('bookings.show', $booking, navigate: true);
     }
@@ -86,48 +86,56 @@ new #[Title('Event details')] class extends Component {
     }
 }; ?>
 
-<section class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-    <div class="flex flex-col gap-2">
-        <flux:badge>{{ ucfirst($event->type) }}</flux:badge>
-        <flux:heading size="xl">{{ $event->name }}</flux:heading>
-        <flux:subheading>{{ $event->location }} · {{ $event->starts_at?->format('M j, Y H:i') ?? __('Date to be announced') }}</flux:subheading>
+<section class="flex flex-col gap-6">
+    <div class="rounded-2xl bg-emerald-900 p-6 text-white shadow-sm md:p-8">
+        <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div class="space-y-3">
+                <span class="w-fit rounded-full border border-amber-300/30 bg-amber-300/15 px-3 py-1 text-sm font-medium text-amber-100">{{ trans()->has("admin.event_types.{$event->type}") ? __("admin.event_types.{$event->type}") : ucfirst($event->type) }}</span>
+                <flux:heading size="xl" class="text-white">{{ $event->name }}</flux:heading>
+                <flux:text class="text-emerald-50">{{ $event->location }} · <span dir="ltr">{{ $event->starts_at?->format('Y-m-d H:i') ?? __('ui.events.date_to_be_announced') }}</span></flux:text>
+            </div>
+            <div class="rounded-xl bg-white/10 px-4 py-3">
+                <flux:text class="text-emerald-50">{{ __('ui.events.approved_seats_remain') }}</flux:text>
+                <div class="text-2xl font-semibold text-white">{{ $event->remainingSeats() }}</div>
+            </div>
+        </div>
     </div>
 
     <div class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div class="space-y-6">
-            <flux:card>
+            <div class="rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5">
                 <div class="prose max-w-none dark:prose-invert">
                     {!! $event->description_html !!}
                 </div>
-            </flux:card>
+            </div>
         </div>
 
-        <flux:card>
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
             <form wire:submit="book" class="space-y-5">
                 <div>
-                    <flux:heading>{{ __('Book this event') }}</flux:heading>
-                    <flux:text>{{ $event->remainingSeats() }} {{ __('approved seats remain') }}</flux:text>
+                    <flux:heading>{{ __('ui.events.book_this_event') }}</flux:heading>
+                    <flux:text>{{ $event->remainingSeats() }} {{ __('ui.events.approved_seats_remain') }}</flux:text>
                 </div>
 
-                <flux:checkbox.group wire:model="familyMemberIds" :label="__('Family members')">
+                <flux:checkbox.group wire:model="familyMemberIds" :label="__('ui.events.family_members')">
                     @forelse ($familyMembers as $familyMember)
-                        <flux:checkbox wire:key="event-family-member-{{ $familyMember->id }}" value="{{ $familyMember->id }}" :label="$familyMember->name.' · '.__('Age').' '.$familyMember->ageAt($event->starts_at ?? now())" />
+                        <flux:checkbox wire:key="event-family-member-{{ $familyMember->id }}" value="{{ $familyMember->id }}" :label="$familyMember->name.' · '.__('ui.family.age').' '.$familyMember->ageAt($event->starts_at ?? now())" />
                     @empty
-                        <flux:text>{{ __('Add a family member before booking.') }}</flux:text>
+                        <flux:text>{{ __('ui.events.add_family_before_booking') }}</flux:text>
                     @endforelse
                 </flux:checkbox.group>
 
                 <flux:error name="familyMemberIds" />
 
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-3">
                     <flux:button type="submit" variant="primary" icon="clipboard-document-check" :disabled="$familyMembers->isEmpty()">
-                        {{ __('Submit request') }}
+                        {{ __('ui.actions.submit_request') }}
                     </flux:button>
                     <flux:button :href="route('family-members.index')" wire:navigate>
-                        {{ __('Manage family') }}
+                        {{ __('ui.actions.manage_family') }}
                     </flux:button>
                 </div>
             </form>
-        </flux:card>
+        </div>
     </div>
 </section>

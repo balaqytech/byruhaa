@@ -8,6 +8,6 @@ class Cancelled extends BookingState
 
     public function label(): string
     {
-        return 'Cancelled';
+        return __('admin.statuses.cancelled');
     }
 }

@@ -20,11 +20,24 @@ class BookingResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
-    protected static ?string $navigationLabel = 'Bookings';
-
     public static function form(Schema $schema): Schema
     {
         return BookingForm::configure($schema);
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.resources.bookings.label');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.resources.bookings.plural_label');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.resources.bookings.navigation_label');
     }
 
     public static function table(Table $table): Table

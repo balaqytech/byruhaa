@@ -14,21 +14,25 @@ class CustomerForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label(__('admin.fields.name'))
                     ->required()
                     ->maxLength(255),
                 TextInput::make('email')
-                    ->label('Email address')
+                    ->label(__('admin.fields.email_address'))
                     ->email()
                     ->maxLength(255)
                     ->rules(['required_without:phone_number'])
                     ->unique(ignoreRecord: true),
                 TextInput::make('phone_number')
+                    ->label(__('admin.fields.phone_number'))
                     ->tel()
                     ->maxLength(255)
                     ->rules(['required_without:email', 'phone:OM'])
                     ->unique(ignoreRecord: true),
-                DateTimePicker::make('email_verified_at'),
+                DateTimePicker::make('email_verified_at')
+                    ->label(__('admin.fields.email_verified_at')),
                 TextInput::make('password')
+                    ->label(__('admin.fields.password'))
                     ->password()
                     ->revealable()
                     ->rule(Password::defaults())

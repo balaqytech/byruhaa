@@ -8,6 +8,6 @@ class Signed extends ContractState
 
     public function label(): string
     {
-        return 'Signed';
+        return __('admin.statuses.signed');
     }
 }

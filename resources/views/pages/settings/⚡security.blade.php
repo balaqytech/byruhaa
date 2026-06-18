@@ -7,7 +7,7 @@ use Illuminate\Validation\Rules\Password;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Security settings')] class extends Component {
+new #[Title('إعدادات الأمان')] class extends Component {
     public string $current_password = '';
     public string $password = '';
     public string $password_confirmation = '';
@@ -27,23 +27,23 @@ new #[Title('Security settings')] class extends Component {
 
         $this->reset('current_password', 'password', 'password_confirmation');
 
-        Flux::toast(variant: 'success', text: __('Password updated.'));
+        Flux::toast(variant: 'success', text: __('ui.messages.password_updated'));
     }
 }; ?>
 
 <section class="w-full">
     @include('partials.settings-heading')
 
-    <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
+    <flux:heading class="sr-only">{{ __('ui.security.settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Security')" :subheading="__('Update your account password')">
+    <x-pages::settings.layout :heading="__('ui.security.heading')" :subheading="__('ui.security.subheading')">
         <form wire:submit="updatePassword" class="my-6 w-full space-y-6">
-            <flux:input wire:model="current_password" :label="__('Current password')" type="password" required autocomplete="current-password" viewable />
-            <flux:input wire:model="password" :label="__('New password')" type="password" required autocomplete="new-password" viewable />
-            <flux:input wire:model="password_confirmation" :label="__('Confirm password')" type="password" required autocomplete="new-password" viewable />
+            <flux:input wire:model="current_password" :label="__('ui.fields.current_password')" type="password" required autocomplete="current-password" viewable />
+            <flux:input wire:model="password" :label="__('ui.fields.new_password')" type="password" required autocomplete="new-password" viewable />
+            <flux:input wire:model="password_confirmation" :label="__('ui.fields.password_confirmation')" type="password" required autocomplete="new-password" viewable />
 
             <flux:button variant="primary" type="submit" data-test="update-password-button">
-                {{ __('Save password') }}
+                {{ __('ui.actions.save_password') }}
             </flux:button>
         </form>
     </x-pages::settings.layout>

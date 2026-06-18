@@ -18,51 +18,62 @@ class EventForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label(__('admin.fields.name'))
                     ->required()
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))),
                 TextInput::make('slug')
+                    ->label(__('admin.fields.slug'))
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255),
                 Select::make('type')
+                    ->label(__('admin.fields.type'))
                     ->required()
                     ->options([
-                        'trip' => 'Trip',
-                        'camp' => 'Camp',
-                        'festival' => 'Festival',
+                        'trip' => __('admin.event_types.trip'),
+                        'camp' => __('admin.event_types.camp'),
+                        'festival' => __('admin.event_types.festival'),
                     ]),
                 Select::make('status')
+                    ->label(__('admin.fields.status'))
                     ->required()
                     ->options(EventStatus::options())
                     ->default(EventStatus::Draft->value),
                 TextInput::make('seat_capacity')
+                    ->label(__('admin.fields.seat_capacity'))
                     ->required()
                     ->numeric()
                     ->minValue(1),
                 TextInput::make('minimum_age')
+                    ->label(__('admin.fields.minimum_age'))
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->default(9),
                 TextInput::make('maximum_age')
+                    ->label(__('admin.fields.maximum_age'))
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->default(16),
                 TextInput::make('location')
+                    ->label(__('admin.fields.location'))
                     ->maxLength(255),
-                DateTimePicker::make('starts_at'),
-                DateTimePicker::make('ends_at'),
+                DateTimePicker::make('starts_at')
+                    ->label(__('admin.fields.starts_at')),
+                DateTimePicker::make('ends_at')
+                    ->label(__('admin.fields.ends_at')),
                 Textarea::make('excerpt')
+                    ->label(__('admin.fields.excerpt'))
                     ->columnSpanFull()
                     ->maxLength(500),
                 RichEditor::make('description_html')
-                    ->label('Description')
+                    ->label(__('admin.fields.description'))
                     ->columnSpanFull(),
                 RichEditor::make('contract_terms_html')
-                    ->label('Contract terms')
+                    ->label(__('admin.fields.contract_terms'))
                     ->columnSpanFull(),
             ]);
     }

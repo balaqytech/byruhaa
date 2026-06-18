@@ -8,6 +8,6 @@ class Approved extends BookingState
 
     public function label(): string
     {
-        return 'Approved';
+        return __('admin.statuses.approved');
     }
 }

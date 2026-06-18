@@ -13,18 +13,18 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
+                <flux:sidebar.group :heading="__('ui.labels.platform')" class="grid">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
+                        {{ __('ui.labels.dashboard') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="calendar-days" :href="route('events.index')" :current="request()->routeIs('events.*')" wire:navigate>
-                        {{ __('Events') }}
+                        {{ __('ui.labels.events') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="users" :href="route('family-members.index')" :current="request()->routeIs('family-members.*')" wire:navigate>
-                        {{ __('Family') }}
+                        {{ __('ui.labels.family') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="clipboard-document-list" :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>
-                        {{ __('Bookings') }}
+                        {{ __('ui.labels.bookings') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
@@ -67,7 +67,7 @@
 
                     <flux:menu.radio.group>
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
+                            {{ __('ui.labels.settings') }}
                         </flux:menu.item>
                     </flux:menu.radio.group>
 
@@ -82,7 +82,7 @@
                             class="w-full cursor-pointer"
                             data-test="logout-button"
                         >
-                            {{ __('Log out') }}
+                            {{ __('ui.actions.log_out') }}
                         </flux:menu.item>
                     </form>
                 </flux:menu>

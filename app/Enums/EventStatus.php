@@ -14,9 +14,9 @@ enum EventStatus: string
     public static function options(): array
     {
         return [
-            self::Draft->value => 'Draft',
-            self::Published->value => 'Published',
-            self::Archived->value => 'Archived',
+            self::Draft->value => __('admin.statuses.draft'),
+            self::Published->value => __('admin.statuses.published'),
+            self::Archived->value => __('admin.statuses.archived'),
         ];
     }
 }
