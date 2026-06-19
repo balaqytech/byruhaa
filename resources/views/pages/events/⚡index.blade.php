@@ -61,7 +61,7 @@ new #[Title('الفعاليات')] class extends Component {
                         <div class="flex items-center gap-2">
                             <x-hugeicon name="wallet-02" class="text-base" />
                             <span>{{ __('ui.events.price_per_family_member') }}:</span>
-                            <span dir="ltr">{{ number_format($event->price_baisa / 1000, 3) }} {{ $event->currency }}</span>
+                            <x-money :amount-baisa="$event->price_baisa" :currency="$event->currency" />
                         </div>
                     </div>
 

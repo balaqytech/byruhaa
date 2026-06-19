@@ -38,6 +38,12 @@
                             {{ __('ui.labels.bookings') }}
                         </span>
                     </flux:sidebar.item>
+                    <flux:sidebar.item :href="route('payments.index')" :current="request()->routeIs('payments.index')" wire:navigate>
+                        <span class="inline-flex items-center gap-2">
+                            <x-hugeicon name="wallet-02" class="text-lg" />
+                            {{ __('ui.labels.payments') }}
+                        </span>
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

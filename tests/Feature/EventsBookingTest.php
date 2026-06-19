@@ -47,13 +47,15 @@ test('customer event views show the per family member price', function () {
         ->get(route('events.index'))
         ->assertOk()
         ->assertSee('Mountain Trip')
-        ->assertSee('12.500 OMR');
+        ->assertSee('data-omr-symbol', false)
+        ->assertSee('12.500');
 
     $this->actingAs($customer, 'customer')
         ->get(route('events.show', $event))
         ->assertOk()
         ->assertSee(__('ui.events.price_per_family_member'))
-        ->assertSee('12.500 OMR');
+        ->assertSee('data-omr-symbol', false)
+        ->assertSee('12.500');
 });
 
 test('booking submission stores a price snapshot', function () {

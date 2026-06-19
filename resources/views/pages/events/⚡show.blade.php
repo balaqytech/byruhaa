@@ -109,7 +109,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
             </div>
             <div class="rounded-xl bg-white/10 px-4 py-3">
                 <flux:text class="text-emerald-50">{{ __('ui.events.price_per_family_member') }}</flux:text>
-                <div class="text-2xl font-semibold text-white" dir="ltr">{{ number_format($event->price_baisa / 1000, 3) }} {{ $event->currency }}</div>
+                <x-money :amount-baisa="$event->price_baisa" :currency="$event->currency" class="text-2xl font-semibold text-white" />
             </div>
         </div>
     </div>
@@ -128,7 +128,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                 <div>
                     <flux:heading>{{ __('ui.events.book_this_event') }}</flux:heading>
                     <flux:text>{{ $event->remainingSeats() }} {{ __('ui.events.approved_seats_remain') }}</flux:text>
-                    <flux:text>{{ __('ui.events.price_per_family_member') }}: <span dir="ltr">{{ number_format($event->price_baisa / 1000, 3) }} {{ $event->currency }}</span></flux:text>
+                    <flux:text>{{ __('ui.events.price_per_family_member') }}: <x-money :amount-baisa="$event->price_baisa" :currency="$event->currency" /></flux:text>
                 </div>
 
                 <flux:checkbox.group wire:model="familyMemberIds" :label="__('ui.events.family_members')">

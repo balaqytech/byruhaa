@@ -231,15 +231,15 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         <div class="grid gap-3 md:grid-cols-4">
             <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
                 <flux:text>{{ __('ui.payments.subtotal') }}</flux:text>
-                <flux:heading class="text-base" dir="ltr">{{ number_format($booking->subtotal_baisa / 1000, 3) }} {{ $booking->currency }}</flux:heading>
+                <flux:heading class="text-base"><x-money :amount-baisa="$booking->subtotal_baisa" :currency="$booking->currency" /></flux:heading>
             </div>
             <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
                 <flux:text>{{ __('ui.payments.discount') }}</flux:text>
-                <flux:heading class="text-base" dir="ltr">{{ number_format($booking->discount_amount_baisa / 1000, 3) }} {{ $booking->currency }}</flux:heading>
+                <flux:heading class="text-base"><x-money :amount-baisa="$booking->discount_amount_baisa" :currency="$booking->currency" /></flux:heading>
             </div>
             <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
                 <flux:text>{{ __('ui.payments.total') }}</flux:text>
-                <flux:heading class="text-base" dir="ltr">{{ number_format($booking->total_baisa / 1000, 3) }} {{ $booking->currency }}</flux:heading>
+                <flux:heading class="text-base"><x-money :amount-baisa="$booking->total_baisa" :currency="$booking->currency" /></flux:heading>
             </div>
             <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
                 <flux:text>{{ __('ui.payments.plan') }}</flux:text>
@@ -263,9 +263,9 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                             <flux:table.row wire:key="booking-installment-{{ $installment->id }}">
                                 <flux:table.cell>{{ $installment->name ?: __('ui.payments.installment_number', ['number' => $installment->sequence]) }}</flux:table.cell>
                                 <flux:table.cell dir="ltr">{{ $installment->due_date->format('Y-m-d') }}</flux:table.cell>
-                                <flux:table.cell dir="ltr">{{ number_format($installment->amount_baisa / 1000, 3) }} {{ $booking->currency }}</flux:table.cell>
+                                <flux:table.cell><x-money :amount-baisa="$installment->amount_baisa" :currency="$booking->currency" /></flux:table.cell>
                                 <flux:table.cell>
-                                    <flux:badge>{{ $installment->state->label() }}</flux:badge>
+                                    <x-status-badge :state="$installment->state" />
                                 </flux:table.cell>
                                 <flux:table.cell>
                                     @if ($installment->state === BookingInstallmentState::Pending && $installment->id === $payableInstallmentId && $installment->amount_baisa >= 100)
@@ -354,9 +354,9 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                         </div>
 
                         @if ($bookingFamilyMember->contract)
-                            <flux:badge>{{ $bookingFamilyMember->contract->state->label() }}</flux:badge>
+                            <x-status-badge :state="$bookingFamilyMember->contract->state" />
                         @elseif ($booking->state instanceof Approved)
-                            <flux:badge>{{ __('ui.bookings.contract_pending') }}</flux:badge>
+                            <x-status-badge color="amber">{{ __('ui.bookings.contract_pending') }}</x-status-badge>
                         @endif
                     </div>
 

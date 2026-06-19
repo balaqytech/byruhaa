@@ -122,6 +122,7 @@ return [
     ],
 
     'labels' => [
+        'payments' => 'المدفوعات',
         'bookings' => 'الحجوزات',
         'dashboard' => 'لوحة التحكم',
         'event' => 'الفعالية',
@@ -164,6 +165,16 @@ return [
     ],
 
     'payments' => [
+        'empty' => 'لا توجد جداول دفع متاحة حتى الآن.',
+        'list_subheading' => 'راجع أقساط فعالياتك ومحاولات الدفع والاستردادات.',
+        'no_payment_attempts' => 'لا توجد محاولات دفع بعد.',
+        'outstanding' => 'المبلغ المتبقي',
+        'payment_attempts' => 'محاولات الدفع',
+        'refund' => 'استرداد',
+        'schedule_total' => 'إجمالي الجدول',
+        'total_paid' => 'إجمالي المدفوع',
+        'total_refunded' => 'إجمالي المسترد',
+        'total_scheduled' => 'إجمالي المجدول',
         'amount' => 'المبلغ',
         'available_after_contracts' => 'تتوفر خطط الدفع بعد اعتماد الحجز وتوقيع جميع العقود.',
         'choose_plan' => 'اختر خطة دفع',

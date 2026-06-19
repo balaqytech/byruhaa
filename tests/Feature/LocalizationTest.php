@@ -7,6 +7,15 @@ test('arabic is the default application locale', function () {
         ->and(config('app.faker_locale'))->toBe('ar_OM');
 });
 
+test('payment page translations are available in arabic', function () {
+    app()->setLocale('ar');
+
+    expect(__('ui.labels.payments'))->toBe('المدفوعات')
+        ->and(__('ui.payments.list_subheading'))->toBe('راجع أقساط فعالياتك ومحاولات الدفع والاستردادات.')
+        ->and(__('ui.payments.no_payment_attempts'))->toBe('لا توجد محاولات دفع بعد.')
+        ->and(__('ui.payments.total_refunded'))->toBe('إجمالي المسترد');
+});
+
 test('customer interface translations are available in arabic', function () {
     app()->setLocale('ar');
 

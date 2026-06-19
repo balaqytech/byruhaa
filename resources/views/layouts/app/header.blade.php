@@ -35,6 +35,12 @@
                             {{ __('ui.labels.bookings') }}
                         </span>
                     </flux:navbar.item>
+                    <flux:navbar.item :href="route('payments.index')" :current="request()->routeIs('payments.index')" wire:navigate>
+                        <span class="inline-flex items-center gap-2">
+                            <x-hugeicon name="wallet-02" class="text-lg" />
+                            {{ __('ui.labels.payments') }}
+                        </span>
+                    </flux:navbar.item>
                 </flux:navbar>
 
                 <flux:spacer />
@@ -67,6 +73,12 @@
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="contracts" class="text-lg" />
                                 {{ __('ui.labels.bookings') }}
+                            </span>
+                        </flux:menu.item>
+                        <flux:menu.item :href="route('payments.index')" wire:navigate>
+                            <span class="inline-flex items-center gap-2">
+                                <x-hugeicon name="wallet-02" class="text-lg" />
+                                {{ __('ui.labels.payments') }}
                             </span>
                         </flux:menu.item>
                     </flux:menu>

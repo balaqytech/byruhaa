@@ -1,12 +1,20 @@
 <?php
 
+use App\Enums\BookingInstallmentState;
+use App\Enums\PaymentRefundState;
+use App\Enums\PaymentState;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
+use App\Models\BookingInstallment;
+use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
+use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Models\User;
 use App\Services\BookingApprovalService;
+use App\Support\MoneyFormatter;
 use Livewire\Livewire;
 
 test('family members page renders existing family members in a table', function () {
@@ -92,6 +100,87 @@ test('bookings page renders existing bookings in a table', function () {
         ->assertSee('BRH-10001')
         ->assertSee('Mountain Trip')
         ->assertSee(__('ui.actions.open'));
+});
+
+test('money component renders the omani rial symbol before omr amounts', function () {
+    $this->blade('<x-money :amount-baisa="12500" currency="OMR" />')
+        ->assertSee('data-omr-symbol', false)
+        ->assertSee('12.500')
+        ->assertSee('OMR');
+
+    expect(MoneyFormatter::baisa(12500))->toBe('OMR 12.500');
+});
+
+test('payments page renders customer installments payment attempts and refunds', function () {
+    $customer = Customer::factory()->create();
+    $otherCustomer = Customer::factory()->create();
+    $event = Event::factory()->create(['name' => 'Sea Camp']);
+    $otherEvent = Event::factory()->create(['name' => 'Private Event']);
+    $booking = Booking::factory()
+        ->for($customer)
+        ->for($event)
+        ->create(['reference' => 'BRH-PAY-1']);
+    $otherBooking = Booking::factory()
+        ->for($otherCustomer)
+        ->for($otherEvent)
+        ->create(['reference' => 'BRH-OTHER']);
+
+    $schedule = BookingPaymentSchedule::factory()->for($booking)->create([
+        'plan_name' => 'Two payments',
+        'currency' => 'OMR',
+        'total_baisa' => 9000,
+    ]);
+    $firstInstallment = BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create([
+        'name' => 'Deposit',
+        'sequence' => 1,
+        'amount_baisa' => 4000,
+        'state' => BookingInstallmentState::Paid,
+        'paid_at' => now(),
+    ]);
+    BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create([
+        'name' => 'Balance',
+        'sequence' => 2,
+        'amount_baisa' => 5000,
+        'state' => BookingInstallmentState::Pending,
+    ]);
+    $payment = Payment::factory()->for($firstInstallment, 'bookingInstallment')->create([
+        'reference' => 'PAY-CUSTOMER',
+        'amount_baisa' => 4000,
+        'currency' => 'OMR',
+        'state' => PaymentState::PartiallyRefunded,
+        'paid_at' => now(),
+    ]);
+    PaymentRefund::factory()->for($payment)->create([
+        'reference' => 'REF-CUSTOMER',
+        'amount_baisa' => 1000,
+        'currency' => 'OMR',
+        'state' => PaymentRefundState::Succeeded,
+    ]);
+
+    $otherSchedule = BookingPaymentSchedule::factory()->for($otherBooking)->create(['plan_name' => 'Hidden plan']);
+    $otherInstallment = BookingInstallment::factory()->for($otherSchedule, 'paymentSchedule')->create(['name' => 'Hidden installment']);
+    Payment::factory()->for($otherInstallment, 'bookingInstallment')->create(['reference' => 'PAY-OTHER']);
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('payments.index'))
+        ->assertOk()
+        ->assertSee('BRH-PAY-1')
+        ->assertSee('Sea Camp')
+        ->assertSee('Two payments')
+        ->assertSee('Deposit')
+        ->assertSee('Balance')
+        ->assertSee('PAY-CUSTOMER')
+        ->assertSee('REF-CUSTOMER')
+        ->assertSee('hgi-wallet-02', false)
+        ->assertSee('hgi-invoice-03', false)
+        ->assertSee('data-status-color="green"', false)
+        ->assertSee('data-status-color="amber"', false)
+        ->assertSee('data-omr-symbol', false)
+        ->assertSee('9.000')
+        ->assertSee('1.000')
+        ->assertDontSee('BRH-OTHER')
+        ->assertDontSee('Private Event')
+        ->assertDontSee('PAY-OTHER');
 });
 
 test('booking details page renders the improved hugeicons contract layout', function () {

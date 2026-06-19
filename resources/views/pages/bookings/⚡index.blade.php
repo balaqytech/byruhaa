@@ -49,7 +49,7 @@ new #[Title('الحجوزات')] class extends Component {
                             <flux:table.cell>{{ $booking->event->name }}</flux:table.cell>
                             <flux:table.cell>{{ trans_choice('ui.bookings.family_member_count', $booking->familyMembers->count(), ['count' => $booking->familyMembers->count()]) }}</flux:table.cell>
                             <flux:table.cell>
-                                <flux:badge>{{ $booking->state->label() }}</flux:badge>
+                                <x-status-badge :state="$booking->state" />
                             </flux:table.cell>
                             <flux:table.cell dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</flux:table.cell>
                             <flux:table.cell align="end">

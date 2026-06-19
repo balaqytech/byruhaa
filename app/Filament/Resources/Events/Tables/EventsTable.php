@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Events\Tables;
 
+use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -32,7 +33,7 @@ class EventsTable
                     ->sortable(),
                 TextColumn::make('price_baisa')
                     ->label(__('admin.fields.price'))
-                    ->money('OMR', divideBy: 1000, decimalPlaces: 3)
+                    ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state))
                     ->sortable(),
                 TextColumn::make('starts_at')
                     ->label(__('admin.fields.starts_at'))

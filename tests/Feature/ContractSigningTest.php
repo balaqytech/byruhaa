@@ -183,7 +183,8 @@ test('customer can select a payment plan after all contracts are signed', functi
         ->assertHasNoErrors()
         ->assertSee('First')
         ->assertSee('Final')
-        ->assertSee('3.061 OMR');
+        ->assertSee('data-omr-symbol', false)
+        ->assertSee('3.061');
 
     $installments = $booking->refresh()->paymentSchedule()->firstOrFail()->installments()->get();
 

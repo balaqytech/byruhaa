@@ -2,6 +2,7 @@
 
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Discounts\DiscountResource;
+use App\Filament\Resources\Discounts\Pages\CreateDiscount;
 use App\Filament\Resources\EventPaymentPlans\EventPaymentPlanResource;
 use App\Filament\Resources\EventPaymentPlans\Pages\CreateEventPaymentPlan;
 use App\Filament\Resources\Events\EventResource;
@@ -55,6 +56,28 @@ test('staff can view discounts in filament', function () {
         ->assertSee($discount->name)
         ->assertSee(__('admin.fields.discount_amount'))
         ->assertSee('fi-ta-cell-amount-baisa', false);
+});
+
+test('staff must enter a valid discount date and family member range', function () {
+    $staff = User::factory()->create();
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateDiscount::class)
+        ->fillForm([
+            'name' => 'Invalid discount',
+            'amount_baisa' => 2500,
+            'starts_at' => '2026-08-01 00:00:00',
+            'ends_at' => '2026-07-01 00:00:00',
+            'minimum_family_members' => 5,
+            'maximum_family_members' => 2,
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors([
+            'ends_at',
+            'maximum_family_members',
+        ]);
 });
 
 test('staff can view event payment plans in filament', function () {

@@ -7,5 +7,7 @@ test('frontend typography uses ruqaa headings and ibm plex text', function () {
         ->toContain("--font-sans: 'IBM Plex Sans Arabic'")
         ->toContain("--font-heading: 'Aref Ruqaa'")
         ->toContain('font-family: var(--font-sans)')
-        ->toContain('font-family: var(--font-heading)');
+        ->toContain('font-family: var(--font-heading)')
+        ->toContain('font-size: 1.125em')
+        ->toContain('font-size: 2rem');
 });

@@ -51,6 +51,18 @@ class InitiateInstallmentPayment
                 ]);
             }
 
+            $existingPayment = $installment->payments()
+                ->where('state', PaymentState::Pending->value)
+                ->whereNotNull('provider_session_id')
+                ->whereNotNull('checkout_url')
+                ->where('created_at', '>=', now()->subHours(12))
+                ->latest()
+                ->first();
+
+            if ($existingPayment instanceof Payment) {
+                return $existingPayment;
+            }
+
             $payment = $installment->payments()->create([
                 'amount_baisa' => $installment->amount_baisa,
                 'currency' => $installment->paymentSchedule->currency,
@@ -64,6 +76,10 @@ class InitiateInstallmentPayment
 
             return $payment;
         });
+
+        if ($payment->provider_session_id && $payment->checkout_url) {
+            return $payment->refresh();
+        }
 
         try {
             $response = $this->thawaniClient->createSession($payment->request_payload ?? []);

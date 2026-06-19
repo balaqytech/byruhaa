@@ -53,6 +53,28 @@ test('customer can initiate a thawani checkout for the next installment', functi
     });
 });
 
+test('customer reuses an active pending checkout for the same installment', function () {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session' => Http::response([
+            'success' => true,
+            'data' => [
+                'session_id' => 'checkout_session_123',
+            ],
+        ]),
+    ]);
+
+    [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 4500);
+
+    $firstPayment = app(InitiateInstallmentPayment::class)->execute($installment, $customer->id);
+    $secondPayment = app(InitiateInstallmentPayment::class)->execute($installment, $customer->id);
+
+    expect($secondPayment->id)->toBe($firstPayment->id)
+        ->and($installment->payments()->count())->toBe(1);
+
+    Http::assertSentCount(1);
+});
+
 test('booking page shows thawani payment action for the next installment', function () {
     [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 4500);
 
@@ -121,6 +143,70 @@ test('thawani success return does not mark unpaid sessions paid', function () {
     $this->actingAs($customer, 'customer')
         ->get(URL::signedRoute('payments.thawani.success', ['payment' => $payment]))
         ->assertRedirect(route('bookings.show', $installment->paymentSchedule->booking));
+
+    expect($payment->refresh())
+        ->state->toBe(PaymentState::Pending)
+        ->provider_payment_status->toBe('unpaid')
+        ->and($installment->refresh())
+        ->state->toBe(BookingInstallmentState::Pending);
+});
+
+test('scheduled thawani reconciliation marks paid sessions paid', function () {
+    Http::preventStrayRequests();
+
+    [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 9001);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+        'amount_baisa' => 9001,
+        'provider_session_id' => 'checkout_session_paid',
+    ]);
+
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session/checkout_session_paid' => Http::response([
+            'success' => true,
+            'data' => [
+                'session_id' => 'checkout_session_paid',
+                'payment_status' => 'paid',
+                'invoice' => 'invoice_123',
+                'total_amount' => 9001,
+            ],
+        ]),
+    ]);
+
+    $this->artisan('payments:reconcile-thawani')
+        ->assertSuccessful();
+
+    expect($payment->refresh())
+        ->state->toBe(PaymentState::Paid)
+        ->provider_payment_status->toBe('paid')
+        ->provider_invoice->toBe('invoice_123')
+        ->and($installment->refresh())
+        ->state->toBe(BookingInstallmentState::Paid);
+
+    expect($payment->ledgerTransaction()->exists())->toBeTrue();
+});
+
+test('scheduled thawani reconciliation leaves unpaid sessions pending', function () {
+    Http::preventStrayRequests();
+
+    [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 5000);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+        'amount_baisa' => 5000,
+        'provider_session_id' => 'checkout_session_unpaid',
+    ]);
+
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session/checkout_session_unpaid' => Http::response([
+            'success' => true,
+            'data' => [
+                'session_id' => 'checkout_session_unpaid',
+                'payment_status' => 'unpaid',
+                'total_amount' => 5000,
+            ],
+        ]),
+    ]);
+
+    $this->artisan('payments:reconcile-thawani')
+        ->assertSuccessful();
 
     expect($payment->refresh())
         ->state->toBe(PaymentState::Pending)

@@ -53,6 +53,21 @@
     flux-heading {
         font-family: var(--font-heading);
         letter-spacing: 0;
+        line-height: 1.35;
+    }
+
+    h1,
+    [data-flux-heading].text-2xl {
+        font-size: 2rem;
+    }
+
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    [data-flux-heading] {
+        font-size: 1.125em;
     }
 
     *,
