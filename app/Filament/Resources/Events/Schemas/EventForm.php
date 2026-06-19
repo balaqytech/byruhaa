@@ -3,12 +3,16 @@
 namespace App\Filament\Resources\Events\Schemas;
 
 use App\Enums\EventStatus;
+use App\Support\ContractVariables;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Html;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class EventForm
@@ -87,6 +91,38 @@ class EventForm
                 RichEditor::make('contract_terms_html')
                     ->label(__('admin.fields.contract_terms'))
                     ->columnSpanFull(),
+                Section::make('Contract variables')
+                    ->description('Copy these tokens into the contract terms. They are resolved when a booking is approved.')
+                    ->schema([
+                        Html::make(self::contractVariableReferenceHtml()),
+                    ])
+                    ->compact()
+                    ->collapsible()
+                    ->columnSpanFull(),
             ]);
+    }
+
+    private static function contractVariableReferenceHtml(): HtmlString
+    {
+        $html = '<div class="space-y-4 text-sm">';
+
+        foreach (ContractVariables::definitions() as $group => $variables) {
+            $html .= '<div>';
+            $html .= '<div class="mb-2 font-medium text-gray-950 dark:text-white">'.e($group).'</div>';
+            $html .= '<div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">';
+
+            foreach ($variables as $key => $label) {
+                $token = '{{ '.$key.' }}';
+
+                $html .= '<div class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-white/10 dark:bg-white/5">';
+                $html .= '<code dir="ltr" class="block select-all text-xs font-semibold text-primary-700 dark:text-primary-300">'.e($token).'</code>';
+                $html .= '<div class="mt-1 text-xs text-gray-600 dark:text-gray-400">'.e($label).'</div>';
+                $html .= '</div>';
+            }
+
+            $html .= '</div></div>';
+        }
+
+        return new HtmlString($html.'</div>');
     }
 }

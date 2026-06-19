@@ -16,6 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->nullable()->unique();
             $table->string('phone_number')->nullable()->unique();
+            $table->string('guardian_civil_id')->nullable();
+            $table->string('guardian_relationship')->nullable();
+            $table->string('guardian_wilaya')->nullable();
+            $table->string('guardian_area')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();

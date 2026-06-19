@@ -43,6 +43,17 @@ test('staff can view event prices in filament', function () {
         ->assertSee('fi-ta-cell-price-baisa', false);
 });
 
+test('staff can view contract variable tokens in event form', function () {
+    $staff = User::factory()->create();
+
+    $this->actingAs($staff, 'web')
+        ->get(EventResource::getUrl('create'))
+        ->assertOk()
+        ->assertSee('{{ guardian_name }}', false)
+        ->assertSee('{{ student_name }}', false)
+        ->assertSee('{{ agreed_fee }}', false);
+});
+
 test('staff can view discounts in filament', function () {
     $staff = User::factory()->create();
     $discount = Discount::factory()->create([

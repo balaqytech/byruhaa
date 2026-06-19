@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\BookingFamilyMember;
 use App\Models\EventContract;
+use App\Support\ContractVariables;
 use Mccarlosen\LaravelMpdf\Facades\LaravelMpdf as PDF;
 
 class ContractRenderer
@@ -11,12 +12,18 @@ class ContractRenderer
     public function html(BookingFamilyMember $bookingFamilyMember): string
     {
         $bookingFamilyMember->loadMissing(['booking.customer', 'booking.event', 'familyMember']);
+        $event = clone $bookingFamilyMember->booking->event;
+
+        $event->setAttribute(
+            'contract_terms_html',
+            ContractVariables::render((string) $event->contract_terms_html, $bookingFamilyMember),
+        );
 
         return view('contracts.event', [
             'bookingFamilyMember' => $bookingFamilyMember,
             'booking' => $bookingFamilyMember->booking,
             'customer' => $bookingFamilyMember->booking->customer,
-            'event' => $bookingFamilyMember->booking->event,
+            'event' => $event,
             'familyMember' => $bookingFamilyMember->familyMember,
             'contract' => $bookingFamilyMember->contract,
         ])->render();

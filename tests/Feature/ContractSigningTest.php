@@ -5,6 +5,7 @@ use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\Customer;
 use App\Models\Event;
+use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
 use App\Models\FamilyMember;
@@ -101,6 +102,62 @@ test('event contract snapshot and pdf are rendered in arabic', function () {
     expect($pdf)
         ->toStartWith('%PDF')
         ->toContain('/Type /Page');
+});
+
+test('contract variables are rendered and escaped when booking is approved', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create([
+        'name' => 'Mona <Guardian>',
+        'guardian_civil_id' => 'OM123456',
+        'guardian_relationship' => 'Mother',
+        'guardian_wilaya' => 'Muscat',
+        'guardian_area' => 'Qurum',
+    ]);
+    $event = Event::factory()->create([
+        'name' => 'Spring Camp',
+        'location' => 'Muscat',
+        'starts_at' => '2026-07-01 09:00:00',
+        'ends_at' => '2026-07-03 12:30:00',
+        'price_baisa' => 12000,
+        'contract_terms_html' => implode('', [
+            '<p>Guardian: {{ guardian_name }}</p>',
+            '<p>Student: {{ student_name }}</p>',
+            '<p>Event: {{ event_name }}</p>',
+            '<p>Start: {{ event_start_date }}</p>',
+            '<p>End: {{ event_end_date }}</p>',
+            '<p>Fee: {{ agreed_fee }}</p>',
+            '<p>Area: {{ guardian_area }}</p>',
+        ]),
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create([
+        'name' => 'Maha & Salim',
+        'birth_date' => '2014-05-10',
+    ]);
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'reference' => 'BRH-VARS',
+        'currency' => 'OMR',
+        'subtotal_baisa' => 12000,
+        'discount_amount_baisa' => 3000,
+        'total_baisa' => 9000,
+    ]);
+
+    BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    app(BookingApprovalService::class)->approve($booking, $staff);
+
+    $html = EventContract::query()->firstOrFail()->contract_html;
+
+    expect($html)
+        ->toContain('Mona &lt;Guardian&gt;')
+        ->toContain('Maha &amp; Salim')
+        ->toContain('Spring Camp')
+        ->toContain('2026-07-01 09:00')
+        ->toContain('2026-07-03 12:30')
+        ->toContain('OMR 9.000')
+        ->toContain('Qurum')
+        ->not->toContain('{{')
+        ->not->toContain('<Guardian>')
+        ->not->toContain('Maha & Salim');
 });
 
 test('customer cannot select a payment plan before all contracts are signed', function () {
