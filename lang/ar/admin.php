@@ -94,6 +94,7 @@ return [
         'awaiting_signature' => 'بانتظار التوقيع',
         'cancelled' => 'ملغي',
         'draft' => 'مسودة',
+        'failed' => 'فشل',
         'inactive' => 'غير نشط',
         'paid' => 'مدفوع',
         'pending' => 'معلق',

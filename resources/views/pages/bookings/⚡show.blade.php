@@ -1,7 +1,10 @@
 <?php
 
+use App\Actions\InitiateInstallmentPayment;
 use App\Actions\SelectBookingPaymentPlan;
+use App\Enums\BookingInstallmentState;
 use App\Models\Booking;
+use App\Models\BookingInstallment;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Services\ContractRenderer;
@@ -64,6 +67,20 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         Flux::toast(variant: 'success', text: __('ui.messages.payment_plan_selected'));
     }
 
+    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment)
+    {
+        $installment = BookingInstallment::query()
+            ->whereKey($installmentId)
+            ->whereHas('paymentSchedule.booking', fn ($query) => $query
+                ->where('customer_id', Auth::guard('customer')->id())
+                ->where('id', $this->booking->id))
+            ->firstOrFail();
+
+        $payment = $initiateInstallmentPayment->execute($installment, (int) Auth::guard('customer')->id());
+
+        return redirect()->away((string) $payment->checkout_url);
+    }
+
     public function downloadContract(int $contractId, ContractRenderer $contractRenderer)
     {
         $contract = $this->ownedContract($contractId);
@@ -99,6 +116,9 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                 ->oldest('name')
                 ->get(),
             'contractsAreSigned' => $this->booking->hasSignedContracts(),
+            'payableInstallmentId' => $this->booking->paymentSchedule?->installments
+                ->first(fn (BookingInstallment $installment): bool => $installment->state === BookingInstallmentState::Pending)
+                ?->id,
         ];
     }
 
@@ -140,6 +160,12 @@ new #[Title('تفاصيل الحجز')] class extends Component {
             </div>
         </div>
     </div>
+
+    @if (session('status'))
+        <div class="rounded-xl border border-emerald-900/10 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 dark:border-white/10 dark:bg-emerald-300/10 dark:text-emerald-50">
+            {{ session('status') }}
+        </div>
+    @endif
 
     <div class="grid gap-3 md:grid-cols-4">
         <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
@@ -229,6 +255,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                         <flux:table.column>{{ __('ui.payments.due_date') }}</flux:table.column>
                         <flux:table.column>{{ __('ui.payments.amount') }}</flux:table.column>
                         <flux:table.column>{{ __('ui.labels.status') }}</flux:table.column>
+                        <flux:table.column>{{ __('ui.payments.payment') }}</flux:table.column>
                     </flux:table.columns>
 
                     <flux:table.rows>
@@ -239,6 +266,18 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                                 <flux:table.cell dir="ltr">{{ number_format($installment->amount_baisa / 1000, 3) }} {{ $booking->currency }}</flux:table.cell>
                                 <flux:table.cell>
                                     <flux:badge>{{ $installment->state->label() }}</flux:badge>
+                                </flux:table.cell>
+                                <flux:table.cell>
+                                    @if ($installment->state === BookingInstallmentState::Pending && $installment->id === $payableInstallmentId && $installment->amount_baisa >= 100)
+                                        <flux:button wire:click="payInstallment({{ $installment->id }})" wire:target="payInstallment({{ $installment->id }})" size="sm" variant="primary">
+                                            <x-hugeicon name="wallet-02" class="text-lg" />
+                                            {{ __('ui.payments.pay_with_thawani') }}
+                                        </flux:button>
+                                    @elseif ($installment->state === BookingInstallmentState::Pending)
+                                        <span class="text-sm text-zinc-500 dark:text-white/60">{{ __('ui.payments.waiting_for_previous') }}</span>
+                                    @else
+                                        <span class="text-sm text-zinc-500 dark:text-white/60">{{ __('ui.payments.completed') }}</span>
+                                    @endif
                                 </flux:table.cell>
                             </flux:table.row>
                         @endforeach

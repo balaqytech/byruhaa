@@ -94,6 +94,7 @@ return [
         'awaiting_signature' => 'Awaiting signature',
         'cancelled' => 'Cancelled',
         'draft' => 'Draft',
+        'failed' => 'Failed',
         'inactive' => 'Inactive',
         'paid' => 'Paid',
         'pending' => 'Pending',
