@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\States\Booking\BookingState;
+use App\States\Contract\Signed;
 use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Spatie\ModelStates\HasStates;
@@ -94,6 +96,24 @@ class Booking extends Model
     public function familyMembers(): HasMany
     {
         return $this->hasMany(BookingFamilyMember::class);
+    }
+
+    /**
+     * @return HasOne<BookingPaymentSchedule, $this>
+     */
+    public function paymentSchedule(): HasOne
+    {
+        return $this->hasOne(BookingPaymentSchedule::class);
+    }
+
+    public function hasSignedContracts(): bool
+    {
+        $familyMembers = $this->relationLoaded('familyMembers')
+            ? $this->familyMembers
+            : $this->familyMembers()->with('contract')->get();
+
+        return $familyMembers->isNotEmpty()
+            && $familyMembers->every(fn (BookingFamilyMember $familyMember): bool => $familyMember->contract?->state instanceof Signed);
     }
 
     /**

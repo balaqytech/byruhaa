@@ -1,7 +1,9 @@
 <?php
 
+use App\Actions\SelectBookingPaymentPlan;
 use App\Models\Booking;
 use App\Models\EventContract;
+use App\Models\EventPaymentPlan;
 use App\Services\ContractRenderer;
 use App\States\Booking\Approved;
 use App\States\Contract\AwaitingSignature;
@@ -13,12 +15,13 @@ use Livewire\Component;
 new #[Title('تفاصيل الحجز')] class extends Component {
     public Booking $booking;
     public string $signedName = '';
+    public ?int $paymentPlanId = null;
 
     public function mount(Booking $booking): void
     {
         abort_unless($booking->customer_id === Auth::guard('customer')->id(), 403);
 
-        $this->booking = $booking->load(['event', 'familyMembers.familyMember', 'familyMembers.contract']);
+        $this->booking = $booking->load(['event', 'familyMembers.familyMember', 'familyMembers.contract', 'paymentSchedule.installments']);
         $this->signedName = Auth::guard('customer')->user()->name;
     }
 
@@ -38,9 +41,27 @@ new #[Title('تفاصيل الحجز')] class extends Component {
 
         $contract->sign($signatureDataUrl, $this->signedName, request()->ip());
 
-        $this->booking->refresh()->load(['event', 'familyMembers.familyMember', 'familyMembers.contract']);
+        $this->refreshBooking();
 
         Flux::toast(variant: 'success', text: __('ui.messages.contract_signed'));
+    }
+
+    public function selectPaymentPlan(SelectBookingPaymentPlan $selectBookingPaymentPlan): void
+    {
+        $validated = $this->validate([
+            'paymentPlanId' => ['required', 'integer'],
+        ]);
+
+        $paymentPlan = EventPaymentPlan::query()
+            ->whereKey($validated['paymentPlanId'])
+            ->firstOrFail();
+
+        $selectBookingPaymentPlan->execute($this->booking, $paymentPlan);
+
+        $this->paymentPlanId = null;
+        $this->refreshBooking();
+
+        Flux::toast(variant: 'success', text: __('ui.messages.payment_plan_selected'));
     }
 
     public function downloadContract(int $contractId, ContractRenderer $contractRenderer)
@@ -66,6 +87,24 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                 ->where('customer_id', Auth::guard('customer')->id())
                 ->where('id', $this->booking->id))
             ->firstOrFail();
+    }
+
+    public function with(): array
+    {
+        return [
+            'activePaymentPlans' => $this->booking->event
+                ->paymentPlans()
+                ->where('is_active', true)
+                ->with('installments')
+                ->oldest('name')
+                ->get(),
+            'contractsAreSigned' => $this->booking->hasSignedContracts(),
+        ];
+    }
+
+    private function refreshBooking(): void
+    {
+        $this->booking->refresh()->load(['event', 'familyMembers.familyMember', 'familyMembers.contract', 'paymentSchedule.installments']);
     }
 }; ?>
 
@@ -150,6 +189,104 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <div class="mb-5 flex items-center justify-between gap-3">
+            <div>
+                <flux:heading>{{ __('ui.payments.heading') }}</flux:heading>
+                <flux:text>{{ __('ui.payments.subheading') }}</flux:text>
+            </div>
+            <span class="flex size-11 items-center justify-center rounded-xl bg-sky-100 text-sky-800 dark:bg-sky-300/15 dark:text-sky-100">
+                <x-hugeicon name="wallet-02" class="text-2xl" />
+            </span>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-4">
+            <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
+                <flux:text>{{ __('ui.payments.subtotal') }}</flux:text>
+                <flux:heading class="text-base" dir="ltr">{{ number_format($booking->subtotal_baisa / 1000, 3) }} {{ $booking->currency }}</flux:heading>
+            </div>
+            <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
+                <flux:text>{{ __('ui.payments.discount') }}</flux:text>
+                <flux:heading class="text-base" dir="ltr">{{ number_format($booking->discount_amount_baisa / 1000, 3) }} {{ $booking->currency }}</flux:heading>
+            </div>
+            <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
+                <flux:text>{{ __('ui.payments.total') }}</flux:text>
+                <flux:heading class="text-base" dir="ltr">{{ number_format($booking->total_baisa / 1000, 3) }} {{ $booking->currency }}</flux:heading>
+            </div>
+            <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/40 p-4 dark:border-white/10 dark:bg-white/5">
+                <flux:text>{{ __('ui.payments.plan') }}</flux:text>
+                <flux:heading class="text-base">{{ $booking->paymentSchedule?->plan_name ?? __('ui.payments.not_selected') }}</flux:heading>
+            </div>
+        </div>
+
+        @if ($booking->paymentSchedule)
+            <div class="mt-5 overflow-hidden rounded-xl border border-emerald-900/10 dark:border-white/10">
+                <flux:table>
+                    <flux:table.columns>
+                        <flux:table.column>{{ __('ui.payments.installment') }}</flux:table.column>
+                        <flux:table.column>{{ __('ui.payments.due_date') }}</flux:table.column>
+                        <flux:table.column>{{ __('ui.payments.amount') }}</flux:table.column>
+                        <flux:table.column>{{ __('ui.labels.status') }}</flux:table.column>
+                    </flux:table.columns>
+
+                    <flux:table.rows>
+                        @foreach ($booking->paymentSchedule->installments as $installment)
+                            <flux:table.row wire:key="booking-installment-{{ $installment->id }}">
+                                <flux:table.cell>{{ $installment->name ?: __('ui.payments.installment_number', ['number' => $installment->sequence]) }}</flux:table.cell>
+                                <flux:table.cell dir="ltr">{{ $installment->due_date->format('Y-m-d') }}</flux:table.cell>
+                                <flux:table.cell dir="ltr">{{ number_format($installment->amount_baisa / 1000, 3) }} {{ $booking->currency }}</flux:table.cell>
+                                <flux:table.cell>
+                                    <flux:badge>{{ $installment->state->label() }}</flux:badge>
+                                </flux:table.cell>
+                            </flux:table.row>
+                        @endforeach
+                    </flux:table.rows>
+                </flux:table>
+            </div>
+        @elseif ($booking->state instanceof Approved && $contractsAreSigned)
+            @if ($activePaymentPlans->isNotEmpty())
+                <form wire:submit="selectPaymentPlan" class="mt-5 space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
+                    <flux:select wire:model="paymentPlanId" :label="__('ui.payments.choose_plan')" required>
+                        <option value="">{{ __('ui.payments.choose_plan_placeholder') }}</option>
+                        @foreach ($activePaymentPlans as $paymentPlan)
+                            <option value="{{ $paymentPlan->id }}">{{ $paymentPlan->name }}</option>
+                        @endforeach
+                    </flux:select>
+                    <flux:error name="paymentPlanId" />
+
+                    <div class="grid gap-3 md:grid-cols-2">
+                        @foreach ($activePaymentPlans as $paymentPlan)
+                            <div wire:key="payment-plan-option-{{ $paymentPlan->id }}" class="rounded-xl border border-sky-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                                <flux:heading class="text-base">{{ $paymentPlan->name }}</flux:heading>
+                                <div class="mt-3 space-y-2">
+                                    @foreach ($paymentPlan->installments as $planInstallment)
+                                        <div class="flex items-center justify-between gap-3 text-sm text-emerald-950/75 dark:text-emerald-50/75">
+                                            <span>{{ $planInstallment->name ?: __('ui.payments.installment_number', ['number' => $planInstallment->sequence]) }}</span>
+                                            <span dir="ltr">{{ $planInstallment->percentage }}% · {{ $planInstallment->due_date->format('Y-m-d') }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <flux:button type="submit" variant="primary">
+                        <x-hugeicon name="check-list" class="text-lg" />
+                        {{ __('ui.payments.select_plan') }}
+                    </flux:button>
+                </form>
+            @else
+                <div class="mt-5 rounded-xl border border-dashed border-emerald-900/20 p-5 text-center dark:border-white/15">
+                    <flux:text>{{ __('ui.payments.no_plans') }}</flux:text>
+                </div>
+            @endif
+        @else
+            <div class="mt-5 rounded-xl border border-dashed border-emerald-900/20 p-5 text-center dark:border-white/15">
+                <flux:text>{{ __('ui.payments.available_after_contracts') }}</flux:text>
+            </div>
+        @endif
     </div>
 
     <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">

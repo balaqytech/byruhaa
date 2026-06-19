@@ -59,6 +59,14 @@ class Event extends Model
         return $this->hasMany(Discount::class);
     }
 
+    /**
+     * @return HasMany<EventPaymentPlan, $this>
+     */
+    public function paymentPlans(): HasMany
+    {
+        return $this->hasMany(EventPaymentPlan::class);
+    }
+
     public function approvedSeatsCount(): int
     {
         return BookingFamilyMember::query()
