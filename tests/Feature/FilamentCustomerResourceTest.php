@@ -6,6 +6,7 @@ use App\Filament\Resources\Discounts\Pages\CreateDiscount;
 use App\Filament\Resources\EventPaymentPlans\EventPaymentPlanResource;
 use App\Filament\Resources\EventPaymentPlans\Pages\CreateEventPaymentPlan;
 use App\Filament\Resources\Events\EventResource;
+use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Event;
@@ -52,6 +53,45 @@ test('staff can view contract variable tokens in event form', function () {
         ->assertSee('{{ guardian_name }}', false)
         ->assertSee('{{ student_name }}', false)
         ->assertSee('{{ agreed_fee }}', false);
+});
+
+test('staff can save participant extra fields on an event', function () {
+    $staff = User::factory()->create();
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateEvent::class)
+        ->fillForm([
+            'name' => 'Participant Camp',
+            'slug' => 'participant-camp',
+            'type' => 'camp',
+            'status' => 'published',
+            'seat_capacity' => 20,
+            'price_baisa' => 12000,
+            'currency' => 'OMR',
+            'minimum_age' => 9,
+            'maximum_age' => 16,
+            'participant_extra_fields' => [
+                [
+                    'key' => 'swimming_level',
+                    'label' => 'Swimming level',
+                    'type' => 'select',
+                    'required' => true,
+                    'options' => "Beginner\nAdvanced",
+                    'placeholder' => 'Choose level',
+                    'help_text' => 'Used for group assignment.',
+                ],
+            ],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $event = Event::query()->where('slug', 'participant-camp')->firstOrFail();
+
+    expect($event->participant_extra_fields)
+        ->toHaveCount(1)
+        ->and($event->participant_extra_fields[0]['key'])->toBe('swimming_level')
+        ->and($event->participant_extra_fields[0]['required'])->toBeTrue();
 });
 
 test('staff can view discounts in filament', function () {

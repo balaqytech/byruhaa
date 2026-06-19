@@ -19,12 +19,14 @@ use Spatie\ModelStates\HasStates;
  * @property int $booking_family_member_id
  * @property ContractState $state
  * @property string $contract_html
+ * @property array<string, mixed>|null $participant_extra_answers
+ * @property Carbon|null $participant_extra_completed_at
  * @property string|null $signature_path
  * @property string|null $signed_name
  * @property string|null $signed_ip
  * @property Carbon|null $signed_at
  */
-#[Fillable(['booking_family_member_id', 'state', 'contract_html', 'signature_path', 'signed_name', 'signed_ip', 'signed_at'])]
+#[Fillable(['booking_family_member_id', 'state', 'contract_html', 'participant_extra_answers', 'participant_extra_completed_at', 'signature_path', 'signed_name', 'signed_ip', 'signed_at'])]
 class EventContract extends Model
 {
     /** @use HasFactory<EventContractFactory> */
@@ -75,6 +77,8 @@ class EventContract extends Model
     {
         return [
             'state' => ContractState::class,
+            'participant_extra_answers' => 'array',
+            'participant_extra_completed_at' => 'datetime',
             'signed_at' => 'datetime',
         ];
     }

@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('excerpt')->nullable();
             $table->longText('description_html')->nullable();
             $table->longText('contract_terms_html')->nullable();
+            $table->json('participant_extra_fields')->nullable();
             $table->string('location')->nullable();
             $table->dateTime('starts_at')->nullable();
             $table->dateTime('ends_at')->nullable();

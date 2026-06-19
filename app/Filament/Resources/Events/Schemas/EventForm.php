@@ -4,13 +4,17 @@ namespace App\Filament\Resources\Events\Schemas;
 
 use App\Enums\EventStatus;
 use App\Support\ContractVariables;
+use App\Support\ParticipantExtraFields;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Html;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
@@ -90,6 +94,46 @@ class EventForm
                     ->columnSpanFull(),
                 RichEditor::make('contract_terms_html')
                     ->label(__('admin.fields.contract_terms'))
+                    ->columnSpanFull(),
+                Repeater::make('participant_extra_fields')
+                    ->label('Participant extra fields')
+                    ->schema([
+                        TextInput::make('key')
+                            ->label('Key')
+                            ->required()
+                            ->rules(['regex:/^[A-Za-z][A-Za-z0-9_]*$/'])
+                            ->maxLength(80),
+                        TextInput::make('label')
+                            ->label('Label')
+                            ->required()
+                            ->maxLength(255),
+                        Select::make('type')
+                            ->label('Type')
+                            ->options(ParticipantExtraFields::typeOptions())
+                            ->default('text')
+                            ->live()
+                            ->required(),
+                        Toggle::make('required')
+                            ->label('Required')
+                            ->default(false),
+                        Textarea::make('options')
+                            ->label('Options')
+                            ->helperText('One option per line. Used only for select and radio fields.')
+                            ->visible(fn (Get $get): bool => in_array($get('type'), ['select', 'radio'], true))
+                            ->required(fn (Get $get): bool => in_array($get('type'), ['select', 'radio'], true))
+                            ->columnSpanFull(),
+                        TextInput::make('placeholder')
+                            ->label('Placeholder')
+                            ->maxLength(255),
+                        Textarea::make('help_text')
+                            ->label('Help text')
+                            ->maxLength(500)
+                            ->columnSpanFull(),
+                    ])
+                    ->defaultItems(0)
+                    ->columns(2)
+                    ->collapsible()
+                    ->itemLabel(fn (array $state): ?string => $state['label'] ?? $state['key'] ?? null)
                     ->columnSpanFull(),
                 Section::make('Contract variables')
                     ->description('Copy these tokens into the contract terms. They are resolved when a booking is approved.')

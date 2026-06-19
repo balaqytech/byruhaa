@@ -300,6 +300,8 @@
                 {!! $contract->contract_html !!}
             </div>
 
+            @include('contracts.participant-extra-answers', ['contract' => $contract, 'pdf' => true])
+
             @if ($contract->signature_path)
                 <div class="signature-box">
                     <h2>التوقيع الإلكتروني</h2>

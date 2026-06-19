@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('booking_family_member_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('state')->default('awaiting_signature')->index();
             $table->longText('contract_html');
+            $table->json('participant_extra_answers')->nullable();
+            $table->timestamp('participant_extra_completed_at')->nullable();
             $table->string('signature_path')->nullable();
             $table->string('signed_name')->nullable();
             $table->string('signed_ip')->nullable();

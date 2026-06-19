@@ -160,6 +160,119 @@ test('contract variables are rendered and escaped when booking is approved', fun
         ->not->toContain('Maha & Salim');
 });
 
+test('required participant extra fields block contract signing', function () {
+    Storage::fake('local');
+
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'participant_extra_fields' => [
+            [
+                'key' => 'medical_clearance',
+                'label' => 'Medical clearance',
+                'type' => 'text',
+                'required' => true,
+            ],
+        ],
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create();
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    $contract = $bookingFamilyMember->contract()->firstOrFail();
+    $signature = 'data:image/png;base64,'.base64_encode('fake-png-bytes');
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::bookings.show', ['booking' => $booking])
+        ->set('signedName', $customer->name)
+        ->call('signContract', $contract->id, $signature)
+        ->assertHasErrors(["participantExtraAnswers.{$contract->id}.medical_clearance"]);
+
+    expect($contract->refresh())
+        ->state->not->toBeInstanceOf(Signed::class)
+        ->participant_extra_answers->toBeNull()
+        ->participant_extra_completed_at->toBeNull();
+});
+
+test('participant extra answers are saved on the correct contract and rendered for view and pdf', function () {
+    Storage::fake('local');
+
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'participant_extra_fields' => [
+            [
+                'key' => 'swimming_level',
+                'label' => 'Swimming level',
+                'type' => 'select',
+                'required' => true,
+                'options' => "Beginner\nAdvanced",
+            ],
+            [
+                'key' => 'special_notes',
+                'label' => 'Special notes',
+                'type' => 'textarea',
+                'required' => false,
+            ],
+        ],
+    ]);
+    $firstFamilyMember = FamilyMember::factory()->for($customer)->create(['name' => 'First Student']);
+    $secondFamilyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Second Student']);
+    $booking = Booking::factory()->for($customer)->for($event)->create(['reference' => 'BRH-EXTRA']);
+    $firstBookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($firstFamilyMember)->create();
+    $secondBookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($secondFamilyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    $firstContract = $firstBookingFamilyMember->contract()->firstOrFail();
+    $secondContract = $secondBookingFamilyMember->contract()->firstOrFail();
+    $signature = 'data:image/png;base64,'.'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::bookings.show', ['booking' => $booking])
+        ->set("participantExtraAnswers.{$firstContract->id}.swimming_level", 'Advanced')
+        ->set("participantExtraAnswers.{$firstContract->id}.special_notes", 'Needs shade <script>')
+        ->set('signedName', $customer->name)
+        ->call('signContract', $firstContract->id, $signature)
+        ->assertHasNoErrors();
+
+    expect($firstContract->refresh())
+        ->state->toBeInstanceOf(Signed::class)
+        ->participant_extra_answers->toBe([
+            'swimming_level' => 'Advanced',
+            'special_notes' => 'Needs shade <script>',
+        ])
+        ->participant_extra_completed_at->not->toBeNull()
+        ->and($secondContract->refresh()->participant_extra_answers)->toBeNull();
+
+    $this->get(route('bookings.show', $booking))
+        ->assertOk()
+        ->assertSee('Swimming level')
+        ->assertSee('Advanced')
+        ->assertSee('Needs shade &lt;script&gt;', false)
+        ->assertDontSee('Needs shade <script>', false);
+
+    $firstContract->loadMissing('bookingFamilyMember.booking.customer', 'bookingFamilyMember.booking.event', 'bookingFamilyMember.familyMember');
+
+    $pdfHtml = view('contracts.event-pdf', [
+        'contract' => $firstContract,
+        'bookingFamilyMember' => $firstContract->bookingFamilyMember,
+        'booking' => $firstContract->bookingFamilyMember->booking,
+        'customer' => $firstContract->bookingFamilyMember->booking->customer,
+        'event' => $firstContract->bookingFamilyMember->booking->event,
+        'familyMember' => $firstContract->bookingFamilyMember->familyMember,
+    ])->render();
+
+    expect($pdfHtml)
+        ->toContain('Swimming level')
+        ->toContain('Advanced')
+        ->toContain('Needs shade &lt;script&gt;')
+        ->not->toContain('Needs shade <script>')
+        ->and(app(ContractRenderer::class)->pdf($firstContract))->toStartWith('%PDF');
+});
+
 test('customer cannot select a payment plan before all contracts are signed', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create();

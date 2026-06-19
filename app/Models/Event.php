@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $excerpt
  * @property string|null $description_html
  * @property string|null $contract_terms_html
+ * @property array<int, array<string, mixed>>|null $participant_extra_fields
  * @property string|null $location
  * @property Carbon|null $starts_at
  * @property Carbon|null $ends_at
@@ -29,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property int $price_baisa
  * @property string $currency
  */
-#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price_baisa', 'currency'])]
+#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price_baisa', 'currency'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -98,6 +99,7 @@ class Event extends Model
     {
         return [
             'status' => EventStatus::class,
+            'participant_extra_fields' => 'array',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'minimum_age' => 'integer',

@@ -10,6 +10,7 @@ use App\Models\EventPaymentPlan;
 use App\Services\ContractRenderer;
 use App\States\Booking\Approved;
 use App\States\Contract\AwaitingSignature;
+use App\Support\ParticipantExtraFields;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
@@ -20,12 +21,16 @@ new #[Title('تفاصيل الحجز')] class extends Component {
     public string $signedName = '';
     public ?int $paymentPlanId = null;
 
+    /** @var array<int, array<string, mixed>> */
+    public array $participantExtraAnswers = [];
+
     public function mount(Booking $booking): void
     {
         abort_unless($booking->customer_id === Auth::guard('customer')->id(), 403);
 
         $this->booking = $booking->load(['event', 'familyMembers.familyMember', 'familyMembers.contract', 'paymentSchedule.installments']);
         $this->signedName = Auth::guard('customer')->user()->name;
+        $this->syncParticipantExtraAnswers();
     }
 
     public function signContract(int $contractId, string $signatureDataUrl): void
@@ -34,13 +39,24 @@ new #[Title('تفاصيل الحجز')] class extends Component {
 
         abort_unless($contract->state instanceof AwaitingSignature, 403);
 
+        $participantExtraFields = ParticipantExtraFields::normalizeFields($contract->bookingFamilyMember->booking->event->participant_extra_fields);
+
         validator([
             'signedName' => $this->signedName,
             'signatureDataUrl' => $signatureDataUrl,
+            'participantExtraAnswers' => $this->participantExtraAnswers,
         ], [
             'signedName' => ['required', 'string', 'max:255'],
             'signatureDataUrl' => ['required', 'string'],
+            ...ParticipantExtraFields::validationRules($participantExtraFields, "participantExtraAnswers.{$contractId}"),
         ])->validate();
+
+        if ($participantExtraFields !== []) {
+            $contract->forceFill([
+                'participant_extra_answers' => ParticipantExtraFields::answersForStorage($participantExtraFields, $this->participantExtraAnswers[$contractId] ?? []),
+                'participant_extra_completed_at' => now(),
+            ])->save();
+        }
 
         $contract->sign($signatureDataUrl, $this->signedName, request()->ip());
 
@@ -100,6 +116,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
     {
         return EventContract::query()
             ->whereKey($contractId)
+            ->with('bookingFamilyMember.booking.event')
             ->whereHas('bookingFamilyMember.booking', fn ($query) => $query
                 ->where('customer_id', Auth::guard('customer')->id())
                 ->where('id', $this->booking->id))
@@ -116,6 +133,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                 ->oldest('name')
                 ->get(),
             'contractsAreSigned' => $this->booking->hasSignedContracts(),
+            'participantExtraFields' => ParticipantExtraFields::normalizeFields($this->booking->event->participant_extra_fields),
             'payableInstallmentId' => $this->booking->paymentSchedule?->installments
                 ->first(fn (BookingInstallment $installment): bool => $installment->state === BookingInstallmentState::Pending)
                 ?->id,
@@ -125,6 +143,18 @@ new #[Title('تفاصيل الحجز')] class extends Component {
     private function refreshBooking(): void
     {
         $this->booking->refresh()->load(['event', 'familyMembers.familyMember', 'familyMembers.contract', 'paymentSchedule.installments']);
+        $this->syncParticipantExtraAnswers();
+    }
+
+    private function syncParticipantExtraAnswers(): void
+    {
+        foreach ($this->booking->familyMembers as $bookingFamilyMember) {
+            if (! $bookingFamilyMember->contract) {
+                continue;
+            }
+
+            $this->participantExtraAnswers[$bookingFamilyMember->contract->id] = $bookingFamilyMember->contract->participant_extra_answers ?? $this->participantExtraAnswers[$bookingFamilyMember->contract->id] ?? [];
+        }
     }
 }; ?>
 
@@ -369,6 +399,8 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                             <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
                                 {!! $bookingFamilyMember->contract->contract_html !!}
                             </div>
+
+                            @include('contracts.participant-extra-answers', ['contract' => $bookingFamilyMember->contract])
                         </div>
 
                         <form
@@ -446,6 +478,70 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                                 <flux:heading class="text-base">{{ __('ui.actions.sign_contract') }}</flux:heading>
                             </div>
 
+                            @if ($participantExtraFields !== [])
+                                <div class="space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
+                                    <div>
+                                        <flux:heading class="text-base">Participant information</flux:heading>
+                                        <flux:text>Please complete these event-specific fields before signing.</flux:text>
+                                    </div>
+
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        @foreach ($participantExtraFields as $field)
+                                            @php
+                                                $answerPath = "participantExtraAnswers.{$bookingFamilyMember->contract->id}.{$field['key']}";
+                                                $label = $field['required'] ? $field['label'].' *' : $field['label'];
+                                            @endphp
+
+                                            <div wire:key="participant-extra-{{ $bookingFamilyMember->contract->id }}-{{ $field['key'] }}" @class(['md:col-span-2' => in_array($field['type'], ['textarea', 'radio'], true)])>
+                                                @switch($field['type'])
+                                                    @case('textarea')
+                                                        <flux:textarea wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" />
+                                                        @break
+
+                                                    @case('select')
+                                                        <flux:select wire:model="{{ $answerPath }}" :label="$label">
+                                                            <option value="">{{ $field['placeholder'] ?: 'Select an option' }}</option>
+                                                            @foreach ($field['options'] as $option)
+                                                                <option value="{{ $option }}">{{ $option }}</option>
+                                                            @endforeach
+                                                        </flux:select>
+                                                        @break
+
+                                                    @case('radio')
+                                                        <flux:radio.group wire:model="{{ $answerPath }}" :label="$label">
+                                                            @foreach ($field['options'] as $option)
+                                                                <flux:radio wire:key="participant-extra-radio-{{ $bookingFamilyMember->contract->id }}-{{ $field['key'] }}-{{ md5($option) }}" value="{{ $option }}" :label="$option" />
+                                                            @endforeach
+                                                        </flux:radio.group>
+                                                        @break
+
+                                                    @case('checkbox')
+                                                        <flux:checkbox wire:model="{{ $answerPath }}" :label="$label" />
+                                                        @break
+
+                                                    @case('date')
+                                                        <flux:input wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" type="date" />
+                                                        @break
+
+                                                    @case('number')
+                                                        <flux:input wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" type="number" />
+                                                        @break
+
+                                                    @default
+                                                        <flux:input wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" />
+                                                @endswitch
+
+                                                @if ($field['help_text'])
+                                                    <flux:text class="mt-1 text-xs">{{ $field['help_text'] }}</flux:text>
+                                                @endif
+
+                                                <flux:error :name="$answerPath" />
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+
                             <flux:input wire:model="signedName" :label="__('ui.bookings.signer_name')" required />
                             <div>
                                 <flux:text class="mb-2">{{ __('ui.bookings.signature') }}</flux:text>
@@ -472,6 +568,8 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                             <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
                                 {!! $bookingFamilyMember->contract->contract_html !!}
                             </div>
+
+                            @include('contracts.participant-extra-answers', ['contract' => $bookingFamilyMember->contract])
                         </div>
 
                         <div class="mt-4">
