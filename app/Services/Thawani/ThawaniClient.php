@@ -74,6 +74,64 @@ class ThawaniClient
         return rtrim($this->checkoutBaseUrl(), '/').'/pay/'.$sessionId.'?key='.$publishableKey;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function listPaymentsByInvoice(string $invoice): array
+    {
+        $response = Http::withHeaders([
+            'thawani-api-key' => $this->secretKey(),
+        ])
+            ->acceptJson()
+            ->connectTimeout(5)
+            ->timeout(10)
+            ->retry([100, 200], throw: false)
+            ->get($this->apiUrl('/payments'), [
+                'checkout_invoice' => $invoice,
+            ]);
+
+        if (! $response->successful()) {
+            throw new RuntimeException('Unable to retrieve Thawani payments.');
+        }
+
+        $body = $response->json();
+
+        if (! is_array($body) || ! data_get($body, 'success') || ! is_array(data_get($body, 'data'))) {
+            throw new RuntimeException('Thawani payments response is invalid.');
+        }
+
+        return $body;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    public function createRefund(array $payload): array
+    {
+        $response = Http::withHeaders([
+            'thawani-api-key' => $this->secretKey(),
+        ])
+            ->acceptJson()
+            ->asJson()
+            ->connectTimeout(5)
+            ->timeout(10)
+            ->retry([100, 200], throw: false)
+            ->post($this->apiUrl('/refunds'), $payload);
+
+        if (! $response->successful()) {
+            throw new RuntimeException('Unable to create Thawani refund.');
+        }
+
+        $body = $response->json();
+
+        if (! is_array($body) || ! data_get($body, 'success') || ! data_get($body, 'data.refund_id')) {
+            throw new RuntimeException('Thawani refund response is invalid.');
+        }
+
+        return $body;
+    }
+
     private function secretKey(): string
     {
         $secretKey = config('services.thawani.secret_key');

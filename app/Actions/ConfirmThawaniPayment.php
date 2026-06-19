@@ -36,10 +36,11 @@ class ConfirmThawaniPayment
         }
 
         $providerPaymentStatus = strtolower((string) data_get($session, 'payment_status', ''));
+        $providerPaymentId = data_get($session, 'payment_id') ?? data_get($session, 'id');
         $providerInvoice = data_get($session, 'invoice');
         $providerAmount = data_get($session, 'total_amount');
 
-        return DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerInvoice, $providerAmount): Payment {
+        return DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount): Payment {
             $payment = Payment::query()
                 ->whereKey($payment->id)
                 ->with('bookingInstallment')
@@ -63,6 +64,7 @@ class ConfirmThawaniPayment
 
             $payment->forceFill([
                 'state' => $state,
+                'provider_payment_id' => is_scalar($providerPaymentId) ? (string) $providerPaymentId : $payment->provider_payment_id,
                 'provider_invoice' => is_scalar($providerInvoice) ? (string) $providerInvoice : null,
                 'provider_payment_status' => $providerPaymentStatus ?: null,
                 'response_payload' => $response,

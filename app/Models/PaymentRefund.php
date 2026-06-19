@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\PaymentRefundState;
+use Database\Factories\PaymentRefundFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+
+/**
+ * @property int $id
+ * @property int $payment_id
+ * @property string $reference
+ * @property int $amount_baisa
+ * @property string $currency
+ * @property PaymentRefundState $state
+ * @property string|null $provider_refund_id
+ * @property string|null $provider_payment_id
+ * @property string|null $provider_status
+ * @property string $reason
+ * @property array<string, mixed>|null $request_payload
+ * @property array<string, mixed>|null $response_payload
+ * @property Carbon|null $processed_at
+ */
+#[Fillable(['payment_id', 'reference', 'amount_baisa', 'currency', 'state', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at'])]
+class PaymentRefund extends Model
+{
+    /** @use HasFactory<PaymentRefundFactory> */
+    use HasFactory;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'currency' => 'OMR',
+        'state' => 'pending',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (PaymentRefund $paymentRefund): void {
+            $paymentRefund->reference ??= 'REF-'.Str::upper(Str::random(12));
+        });
+    }
+
+    /**
+     * @return BelongsTo<Payment, $this>
+     */
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(Payment::class);
+    }
+
+    /**
+     * @return MorphOne<LedgerTransaction, $this>
+     */
+    public function ledgerTransaction(): MorphOne
+    {
+        return $this->morphOne(LedgerTransaction::class, 'source');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'amount_baisa' => 'integer',
+            'state' => PaymentRefundState::class,
+            'request_payload' => 'array',
+            'response_payload' => 'array',
+            'processed_at' => 'datetime',
+        ];
+    }
+}

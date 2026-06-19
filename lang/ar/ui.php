@@ -156,7 +156,10 @@ return [
         'payment_plan_already_selected' => 'تم اختيار خطة دفع لهذا الحجز مسبقاً.',
         'payment_plan_percentages_invalid' => 'يجب أن يكون مجموع نسب أقساط خطة الدفع 100%.',
         'payment_plan_selected' => 'تم اختيار خطة الدفع.',
+        'payment_not_refundable' => 'لا يمكن استرداد هذا الدفع.',
         'profile_updated' => 'تم تحديث الملف الشخصي.',
+        'refund_amount_invalid' => 'مبلغ الاسترداد غير صالح.',
+        'refund_gateway_unavailable' => 'تعذر تنفيذ الاسترداد. يرجى المحاولة مرة أخرى.',
         'signature_must_be_png' => 'يجب أن يكون التوقيع صورة PNG.',
     ],
 

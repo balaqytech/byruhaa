@@ -156,7 +156,10 @@ return [
         'payment_plan_already_selected' => 'A payment plan has already been selected for this booking.',
         'payment_plan_percentages_invalid' => 'The selected payment plan installments must total 100%.',
         'payment_plan_selected' => 'Payment plan selected.',
+        'payment_not_refundable' => 'This payment cannot be refunded.',
         'profile_updated' => 'Profile updated.',
+        'refund_amount_invalid' => 'The refund amount is invalid.',
+        'refund_gateway_unavailable' => 'The refund could not be processed. Please try again.',
         'signature_must_be_png' => 'The signature must be a PNG image.',
     ],
 
