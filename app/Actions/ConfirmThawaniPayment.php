@@ -11,11 +11,16 @@ use RuntimeException;
 
 class ConfirmThawaniPayment
 {
-    public function __construct(private ThawaniClient $thawaniClient) {}
+    public function __construct(
+        private ThawaniClient $thawaniClient,
+        private PostPaymentLedgerTransaction $postPaymentLedgerTransaction,
+    ) {}
 
     public function confirm(Payment $payment): Payment
     {
         if ($payment->state === PaymentState::Paid) {
+            $this->postPaymentLedgerTransaction->execute($payment);
+
             return $payment;
         }
 
@@ -70,6 +75,8 @@ class ConfirmThawaniPayment
                     'state' => BookingInstallmentState::Paid,
                     'paid_at' => $payment->paid_at,
                 ])->save();
+
+                $this->postPaymentLedgerTransaction->execute($payment);
             }
 
             return $payment->refresh();

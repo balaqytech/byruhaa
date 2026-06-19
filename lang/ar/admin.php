@@ -104,4 +104,12 @@ return [
         'signed' => 'موقّع',
         'voided' => 'لاغٍ',
     ],
+
+    'ledger_account_types' => [
+        'asset' => 'أصل',
+        'liability' => 'التزام',
+        'equity' => 'حقوق ملكية',
+        'income' => 'دخل',
+        'expense' => 'مصروف',
+    ],
 ];

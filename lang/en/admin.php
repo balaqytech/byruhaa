@@ -104,4 +104,12 @@ return [
         'signed' => 'Signed',
         'voided' => 'Voided',
     ],
+
+    'ledger_account_types' => [
+        'asset' => 'Asset',
+        'liability' => 'Liability',
+        'equity' => 'Equity',
+        'income' => 'Income',
+        'expense' => 'Expense',
+    ],
 ];
