@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('due_date');
             $table->timestamps();
 
-            $table->unique(['event_payment_plan_id', 'sequence']);
+            $table->unique(['event_payment_plan_id', 'sequence'], 'ev_pp_inst_planid_seq_uq');
         });
     }
 
