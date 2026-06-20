@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
 use App\Enums\PaymentRefundState;
+use Brick\Money\Money;
 use Database\Factories\PaymentRefundFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,6 +20,7 @@ use Illuminate\Support\Str;
  * @property string $reference
  * @property int $amount_baisa
  * @property string $currency
+ * @property-read Money $amount
  * @property PaymentRefundState $state
  * @property string|null $provider_refund_id
  * @property string|null $provider_payment_id
@@ -27,7 +30,7 @@ use Illuminate\Support\Str;
  * @property array<string, mixed>|null $response_payload
  * @property Carbon|null $processed_at
  */
-#[Fillable(['payment_id', 'reference', 'amount_baisa', 'currency', 'state', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at'])]
+#[Fillable(['payment_id', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at'])]
 class PaymentRefund extends Model
 {
     /** @use HasFactory<PaymentRefundFactory> */
@@ -70,6 +73,7 @@ class PaymentRefund extends Model
     protected function casts(): array
     {
         return [
+            'amount' => MoneyBaisaCast::of('amount_baisa'),
             'amount_baisa' => 'integer',
             'state' => PaymentRefundState::class,
             'request_payload' => 'array',

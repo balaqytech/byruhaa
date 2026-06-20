@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
+use Brick\Money\Money;
 use Database\Factories\BookingPaymentScheduleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,8 +20,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $subtotal_baisa
  * @property int $discount_amount_baisa
  * @property int $total_baisa
+ * @property-read Money $subtotal
+ * @property-read Money $discount_amount
+ * @property-read Money $total
  */
-#[Fillable(['booking_id', 'event_payment_plan_id', 'plan_name', 'currency', 'subtotal_baisa', 'discount_amount_baisa', 'total_baisa'])]
+#[Fillable(['booking_id', 'event_payment_plan_id', 'plan_name', 'currency', 'subtotal', 'subtotal_baisa', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
 class BookingPaymentSchedule extends Model
 {
     /** @use HasFactory<BookingPaymentScheduleFactory> */
@@ -65,8 +70,11 @@ class BookingPaymentSchedule extends Model
     protected function casts(): array
     {
         return [
+            'subtotal' => MoneyBaisaCast::of('subtotal_baisa'),
             'subtotal_baisa' => 'integer',
+            'discount_amount' => MoneyBaisaCast::of('discount_amount_baisa'),
             'discount_amount_baisa' => 'integer',
+            'total' => MoneyBaisaCast::of('total_baisa'),
             'total_baisa' => 'integer',
         ];
     }

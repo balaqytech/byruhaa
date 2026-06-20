@@ -2,12 +2,14 @@
 
 namespace App\Support;
 
+use App\Support\Money\MoneyFactory;
+
 class MoneyFormatter
 {
     public static function baisa(int $amountBaisa, string $currency = 'OMR'): string
     {
-        $amount = number_format($amountBaisa / 1000, 3);
         $currency = strtoupper($currency);
+        $amount = MoneyFactory::formatMinorUnits($amountBaisa, $currency);
 
         return $currency === 'OMR'
             ? 'OMR '.$amount

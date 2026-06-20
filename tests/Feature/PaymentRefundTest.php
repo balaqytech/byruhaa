@@ -12,6 +12,7 @@ use App\Models\Event;
 use App\Models\LedgerAccount;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
@@ -82,6 +83,8 @@ test('paid payment can be partially refunded and remains partially refunded', fu
     expect($paymentRefund->state)->toBe(PaymentRefundState::Succeeded)
         ->and($paymentRefund->amount_baisa)->toBe(4000)
         ->and($payment->refresh()->state)->toBe(PaymentState::PartiallyRefunded)
+        ->and($payment->refundableAmountBaisa())->toBe(5001)
+        ->and(MoneyFactory::formatMinorUnits($payment->refundableAmountBaisa(), $payment->currency))->toBe('5.001')
         ->and($payment->bookingInstallment->refresh()->state)->toBe(BookingInstallmentState::Paid)
         ->and($paymentRefund->ledgerTransaction()->firstOrFail()->entries()->sum('debit_baisa'))->toBe(4000);
 });

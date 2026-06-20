@@ -21,6 +21,7 @@ class DiscountFactory extends Factory
             'name' => fake()->words(3, true),
             'event_id' => null,
             'amount_baisa' => fake()->numberBetween(1000, 10000),
+            'currency' => 'OMR',
             'starts_at' => now()->subDay(),
             'ends_at' => now()->addWeek(),
             'minimum_family_members' => null,

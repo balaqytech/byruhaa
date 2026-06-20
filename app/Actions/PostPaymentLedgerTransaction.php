@@ -7,6 +7,7 @@ use App\Enums\PaymentState;
 use App\Models\LedgerAccount;
 use App\Models\LedgerTransaction;
 use App\Models\Payment;
+use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -51,13 +52,13 @@ class PostPaymentLedgerTransaction
                 'description' => 'Thawani payment '.$payment->reference,
                 'occurred_at' => $payment->paid_at ?? now(),
                 'currency' => $payment->currency,
-                'total_baisa' => $payment->amount_baisa,
+                'total_baisa' => MoneyFactory::toMinor($payment->amount),
             ]);
 
             $transaction->entries()->createMany([
                 [
                     'ledger_account_id' => $thawaniClearingAccount->id,
-                    'debit_baisa' => $payment->amount_baisa,
+                    'debit_baisa' => MoneyFactory::toMinor($payment->amount),
                     'credit_baisa' => 0,
                     'currency' => $payment->currency,
                     'memo' => $this->memo($payment),
@@ -65,7 +66,7 @@ class PostPaymentLedgerTransaction
                 [
                     'ledger_account_id' => $customerDepositsAccount->id,
                     'debit_baisa' => 0,
-                    'credit_baisa' => $payment->amount_baisa,
+                    'credit_baisa' => MoneyFactory::toMinor($payment->amount),
                     'currency' => $payment->currency,
                     'memo' => $this->memo($payment),
                 ],
@@ -73,10 +74,10 @@ class PostPaymentLedgerTransaction
 
             $transaction->load('entries');
 
-            $debits = $transaction->entries->sum('debit_baisa');
-            $credits = $transaction->entries->sum('credit_baisa');
+            $debits = MoneyFactory::sumMinor($transaction->entries, 'debit_baisa', $payment->currency);
+            $credits = MoneyFactory::sumMinor($transaction->entries, 'credit_baisa', $payment->currency);
 
-            if ($debits !== $credits || $debits !== $payment->amount_baisa) {
+            if (! $debits->isEqualTo($credits) || ! $debits->isEqualTo($payment->amount)) {
                 throw new RuntimeException('Ledger transaction is not balanced.');
             }
 

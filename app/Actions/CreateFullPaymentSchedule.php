@@ -41,9 +41,9 @@ class CreateFullPaymentSchedule
                 'event_payment_plan_id' => null,
                 'plan_name' => __('ui.payments.full_payment'),
                 'currency' => $booking->currency,
-                'subtotal_baisa' => $booking->subtotal_baisa,
-                'discount_amount_baisa' => $booking->discount_amount_baisa,
-                'total_baisa' => $booking->total_baisa,
+                'subtotal' => $booking->subtotal,
+                'discount_amount' => $booking->discount_amount,
+                'total' => $booking->total,
             ]);
 
             $schedule->installments()->create([
@@ -51,9 +51,10 @@ class CreateFullPaymentSchedule
                 'sequence' => 1,
                 'percentage' => 100,
                 'due_date' => now()->toDateString(),
-                'gross_amount_baisa' => $booking->subtotal_baisa,
-                'discount_amount_baisa' => $booking->discount_amount_baisa,
-                'amount_baisa' => $booking->total_baisa,
+                'gross_amount' => $booking->subtotal,
+                'discount_amount' => $booking->discount_amount,
+                'amount' => $booking->total,
+                'currency' => $booking->currency,
             ]);
 
             return $schedule->load('installments');

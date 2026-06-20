@@ -7,6 +7,7 @@ use App\Enums\PaymentRefundState;
 use App\Models\LedgerAccount;
 use App\Models\LedgerTransaction;
 use App\Models\PaymentRefund;
+use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -51,13 +52,13 @@ class PostRefundLedgerTransaction
                 'description' => 'Thawani refund '.$paymentRefund->reference,
                 'occurred_at' => $paymentRefund->processed_at ?? now(),
                 'currency' => $paymentRefund->currency,
-                'total_baisa' => $paymentRefund->amount_baisa,
+                'total_baisa' => MoneyFactory::toMinor($paymentRefund->amount),
             ]);
 
             $transaction->entries()->createMany([
                 [
                     'ledger_account_id' => $customerDepositsAccount->id,
-                    'debit_baisa' => $paymentRefund->amount_baisa,
+                    'debit_baisa' => MoneyFactory::toMinor($paymentRefund->amount),
                     'credit_baisa' => 0,
                     'currency' => $paymentRefund->currency,
                     'memo' => $this->memo($paymentRefund),
@@ -65,7 +66,7 @@ class PostRefundLedgerTransaction
                 [
                     'ledger_account_id' => $thawaniClearingAccount->id,
                     'debit_baisa' => 0,
-                    'credit_baisa' => $paymentRefund->amount_baisa,
+                    'credit_baisa' => MoneyFactory::toMinor($paymentRefund->amount),
                     'currency' => $paymentRefund->currency,
                     'memo' => $this->memo($paymentRefund),
                 ],
@@ -73,10 +74,10 @@ class PostRefundLedgerTransaction
 
             $transaction->load('entries');
 
-            $debits = $transaction->entries->sum('debit_baisa');
-            $credits = $transaction->entries->sum('credit_baisa');
+            $debits = MoneyFactory::sumMinor($transaction->entries, 'debit_baisa', $paymentRefund->currency);
+            $credits = MoneyFactory::sumMinor($transaction->entries, 'credit_baisa', $paymentRefund->currency);
 
-            if ($debits !== $credits || $debits !== $paymentRefund->amount_baisa) {
+            if (! $debits->isEqualTo($credits) || ! $debits->isEqualTo($paymentRefund->amount)) {
                 throw new RuntimeException('Ledger transaction is not balanced.');
             }
 

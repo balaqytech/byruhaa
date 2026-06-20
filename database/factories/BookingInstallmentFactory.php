@@ -28,6 +28,7 @@ class BookingInstallmentFactory extends Factory
             'gross_amount_baisa' => 0,
             'discount_amount_baisa' => 0,
             'amount_baisa' => 0,
+            'currency' => 'OMR',
             'state' => BookingInstallmentState::Pending,
         ];
     }

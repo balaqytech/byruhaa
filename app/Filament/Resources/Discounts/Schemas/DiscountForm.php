@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Discounts\Schemas;
 
+use App\Support\Money\MoneyFactory;
+use Brick\Money\Money;
 use Closure;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -25,12 +27,12 @@ class DiscountForm
                     ->relationship('event', 'name')
                     ->searchable()
                     ->preload(),
-                TextInput::make('amount_baisa')
+                TextInput::make('amount')
                     ->label(__('admin.fields.discount_amount_per_member'))
                     ->required()
-                    ->numeric()
-                    ->minValue(0)
-                    ->suffix('baisa'),
+                    ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
+                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                    ->suffix('OMR'),
                 DateTimePicker::make('starts_at')
                     ->label(__('admin.fields.starts_at')),
                 DateTimePicker::make('ends_at')
@@ -90,5 +92,14 @@ class DiscountForm
                     ->label(__('admin.fields.is_active'))
                     ->default(true),
             ]);
+    }
+
+    private static function moneyInputState(mixed $state): ?string
+    {
+        if ($state instanceof Money) {
+            return MoneyFactory::formatMoneyAmount($state);
+        }
+
+        return blank($state) ? null : (string) $state;
     }
 }

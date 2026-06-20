@@ -4,6 +4,7 @@ use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Models\BookingPaymentSchedule;
+use App\Support\Money\MoneyFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
@@ -45,15 +46,29 @@ new #[Title('Payments')] class extends Component {
         $totalBaisa = (int) $installments->sum('amount_baisa');
         $paidBaisa = (int) $successfulPayments->sum('amount_baisa');
         $refundedBaisa = (int) $refunds->sum('amount_baisa');
-        $netPaidBaisa = max(0, $paidBaisa - $refundedBaisa);
+        $currency = $schedules->first()?->currency ?? 'OMR';
+        $total = MoneyFactory::fromMinor($totalBaisa, $currency);
+        $paid = MoneyFactory::fromMinor($paidBaisa, $currency);
+        $refunded = MoneyFactory::fromMinor($refundedBaisa, $currency);
+        $netPaid = $paid->minus($refunded);
+
+        if ($netPaid->isNegative()) {
+            $netPaid = MoneyFactory::zero($currency);
+        }
+
+        $outstanding = $total->minus($netPaid);
+
+        if ($outstanding->isNegative()) {
+            $outstanding = MoneyFactory::zero($currency);
+        }
 
         return [
             'schedules' => $schedules,
             'totalBaisa' => $totalBaisa,
             'paidBaisa' => $paidBaisa,
             'refundedBaisa' => $refundedBaisa,
-            'outstandingBaisa' => max(0, $totalBaisa - $netPaidBaisa),
-            'currency' => $schedules->first()?->currency ?? 'OMR',
+            'outstandingBaisa' => MoneyFactory::toMinor($outstanding),
+            'currency' => $currency,
         ];
     }
 

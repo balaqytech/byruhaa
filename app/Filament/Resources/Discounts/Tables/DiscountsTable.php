@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Discounts\Tables;
 
+use App\Models\Discount;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -25,7 +26,7 @@ class DiscountsTable
                     ->placeholder(__('admin.fields.global')),
                 TextColumn::make('amount_baisa')
                     ->label(__('admin.fields.discount_amount_per_member'))
-                    ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state))
+                    ->formatStateUsing(fn (int $state, Discount $record): string => MoneyFormatter::baisa($state, $record->currency))
                     ->sortable(),
                 TextColumn::make('minimum_family_members')
                     ->label(__('admin.fields.minimum_family_members'))

@@ -5,7 +5,7 @@
 
 @php
     $currencyCode = strtoupper((string) $currency);
-    $amount = number_format(((int) $amountBaisa) / 1000, 3);
+    $amount = \App\Support\Money\MoneyFactory::formatMinorUnits((int) $amountBaisa, $currencyCode);
 @endphp
 
 <span {{ $attributes->merge(['dir' => 'ltr', 'class' => 'inline-flex items-baseline gap-1 whitespace-nowrap tabular-nums']) }}>

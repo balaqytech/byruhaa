@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
+use Brick\Money\Money;
 use Database\Factories\LedgerEntryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,9 +17,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $debit_baisa
  * @property int $credit_baisa
  * @property string $currency
+ * @property-read Money $debit
+ * @property-read Money $credit
  * @property string|null $memo
  */
-#[Fillable(['ledger_transaction_id', 'ledger_account_id', 'debit_baisa', 'credit_baisa', 'currency', 'memo'])]
+#[Fillable(['ledger_transaction_id', 'ledger_account_id', 'debit', 'debit_baisa', 'credit', 'credit_baisa', 'currency', 'memo'])]
 class LedgerEntry extends Model
 {
     /** @use HasFactory<LedgerEntryFactory> */
@@ -54,7 +58,9 @@ class LedgerEntry extends Model
     protected function casts(): array
     {
         return [
+            'debit' => MoneyBaisaCast::of('debit_baisa'),
             'debit_baisa' => 'integer',
+            'credit' => MoneyBaisaCast::of('credit_baisa'),
             'credit_baisa' => 'integer',
         ];
     }

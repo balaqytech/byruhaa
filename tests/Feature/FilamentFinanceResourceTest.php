@@ -144,7 +144,7 @@ test('staff can refund a paid payment from the payment resource', function () {
     Livewire::test(ListPayments::class)
         ->assertActionVisible(TestAction::make('refund')->table($payment))
         ->callAction(TestAction::make('refund')->table($payment), [
-            'amount_baisa' => 4000,
+            'amount' => '4.000',
             'reason' => 'Admin adjustment',
         ])
         ->assertHasNoActionErrors()
@@ -188,10 +188,10 @@ test('refund action is hidden or validation blocked when payment is not refundab
     Livewire::test(ListPayments::class)
         ->assertActionHidden(TestAction::make('refund')->table($pendingPayment))
         ->callAction(TestAction::make('refund')->table($paidPayment), [
-            'amount_baisa' => 6000,
+            'amount' => '6.000',
             'reason' => 'Too much',
         ])
-        ->assertHasActionErrors(['amount_baisa']);
+        ->assertHasActionErrors(['amount']);
 
     expect($paidPayment->refunds()->exists())->toBeFalse();
 });

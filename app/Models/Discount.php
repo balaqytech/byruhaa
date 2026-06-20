@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
+use App\Support\Money\MoneyFactory;
+use Brick\Money\Money;
 use Carbon\CarbonInterface;
 use Database\Factories\DiscountFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,13 +20,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $event_id
  * @property string $name
  * @property int $amount_baisa
+ * @property string $currency
+ * @property-read Money $amount
  * @property Carbon|null $starts_at
  * @property Carbon|null $ends_at
  * @property int|null $minimum_family_members
  * @property int|null $maximum_family_members
  * @property bool $is_active
  */
-#[Fillable(['event_id', 'name', 'amount_baisa', 'starts_at', 'ends_at', 'minimum_family_members', 'maximum_family_members', 'is_active'])]
+#[Fillable(['event_id', 'name', 'amount', 'amount_baisa', 'currency', 'starts_at', 'ends_at', 'minimum_family_members', 'maximum_family_members', 'is_active'])]
 class Discount extends Model
 {
     /** @use HasFactory<DiscountFactory> */
@@ -33,6 +38,7 @@ class Discount extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
+        'currency' => 'OMR',
         'is_active' => true,
     ];
 
@@ -54,11 +60,24 @@ class Discount extends Model
 
     public function amountForFamilyMembersBaisa(int $familyMemberCount, int $subtotalBaisa): int
     {
-        $familyMemberCount = max(0, $familyMemberCount);
-        $subtotalBaisa = max(0, $subtotalBaisa);
-        $amountPerFamilyMemberBaisa = max(0, $this->amount_baisa);
+        return MoneyFactory::toMinor($this->amountForFamilyMembers(
+            $familyMemberCount,
+            MoneyFactory::fromMinor(max(0, $subtotalBaisa), $this->currency),
+        ));
+    }
 
-        return min($subtotalBaisa, $amountPerFamilyMemberBaisa * $familyMemberCount);
+    public function amountForFamilyMembers(int $familyMemberCount, Money $subtotal): Money
+    {
+        $familyMemberCount = max(0, $familyMemberCount);
+        $amountPerFamilyMember = $this->amount;
+
+        if ($amountPerFamilyMember->isNegative()) {
+            $amountPerFamilyMember = MoneyFactory::zero($this->currency);
+        }
+
+        $discount = $amountPerFamilyMember->multipliedBy($familyMemberCount);
+
+        return Money::min($subtotal, $discount);
     }
 
     /**
@@ -92,6 +111,7 @@ class Discount extends Model
     protected function casts(): array
     {
         return [
+            'amount' => MoneyBaisaCast::of('amount_baisa'),
             'amount_baisa' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

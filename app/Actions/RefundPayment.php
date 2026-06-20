@@ -10,6 +10,7 @@ use App\Exceptions\PaymentGatewayException;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Services\Payments\PaymentGatewayManager;
+use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -37,23 +38,27 @@ class RefundPayment
                 ]);
             }
 
-            $alreadyRefundedBaisa = $payment->refunds
+            $alreadyRefunded = MoneyFactory::fromMinor((int) $payment->refunds
                 ->where('state', PaymentRefundState::Succeeded)
-                ->sum('amount_baisa');
-            $pendingRefundBaisa = $payment->refunds
+                ->sum('amount_baisa'), $payment->currency);
+            $pendingRefund = MoneyFactory::fromMinor((int) $payment->refunds
                 ->where('state', PaymentRefundState::Pending)
-                ->sum('amount_baisa');
-            $remainingBaisa = $payment->amount_baisa - $alreadyRefundedBaisa - $pendingRefundBaisa;
-            $refundAmountBaisa = $amountBaisa ?? $remainingBaisa;
+                ->sum('amount_baisa'), $payment->currency);
+            $remaining = $payment->amount
+                ->minus($alreadyRefunded)
+                ->minus($pendingRefund);
+            $refundAmount = $amountBaisa === null
+                ? $remaining
+                : MoneyFactory::fromMinor($amountBaisa, $payment->currency);
 
-            if ($refundAmountBaisa <= 0 || $refundAmountBaisa > $remainingBaisa) {
+            if ($refundAmount->isZero() || $refundAmount->isNegative() || $refundAmount->isGreaterThan($remaining)) {
                 throw ValidationException::withMessages([
                     'refund' => __('ui.messages.refund_amount_invalid'),
                 ]);
             }
 
             return $payment->refunds()->create([
-                'amount_baisa' => $refundAmountBaisa,
+                'amount_baisa' => MoneyFactory::toMinor($refundAmount),
                 'currency' => $payment->currency,
                 'reason' => $reason,
             ]);
@@ -149,11 +154,11 @@ class RefundPayment
     {
         $payment->load('refunds');
 
-        $succeededRefundTotal = $payment->refunds
+        $succeededRefundTotal = MoneyFactory::fromMinor((int) $payment->refunds
             ->where('state', PaymentRefundState::Succeeded)
-            ->sum('amount_baisa');
+            ->sum('amount_baisa'), $payment->currency);
 
-        return $succeededRefundTotal >= $payment->amount_baisa
+        return $succeededRefundTotal->isGreaterThanOrEqualTo($payment->amount)
             ? PaymentState::Refunded
             : PaymentState::PartiallyRefunded;
     }

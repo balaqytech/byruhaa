@@ -6,7 +6,10 @@ use App\Actions\RefundPayment;
 use App\Enums\PaymentState;
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Models\Payment;
+use App\Support\Money\MoneyFactory;
 use App\Support\MoneyFormatter;
+use Brick\Math\Exception\MathException;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
@@ -19,6 +22,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 class PaymentsTable
 {
@@ -113,14 +117,30 @@ class PaymentsTable
             ->visible(fn (Payment $record): bool => $record->isRefundable())
             ->modalHeading(__('admin.actions.refund_payment'))
             ->schema([
-                TextInput::make('amount_baisa')
+                TextInput::make('amount')
                     ->label(__('admin.fields.amount'))
                     ->required()
-                    ->numeric()
-                    ->minValue(1)
-                    ->maxValue(fn (Payment $record): int => $record->refundableAmountBaisa())
-                    ->default(fn (Payment $record): int => $record->refundableAmountBaisa())
-                    ->suffix('baisa'),
+                    ->rules([
+                        'regex:/^\d+(\.\d{1,3})?$/',
+                        fn (Payment $record): Closure => function (string $attribute, mixed $value, Closure $fail) use ($record): void {
+                            try {
+                                $amountBaisa = MoneyFactory::decimalStringToMinorUnits((string) $value, $record->currency);
+                            } catch (InvalidArgumentException|MathException) {
+                                $fail(__('validation.regex', ['attribute' => __('admin.fields.amount')]));
+
+                                return;
+                            }
+
+                            if ($amountBaisa <= 0 || $amountBaisa > $record->refundableAmountBaisa()) {
+                                $fail(__('ui.messages.refund_amount_invalid'));
+                            }
+                        },
+                    ])
+                    ->default(fn (Payment $record): string => MoneyFactory::formatMinorUnits(
+                        $record->refundableAmountBaisa(),
+                        $record->currency,
+                    ))
+                    ->suffix('OMR'),
                 Textarea::make('reason')
                     ->label(__('admin.fields.reason'))
                     ->required()
@@ -129,9 +149,23 @@ class PaymentsTable
             ])
             ->action(function (Payment $record, RefundPayment $refundPayment, array $data): void {
                 try {
+                    $amountBaisa = MoneyFactory::decimalStringToMinorUnits((string) $data['amount'], $record->currency);
+                } catch (InvalidArgumentException|MathException) {
+                    throw ValidationException::withMessages([
+                        'amount' => __('validation.regex', ['attribute' => __('admin.fields.amount')]),
+                    ]);
+                }
+
+                if ($amountBaisa <= 0 || $amountBaisa > $record->refundableAmountBaisa()) {
+                    throw ValidationException::withMessages([
+                        'amount' => __('ui.messages.refund_amount_invalid'),
+                    ]);
+                }
+
+                try {
                     $refundPayment->execute(
                         $record,
-                        (int) $data['amount_baisa'],
+                        $amountBaisa,
                         (string) $data['reason'],
                     );
                 } catch (ValidationException $exception) {

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
 use App\Enums\EventStatus;
 use App\States\Booking\Approved;
+use Brick\Money\Money;
 use Database\Factories\EventFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,8 +31,9 @@ use Illuminate\Support\Carbon;
  * @property int $seat_capacity
  * @property int $price_baisa
  * @property string $currency
+ * @property-read Money $price
  */
-#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price_baisa', 'currency'])]
+#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -105,6 +108,7 @@ class Event extends Model
             'minimum_age' => 'integer',
             'maximum_age' => 'integer',
             'seat_capacity' => 'integer',
+            'price' => MoneyBaisaCast::of('price_baisa'),
             'price_baisa' => 'integer',
         ];
     }

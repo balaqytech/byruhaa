@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
 use App\States\Booking\BookingState;
 use App\States\Contract\Signed;
+use Brick\Money\Money;
 use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,8 +34,12 @@ use Spatie\ModelStates\HasStates;
  * @property string|null $discount_name
  * @property int $discount_amount_baisa
  * @property int $total_baisa
+ * @property-read Money $unit_price
+ * @property-read Money $subtotal
+ * @property-read Money $discount_amount
+ * @property-read Money $total
  */
-#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal_baisa', 'discount_id', 'discount_name', 'discount_amount_baisa', 'total_baisa'])]
+#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -124,10 +130,14 @@ class Booking extends Model
         return [
             'state' => BookingState::class,
             'reviewed_at' => 'datetime',
+            'unit_price' => MoneyBaisaCast::of('unit_price_baisa'),
             'unit_price_baisa' => 'integer',
             'family_member_count' => 'integer',
+            'subtotal' => MoneyBaisaCast::of('subtotal_baisa'),
             'subtotal_baisa' => 'integer',
+            'discount_amount' => MoneyBaisaCast::of('discount_amount_baisa'),
             'discount_amount_baisa' => 'integer',
+            'total' => MoneyBaisaCast::of('total_baisa'),
             'total_baisa' => 'integer',
         ];
     }

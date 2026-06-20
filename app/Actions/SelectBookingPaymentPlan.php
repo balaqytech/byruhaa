@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\BookingPaymentSchedule;
 use App\Models\EventPaymentPlan;
 use App\States\Booking\Approved;
+use Brick\Money\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -51,30 +52,33 @@ class SelectBookingPaymentPlan
                 ]);
             }
 
-            $grossAmounts = $this->allocateAmount($booking->subtotal_baisa, $paymentPlan->installments->pluck('percentage')->all());
-            $discountAmounts = $this->allocateAmount($booking->discount_amount_baisa, $paymentPlan->installments->pluck('percentage')->all());
+            $percentages = $paymentPlan->installments->pluck('percentage')->all();
+            $grossAmounts = $this->allocateRemainderToLast($booking->subtotal, $percentages);
+            $discountAmounts = $this->allocateRemainderToLast($booking->discount_amount, $percentages);
 
             $schedule = $booking->paymentSchedule()->create([
                 'event_payment_plan_id' => $paymentPlan->id,
                 'plan_name' => $paymentPlan->name,
                 'currency' => $booking->currency,
-                'subtotal_baisa' => $booking->subtotal_baisa,
-                'discount_amount_baisa' => $booking->discount_amount_baisa,
-                'total_baisa' => $booking->total_baisa,
+                'subtotal' => $booking->subtotal,
+                'discount_amount' => $booking->discount_amount,
+                'total' => $booking->total,
             ]);
 
             foreach ($paymentPlan->installments->values() as $index => $planInstallment) {
-                $grossAmountBaisa = $grossAmounts[$index];
-                $discountAmountBaisa = $discountAmounts[$index];
+                $grossAmount = $grossAmounts[$index];
+                $discountAmount = $discountAmounts[$index];
+                $amount = $grossAmount->minus($discountAmount);
 
                 $schedule->installments()->create([
                     'name' => $planInstallment->name,
                     'sequence' => $planInstallment->sequence,
                     'percentage' => $planInstallment->percentage,
                     'due_date' => $planInstallment->due_date,
-                    'gross_amount_baisa' => $grossAmountBaisa,
-                    'discount_amount_baisa' => $discountAmountBaisa,
-                    'amount_baisa' => $grossAmountBaisa - $discountAmountBaisa,
+                    'gross_amount' => $grossAmount,
+                    'discount_amount' => $discountAmount,
+                    'amount' => $amount,
+                    'currency' => $booking->currency,
                 ]);
             }
 
@@ -84,23 +88,10 @@ class SelectBookingPaymentPlan
 
     /**
      * @param  array<int, int>  $percentages
-     * @return array<int, int>
+     * @return array<int, Money>
      */
-    private function allocateAmount(int $amountBaisa, array $percentages): array
+    private function allocateRemainderToLast(Money $amount, array $percentages): array
     {
-        $allocated = [];
-        $allocatedTotal = 0;
-        $lastIndex = count($percentages) - 1;
-
-        foreach ($percentages as $index => $percentage) {
-            $installmentAmount = $index === $lastIndex
-                ? $amountBaisa - $allocatedTotal
-                : intdiv($amountBaisa * $percentage, 100);
-
-            $allocated[] = $installmentAmount;
-            $allocatedTotal += $installmentAmount;
-        }
-
-        return $allocated;
+        return array_reverse($amount->allocate(...array_reverse($percentages)));
     }
 }

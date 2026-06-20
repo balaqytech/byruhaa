@@ -4,7 +4,9 @@ namespace App\Filament\Resources\Events\Schemas;
 
 use App\Enums\EventStatus;
 use App\Support\ContractVariables;
+use App\Support\Money\MoneyFactory;
 use App\Support\ParticipantExtraFields;
+use Brick\Money\Money;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
@@ -51,13 +53,13 @@ class EventForm
                     ->required()
                     ->numeric()
                     ->minValue(1),
-                TextInput::make('price_baisa')
+                TextInput::make('price')
                     ->label(__('admin.fields.price'))
                     ->required()
-                    ->numeric()
-                    ->minValue(0)
-                    ->default(0)
-                    ->suffix('baisa'),
+                    ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
+                    ->default('0.000')
+                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                    ->suffix('OMR'),
                 TextInput::make('currency')
                     ->label(__('admin.fields.currency'))
                     ->required()
@@ -135,5 +137,14 @@ class EventForm
                     ->itemLabel(fn (array $state): ?string => $state['label'] ?? $state['key'] ?? null)
                     ->columnSpanFull(),
             ]);
+    }
+
+    private static function moneyInputState(mixed $state): ?string
+    {
+        if ($state instanceof Money) {
+            return MoneyFactory::formatMoneyAmount($state);
+        }
+
+        return blank($state) ? null : (string) $state;
     }
 }

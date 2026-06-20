@@ -10,6 +10,8 @@ use App\Models\FamilyMember;
 use App\Models\User;
 use App\Services\BookingApprovalService;
 use App\States\Booking\Approved;
+use App\Support\Money\MoneyFactory;
+use Brick\Money\Money;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -83,7 +85,9 @@ test('booking submission stores a price snapshot', function () {
         ->discount_id->toBeNull()
         ->discount_name->toBeNull()
         ->discount_amount_baisa->toBe(0)
-        ->total_baisa->toBe(25000);
+        ->total_baisa->toBe(25000)
+        ->and($booking->total)->toBeInstanceOf(Money::class)
+        ->and(MoneyFactory::formatMoneyAmount($booking->total))->toBe('25.000');
 });
 
 test('booking submission applies the largest eligible discount per family member', function () {
@@ -128,7 +132,9 @@ test('booking submission applies the largest eligible discount per family member
         ->discount_id->toBe($bestDiscount->id)
         ->discount_name->toBe('Best family discount')
         ->discount_amount_baisa->toBe(24000)
-        ->total_baisa->toBe(6000);
+        ->total_baisa->toBe(6000)
+        ->and(MoneyFactory::formatMoneyAmount($booking->discount_amount))->toBe('24.000')
+        ->and(MoneyFactory::formatMoneyAmount($booking->total))->toBe('6.000');
 });
 
 test('discount amount is capped at the booking subtotal', function () {

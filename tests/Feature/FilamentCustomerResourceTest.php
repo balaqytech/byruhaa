@@ -196,7 +196,7 @@ test('staff can save participant extra fields on an event', function () {
             'type' => 'camp',
             'status' => 'published',
             'seat_capacity' => 20,
-            'price_baisa' => 12000,
+            'price' => '12.000',
             'currency' => 'OMR',
             'minimum_age' => 9,
             'maximum_age' => 16,
@@ -220,7 +220,8 @@ test('staff can save participant extra fields on an event', function () {
     expect($event->participant_extra_fields)
         ->toHaveCount(1)
         ->and($event->participant_extra_fields[0]['key'])->toBe('swimming_level')
-        ->and($event->participant_extra_fields[0]['required'])->toBeTrue();
+        ->and($event->participant_extra_fields[0]['required'])->toBeTrue()
+        ->and($event->price_baisa)->toBe(12000);
 });
 
 test('staff can view discounts in filament', function () {
@@ -238,6 +239,26 @@ test('staff can view discounts in filament', function () {
         ->assertSee('fi-ta-cell-amount-baisa', false);
 });
 
+test('staff can save discount amount as omr in filament', function () {
+    $staff = User::factory()->create();
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateDiscount::class)
+        ->fillForm([
+            'name' => 'Filament OMR discount',
+            'amount' => '2.500',
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $discount = Discount::query()->where('name', 'Filament OMR discount')->firstOrFail();
+
+    expect($discount->amount_baisa)->toBe(2500)
+        ->and($discount->currency)->toBe('OMR');
+});
+
 test('staff must enter a valid discount date and family member range', function () {
     $staff = User::factory()->create();
 
@@ -246,7 +267,7 @@ test('staff must enter a valid discount date and family member range', function 
     Livewire::test(CreateDiscount::class)
         ->fillForm([
             'name' => 'Invalid discount',
-            'amount_baisa' => 2500,
+            'amount' => '2.500',
             'starts_at' => '2026-08-01 00:00:00',
             'ends_at' => '2026-07-01 00:00:00',
             'minimum_family_members' => 5,

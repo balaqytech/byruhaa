@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\MoneyBaisaCast;
 use App\Enums\BookingInstallmentState;
+use Brick\Money\Money;
 use Database\Factories\BookingInstallmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,10 +23,14 @@ use Illuminate\Support\Carbon;
  * @property int $gross_amount_baisa
  * @property int $discount_amount_baisa
  * @property int $amount_baisa
+ * @property string $currency
+ * @property-read Money $gross_amount
+ * @property-read Money $discount_amount
+ * @property-read Money $amount
  * @property BookingInstallmentState $state
  * @property Carbon|null $paid_at
  */
-#[Fillable(['booking_payment_schedule_id', 'name', 'sequence', 'percentage', 'due_date', 'gross_amount_baisa', 'discount_amount_baisa', 'amount_baisa', 'state', 'paid_at'])]
+#[Fillable(['booking_payment_schedule_id', 'name', 'sequence', 'percentage', 'due_date', 'gross_amount', 'gross_amount_baisa', 'discount_amount', 'discount_amount_baisa', 'amount', 'amount_baisa', 'currency', 'state', 'paid_at'])]
 class BookingInstallment extends Model
 {
     /** @use HasFactory<BookingInstallmentFactory> */
@@ -37,6 +43,7 @@ class BookingInstallment extends Model
         'gross_amount_baisa' => 0,
         'discount_amount_baisa' => 0,
         'amount_baisa' => 0,
+        'currency' => 'OMR',
         'state' => 'pending',
     ];
 
@@ -65,8 +72,11 @@ class BookingInstallment extends Model
             'sequence' => 'integer',
             'percentage' => 'integer',
             'due_date' => 'date',
+            'gross_amount' => MoneyBaisaCast::of('gross_amount_baisa'),
             'gross_amount_baisa' => 'integer',
+            'discount_amount' => MoneyBaisaCast::of('discount_amount_baisa'),
             'discount_amount_baisa' => 'integer',
+            'amount' => MoneyBaisaCast::of('amount_baisa'),
             'amount_baisa' => 'integer',
             'state' => BookingInstallmentState::class,
             'paid_at' => 'datetime',
