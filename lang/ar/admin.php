@@ -3,6 +3,7 @@
 return [
     'navigation' => [
         'customer_management' => 'إدارة العملاء',
+        'finance' => 'المالية',
     ],
 
     'resources' => [
@@ -31,12 +32,34 @@ return [
             'plural_label' => 'خطط الدفع',
             'navigation_label' => 'خطط الدفع',
         ],
+        'payments' => [
+            'label' => 'دفعة',
+            'plural_label' => 'الدفعات',
+            'navigation_label' => 'الدفعات',
+        ],
+        'payment_refunds' => [
+            'label' => 'استرداد دفعة',
+            'plural_label' => 'استردادات الدفعات',
+            'navigation_label' => 'الاستردادات',
+        ],
+        'ledger_accounts' => [
+            'label' => 'حساب دفتر الأستاذ',
+            'plural_label' => 'حسابات دفتر الأستاذ',
+            'navigation_label' => 'حسابات دفتر الأستاذ',
+        ],
+        'ledger_transactions' => [
+            'label' => 'قيد دفتر الأستاذ',
+            'plural_label' => 'قيود دفتر الأستاذ',
+            'navigation_label' => 'قيود دفتر الأستاذ',
+        ],
     ],
 
     'actions' => [
         'approve' => 'اعتماد',
         'cancel' => 'إلغاء',
         'reject' => 'رفض',
+        'refund' => 'استرداد',
+        'refund_payment' => 'استرداد الدفعة',
     ],
 
     'event_types' => [
@@ -108,7 +131,10 @@ return [
     ],
 
     'fields' => [
+        'amount' => 'المبلغ',
+        'booking' => 'الحجز',
         'bookings' => 'الحجوزات',
+        'code' => 'الرمز',
         'contract_terms' => 'شروط العقد',
         'created_at' => 'تاريخ الإنشاء',
         'currency' => 'العملة',
@@ -120,12 +146,14 @@ return [
         'email_address' => 'البريد الإلكتروني',
         'email_verified_at' => 'تاريخ التحقق من البريد',
         'ends_at' => 'ينتهي في',
+        'entries' => 'القيود',
         'event' => 'الفعالية',
         'excerpt' => 'المختصر',
         'family' => 'العائلة',
         'family_members' => 'أفراد العائلة',
         'global' => 'عام',
         'is_active' => 'نشط',
+        'installment_state' => 'حالة القسط',
         'installments' => 'الأقساط',
         'location' => 'الموقع',
         'maximum_age' => 'العمر الأقصى',
@@ -133,23 +161,52 @@ return [
         'minimum_age' => 'العمر الأدنى',
         'minimum_family_members' => 'الحد الأدنى لأفراد العائلة',
         'name' => 'الاسم',
+        'occurred_at' => 'حدث في',
+        'paid_at' => 'تاريخ الدفع',
         'password' => 'كلمة المرور',
+        'payloads' => 'البيانات',
         'phone_number' => 'رقم الهاتف',
         'percentage' => 'النسبة',
         'price' => 'السعر',
+        'processed_at' => 'تاريخ المعالجة',
+        'provider' => 'مزود الدفع',
+        'provider_invoice' => 'فاتورة المزود',
+        'provider_payment_id' => 'معرف دفع المزود',
+        'provider_refund_id' => 'معرف استرداد المزود',
+        'provider_session_id' => 'معرف جلسة المزود',
+        'provider_status' => 'حالة المزود',
+        'reason' => 'السبب',
         'reference' => 'المرجع',
+        'refundable_amount' => 'المبلغ القابل للاسترداد',
         'review_notes' => 'ملاحظات المراجعة',
         'reviewed_at' => 'تاريخ المراجعة',
         'reviewer' => 'المراجع',
+        'request_payload' => 'بيانات الطلب',
+        'response_payload' => 'بيانات الاستجابة',
         'seat_capacity' => 'سعة المقاعد',
         'seats' => 'المقاعد',
         'sequence' => 'الترتيب',
         'slug' => 'الرابط المختصر',
+        'source' => 'المصدر',
         'starts_at' => 'يبدأ في',
         'state' => 'الحالة',
         'status' => 'الحالة',
+        'total' => 'الإجمالي',
         'type' => 'النوع',
         'updated_at' => 'تاريخ التحديث',
+        'verified_at' => 'تاريخ التحقق',
+    ],
+
+    'filters' => [
+        'refundable' => 'قابل للاسترداد',
+    ],
+
+    'refunds' => [
+        'default_reason' => 'استرداد إداري',
+    ],
+
+    'notifications' => [
+        'refund_processed' => 'تم تنفيذ الاسترداد بنجاح.',
     ],
 
     'statuses' => [

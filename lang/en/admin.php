@@ -3,6 +3,7 @@
 return [
     'navigation' => [
         'customer_management' => 'Customer Management',
+        'finance' => 'Finance',
     ],
 
     'resources' => [
@@ -31,12 +32,34 @@ return [
             'plural_label' => 'Payment plans',
             'navigation_label' => 'Payment plans',
         ],
+        'payments' => [
+            'label' => 'Payment',
+            'plural_label' => 'Payments',
+            'navigation_label' => 'Payments',
+        ],
+        'payment_refunds' => [
+            'label' => 'Payment refund',
+            'plural_label' => 'Payment refunds',
+            'navigation_label' => 'Refunds',
+        ],
+        'ledger_accounts' => [
+            'label' => 'Ledger account',
+            'plural_label' => 'Ledger accounts',
+            'navigation_label' => 'Ledger accounts',
+        ],
+        'ledger_transactions' => [
+            'label' => 'Ledger transaction',
+            'plural_label' => 'Ledger transactions',
+            'navigation_label' => 'Ledger transactions',
+        ],
     ],
 
     'actions' => [
         'approve' => 'Approve',
         'cancel' => 'Cancel',
         'reject' => 'Reject',
+        'refund' => 'Refund',
+        'refund_payment' => 'Refund payment',
     ],
 
     'event_types' => [
@@ -108,7 +131,10 @@ return [
     ],
 
     'fields' => [
+        'amount' => 'Amount',
+        'booking' => 'Booking',
         'bookings' => 'Bookings',
+        'code' => 'Code',
         'contract_terms' => 'Contract terms',
         'created_at' => 'Created at',
         'currency' => 'Currency',
@@ -120,12 +146,14 @@ return [
         'email_address' => 'Email address',
         'email_verified_at' => 'Email verified at',
         'ends_at' => 'Ends at',
+        'entries' => 'Entries',
         'event' => 'Event',
         'excerpt' => 'Excerpt',
         'family' => 'Family',
         'family_members' => 'Family members',
         'global' => 'Global',
         'is_active' => 'Active',
+        'installment_state' => 'Installment state',
         'installments' => 'Installments',
         'location' => 'Location',
         'maximum_age' => 'Maximum age',
@@ -133,23 +161,52 @@ return [
         'minimum_age' => 'Minimum age',
         'minimum_family_members' => 'Minimum family members',
         'name' => 'Name',
+        'occurred_at' => 'Occurred at',
+        'paid_at' => 'Paid at',
         'password' => 'Password',
+        'payloads' => 'Payloads',
         'phone_number' => 'Phone number',
         'percentage' => 'Percentage',
         'price' => 'Price',
+        'processed_at' => 'Processed at',
+        'provider' => 'Provider',
+        'provider_invoice' => 'Provider invoice',
+        'provider_payment_id' => 'Provider payment ID',
+        'provider_refund_id' => 'Provider refund ID',
+        'provider_session_id' => 'Provider session ID',
+        'provider_status' => 'Provider status',
+        'reason' => 'Reason',
         'reference' => 'Reference',
+        'refundable_amount' => 'Refundable amount',
         'review_notes' => 'Review notes',
         'reviewed_at' => 'Reviewed at',
         'reviewer' => 'Reviewer',
+        'request_payload' => 'Request payload',
+        'response_payload' => 'Response payload',
         'seat_capacity' => 'Seat capacity',
         'seats' => 'Seats',
         'sequence' => 'Sequence',
         'slug' => 'Slug',
+        'source' => 'Source',
         'starts_at' => 'Starts at',
         'state' => 'State',
         'status' => 'Status',
+        'total' => 'Total',
         'type' => 'Type',
         'updated_at' => 'Updated at',
+        'verified_at' => 'Verified at',
+    ],
+
+    'filters' => [
+        'refundable' => 'Refundable',
+    ],
+
+    'refunds' => [
+        'default_reason' => 'Admin refund',
+    ],
+
+    'notifications' => [
+        'refund_processed' => 'Refund processed successfully.',
     ],
 
     'statuses' => [

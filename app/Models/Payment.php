@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -30,6 +31,7 @@ use Illuminate\Support\Str;
  * @property array<string, mixed>|null $response_payload
  * @property Carbon|null $verified_at
  * @property Carbon|null $paid_at
+ * @property-read int $refundable_amount_baisa
  */
 #[Fillable(['booking_installment_id', 'provider', 'reference', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at'])]
 class Payment extends Model
@@ -75,6 +77,28 @@ class Payment extends Model
     public function refunds(): HasMany
     {
         return $this->hasMany(PaymentRefund::class);
+    }
+
+    public function refundableAmountBaisa(): int
+    {
+        if (! in_array($this->state, [PaymentState::Paid, PaymentState::PartiallyRefunded], true)) {
+            return 0;
+        }
+
+        $reservedRefundBaisa = $this->relationLoaded('refunds')
+            ? $this->refunds
+                ->filter(fn (PaymentRefund $refund): bool => in_array($refund->state, [PaymentRefundState::Pending, PaymentRefundState::Succeeded], true))
+                ->sum('amount_baisa')
+            : $this->refunds()
+                ->whereIn('state', [PaymentRefundState::Pending->value, PaymentRefundState::Succeeded->value])
+                ->sum('amount_baisa');
+
+        return max(0, $this->amount_baisa - (int) $reservedRefundBaisa);
+    }
+
+    public function isRefundable(): bool
+    {
+        return $this->refundableAmountBaisa() > 0;
     }
 
     /**
