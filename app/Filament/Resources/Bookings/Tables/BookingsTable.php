@@ -13,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -88,6 +89,7 @@ class BookingsTable
                     ->color('warning')
                     ->requiresConfirmation()
                     ->action(fn (Booking $record) => $record->state->transitionTo(Cancelled::class)),
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
