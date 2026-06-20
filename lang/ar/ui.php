@@ -12,6 +12,7 @@ return [
         'create_account' => 'إنشاء حساب',
         'cancel' => 'إلغاء',
         'download_contract' => 'تحميل العقد',
+        'download_pdf' => 'تحميل PDF',
         'edit' => 'تعديل',
         'delete' => 'حذف',
         'email_password_reset_link' => 'إرسال رابط إعادة تعيين كلمة المرور',
@@ -27,6 +28,8 @@ return [
         'update' => 'تحديث',
         'view' => 'عرض',
         'view_bookings' => 'عرض الحجوزات',
+        'view_and_sign_contract' => 'عرض وتوقيع العقد',
+        'view_contract' => 'عرض العقد',
         'view_events' => 'عرض الفعاليات',
     ],
 
@@ -128,9 +131,11 @@ return [
         'event' => 'الفعالية',
         'events' => 'الفعاليات',
         'family' => 'العائلة',
+        'no' => 'لا',
         'platform' => 'المنصة',
         'settings' => 'الإعدادات',
         'status' => 'الحالة',
+        'yes' => 'نعم',
     ],
 
     'messages' => [
@@ -195,6 +200,12 @@ return [
         'subtotal' => 'الإجمالي قبل الخصم',
         'total' => 'الإجمالي',
         'waiting_for_previous' => 'بانتظار القسط السابق',
+    ],
+
+    'participant_extra' => [
+        'heading' => 'معلومات المشارك',
+        'select_placeholder' => 'اختر خياراً',
+        'signing_help' => 'يرجى إكمال هذه الحقول الخاصة بالفعالية قبل التوقيع.',
     ],
 
     'profile' => [

@@ -5,6 +5,8 @@ namespace App\Support;
 use App\Models\BookingFamilyMember;
 use App\Models\EventContract;
 use Carbon\CarbonInterface;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
+use Illuminate\Support\HtmlString;
 
 class ContractVariables
 {
@@ -16,55 +18,120 @@ class ContractVariables
     public static function definitions(): array
     {
         return [
-            'Guardian' => [
-                'guardian_name' => 'Guardian name',
-                'guardian_civil_id' => 'Guardian civil ID',
-                'guardian_relationship' => 'Guardian relationship',
-                'guardian_phone' => 'Guardian phone',
-                'guardian_wilaya' => 'Guardian wilaya',
-                'guardian_area' => 'Guardian area',
+            __('admin.contract_variables.groups.guardian') => [
+                'guardian_name' => __('admin.contract_variables.labels.guardian_name'),
+                'guardian_civil_id' => __('admin.contract_variables.labels.guardian_civil_id'),
+                'guardian_relationship' => __('admin.contract_variables.labels.guardian_relationship'),
+                'guardian_phone' => __('admin.contract_variables.labels.guardian_phone'),
+                'guardian_wilaya' => __('admin.contract_variables.labels.guardian_wilaya'),
+                'guardian_area' => __('admin.contract_variables.labels.guardian_area'),
             ],
-            'Student' => [
-                'student_name' => 'Student name',
-                'student_birth_date' => 'Student birth date',
-                'student_age' => 'Student age',
-                'student_grade' => 'Student grade',
-                'student_school' => 'Student school',
+            __('admin.contract_variables.groups.student') => [
+                'student_name' => __('admin.contract_variables.labels.student_name'),
+                'student_birth_date' => __('admin.contract_variables.labels.student_birth_date'),
+                'student_age' => __('admin.contract_variables.labels.student_age'),
+                'student_grade' => __('admin.contract_variables.labels.student_grade'),
+                'student_school' => __('admin.contract_variables.labels.student_school'),
             ],
-            'Event' => [
-                'event_name' => 'Event name',
-                'event_location' => 'Event location',
-                'event_start_date' => 'Event start date',
-                'event_end_date' => 'Event end date',
-                'event_duration' => 'Event duration',
-                'event_year' => 'Event year',
-                'event_price' => 'Event price',
-                'event_currency' => 'Event currency',
+            __('admin.contract_variables.groups.event') => [
+                'event_name' => __('admin.contract_variables.labels.event_name'),
+                'event_location' => __('admin.contract_variables.labels.event_location'),
+                'event_start_date' => __('admin.contract_variables.labels.event_start_date'),
+                'event_end_date' => __('admin.contract_variables.labels.event_end_date'),
+                'event_duration' => __('admin.contract_variables.labels.event_duration'),
+                'event_year' => __('admin.contract_variables.labels.event_year'),
+                'event_price' => __('admin.contract_variables.labels.event_price'),
+                'event_currency' => __('admin.contract_variables.labels.event_currency'),
             ],
-            'Booking' => [
-                'booking_reference' => 'Booking reference',
-                'booking_date' => 'Booking date',
-                'agreed_fee' => 'Agreed fee',
-                'discount_name' => 'Discount name',
-                'subtotal' => 'Subtotal',
-                'discount_amount' => 'Discount amount',
-                'total_amount' => 'Total amount',
+            __('admin.contract_variables.groups.booking') => [
+                'booking_reference' => __('admin.contract_variables.labels.booking_reference'),
+                'booking_date' => __('admin.contract_variables.labels.booking_date'),
+                'agreed_fee' => __('admin.contract_variables.labels.agreed_fee'),
+                'discount_name' => __('admin.contract_variables.labels.discount_name'),
+                'subtotal' => __('admin.contract_variables.labels.subtotal'),
+                'discount_amount' => __('admin.contract_variables.labels.discount_amount'),
+                'total_amount' => __('admin.contract_variables.labels.total_amount'),
             ],
-            'Contract' => [
-                'contract_date' => 'Contract date',
-                'contract_signed_name' => 'Contract signed name',
-                'contract_signed_at' => 'Contract signed at',
+            __('admin.contract_variables.groups.contract') => [
+                'contract_date' => __('admin.contract_variables.labels.contract_date'),
+                'contract_signed_name' => __('admin.contract_variables.labels.contract_signed_name'),
+                'contract_signed_at' => __('admin.contract_variables.labels.contract_signed_at'),
             ],
         ];
     }
 
-    public static function render(string $html, EventContract|BookingFamilyMember $source): string
+    /**
+     * @return array<string, string>
+     */
+    public static function mergeTagLabels(): array
+    {
+        $labels = [];
+
+        foreach (self::definitions() as $variables) {
+            foreach ($variables as $key => $label) {
+                $labels[$key] = $label;
+            }
+        }
+
+        return $labels;
+    }
+
+    public static function render(string|array|null $content, EventContract|BookingFamilyMember $source): string
     {
         $values = self::values($source);
+        $html = self::renderRichEditorContent($content, $values);
 
         return preg_replace_callback('/\{\{\s*(?<key>[A-Za-z0-9_]+)\s*\}\}/', function (array $matches) use ($values): string {
             return e($values[$matches['key']] ?? self::MissingValue);
         }, $html) ?? $html;
+    }
+
+    /**
+     * @param  array<string, string>  $values
+     */
+    private static function renderRichEditorContent(string|array|null $content, array $values): string
+    {
+        if ($content === null || $content === '') {
+            return '';
+        }
+
+        if (is_array($content)) {
+            return RichContentRenderer::make($content)
+                ->mergeTags(self::htmlMergeTagValues($values))
+                ->toUnsafeHtml();
+        }
+
+        $decodedContent = json_decode($content, associative: true);
+
+        if (
+            is_array($decodedContent)
+            && json_last_error() === JSON_ERROR_NONE
+            && ($decodedContent['type'] ?? null) === 'doc'
+        ) {
+            return RichContentRenderer::make($decodedContent)
+                ->mergeTags(self::htmlMergeTagValues($values))
+                ->toUnsafeHtml();
+        }
+
+        if (str_contains($content, 'data-type="mergeTag"') || str_contains($content, "data-type='mergeTag'")) {
+            return RichContentRenderer::make($content)
+                ->mergeTags(self::htmlMergeTagValues($values))
+                ->toUnsafeHtml();
+        }
+
+        return $content;
+    }
+
+    /**
+     * @param  array<string, string>  $values
+     * @return array<string, HtmlString>
+     */
+    private static function htmlMergeTagValues(array $values): array
+    {
+        return array_map(
+            fn (string $value): HtmlString => new HtmlString(e($value)),
+            $values,
+        );
     }
 
     /**

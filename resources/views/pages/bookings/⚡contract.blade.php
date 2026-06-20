@@ -231,8 +231,8 @@ new #[Title('العقد')] class extends Component {
             @if ($participantExtraFields !== [])
                 <div class="space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
                     <div>
-                        <flux:heading class="text-base">Participant information</flux:heading>
-                        <flux:text>Please complete these event-specific fields before signing.</flux:text>
+                        <flux:heading class="text-base">{{ __('ui.participant_extra.heading') }}</flux:heading>
+                        <flux:text>{{ __('ui.participant_extra.signing_help') }}</flux:text>
                     </div>
 
                     <div class="grid gap-4 md:grid-cols-2">
@@ -250,7 +250,7 @@ new #[Title('العقد')] class extends Component {
 
                                     @case('select')
                                         <flux:select wire:model="{{ $answerPath }}" :label="$label">
-                                            <option value="">{{ $field['placeholder'] ?: 'Select an option' }}</option>
+                                            <option value="">{{ $field['placeholder'] ?: __('ui.participant_extra.select_placeholder') }}</option>
                                             @foreach ($field['options'] as $option)
                                                 <option value="{{ $option }}">{{ $option }}</option>
                                             @endforeach
@@ -323,7 +323,7 @@ new #[Title('العقد')] class extends Component {
 
                 <flux:button wire:click="downloadContract" wire:target="downloadContract" variant="primary">
                     <x-hugeicon name="download-01" class="text-lg" />
-                    تحميل PDF
+                    {{ __('ui.actions.download_pdf') }}
                 </flux:button>
             </div>
         </div>

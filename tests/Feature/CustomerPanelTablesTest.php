@@ -210,7 +210,7 @@ test('booking details page renders a compact contract overview for a single part
         ->assertSee('BRH-20002')
         ->assertSee('Desert Camp')
         ->assertSee('Maha Al Harthy')
-        ->assertSee('عرض وتوقيع العقد')
+        ->assertSee(__('ui.actions.view_and_sign_contract'))
         ->assertSee(route('bookings.contracts.show', [$booking, $contract]), false)
         ->assertDontSee('Safety terms must be reviewed before signature.')
         ->assertDontSee('<canvas', false)

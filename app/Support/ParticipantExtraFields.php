@@ -13,13 +13,13 @@ class ParticipantExtraFields
     public static function typeOptions(): array
     {
         return [
-            'text' => 'Text',
-            'textarea' => 'Textarea',
-            'select' => 'Select',
-            'radio' => 'Radio',
-            'checkbox' => 'Checkbox',
-            'date' => 'Date',
-            'number' => 'Number',
+            'text' => __('admin.participant_extra_fields.types.text'),
+            'textarea' => __('admin.participant_extra_fields.types.textarea'),
+            'select' => __('admin.participant_extra_fields.types.select'),
+            'radio' => __('admin.participant_extra_fields.types.radio'),
+            'checkbox' => __('admin.participant_extra_fields.types.checkbox'),
+            'date' => __('admin.participant_extra_fields.types.date'),
+            'number' => __('admin.participant_extra_fields.types.number'),
         ];
     }
 
@@ -164,7 +164,7 @@ class ParticipantExtraFields
     private static function formatAnswerValue(array $field, mixed $value): string
     {
         if ($field['type'] === 'checkbox') {
-            return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'Yes' : 'No';
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN) ? __('ui.labels.yes') : __('ui.labels.no');
         }
 
         return (string) $value;

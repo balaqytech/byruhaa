@@ -369,17 +369,17 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                                 @if ($contract->state instanceof AwaitingSignature)
                                     <flux:button :href="route('bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm" variant="primary">
                                         <x-hugeicon name="signature" class="text-base" />
-                                        عرض وتوقيع العقد
+                                        {{ __('ui.actions.view_and_sign_contract') }}
                                     </flux:button>
                                 @else
                                     <flux:button :href="route('bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm">
                                         <x-hugeicon name="file-view" class="text-base" />
-                                        عرض العقد
+                                        {{ __('ui.actions.view_contract') }}
                                     </flux:button>
 
                                     <flux:button wire:click="downloadContract({{ $contract->id }})" wire:target="downloadContract({{ $contract->id }})" size="sm" variant="outline">
                                         <x-hugeicon name="download-01" class="text-base" />
-                                        تحميل PDF
+                                        {{ __('ui.actions.download_pdf') }}
                                     </flux:button>
                                 @endif
                             </div>

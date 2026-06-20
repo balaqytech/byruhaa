@@ -97,9 +97,9 @@ test('booking show page lists participant contract cards without rendering contr
         ->assertOk()
         ->assertSee('First Participant')
         ->assertSee('Second Participant')
-        ->assertSee('عرض العقد')
-        ->assertSee('عرض وتوقيع العقد')
-        ->assertSee('تحميل PDF')
+        ->assertSee(__('ui.actions.view_contract'))
+        ->assertSee(__('ui.actions.view_and_sign_contract'))
+        ->assertSee(__('ui.actions.download_pdf'))
         ->assertSee($firstContract->refresh()->signed_at->format('Y-m-d H:i'))
         ->assertSee(route('bookings.contracts.show', [$booking, $firstContract]), false)
         ->assertSee(route('bookings.contracts.show', [$booking, $secondContract]), false)
@@ -170,7 +170,7 @@ test('signed contract can be downloaded from the dedicated contract page', funct
     $this->actingAs($customer, 'customer');
 
     Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
-        ->assertSee('تحميل PDF')
+        ->assertSee(__('ui.actions.download_pdf'))
         ->call('downloadContract')
         ->assertFileDownloaded("byruhaa-contract-{$booking->reference}-{$contract->id}.pdf");
 });
@@ -260,6 +260,42 @@ test('contract variables are rendered and escaped when booking is approved', fun
         ->toContain('OMR 9.000')
         ->toContain('Qurum')
         ->not->toContain('{{')
+        ->not->toContain('<Guardian>')
+        ->not->toContain('Maha & Salim');
+});
+
+test('filament rich editor merge tags are rendered when booking is approved', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create([
+        'name' => 'Mona <Guardian>',
+    ]);
+    $event = Event::factory()->create([
+        'name' => 'Merge Tag Camp',
+        'contract_terms_html' => implode('', [
+            '<p>Guardian: <span data-type="mergeTag" data-id="guardian_name"></span></p>',
+            '<p>Student: <span data-type="mergeTag" data-id="student_name"></span></p>',
+            '<p>Fee: <span data-type="mergeTag" data-id="agreed_fee"></span></p>',
+        ]),
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create([
+        'name' => 'Maha & Salim',
+    ]);
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'currency' => 'OMR',
+        'total_baisa' => 9000,
+    ]);
+
+    BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    app(BookingApprovalService::class)->approve($booking, $staff);
+
+    $html = EventContract::query()->firstOrFail()->contract_html;
+
+    expect($html)
+        ->toContain('Mona &lt;Guardian&gt;')
+        ->toContain('Maha &amp; Salim')
+        ->toContain('OMR 9.000')
+        ->not->toContain('data-type="mergeTag"')
         ->not->toContain('<Guardian>')
         ->not->toContain('Maha & Salim');
 });

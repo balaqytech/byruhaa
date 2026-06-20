@@ -6,7 +6,7 @@
 @if ($participantExtraAnswers !== [])
     @if ($isPdf)
         <div style="margin-top: 7mm;">
-            <h2>Additional participant information</h2>
+            <h2>{{ __('ui.participant_extra.heading') }}</h2>
             <table class="meta-table">
                 @foreach ($participantExtraAnswers as $answer)
                     <tr>
@@ -20,7 +20,7 @@
         <div class="mt-5 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
             <div class="mb-4 flex items-center gap-2 text-sky-800 dark:text-sky-100">
                 <x-hugeicon name="check-list" class="text-xl" />
-                <flux:heading class="text-base">Participant information</flux:heading>
+                <flux:heading class="text-base">{{ __('ui.participant_extra.heading') }}</flux:heading>
             </div>
 
             <dl class="grid gap-3 md:grid-cols-2">

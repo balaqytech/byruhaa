@@ -16,7 +16,7 @@ class ContractRenderer
 
         $event->setAttribute(
             'contract_terms_html',
-            ContractVariables::render((string) $event->contract_terms_html, $bookingFamilyMember),
+            ContractVariables::render($event->contract_terms_html, $bookingFamilyMember),
         );
 
         return view('contracts.event', [

@@ -12,6 +12,7 @@ return [
         'create_account' => 'Create account',
         'cancel' => 'Cancel',
         'download_contract' => 'Download contract',
+        'download_pdf' => 'Download PDF',
         'edit' => 'Edit',
         'delete' => 'Delete',
         'email_password_reset_link' => 'Email password reset link',
@@ -27,6 +28,8 @@ return [
         'update' => 'Update',
         'view' => 'View',
         'view_bookings' => 'View bookings',
+        'view_and_sign_contract' => 'View and sign contract',
+        'view_contract' => 'View contract',
         'view_events' => 'View events',
     ],
 
@@ -128,9 +131,11 @@ return [
         'events' => 'Events',
         'family' => 'Family',
         'payments' => 'Payments',
+        'no' => 'No',
         'platform' => 'Platform',
         'settings' => 'Settings',
         'status' => 'Status',
+        'yes' => 'Yes',
     ],
 
     'messages' => [
@@ -195,6 +200,12 @@ return [
         'total_refunded' => 'Total refunded',
         'total_scheduled' => 'Total scheduled',
         'waiting_for_previous' => 'Waiting for previous installment',
+    ],
+
+    'participant_extra' => [
+        'heading' => 'Participant information',
+        'select_placeholder' => 'Select an option',
+        'signing_help' => 'Please complete these event-specific fields before signing.',
     ],
 
     'profile' => [
