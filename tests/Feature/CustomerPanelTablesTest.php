@@ -183,7 +183,7 @@ test('payments page renders customer installments payment attempts and refunds',
         ->assertDontSee('PAY-OTHER');
 });
 
-test('booking details page renders the improved hugeicons contract layout', function () {
+test('booking details page renders a compact contract overview for a single participant', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([
@@ -202,6 +202,7 @@ test('booking details page renders the improved hugeicons contract layout', func
         ->create();
 
     app(BookingApprovalService::class)->approve($booking, $staff);
+    $contract = $booking->familyMembers()->firstOrFail()->contract()->firstOrFail();
 
     $this->actingAs($customer, 'customer')
         ->get(route('bookings.show', $booking))
@@ -209,9 +210,17 @@ test('booking details page renders the improved hugeicons contract layout', func
         ->assertSee('BRH-20002')
         ->assertSee('Desert Camp')
         ->assertSee('Maha Al Harthy')
+        ->assertSee('عرض وتوقيع العقد')
+        ->assertSee(route('bookings.contracts.show', [$booking, $contract]), false)
+        ->assertDontSee('Safety terms must be reviewed before signature.')
+        ->assertDontSee('<canvas', false)
+        ->assertSee('hgi-stroke', false)
+        ->assertSee('hgi-contracts', false);
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('bookings.contracts.show', [$booking, $contract]))
+        ->assertOk()
         ->assertSee(__('ui.bookings.contract_terms'))
         ->assertSee('Safety terms must be reviewed before signature.')
-        ->assertSee('hgi-stroke', false)
-        ->assertSee('hgi-contracts', false)
         ->assertSee(__('ui.actions.sign_contract'));
 });

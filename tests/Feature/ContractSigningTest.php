@@ -42,7 +42,7 @@ test('customer can sign an approved contract with a drawn png signature', functi
     Storage::disk('local')->assertExists($contract->signature_path);
 });
 
-test('customer can sign a contract from the booking details page action', function () {
+test('customer can sign a contract from the dedicated contract page action', function () {
     Storage::fake('local');
 
     $staff = User::factory()->create();
@@ -59,9 +59,9 @@ test('customer can sign a contract from the booking details page action', functi
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
         ->set('signedName', $customer->name)
-        ->call('signContract', $contract->id, $signature)
+        ->call('signContract', $signature)
         ->assertHasNoErrors();
 
     expect($contract->refresh())
@@ -69,6 +69,110 @@ test('customer can sign a contract from the booking details page action', functi
         ->signed_name->toBe($customer->name);
 
     Storage::disk('local')->assertExists($contract->signature_path);
+});
+
+test('booking show page lists participant contract cards without rendering contract bodies inline', function () {
+    Storage::fake('local');
+
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'name' => 'Explorer Camp',
+        'contract_terms_html' => '<p>Inline body should only appear on the contract page.</p>',
+    ]);
+    $firstFamilyMember = FamilyMember::factory()->for($customer)->create(['name' => 'First Participant']);
+    $secondFamilyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Second Participant']);
+    $booking = Booking::factory()->for($customer)->for($event)->create(['reference' => 'BRH-CARDS']);
+    $firstBookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($firstFamilyMember)->create();
+    $secondBookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($secondFamilyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    $firstContract = $firstBookingFamilyMember->contract()->firstOrFail();
+    $secondContract = $secondBookingFamilyMember->contract()->firstOrFail();
+
+    $firstContract->sign('data:image/png;base64,'.base64_encode('fake-png-bytes'), $customer->name, '127.0.0.1');
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('bookings.show', $booking))
+        ->assertOk()
+        ->assertSee('First Participant')
+        ->assertSee('Second Participant')
+        ->assertSee('عرض العقد')
+        ->assertSee('عرض وتوقيع العقد')
+        ->assertSee('تحميل PDF')
+        ->assertSee($firstContract->refresh()->signed_at->format('Y-m-d H:i'))
+        ->assertSee(route('bookings.contracts.show', [$booking, $firstContract]), false)
+        ->assertSee(route('bookings.contracts.show', [$booking, $secondContract]), false)
+        ->assertDontSee('Inline body should only appear on the contract page.')
+        ->assertDontSee('<canvas', false);
+});
+
+test('customer can open their own participant contract page', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'name' => 'Own Contract Event',
+        'contract_terms_html' => '<p>Only this contract page renders these terms.</p>',
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Own Participant']);
+    $booking = Booking::factory()->for($customer)->for($event)->create(['reference' => 'BRH-OWN']);
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    $contract = $bookingFamilyMember->contract()->firstOrFail();
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('bookings.contracts.show', [$booking, $contract]))
+        ->assertOk()
+        ->assertSee('Own Participant')
+        ->assertSee('Only this contract page renders these terms.')
+        ->assertSee(__('ui.actions.sign_contract'));
+});
+
+test('customer cannot open a contract that does not belong to their booking', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $otherCustomer = Customer::factory()->create();
+    $event = Event::factory()->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create();
+    $otherBooking = Booking::factory()->for($otherCustomer)->for($event)->create();
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $otherFamilyMember = FamilyMember::factory()->for($otherCustomer)->create();
+
+    BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+    $otherBookingFamilyMember = BookingFamilyMember::factory()->for($otherBooking)->for($otherFamilyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    app(BookingApprovalService::class)->approve($otherBooking, $staff);
+    $otherContract = $otherBookingFamilyMember->contract()->firstOrFail();
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('bookings.contracts.show', [$booking, $otherContract]))
+        ->assertNotFound();
+});
+
+test('signed contract can be downloaded from the dedicated contract page', function () {
+    Storage::fake('local');
+
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'contract_terms_html' => '<p>Downloadable contract body.</p>',
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create(['reference' => 'BRH-PDF']);
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    $contract = $bookingFamilyMember->contract()->firstOrFail();
+    $contract->sign('data:image/png;base64,'.base64_encode('fake-png-bytes'), $customer->name, '127.0.0.1');
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
+        ->assertSee('تحميل PDF')
+        ->call('downloadContract')
+        ->assertFileDownloaded("byruhaa-contract-{$booking->reference}-{$contract->id}.pdf");
 });
 
 test('event contract snapshot and pdf are rendered in arabic', function () {
@@ -185,10 +289,10 @@ test('required participant extra fields block contract signing', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
         ->set('signedName', $customer->name)
-        ->call('signContract', $contract->id, $signature)
-        ->assertHasErrors(["participantExtraAnswers.{$contract->id}.medical_clearance"]);
+        ->call('signContract', $signature)
+        ->assertHasErrors(['participantExtraAnswers.medical_clearance']);
 
     expect($contract->refresh())
         ->state->not->toBeInstanceOf(Signed::class)
@@ -231,11 +335,11 @@ test('participant extra answers are saved on the correct contract and rendered f
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
-        ->set("participantExtraAnswers.{$firstContract->id}.swimming_level", 'Advanced')
-        ->set("participantExtraAnswers.{$firstContract->id}.special_notes", 'Needs shade <script>')
+    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $firstContract])
+        ->set('participantExtraAnswers.swimming_level', 'Advanced')
+        ->set('participantExtraAnswers.special_notes', 'Needs shade <script>')
         ->set('signedName', $customer->name)
-        ->call('signContract', $firstContract->id, $signature)
+        ->call('signContract', $signature)
         ->assertHasNoErrors();
 
     expect($firstContract->refresh())
@@ -247,7 +351,7 @@ test('participant extra answers are saved on the correct contract and rendered f
         ->participant_extra_completed_at->not->toBeNull()
         ->and($secondContract->refresh()->participant_extra_answers)->toBeNull();
 
-    $this->get(route('bookings.show', $booking))
+    $this->get(route('bookings.contracts.show', [$booking, $firstContract]))
         ->assertOk()
         ->assertSee('Swimming level')
         ->assertSee('Advanced')

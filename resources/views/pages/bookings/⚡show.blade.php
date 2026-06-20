@@ -10,59 +10,22 @@ use App\Models\EventPaymentPlan;
 use App\Services\ContractRenderer;
 use App\States\Booking\Approved;
 use App\States\Contract\AwaitingSignature;
-use App\Support\ParticipantExtraFields;
 use Flux\Flux;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 new #[Title('تفاصيل الحجز')] class extends Component {
     public Booking $booking;
-    public string $signedName = '';
     public ?int $paymentPlanId = null;
-
-    /** @var array<int, array<string, mixed>> */
-    public array $participantExtraAnswers = [];
 
     public function mount(Booking $booking): void
     {
         abort_unless($booking->customer_id === Auth::guard('customer')->id(), 403);
 
         $this->booking = $booking->load(['event', 'familyMembers.familyMember', 'familyMembers.contract', 'paymentSchedule.installments']);
-        $this->signedName = Auth::guard('customer')->user()->name;
-        $this->syncParticipantExtraAnswers();
-    }
-
-    public function signContract(int $contractId, string $signatureDataUrl): void
-    {
-        $contract = $this->ownedContract($contractId);
-
-        abort_unless($contract->state instanceof AwaitingSignature, 403);
-
-        $participantExtraFields = ParticipantExtraFields::normalizeFields($contract->bookingFamilyMember->booking->event->participant_extra_fields);
-
-        validator([
-            'signedName' => $this->signedName,
-            'signatureDataUrl' => $signatureDataUrl,
-            'participantExtraAnswers' => $this->participantExtraAnswers,
-        ], [
-            'signedName' => ['required', 'string', 'max:255'],
-            'signatureDataUrl' => ['required', 'string'],
-            ...ParticipantExtraFields::validationRules($participantExtraFields, "participantExtraAnswers.{$contractId}"),
-        ])->validate();
-
-        if ($participantExtraFields !== []) {
-            $contract->forceFill([
-                'participant_extra_answers' => ParticipantExtraFields::answersForStorage($participantExtraFields, $this->participantExtraAnswers[$contractId] ?? []),
-                'participant_extra_completed_at' => now(),
-            ])->save();
-        }
-
-        $contract->sign($signatureDataUrl, $this->signedName, request()->ip());
-
-        $this->refreshBooking();
-
-        Flux::toast(variant: 'success', text: __('ui.messages.contract_signed'));
     }
 
     public function selectPaymentPlan(SelectBookingPaymentPlan $selectBookingPaymentPlan): void
@@ -83,7 +46,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         Flux::toast(variant: 'success', text: __('ui.messages.payment_plan_selected'));
     }
 
-    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment)
+    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse
     {
         $installment = BookingInstallment::query()
             ->whereKey($installmentId)
@@ -97,11 +60,11 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         return redirect()->away((string) $payment->checkout_url);
     }
 
-    public function downloadContract(int $contractId, ContractRenderer $contractRenderer)
+    public function downloadContract(int $contractId, ContractRenderer $contractRenderer): StreamedResponse
     {
         $contract = $this->ownedContract($contractId);
 
-        abort_unless(! $contract->state instanceof AwaitingSignature, 403);
+        abort_if($contract->state instanceof AwaitingSignature, 403);
 
         $filename = 'byruhaa-contract-'.$this->booking->reference.'-'.$contract->id.'.pdf';
 
@@ -133,7 +96,6 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                 ->oldest('name')
                 ->get(),
             'contractsAreSigned' => $this->booking->hasSignedContracts(),
-            'participantExtraFields' => ParticipantExtraFields::normalizeFields($this->booking->event->participant_extra_fields),
             'payableInstallmentId' => $this->booking->paymentSchedule?->installments
                 ->first(fn (BookingInstallment $installment): bool => $installment->state === BookingInstallmentState::Pending)
                 ?->id,
@@ -143,18 +105,6 @@ new #[Title('تفاصيل الحجز')] class extends Component {
     private function refreshBooking(): void
     {
         $this->booking->refresh()->load(['event', 'familyMembers.familyMember', 'familyMembers.contract', 'paymentSchedule.installments']);
-        $this->syncParticipantExtraAnswers();
-    }
-
-    private function syncParticipantExtraAnswers(): void
-    {
-        foreach ($this->booking->familyMembers as $bookingFamilyMember) {
-            if (! $bookingFamilyMember->contract) {
-                continue;
-            }
-
-            $this->participantExtraAnswers[$bookingFamilyMember->contract->id] = $bookingFamilyMember->contract->participant_extra_answers ?? $this->participantExtraAnswers[$bookingFamilyMember->contract->id] ?? [];
-        }
     }
 }; ?>
 
@@ -390,193 +340,49 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                         @endif
                     </div>
 
-                    @if ($bookingFamilyMember->contract && $bookingFamilyMember->contract->state instanceof AwaitingSignature)
-                        <div class="mt-5 rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                            <div class="mb-3 flex items-center gap-2 text-emerald-800 dark:text-emerald-100">
-                                <x-hugeicon name="file-view" class="text-xl" />
-                                <flux:heading class="text-base">{{ __('ui.bookings.contract_terms') }}</flux:heading>
-                            </div>
-                            <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
-                                {!! $bookingFamilyMember->contract->contract_html !!}
-                            </div>
+                    @if ($bookingFamilyMember->contract)
+                        @php
+                            $contract = $bookingFamilyMember->contract;
+                        @endphp
 
-                            @include('contracts.participant-extra-answers', ['contract' => $bookingFamilyMember->contract])
-                        </div>
+                        <div class="mt-4 grid gap-3 rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5 md:grid-cols-[1fr_auto] md:items-center">
+                            <div class="space-y-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <x-status-badge :state="$contract->state" />
 
-                        <form
-                            x-on:submit.prevent="submitSignature"
-                            x-data="{
-                                drawing: false,
-                                hasSignature: false,
-                                context: null,
-                                init() {
-                                    const canvas = this.$refs.canvas;
-                                    this.context = canvas.getContext('2d');
-                                    this.resizeCanvas();
-                                    this.context.lineWidth = 2.5;
-                                    this.context.lineCap = 'round';
-                                    this.context.lineJoin = 'round';
-                                    this.context.strokeStyle = '#17382f';
-
-                                    const point = (event) => {
-                                        const rect = canvas.getBoundingClientRect();
-                                        const source = event.touches?.[0] ?? event.changedTouches?.[0] ?? event;
-
-                                        return {
-                                            x: source.clientX - rect.left,
-                                            y: source.clientY - rect.top,
-                                        };
-                                    };
-
-                                    canvas.addEventListener('pointerdown', event => {
-                                        event.preventDefault();
-                                        canvas.setPointerCapture(event.pointerId);
-                                        this.drawing = true;
-                                        const p = point(event);
-                                        this.context.beginPath();
-                                        this.context.moveTo(p.x, p.y);
-                                    });
-
-                                    canvas.addEventListener('pointermove', event => {
-                                        if (! this.drawing) return;
-
-                                        event.preventDefault();
-                                        const p = point(event);
-                                        this.context.lineTo(p.x, p.y);
-                                        this.context.stroke();
-                                        this.hasSignature = true;
-                                    });
-
-                                    window.addEventListener('pointerup', () => this.drawing = false);
-                                    window.addEventListener('resize', () => this.resizeCanvas());
-                                },
-                                resizeCanvas() {
-                                    const canvas = this.$refs.canvas;
-                                    const rect = canvas.getBoundingClientRect();
-                                    const ratio = window.devicePixelRatio || 1;
-
-                                    canvas.width = Math.max(1, Math.floor(rect.width * ratio));
-                                    canvas.height = Math.max(1, Math.floor(rect.height * ratio));
-
-                                    this.context.setTransform(ratio, 0, 0, ratio, 0, 0);
-                                },
-                                clear() {
-                                    const canvas = this.$refs.canvas;
-                                    const rect = canvas.getBoundingClientRect();
-                                    this.context.clearRect(0, 0, rect.width, rect.height);
-                                    this.hasSignature = false;
-                                },
-                                submitSignature() {
-                                    const signatureDataUrl = this.hasSignature ? this.$refs.canvas.toDataURL('image/png') : '';
-                                    $wire.signContract({{ $bookingFamilyMember->contract->id }}, signatureDataUrl);
-                                }
-                            }"
-                            class="mt-5 space-y-4 rounded-xl border border-amber-200 bg-white p-4 dark:border-amber-300/20 dark:bg-white/5"
-                        >
-                            <div class="flex items-center gap-2 text-amber-800 dark:text-amber-100">
-                                <x-hugeicon name="signature" class="text-xl" />
-                                <flux:heading class="text-base">{{ __('ui.actions.sign_contract') }}</flux:heading>
-                            </div>
-
-                            @if ($participantExtraFields !== [])
-                                <div class="space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
-                                    <div>
-                                        <flux:heading class="text-base">Participant information</flux:heading>
-                                        <flux:text>Please complete these event-specific fields before signing.</flux:text>
-                                    </div>
-
-                                    <div class="grid gap-4 md:grid-cols-2">
-                                        @foreach ($participantExtraFields as $field)
-                                            @php
-                                                $answerPath = "participantExtraAnswers.{$bookingFamilyMember->contract->id}.{$field['key']}";
-                                                $label = $field['required'] ? $field['label'].' *' : $field['label'];
-                                            @endphp
-
-                                            <div wire:key="participant-extra-{{ $bookingFamilyMember->contract->id }}-{{ $field['key'] }}" @class(['md:col-span-2' => in_array($field['type'], ['textarea', 'radio'], true)])>
-                                                @switch($field['type'])
-                                                    @case('textarea')
-                                                        <flux:textarea wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" />
-                                                        @break
-
-                                                    @case('select')
-                                                        <flux:select wire:model="{{ $answerPath }}" :label="$label">
-                                                            <option value="">{{ $field['placeholder'] ?: 'Select an option' }}</option>
-                                                            @foreach ($field['options'] as $option)
-                                                                <option value="{{ $option }}">{{ $option }}</option>
-                                                            @endforeach
-                                                        </flux:select>
-                                                        @break
-
-                                                    @case('radio')
-                                                        <flux:radio.group wire:model="{{ $answerPath }}" :label="$label">
-                                                            @foreach ($field['options'] as $option)
-                                                                <flux:radio wire:key="participant-extra-radio-{{ $bookingFamilyMember->contract->id }}-{{ $field['key'] }}-{{ md5($option) }}" value="{{ $option }}" :label="$option" />
-                                                            @endforeach
-                                                        </flux:radio.group>
-                                                        @break
-
-                                                    @case('checkbox')
-                                                        <flux:checkbox wire:model="{{ $answerPath }}" :label="$label" />
-                                                        @break
-
-                                                    @case('date')
-                                                        <flux:input wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" type="date" />
-                                                        @break
-
-                                                    @case('number')
-                                                        <flux:input wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" type="number" />
-                                                        @break
-
-                                                    @default
-                                                        <flux:input wire:model="{{ $answerPath }}" :label="$label" :placeholder="$field['placeholder']" />
-                                                @endswitch
-
-                                                @if ($field['help_text'])
-                                                    <flux:text class="mt-1 text-xs">{{ $field['help_text'] }}</flux:text>
-                                                @endif
-
-                                                <flux:error :name="$answerPath" />
-                                            </div>
-                                        @endforeach
-                                    </div>
+                                    @if ($contract->signed_at)
+                                        <span class="text-sm text-emerald-950/70 dark:text-emerald-50/70">
+                                            {{ __('ui.bookings.signature') }}:
+                                            <span dir="ltr">{{ $contract->signed_at->format('Y-m-d H:i') }}</span>
+                                        </span>
+                                    @endif
                                 </div>
-                            @endif
 
-                            <flux:input wire:model="signedName" :label="__('ui.bookings.signer_name')" required />
-                            <div>
-                                <flux:text class="mb-2">{{ __('ui.bookings.signature') }}</flux:text>
-                                <canvas x-ref="canvas" class="h-40 w-full touch-none rounded-xl border border-emerald-900/20 bg-white"></canvas>
-                                <flux:error name="signatureDataUrl" />
-                            </div>
-                            <div class="flex flex-wrap gap-3">
-                                <flux:button type="submit" variant="primary">
-                                    <x-hugeicon name="signature" class="text-lg" />
-                                    {{ __('ui.actions.sign_contract') }}
-                                </flux:button>
-                                <flux:button type="button" x-on:click="clear()">
-                                    <x-hugeicon name="delete-02" class="text-lg" />
-                                    {{ __('ui.actions.clear') }}
-                                </flux:button>
-                            </div>
-                        </form>
-                    @elseif ($bookingFamilyMember->contract)
-                        <div class="mt-5 rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-                            <div class="mb-3 flex items-center gap-2 text-emerald-800 dark:text-emerald-100">
-                                <x-hugeicon name="file-view" class="text-xl" />
-                                <flux:heading class="text-base">{{ __('ui.bookings.contract_terms') }}</flux:heading>
-                            </div>
-                            <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
-                                {!! $bookingFamilyMember->contract->contract_html !!}
+                                @if ($contract->signed_name)
+                                    <flux:text>{{ __('ui.bookings.signer_name') }}: {{ $contract->signed_name }}</flux:text>
+                                @else
+                                    <flux:text>{{ __('ui.bookings.contract_terms') }}</flux:text>
+                                @endif
                             </div>
 
-                            @include('contracts.participant-extra-answers', ['contract' => $bookingFamilyMember->contract])
-                        </div>
+                            <div class="flex flex-wrap gap-2 md:justify-end">
+                                @if ($contract->state instanceof AwaitingSignature)
+                                    <flux:button :href="route('bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm" variant="primary">
+                                        <x-hugeicon name="signature" class="text-base" />
+                                        عرض وتوقيع العقد
+                                    </flux:button>
+                                @else
+                                    <flux:button :href="route('bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm">
+                                        <x-hugeicon name="file-view" class="text-base" />
+                                        عرض العقد
+                                    </flux:button>
 
-                        <div class="mt-4">
-                            <flux:button wire:click="downloadContract({{ $bookingFamilyMember->contract->id }})">
-                                <x-hugeicon name="download-01" class="text-lg" />
-                                {{ __('ui.actions.download_contract') }}
-                            </flux:button>
+                                    <flux:button wire:click="downloadContract({{ $contract->id }})" wire:target="downloadContract({{ $contract->id }})" size="sm" variant="outline">
+                                        <x-hugeicon name="download-01" class="text-base" />
+                                        تحميل PDF
+                                    </flux:button>
+                                @endif
+                            </div>
                         </div>
                     @endif
                 </div>

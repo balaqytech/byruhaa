@@ -16,6 +16,7 @@ Route::middleware(['auth:customer'])->group(function () {
     Route::livewire('events/{event:slug}', 'pages::events.show')->name('events.show');
     Route::livewire('family-members', 'pages::family-members.index')->name('family-members.index');
     Route::livewire('bookings', 'pages::bookings.index')->name('bookings.index');
+    Route::livewire('bookings/{booking}/contracts/{contract}', 'pages::bookings.contract')->name('bookings.contracts.show');
     Route::livewire('bookings/{booking}', 'pages::bookings.show')->name('bookings.show');
     Route::livewire('payments', 'pages::payments.index')->name('payments.index');
 });
