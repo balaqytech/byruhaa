@@ -23,7 +23,7 @@ class CalculateBookingPrice
             ->first();
 
         $discountAmountBaisa = $discount instanceof Discount
-            ? min($subtotalBaisa, $discount->amount_baisa)
+            ? $discount->amountForFamilyMembersBaisa($familyMemberCount, $subtotalBaisa)
             : 0;
 
         return new BookingPriceSnapshot(
@@ -34,7 +34,7 @@ class CalculateBookingPrice
             discountId: $discount instanceof Discount ? $discount->id : null,
             discountName: $discount instanceof Discount ? $discount->name : null,
             discountAmountBaisa: $discountAmountBaisa,
-            totalBaisa: $subtotalBaisa - $discountAmountBaisa,
+            totalBaisa: max(0, $subtotalBaisa - $discountAmountBaisa),
         );
     }
 }

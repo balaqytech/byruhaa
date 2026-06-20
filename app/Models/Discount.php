@@ -52,6 +52,15 @@ class Discount extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function amountForFamilyMembersBaisa(int $familyMemberCount, int $subtotalBaisa): int
+    {
+        $familyMemberCount = max(0, $familyMemberCount);
+        $subtotalBaisa = max(0, $subtotalBaisa);
+        $amountPerFamilyMemberBaisa = max(0, $this->amount_baisa);
+
+        return min($subtotalBaisa, $amountPerFamilyMemberBaisa * $familyMemberCount);
+    }
+
     /**
      * @param  Builder<Discount>  $query
      * @return Builder<Discount>

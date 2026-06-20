@@ -142,6 +142,7 @@ return [
         'description' => 'الوصف',
         'discount' => 'الخصم',
         'discount_amount' => 'قيمة الخصم',
+        'discount_amount_per_member' => 'قيمة الخصم لكل فرد',
         'due_date' => 'تاريخ الاستحقاق',
         'email_address' => 'البريد الإلكتروني',
         'email_verified_at' => 'تاريخ التحقق من البريد',

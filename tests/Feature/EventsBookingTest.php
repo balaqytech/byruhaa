@@ -86,7 +86,7 @@ test('booking submission stores a price snapshot', function () {
         ->total_baisa->toBe(25000);
 });
 
-test('booking submission applies the largest eligible discount once', function () {
+test('booking submission applies the largest eligible discount per family member', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([
         'price_baisa' => 10000,
@@ -127,8 +127,8 @@ test('booking submission applies the largest eligible discount once', function (
         ->subtotal_baisa->toBe(30000)
         ->discount_id->toBe($bestDiscount->id)
         ->discount_name->toBe('Best family discount')
-        ->discount_amount_baisa->toBe(8000)
-        ->total_baisa->toBe(22000);
+        ->discount_amount_baisa->toBe(24000)
+        ->total_baisa->toBe(6000);
 });
 
 test('discount amount is capped at the booking subtotal', function () {
@@ -137,7 +137,7 @@ test('discount amount is capped at the booking subtotal', function () {
         'price_baisa' => 5000,
         'seat_capacity' => 5,
     ]);
-    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $familyMembers = FamilyMember::factory()->count(3)->for($customer)->create();
 
     Discount::factory()->create([
         'name' => 'Oversized discount',
@@ -147,15 +147,15 @@ test('discount amount is capped at the booking subtotal', function () {
     $this->actingAs($customer, 'customer');
 
     Livewire::test('pages::events.show', ['event' => $event])
-        ->set('familyMemberIds', [$familyMember->id])
+        ->set('familyMemberIds', $familyMembers->pluck('id')->all())
         ->call('book')
         ->assertHasNoErrors();
 
     $booking = Booking::query()->firstOrFail();
 
     expect($booking)
-        ->subtotal_baisa->toBe(5000)
-        ->discount_amount_baisa->toBe(5000)
+        ->subtotal_baisa->toBe(15000)
+        ->discount_amount_baisa->toBe(15000)
         ->total_baisa->toBe(0);
 });
 
@@ -165,7 +165,7 @@ test('booking price snapshot does not change when event price or discount change
         'price_baisa' => 7000,
         'seat_capacity' => 5,
     ]);
-    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
     $discount = Discount::factory()->create([
         'name' => 'Launch discount',
         'amount_baisa' => 1000,
@@ -174,7 +174,7 @@ test('booking price snapshot does not change when event price or discount change
     $this->actingAs($customer, 'customer');
 
     Livewire::test('pages::events.show', ['event' => $event])
-        ->set('familyMemberIds', [$familyMember->id])
+        ->set('familyMemberIds', $familyMembers->pluck('id')->all())
         ->call('book')
         ->assertHasNoErrors();
 
@@ -189,8 +189,8 @@ test('booking price snapshot does not change when event price or discount change
     expect($booking->refresh())
         ->unit_price_baisa->toBe(7000)
         ->discount_name->toBe('Launch discount')
-        ->discount_amount_baisa->toBe(1000)
-        ->total_baisa->toBe(6000);
+        ->discount_amount_baisa->toBe(2000)
+        ->total_baisa->toBe(12000);
 });
 
 test('approval consumes seats and creates one contract per family member', function () {

@@ -226,7 +226,7 @@ test('staff can save participant extra fields on an event', function () {
 test('staff can view discounts in filament', function () {
     $staff = User::factory()->create();
     $discount = Discount::factory()->create([
-        'name' => 'Family flat discount',
+        'name' => 'Family per-member discount',
         'amount_baisa' => 2500,
     ]);
 
@@ -234,7 +234,7 @@ test('staff can view discounts in filament', function () {
         ->get(DiscountResource::getUrl('index'))
         ->assertOk()
         ->assertSee($discount->name)
-        ->assertSee(__('admin.fields.discount_amount'))
+        ->assertSee(__('admin.fields.discount_amount_per_member'))
         ->assertSee('fi-ta-cell-amount-baisa', false);
 });
 

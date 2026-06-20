@@ -142,6 +142,7 @@ return [
         'description' => 'Description',
         'discount' => 'Discount',
         'discount_amount' => 'Discount amount',
+        'discount_amount_per_member' => 'Discount per member',
         'due_date' => 'Due date',
         'email_address' => 'Email address',
         'email_verified_at' => 'Email verified at',

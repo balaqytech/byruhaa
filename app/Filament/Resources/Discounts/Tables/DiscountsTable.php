@@ -24,7 +24,7 @@ class DiscountsTable
                     ->label(__('admin.fields.event'))
                     ->placeholder(__('admin.fields.global')),
                 TextColumn::make('amount_baisa')
-                    ->label(__('admin.fields.discount_amount'))
+                    ->label(__('admin.fields.discount_amount_per_member'))
                     ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state))
                     ->sortable(),
                 TextColumn::make('minimum_family_members')

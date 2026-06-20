@@ -26,7 +26,7 @@ class DiscountForm
                     ->searchable()
                     ->preload(),
                 TextInput::make('amount_baisa')
-                    ->label(__('admin.fields.discount_amount'))
+                    ->label(__('admin.fields.discount_amount_per_member'))
                     ->required()
                     ->numeric()
                     ->minValue(0)
