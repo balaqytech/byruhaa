@@ -2,12 +2,14 @@
 
 namespace App\Actions;
 
+use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
+use App\Exceptions\PaymentGatewayException;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
-use App\Services\Thawani\ThawaniClient;
+use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -16,7 +18,7 @@ use Throwable;
 class RefundPayment
 {
     public function __construct(
-        private ThawaniClient $thawaniClient,
+        private PaymentGatewayManager $paymentGateways,
         private PostRefundLedgerTransaction $postRefundLedgerTransaction,
     ) {}
 
@@ -71,13 +73,11 @@ class RefundPayment
         ])->save();
 
         try {
-            $response = $this->thawaniClient->createRefund($payload);
+            $response = $this->gateway($paymentRefund->payment)->createRefund($payload);
         } catch (Throwable $exception) {
             $paymentRefund->forceFill([
                 'state' => PaymentRefundState::Failed,
-                'response_payload' => [
-                    'error' => $exception->getMessage(),
-                ],
+                'response_payload' => $this->exceptionPayload($exception),
                 'processed_at' => now(),
             ])->save();
 
@@ -134,7 +134,7 @@ class RefundPayment
             throw new RuntimeException('Payment does not have a Thawani invoice.');
         }
 
-        $response = $this->thawaniClient->listPaymentsByInvoice($payment->provider_invoice);
+        $response = $this->gateway($payment)->listPaymentsByInvoice($payment->provider_invoice);
         $providerPaymentId = data_get($response, 'data.0.payment_id')
             ?? data_get($response, 'data.0.id');
 
@@ -156,5 +156,30 @@ class RefundPayment
         return $succeededRefundTotal >= $payment->amount_baisa
             ? PaymentState::Refunded
             : PaymentState::PartiallyRefunded;
+    }
+
+    private function gateway(Payment $payment): PaymentGateway
+    {
+        $gateway = $this->paymentGateways->driver($payment->provider);
+
+        if (! $gateway instanceof PaymentGateway) {
+            throw new RuntimeException("Payment provider [{$payment->provider}] is not supported.");
+        }
+
+        return $gateway;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function exceptionPayload(Throwable $exception): array
+    {
+        if ($exception instanceof PaymentGatewayException) {
+            return $exception->payload();
+        }
+
+        return [
+            'error' => $exception->getMessage(),
+        ];
     }
 }

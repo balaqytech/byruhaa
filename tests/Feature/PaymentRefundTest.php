@@ -18,10 +18,12 @@ use Illuminate\Validation\ValidationException;
 
 beforeEach(function () {
     config([
-        'services.thawani.secret_key' => 'test_secret_key',
-        'services.thawani.publishable_key' => 'test_publishable_key',
-        'services.thawani.api_base_url' => 'https://uatcheckout.thawani.om/api/v1',
-        'services.thawani.checkout_base_url' => 'https://uatcheckout.thawani.om',
+        'payments.default' => 'thawani',
+        'thawani.mode' => 'test',
+        'thawani.test.secret_key' => 'test_secret_key',
+        'thawani.test.publishable_key' => 'test_publishable_key',
+        'thawani.test.base_url' => 'https://uatcheckout.thawani.om/api/v1',
+        'thawani.test.checkout_base_url' => 'https://uatcheckout.thawani.om/pay',
     ]);
 });
 
@@ -130,6 +132,8 @@ test('refund action records failed refund attempts when thawani rejects the requ
     Http::fake([
         'https://uatcheckout.thawani.om/api/v1/refunds' => Http::response([
             'success' => false,
+            'description' => 'Refund rejected',
+            'code' => 4220,
         ], 422),
     ]);
 
@@ -142,6 +146,9 @@ test('refund action records failed refund attempts when thawani rejects the requ
 
     expect($paymentRefund->state)->toBe(PaymentRefundState::Failed)
         ->and($payment->refresh()->state)->toBe(PaymentState::Paid)
+        ->and($paymentRefund->response_payload['error'])->toBe('Refund rejected')
+        ->and($paymentRefund->response_payload['status'])->toBe(422)
+        ->and(data_get($paymentRefund->response_payload, 'response.description'))->toBe('Refund rejected')
         ->and($paymentRefund->ledgerTransaction()->exists())->toBeFalse();
 });
 

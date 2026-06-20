@@ -2,17 +2,18 @@
 
 namespace App\Actions;
 
+use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
 use App\Models\Payment;
-use App\Services\Thawani\ThawaniClient;
+use App\Services\Payments\PaymentGatewayManager;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class ConfirmThawaniPayment
 {
     public function __construct(
-        private ThawaniClient $thawaniClient,
+        private PaymentGatewayManager $paymentGateways,
         private PostPaymentLedgerTransaction $postPaymentLedgerTransaction,
     ) {}
 
@@ -28,7 +29,7 @@ class ConfirmThawaniPayment
             throw new RuntimeException('Payment does not have a Thawani session.');
         }
 
-        $response = $this->thawaniClient->retrieveSession($payment->provider_session_id);
+        $response = $this->gateway($payment)->retrieveSession($payment->provider_session_id);
         $session = data_get($response, 'data');
 
         if (! is_array($session)) {
@@ -103,5 +104,16 @@ class ConfirmThawaniPayment
 
             return $payment->refresh();
         });
+    }
+
+    private function gateway(Payment $payment): PaymentGateway
+    {
+        $gateway = $this->paymentGateways->driver($payment->provider);
+
+        if (! $gateway instanceof PaymentGateway) {
+            throw new RuntimeException("Payment provider [{$payment->provider}] is not supported.");
+        }
+
+        return $gateway;
     }
 }

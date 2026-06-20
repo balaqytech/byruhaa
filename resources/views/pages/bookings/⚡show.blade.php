@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\CreateFullPaymentSchedule;
 use App\Actions\InitiateInstallmentPayment;
 use App\Actions\SelectBookingPaymentPlan;
 use App\Enums\BookingInstallmentState;
@@ -13,8 +14,10 @@ use App\States\Contract\AwaitingSignature;
 use Flux\Flux;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportRedirects\Redirector;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 new #[Title('تفاصيل الحجز')] class extends Component {
@@ -46,18 +49,39 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         Flux::toast(variant: 'success', text: __('ui.messages.payment_plan_selected'));
     }
 
-    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse
+    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse|Redirector
     {
-        $installment = BookingInstallment::query()
-            ->whereKey($installmentId)
-            ->whereHas('paymentSchedule.booking', fn ($query) => $query
-                ->where('customer_id', Auth::guard('customer')->id())
-                ->where('id', $this->booking->id))
-            ->firstOrFail();
+        try {
+            $installment = BookingInstallment::query()
+                ->whereKey($installmentId)
+                ->whereHas('paymentSchedule.booking', fn ($query) => $query
+                    ->where('customer_id', Auth::guard('customer')->id())
+                    ->where('id', $this->booking->id))
+                ->firstOrFail();
 
-        $payment = $initiateInstallmentPayment->execute($installment, (int) Auth::guard('customer')->id());
+            $payment = $initiateInstallmentPayment->execute($installment, (int) Auth::guard('customer')->id());
 
-        return redirect()->away((string) $payment->checkout_url);
+            return redirect()->away((string) $payment->checkout_url);
+        } catch (ValidationException $exception) {
+            $this->refreshBooking();
+
+            throw $exception;
+        }
+    }
+
+    public function payInFull(CreateFullPaymentSchedule $createFullPaymentSchedule, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse|Redirector
+    {
+        try {
+            $schedule = $createFullPaymentSchedule->execute($this->booking);
+            $installment = $schedule->installments()->firstOrFail();
+            $payment = $initiateInstallmentPayment->execute($installment, (int) Auth::guard('customer')->id());
+
+            return redirect()->away((string) $payment->checkout_url);
+        } catch (ValidationException $exception) {
+            $this->refreshBooking();
+
+            throw $exception;
+        }
     }
 
     public function downloadContract(int $contractId, ContractRenderer $contractRenderer): StreamedResponse
@@ -227,6 +251,8 @@ new #[Title('تفاصيل الحجز')] class extends Component {
             </div>
         </div>
 
+        <flux:error name="payment" class="mt-4" />
+
         @if ($booking->paymentSchedule)
             <div class="mt-5 overflow-hidden rounded-xl border border-emerald-900/10 dark:border-white/10">
                 <flux:table>
@@ -265,8 +291,34 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                 </flux:table>
             </div>
         @elseif ($booking->state instanceof Approved && $contractsAreSigned)
+            <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/10">
+                <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+                    <div class="space-y-2">
+                        <flux:heading class="text-base">{{ __('ui.payments.full_payment') }}</flux:heading>
+                        <flux:text>{{ __('ui.payments.full_payment_description') }}</flux:text>
+                        <div class="text-lg font-semibold text-emerald-950 dark:text-emerald-50">
+                            <x-money :amount-baisa="$booking->total_baisa" :currency="$booking->currency" />
+                        </div>
+                    </div>
+
+                    @if ($booking->total_baisa >= 100)
+                        <flux:button wire:click="payInFull" wire:target="payInFull" variant="primary">
+                            <x-hugeicon name="wallet-02" class="text-lg" />
+                            {{ __('ui.payments.pay_full_amount') }}
+                        </flux:button>
+                    @else
+                        <span class="text-sm text-zinc-500 dark:text-white/60">{{ __('ui.messages.installment_amount_too_small') }}</span>
+                    @endif
+                </div>
+            </div>
+
             @if ($activePaymentPlans->isNotEmpty())
                 <form wire:submit="selectPaymentPlan" class="mt-5 space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
+                    <div>
+                        <flux:heading class="text-base">{{ __('ui.payments.installment_options') }}</flux:heading>
+                        <flux:text>{{ __('ui.payments.installment_options_description') }}</flux:text>
+                    </div>
+
                     <flux:select wire:model="paymentPlanId" :label="__('ui.payments.choose_plan')" required>
                         <option value="">{{ __('ui.payments.choose_plan_placeholder') }}</option>
                         @foreach ($activePaymentPlans as $paymentPlan)
@@ -296,10 +348,6 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                         {{ __('ui.payments.select_plan') }}
                     </flux:button>
                 </form>
-            @else
-                <div class="mt-5 rounded-xl border border-dashed border-emerald-900/20 p-5 text-center dark:border-white/15">
-                    <flux:text>{{ __('ui.payments.no_plans') }}</flux:text>
-                </div>
             @endif
         @else
             <div class="mt-5 rounded-xl border border-dashed border-emerald-900/20 p-5 text-center dark:border-white/15">

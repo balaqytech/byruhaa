@@ -1,14 +1,20 @@
 <?php
 
 use App\Actions\InitiateInstallmentPayment;
+use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
 use App\Models\Booking;
+use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Event;
+use App\Models\EventContract;
+use App\Models\FamilyMember;
 use App\Models\Payment;
+use App\States\Booking\Approved;
+use App\States\Contract\Signed;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
@@ -17,11 +23,17 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     config([
-        'services.thawani.secret_key' => 'test_secret_key',
-        'services.thawani.publishable_key' => 'test_publishable_key',
-        'services.thawani.api_base_url' => 'https://uatcheckout.thawani.om/api/v1',
-        'services.thawani.checkout_base_url' => 'https://uatcheckout.thawani.om',
+        'payments.default' => 'thawani',
+        'thawani.mode' => 'test',
+        'thawani.test.secret_key' => 'test_secret_key',
+        'thawani.test.publishable_key' => 'test_publishable_key',
+        'thawani.test.base_url' => 'https://uatcheckout.thawani.om/api/v1',
+        'thawani.test.checkout_base_url' => 'https://uatcheckout.thawani.om/pay',
     ]);
+});
+
+test('default payment gateway resolves through the service container', function () {
+    expect(app(PaymentGateway::class)->name())->toBe('thawani');
 });
 
 test('customer can initiate a thawani checkout for the next installment', function () {
@@ -83,6 +95,83 @@ test('booking page shows thawani payment action for the next installment', funct
     Livewire::test('pages::bookings.show', ['booking' => $installment->paymentSchedule->booking])
         ->assertSee(__('ui.payments.pay_with_thawani'))
         ->assertSee('First');
+});
+
+test('booking page offers full payment by default without installment plans', function () {
+    [$customer, $booking] = payableBookingFixture(amountBaisa: 12000);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::bookings.show', ['booking' => $booking])
+        ->assertSee(__('ui.payments.full_payment'))
+        ->assertSee(__('ui.payments.pay_full_amount'))
+        ->assertDontSee(__('ui.payments.no_plans'));
+});
+
+test('customer can initiate a full thawani payment by default', function () {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session' => Http::response([
+            'success' => true,
+            'data' => [
+                'session_id' => 'checkout_full_payment',
+            ],
+        ]),
+    ]);
+
+    [$customer, $booking] = payableBookingFixture(amountBaisa: 12000);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::bookings.show', ['booking' => $booking])
+        ->call('payInFull')
+        ->assertRedirect('https://uatcheckout.thawani.om/pay/checkout_full_payment?key=test_publishable_key');
+
+    $schedule = $booking->refresh()->paymentSchedule()->with('installments.payments')->firstOrFail();
+    $installment = $schedule->installments->first();
+
+    expect($schedule)
+        ->event_payment_plan_id->toBeNull()
+        ->plan_name->toBe(__('ui.payments.full_payment'))
+        ->total_baisa->toBe(12000)
+        ->and($installment)
+        ->not->toBeNull()
+        ->percentage->toBe(100)
+        ->amount_baisa->toBe(12000)
+        ->and($installment->payments)
+        ->toHaveCount(1)
+        ->and($installment->payments->first())
+        ->provider_session_id->toBe('checkout_full_payment');
+});
+
+test('failed full thawani payment shows an error and stores gateway details', function () {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session' => Http::response([
+            'success' => false,
+            'description' => 'Invalid API key',
+            'code' => 4010,
+        ], 401),
+    ]);
+
+    [$customer, $booking] = payableBookingFixture(amountBaisa: 12000);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::bookings.show', ['booking' => $booking])
+        ->call('payInFull')
+        ->assertHasErrors('payment')
+        ->assertSee(__('ui.messages.payment_gateway_unavailable'));
+
+    $payment = Payment::query()->latest('id')->firstOrFail();
+
+    expect($payment->state)->toBe(PaymentState::Failed)
+        ->and($payment->provider_session_id)->toBeNull()
+        ->and($payment->checkout_url)->toBeNull()
+        ->and($payment->response_payload['error'])->toBe('Invalid API key')
+        ->and($payment->response_payload['status'])->toBe(401)
+        ->and(data_get($payment->response_payload, 'response.description'))->toBe('Invalid API key')
+        ->and(data_get($payment->response_payload, 'response.code'))->toBe(4010);
 });
 
 test('thawani success return marks the payment and installment paid', function () {
@@ -280,4 +369,28 @@ function paymentInstallmentFixture(int $amountBaisa, bool $withSecondInstallment
     ]);
 
     return [$customer, $firstInstallment, $secondInstallment];
+}
+
+/**
+ * @return array{0: Customer, 1: Booking}
+ */
+function payableBookingFixture(int $amountBaisa): array
+{
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create(['name' => 'Summer Adventure']);
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'state' => Approved::$name,
+        'currency' => 'OMR',
+        'subtotal_baisa' => $amountBaisa,
+        'total_baisa' => $amountBaisa,
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    EventContract::factory()->for($bookingFamilyMember, 'bookingFamilyMember')->create([
+        'state' => Signed::$name,
+        'signed_at' => now(),
+    ]);
+
+    return [$customer, $booking];
 }

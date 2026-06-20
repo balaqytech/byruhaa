@@ -170,6 +170,11 @@ return [
     ],
 
     'payments' => [
+        'full_payment' => 'الدفع الكامل',
+        'full_payment_description' => 'ادفع رصيد الحجز الكامل الآن عبر ثواني.',
+        'installment_options' => 'خيارات الأقساط',
+        'installment_options_description' => 'اختر خطة أقساط فقط إذا لا تريد الدفع الكامل.',
+        'pay_full_amount' => 'ادفع المبلغ الكامل',
         'empty' => 'لا توجد جداول دفع متاحة حتى الآن.',
         'list_subheading' => 'راجع أقساط فعالياتك ومحاولات الدفع والاستردادات.',
         'no_payment_attempts' => 'لا توجد محاولات دفع بعد.',

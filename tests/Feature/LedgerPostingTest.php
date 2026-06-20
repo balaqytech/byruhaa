@@ -61,10 +61,12 @@ test('paid thawani confirmation posts ledger entries once', function () {
     Http::preventStrayRequests();
 
     config([
-        'services.thawani.secret_key' => 'test_secret_key',
-        'services.thawani.publishable_key' => 'test_publishable_key',
-        'services.thawani.api_base_url' => 'https://uatcheckout.thawani.om/api/v1',
-        'services.thawani.checkout_base_url' => 'https://uatcheckout.thawani.om',
+        'payments.default' => 'thawani',
+        'thawani.mode' => 'test',
+        'thawani.test.secret_key' => 'test_secret_key',
+        'thawani.test.publishable_key' => 'test_publishable_key',
+        'thawani.test.base_url' => 'https://uatcheckout.thawani.om/api/v1',
+        'thawani.test.checkout_base_url' => 'https://uatcheckout.thawani.om/pay',
     ]);
 
     $payment = paidPaymentFixture(amountBaisa: 7000);

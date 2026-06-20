@@ -2,11 +2,12 @@
 
 namespace App\Actions;
 
+use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
+use App\Exceptions\PaymentGatewayException;
 use App\Models\BookingInstallment;
 use App\Models\Payment;
-use App\Services\Thawani\ThawaniClient;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -15,7 +16,7 @@ use Throwable;
 
 class InitiateInstallmentPayment
 {
-    public function __construct(private ThawaniClient $thawaniClient) {}
+    public function __construct(private PaymentGateway $paymentGateway) {}
 
     public function execute(BookingInstallment $installment, int $customerId): Payment
     {
@@ -64,6 +65,7 @@ class InitiateInstallmentPayment
             }
 
             $payment = $installment->payments()->create([
+                'provider' => $this->paymentGateway->name(),
                 'amount_baisa' => $installment->amount_baisa,
                 'currency' => $installment->paymentSchedule->currency,
             ]);
@@ -82,20 +84,18 @@ class InitiateInstallmentPayment
         }
 
         try {
-            $response = $this->thawaniClient->createSession($payment->request_payload ?? []);
+            $response = $this->paymentGateway->createSession($payment->request_payload ?? []);
             $sessionId = (string) data_get($response, 'data.session_id');
 
             $payment->forceFill([
                 'provider_session_id' => $sessionId,
-                'checkout_url' => $this->thawaniClient->checkoutUrl($sessionId),
+                'checkout_url' => (string) (data_get($response, 'data.redirect_url') ?? $this->paymentGateway->checkoutUrl($sessionId)),
                 'response_payload' => $response,
             ])->save();
         } catch (Throwable $exception) {
             $payment->forceFill([
                 'state' => PaymentState::Failed,
-                'response_payload' => [
-                    'error' => $exception->getMessage(),
-                ],
+                'response_payload' => $this->exceptionPayload($exception),
             ])->save();
 
             throw ValidationException::withMessages([
@@ -135,6 +135,20 @@ class InitiateInstallmentPayment
                 'installment_id' => $installment->id,
                 'customer_id' => $booking->customer_id,
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function exceptionPayload(Throwable $exception): array
+    {
+        if ($exception instanceof PaymentGatewayException) {
+            return $exception->payload();
+        }
+
+        return [
+            'error' => $exception->getMessage(),
         ];
     }
 }
