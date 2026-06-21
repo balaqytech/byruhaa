@@ -38,6 +38,6 @@ class ThawaniPaymentReturnController extends Controller
     {
         $payment->loadMissing('bookingInstallment.paymentSchedule.booking');
 
-        return redirect()->route('bookings.show', $payment->bookingInstallment->paymentSchedule->booking);
+        return redirect()->route('customer.bookings.show', $payment->bookingInstallment->paymentSchedule->booking);
     }
 }

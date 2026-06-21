@@ -24,7 +24,7 @@ new #[Title('الفعاليات')] class extends Component {
             <flux:subheading>{{ __('ui.events.subheading') }}</flux:subheading>
         </div>
 
-        <flux:button :href="route('family-members.index')" wire:navigate variant="outline">
+        <flux:button :href="route('customer.family-members.index')" wire:navigate variant="outline">
             <x-hugeicon name="user-group" class="text-lg" />
             {{ __('ui.actions.manage_family') }}
         </flux:button>
@@ -66,7 +66,7 @@ new #[Title('الفعاليات')] class extends Component {
                     </div>
 
                     <div class="flex justify-end">
-                        <flux:button :href="route('events.show', $event)" wire:navigate>
+                        <flux:button :href="route('customer.events.show', $event)" wire:navigate>
                             <x-hugeicon name="arrow-left-02" class="text-lg" />
                             {{ __('ui.actions.view') }}
                         </flux:button>

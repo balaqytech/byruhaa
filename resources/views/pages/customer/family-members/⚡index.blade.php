@@ -123,7 +123,7 @@ new #[Title('العائلة')] class extends Component {
                 <x-hugeicon name="add-01" class="text-lg" />
                 {{ __('ui.family.add_family_member') }}
             </flux:button>
-            <flux:button :href="route('events.index')" wire:navigate variant="outline">
+            <flux:button :href="route('customer.events.index')" wire:navigate variant="outline">
                 <x-hugeicon name="calendar-03" class="text-lg" />
                 {{ __('ui.actions.view_events') }}
             </flux:button>

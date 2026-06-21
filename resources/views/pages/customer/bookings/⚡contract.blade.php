@@ -116,7 +116,7 @@ new #[Title('العقد')] class extends Component {
 <section class="flex flex-col gap-6">
     <div class="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div class="space-y-2">
-            <flux:button :href="route('bookings.show', $booking)" wire:navigate variant="ghost" size="sm">
+            <flux:button :href="route('customer.bookings.show', $booking)" wire:navigate variant="ghost" size="sm">
                 <x-hugeicon name="arrow-left-02" class="text-base" />
                 {{ __('ui.actions.view_bookings') }}
             </flux:button>

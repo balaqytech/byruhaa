@@ -12,7 +12,7 @@ class BlogController extends Controller
 {
     public function index(): View
     {
-        return view('blog.index', [
+        return view('pages.public.blog.index', [
             'categories' => $this->visibleCategories(),
             'posts' => BlogPost::query()
                 ->publiclyVisible()
@@ -30,7 +30,7 @@ class BlogController extends Controller
 
         $post->loadMissing(['category', 'featuredImage', 'socialShareImage']);
 
-        return view('blog.show', [
+        return view('pages.public.blog.show', [
             'categories' => $this->visibleCategories(),
             'post' => $post,
             'title' => $post->meta_title ?: $post->title,
@@ -43,7 +43,7 @@ class BlogController extends Controller
     {
         abort_unless($category->is_visible, 404);
 
-        return view('blog.index', [
+        return view('pages.public.blog.index', [
             'categories' => $this->visibleCategories(),
             'currentCategory' => $category,
             'posts' => BlogPost::query()

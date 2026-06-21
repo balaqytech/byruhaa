@@ -28,7 +28,7 @@ test('family members page renders existing family members in a table', function 
         ]);
 
     $this->actingAs($customer, 'customer')
-        ->get(route('family-members.index'))
+        ->get(route('customer.family-members.index'))
         ->assertOk()
         ->assertSee('Salim Al Balushi')
         ->assertSee('Horizon School')
@@ -40,7 +40,7 @@ test('customer can create a family member from the panel modal action', function
     $customer = Customer::factory()->create();
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::family-members.index')
+    Livewire::test('pages::customer.family-members.index')
         ->set('name', 'Maha Al Harthy')
         ->set('birth_date', now()->subYears(12)->format('Y-m-d'))
         ->set('school_name', 'Future School')
@@ -67,7 +67,7 @@ test('customer can edit their family member from the panel modal action', functi
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::family-members.index')
+    Livewire::test('pages::customer.family-members.index')
         ->call('editFamilyMember', $familyMember->id)
         ->assertSet('editingFamilyMemberId', $familyMember->id)
         ->assertSet('name', 'Old Name')
@@ -95,7 +95,7 @@ test('bookings page renders existing bookings in a table', function () {
         ->create();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('bookings.index'))
+        ->get(route('customer.bookings.index'))
         ->assertOk()
         ->assertSee('BRH-10001')
         ->assertSee('Mountain Trip')
@@ -162,7 +162,7 @@ test('payments page renders customer installments payment attempts and refunds',
     Payment::factory()->for($otherInstallment, 'bookingInstallment')->create(['reference' => 'PAY-OTHER']);
 
     $this->actingAs($customer, 'customer')
-        ->get(route('payments.index'))
+        ->get(route('customer.payments.index'))
         ->assertOk()
         ->assertSee('BRH-PAY-1')
         ->assertSee('Sea Camp')
@@ -205,20 +205,20 @@ test('booking details page renders a compact contract overview for a single part
     $contract = $booking->familyMembers()->firstOrFail()->contract()->firstOrFail();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('bookings.show', $booking))
+        ->get(route('customer.bookings.show', $booking))
         ->assertOk()
         ->assertSee('BRH-20002')
         ->assertSee('Desert Camp')
         ->assertSee('Maha Al Harthy')
         ->assertSee(__('ui.actions.view_and_sign_contract'))
-        ->assertSee(route('bookings.contracts.show', [$booking, $contract]), false)
+        ->assertSee(route('customer.bookings.contracts.show', [$booking, $contract]), false)
         ->assertDontSee('Safety terms must be reviewed before signature.')
         ->assertDontSee('<canvas', false)
         ->assertSee('hgi-stroke', false)
         ->assertSee('hgi-contracts', false);
 
     $this->actingAs($customer, 'customer')
-        ->get(route('bookings.contracts.show', [$booking, $contract]))
+        ->get(route('customer.bookings.contracts.show', [$booking, $contract]))
         ->assertOk()
         ->assertSee(__('ui.bookings.contract_terms'))
         ->assertSee('Safety terms must be reviewed before signature.')

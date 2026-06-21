@@ -8,34 +8,34 @@
 
         <flux:header container class="sticky top-0 z-40 border-b border-emerald-900/10 bg-white/90 shadow-sm shadow-emerald-950/5 backdrop-blur dark:border-white/10 dark:bg-[#09221d]/90">
             <div class="flex min-h-16 w-full items-center gap-3">
-                <x-app-logo href="{{ route('dashboard') }}" wire:navigate />
+                <x-app-logo href="{{ route('customer.dashboard') }}" wire:navigate />
 
                 <flux:navbar class="ms-8 hidden gap-1 lg:flex">
-                    <flux:navbar.item :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                    <flux:navbar.item :href="route('customer.dashboard')" :current="request()->routeIs('customer.dashboard')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="home-01" class="text-lg" />
                             {{ __('ui.labels.dashboard') }}
                         </span>
                     </flux:navbar.item>
-                    <flux:navbar.item :href="route('events.index')" :current="request()->routeIs('events.*')" wire:navigate>
+                    <flux:navbar.item :href="route('customer.events.index')" :current="request()->routeIs('customer.events.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="calendar-03" class="text-lg" />
                             {{ __('ui.labels.events') }}
                         </span>
                     </flux:navbar.item>
-                    <flux:navbar.item :href="route('family-members.index')" :current="request()->routeIs('family-members.*')" wire:navigate>
+                    <flux:navbar.item :href="route('customer.family-members.index')" :current="request()->routeIs('customer.family-members.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="user-group" class="text-lg" />
                             {{ __('ui.labels.family') }}
                         </span>
                     </flux:navbar.item>
-                    <flux:navbar.item :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>
+                    <flux:navbar.item :href="route('customer.bookings.index')" :current="request()->routeIs('customer.bookings.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="contracts" class="text-lg" />
                             {{ __('ui.labels.bookings') }}
                         </span>
                     </flux:navbar.item>
-                    <flux:navbar.item :href="route('payments.index')" :current="request()->routeIs('payments.index')" wire:navigate>
+                    <flux:navbar.item :href="route('customer.payments.index')" :current="request()->routeIs('customer.payments.index')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="wallet-02" class="text-lg" />
                             {{ __('ui.labels.payments') }}
@@ -51,31 +51,31 @@
                     </flux:button>
 
                     <flux:menu>
-                        <flux:menu.item :href="route('dashboard')" wire:navigate>
+                        <flux:menu.item :href="route('customer.dashboard')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="home-01" class="text-lg" />
                                 {{ __('ui.labels.dashboard') }}
                             </span>
                         </flux:menu.item>
-                        <flux:menu.item :href="route('events.index')" wire:navigate>
+                        <flux:menu.item :href="route('customer.events.index')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="calendar-03" class="text-lg" />
                                 {{ __('ui.labels.events') }}
                             </span>
                         </flux:menu.item>
-                        <flux:menu.item :href="route('family-members.index')" wire:navigate>
+                        <flux:menu.item :href="route('customer.family-members.index')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="user-group" class="text-lg" />
                                 {{ __('ui.labels.family') }}
                             </span>
                         </flux:menu.item>
-                        <flux:menu.item :href="route('bookings.index')" wire:navigate>
+                        <flux:menu.item :href="route('customer.bookings.index')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="contracts" class="text-lg" />
                                 {{ __('ui.labels.bookings') }}
                             </span>
                         </flux:menu.item>
-                        <flux:menu.item :href="route('payments.index')" wire:navigate>
+                        <flux:menu.item :href="route('customer.payments.index')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="wallet-02" class="text-lg" />
                                 {{ __('ui.labels.payments') }}
@@ -98,7 +98,7 @@
 
                         <flux:menu.separator />
 
-                        <flux:menu.item :href="route('profile.edit')" wire:navigate>
+                        <flux:menu.item :href="route('customer.profile.edit')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="account-setting-01" class="text-lg" />
                                 {{ __('ui.labels.settings') }}

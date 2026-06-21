@@ -12,7 +12,7 @@ new #[Title('إعدادات المظهر')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('ui.appearance.settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('ui.appearance.heading')" :subheading="__('ui.appearance.subheading')">
+    <x-pages::customer.settings.layout :heading="__('ui.appearance.heading')" :subheading="__('ui.appearance.subheading')">
         <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
             <flux:radio value="light">
                 <span class="inline-flex items-center gap-2">
@@ -33,5 +33,5 @@ new #[Title('إعدادات المظهر')] class extends Component {
                 </span>
             </flux:radio>
         </flux:radio.group>
-    </x-pages::settings.layout>
+    </x-pages::customer.settings.layout>
 </section>

@@ -48,7 +48,7 @@ new #[Title('إعدادات الملف الشخصي')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('ui.profile.settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('ui.profile.heading')" :subheading="__('ui.profile.subheading')">
+    <x-pages::customer.settings.layout :heading="__('ui.profile.heading')" :subheading="__('ui.profile.subheading')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('ui.fields.name')" type="text" required autofocus autocomplete="name" />
             <flux:input wire:model="email" :label="__('ui.fields.email_address')" type="email" autocomplete="email" />
@@ -60,5 +60,5 @@ new #[Title('إعدادات الملف الشخصي')] class extends Component {
                 </flux:button>
             </div>
         </form>
-    </x-pages::settings.layout>
+    </x-pages::customer.settings.layout>
 </section>

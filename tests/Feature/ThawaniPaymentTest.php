@@ -92,7 +92,7 @@ test('booking page shows thawani payment action for the next installment', funct
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $installment->paymentSchedule->booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $installment->paymentSchedule->booking])
         ->assertSee(__('ui.payments.pay_with_thawani'))
         ->assertSee('First');
 });
@@ -102,7 +102,7 @@ test('booking page offers full payment by default without installment plans', fu
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
         ->assertSee(__('ui.payments.full_payment'))
         ->assertSee(__('ui.payments.pay_full_amount'))
         ->assertDontSee(__('ui.payments.no_plans'));
@@ -123,7 +123,7 @@ test('customer can initiate a full thawani payment by default', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
         ->call('payInFull')
         ->assertRedirect('https://uatcheckout.thawani.om/pay/checkout_full_payment?key=test_publishable_key');
 
@@ -158,7 +158,7 @@ test('failed full thawani payment shows an error and stores gateway details', fu
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
         ->call('payInFull')
         ->assertHasErrors('payment')
         ->assertSee(__('ui.messages.payment_gateway_unavailable'));
@@ -197,7 +197,7 @@ test('thawani success return marks the payment and installment paid', function (
 
     $this->actingAs($customer, 'customer')
         ->get(URL::signedRoute('payments.thawani.success', ['payment' => $payment]))
-        ->assertRedirect(route('bookings.show', $installment->paymentSchedule->booking));
+        ->assertRedirect(route('customer.bookings.show', $installment->paymentSchedule->booking));
 
     expect($payment->refresh())
         ->state->toBe(PaymentState::Paid)
@@ -231,7 +231,7 @@ test('thawani success return does not mark unpaid sessions paid', function () {
 
     $this->actingAs($customer, 'customer')
         ->get(URL::signedRoute('payments.thawani.success', ['payment' => $payment]))
-        ->assertRedirect(route('bookings.show', $installment->paymentSchedule->booking));
+        ->assertRedirect(route('customer.bookings.show', $installment->paymentSchedule->booking));
 
     expect($payment->refresh())
         ->state->toBe(PaymentState::Pending)
@@ -313,7 +313,7 @@ test('thawani cancel return cancels the payment attempt only', function () {
 
     $this->actingAs($customer, 'customer')
         ->get(URL::signedRoute('payments.thawani.cancel', ['payment' => $payment]))
-        ->assertRedirect(route('bookings.show', $installment->paymentSchedule->booking));
+        ->assertRedirect(route('customer.bookings.show', $installment->paymentSchedule->booking));
 
     expect($payment->refresh())
         ->state->toBe(PaymentState::Cancelled)

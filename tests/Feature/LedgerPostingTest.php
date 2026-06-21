@@ -92,7 +92,7 @@ test('paid thawani confirmation posts ledger entries once', function () {
 
     $this->actingAs($customer, 'customer')
         ->get(URL::signedRoute('payments.thawani.success', ['payment' => $payment]))
-        ->assertRedirect(route('bookings.show', $payment->bookingInstallment->paymentSchedule->booking));
+        ->assertRedirect(route('customer.bookings.show', $payment->bookingInstallment->paymentSchedule->booking));
 
     expect($payment->refresh())
         ->state->toBe(PaymentState::Paid)

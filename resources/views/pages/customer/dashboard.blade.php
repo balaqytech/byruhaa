@@ -15,11 +15,11 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3">
-                        <flux:button :href="route('events.index')" wire:navigate class="border-0 bg-amber-300 text-emerald-950 hover:bg-amber-200">
+                        <flux:button :href="route('customer.events.index')" wire:navigate class="border-0 bg-amber-300 text-emerald-950 hover:bg-amber-200">
                             <x-hugeicon name="calendar-03" class="text-lg" />
                             {{ __('ui.actions.view_events') }}
                         </flux:button>
-                        <a href="{{ route('family-members.index') }}" wire:navigate class="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-emerald-50 transition hover:bg-white/10 hover:text-white">
+                        <a href="{{ route('customer.family-members.index') }}" wire:navigate class="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-emerald-50 transition hover:bg-white/10 hover:text-white">
                             <x-hugeicon name="user-group" class="text-lg" />
                             {{ __('ui.actions.manage_family') }}
                         </a>
@@ -28,7 +28,7 @@
             </div>
 
             <div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-                <a href="{{ route('events.index') }}" wire:navigate class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
+                <a href="{{ route('customer.events.index') }}" wire:navigate class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
                     <div class="flex items-center gap-3">
                         <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-200">
                             <x-hugeicon name="calendar-03" class="text-xl" />
@@ -40,7 +40,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('family-members.index') }}" wire:navigate class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
+                <a href="{{ route('customer.family-members.index') }}" wire:navigate class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
                     <div class="flex items-center gap-3">
                         <span class="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-300/15 dark:text-amber-200">
                             <x-hugeicon name="user-group" class="text-xl" />
@@ -52,7 +52,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('bookings.index') }}" wire:navigate class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
+                <a href="{{ route('customer.bookings.index') }}" wire:navigate class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-700/30 hover:shadow-md dark:border-white/10 dark:bg-white/5">
                     <div class="flex items-center gap-3">
                         <span class="flex size-10 items-center justify-center rounded-xl bg-sky-100 text-sky-800 dark:bg-sky-300/15 dark:text-sky-200">
                             <x-hugeicon name="contracts" class="text-xl" />

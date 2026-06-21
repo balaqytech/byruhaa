@@ -87,7 +87,7 @@ new #[Title('Payments')] class extends Component {
                 </div>
             </div>
 
-            <flux:button :href="route('bookings.index')" wire:navigate variant="ghost" class="text-emerald-50 hover:bg-white/10 hover:text-white">
+            <flux:button :href="route('customer.bookings.index')" wire:navigate variant="ghost" class="text-emerald-50 hover:bg-white/10 hover:text-white">
                 <x-hugeicon name="contracts" class="text-lg" />
                 {{ __('ui.actions.view_bookings') }}
             </flux:button>
@@ -172,7 +172,7 @@ new #[Title('Payments')] class extends Component {
                             </div>
                         </div>
 
-                        <flux:button :href="route('bookings.show', $schedule->booking)" wire:navigate size="sm">
+                        <flux:button :href="route('customer.bookings.show', $schedule->booking)" wire:navigate size="sm">
                             <x-hugeicon name="arrow-left-02" class="text-base" />
                             {{ __('ui.actions.open') }}
                         </flux:button>

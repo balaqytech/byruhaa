@@ -157,7 +157,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                     </div>
                 </div>
 
-                <flux:button :href="route('bookings.index')" wire:navigate variant="ghost" class="text-emerald-50 hover:bg-white/10 hover:text-white">
+                <flux:button :href="route('customer.bookings.index')" wire:navigate variant="ghost" class="text-emerald-50 hover:bg-white/10 hover:text-white">
                     <x-hugeicon name="arrow-left-02" class="text-lg" />
                     {{ __('ui.actions.view_bookings') }}
                 </flux:button>
@@ -415,12 +415,12 @@ new #[Title('تفاصيل الحجز')] class extends Component {
 
                             <div class="flex flex-wrap gap-2 md:justify-end">
                                 @if ($contract->state instanceof AwaitingSignature)
-                                    <flux:button :href="route('bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm" variant="primary">
+                                    <flux:button :href="route('customer.bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm" variant="primary">
                                         <x-hugeicon name="signature" class="text-base" />
                                         {{ __('ui.actions.view_and_sign_contract') }}
                                     </flux:button>
                                 @else
-                                    <flux:button :href="route('bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm">
+                                    <flux:button :href="route('customer.bookings.contracts.show', [$booking, $contract])" wire:navigate size="sm">
                                         <x-hugeicon name="file-view" class="text-base" />
                                         {{ __('ui.actions.view_contract') }}
                                     </flux:button>

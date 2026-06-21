@@ -8,37 +8,37 @@
 
         <flux:sidebar sticky collapsible="mobile" class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
             <flux:sidebar.header>
-                <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
+                <x-app-logo :sidebar="true" href="{{ route('customer.dashboard') }}" wire:navigate />
                 <flux:sidebar.collapse class="lg:hidden" />
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
                 <flux:sidebar.group :heading="__('ui.labels.platform')" class="grid">
-                    <flux:sidebar.item :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                    <flux:sidebar.item :href="route('customer.dashboard')" :current="request()->routeIs('customer.dashboard')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="home-01" class="text-lg" />
                             {{ __('ui.labels.dashboard') }}
                         </span>
                     </flux:sidebar.item>
-                    <flux:sidebar.item :href="route('events.index')" :current="request()->routeIs('events.*')" wire:navigate>
+                    <flux:sidebar.item :href="route('customer.events.index')" :current="request()->routeIs('customer.events.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="calendar-03" class="text-lg" />
                             {{ __('ui.labels.events') }}
                         </span>
                     </flux:sidebar.item>
-                    <flux:sidebar.item :href="route('family-members.index')" :current="request()->routeIs('family-members.*')" wire:navigate>
+                    <flux:sidebar.item :href="route('customer.family-members.index')" :current="request()->routeIs('customer.family-members.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="user-group" class="text-lg" />
                             {{ __('ui.labels.family') }}
                         </span>
                     </flux:sidebar.item>
-                    <flux:sidebar.item :href="route('bookings.index')" :current="request()->routeIs('bookings.*')" wire:navigate>
+                    <flux:sidebar.item :href="route('customer.bookings.index')" :current="request()->routeIs('customer.bookings.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="contracts" class="text-lg" />
                             {{ __('ui.labels.bookings') }}
                         </span>
                     </flux:sidebar.item>
-                    <flux:sidebar.item :href="route('payments.index')" :current="request()->routeIs('payments.index')" wire:navigate>
+                    <flux:sidebar.item :href="route('customer.payments.index')" :current="request()->routeIs('customer.payments.index')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="wallet-02" class="text-lg" />
                             {{ __('ui.labels.payments') }}
@@ -85,7 +85,7 @@
                     <flux:menu.separator />
 
                     <flux:menu.radio.group>
-                        <flux:menu.item :href="route('profile.edit')" wire:navigate>
+                        <flux:menu.item :href="route('customer.profile.edit')" wire:navigate>
                             <span class="inline-flex items-center gap-2">
                                 <x-hugeicon name="account-setting-01" class="text-lg" />
                                 {{ __('ui.labels.settings') }}

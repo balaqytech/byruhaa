@@ -8,7 +8,7 @@ test('security settings page can be rendered', function () {
     $customer = Customer::factory()->create();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('security.edit'))
+        ->get(route('customer.security.edit'))
         ->assertOk();
 });
 
@@ -19,7 +19,7 @@ test('password can be updated', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::settings.security')
+    Livewire::test('pages::customer.settings.security')
         ->set('current_password', 'password')
         ->set('password', 'new-password')
         ->set('password_confirmation', 'new-password')
@@ -36,7 +36,7 @@ test('correct password must be provided to update password', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::settings.security')
+    Livewire::test('pages::customer.settings.security')
         ->set('current_password', 'wrong-password')
         ->set('password', 'new-password')
         ->set('password_confirmation', 'new-password')

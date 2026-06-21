@@ -21,7 +21,7 @@ test('customer can submit a booking request for multiple family members', functi
     $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('events.show', $event))
+        ->get(route('customer.events.show', $event))
         ->assertOk();
 
     $booking = Booking::create([
@@ -46,14 +46,14 @@ test('customer event views show the per family member price', function () {
     ]);
 
     $this->actingAs($customer, 'customer')
-        ->get(route('events.index'))
+        ->get(route('customer.events.index'))
         ->assertOk()
         ->assertSee('Mountain Trip')
         ->assertSee('data-omr-symbol', false)
         ->assertSee('12.500');
 
     $this->actingAs($customer, 'customer')
-        ->get(route('events.show', $event))
+        ->get(route('customer.events.show', $event))
         ->assertOk()
         ->assertSee(__('ui.events.price_per_family_member'))
         ->assertSee('data-omr-symbol', false)
@@ -70,7 +70,7 @@ test('booking submission stores a price snapshot', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::events.show', ['event' => $event])
+    Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
         ->call('book')
         ->assertHasNoErrors();
@@ -120,7 +120,7 @@ test('booking submission applies the largest eligible discount per family member
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::events.show', ['event' => $event])
+    Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
         ->call('book')
         ->assertHasNoErrors();
@@ -152,7 +152,7 @@ test('discount amount is capped at the booking subtotal', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::events.show', ['event' => $event])
+    Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
         ->call('book')
         ->assertHasNoErrors();
@@ -179,7 +179,7 @@ test('booking price snapshot does not change when event price or discount change
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::events.show', ['event' => $event])
+    Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
         ->call('book')
         ->assertHasNoErrors();

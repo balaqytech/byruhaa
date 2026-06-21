@@ -49,11 +49,11 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn () => view('pages::auth.login'));
-        Fortify::confirmPasswordView(fn () => view('pages::auth.confirm-password'));
-        Fortify::registerView(fn () => view('pages::auth.register'));
-        Fortify::resetPasswordView(fn () => view('pages::auth.reset-password'));
-        Fortify::requestPasswordResetLinkView(fn () => view('pages::auth.forgot-password'));
+        Fortify::loginView(fn () => view('pages::customer.auth.login'));
+        Fortify::confirmPasswordView(fn () => view('pages::customer.auth.confirm-password'));
+        Fortify::registerView(fn () => view('pages::customer.auth.register'));
+        Fortify::resetPasswordView(fn () => view('pages::customer.auth.reset-password'));
+        Fortify::requestPasswordResetLinkView(fn () => view('pages::customer.auth.forgot-password'));
     }
 
     private function configureAuthentication(): void

@@ -20,7 +20,7 @@
         </div>
         <flux:menu.separator />
         <flux:menu.radio.group>
-            <flux:menu.item :href="route('profile.edit')" wire:navigate>
+            <flux:menu.item :href="route('customer.profile.edit')" wire:navigate>
                 <span class="inline-flex items-center gap-2">
                     <x-hugeicon name="account-setting-01" class="text-lg" />
                     {{ __('ui.labels.settings') }}

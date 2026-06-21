@@ -24,7 +24,7 @@ new #[Title('الحجوزات')] class extends Component {
             <flux:subheading>{{ __('ui.bookings.subheading') }}</flux:subheading>
         </div>
 
-        <flux:button :href="route('events.index')" wire:navigate variant="outline">
+        <flux:button :href="route('customer.events.index')" wire:navigate variant="outline">
             <x-hugeicon name="calendar-03" class="text-lg" />
             {{ __('ui.actions.view_events') }}
         </flux:button>
@@ -53,7 +53,7 @@ new #[Title('الحجوزات')] class extends Component {
                             </flux:table.cell>
                             <flux:table.cell dir="ltr">{{ $booking->created_at->format('Y-m-d') }}</flux:table.cell>
                             <flux:table.cell align="end">
-                                <flux:button :href="route('bookings.show', $booking)" wire:navigate size="sm">
+                                <flux:button :href="route('customer.bookings.show', $booking)" wire:navigate size="sm">
                                     <x-hugeicon name="arrow-left-02" class="text-base" />
                                     {{ __('ui.actions.open') }}
                                 </flux:button>

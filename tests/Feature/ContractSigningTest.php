@@ -59,7 +59,7 @@ test('customer can sign a contract from the dedicated contract page action', fun
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
+    Livewire::test('pages::customer.bookings.contract', ['booking' => $booking, 'contract' => $contract])
         ->set('signedName', $customer->name)
         ->call('signContract', $signature)
         ->assertHasNoErrors();
@@ -93,7 +93,7 @@ test('booking show page lists participant contract cards without rendering contr
     $firstContract->sign('data:image/png;base64,'.base64_encode('fake-png-bytes'), $customer->name, '127.0.0.1');
 
     $this->actingAs($customer, 'customer')
-        ->get(route('bookings.show', $booking))
+        ->get(route('customer.bookings.show', $booking))
         ->assertOk()
         ->assertSee('First Participant')
         ->assertSee('Second Participant')
@@ -101,8 +101,8 @@ test('booking show page lists participant contract cards without rendering contr
         ->assertSee(__('ui.actions.view_and_sign_contract'))
         ->assertSee(__('ui.actions.download_pdf'))
         ->assertSee($firstContract->refresh()->signed_at->format('Y-m-d H:i'))
-        ->assertSee(route('bookings.contracts.show', [$booking, $firstContract]), false)
-        ->assertSee(route('bookings.contracts.show', [$booking, $secondContract]), false)
+        ->assertSee(route('customer.bookings.contracts.show', [$booking, $firstContract]), false)
+        ->assertSee(route('customer.bookings.contracts.show', [$booking, $secondContract]), false)
         ->assertDontSee('Inline body should only appear on the contract page.')
         ->assertDontSee('<canvas', false);
 });
@@ -122,7 +122,7 @@ test('customer can open their own participant contract page', function () {
     $contract = $bookingFamilyMember->contract()->firstOrFail();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('bookings.contracts.show', [$booking, $contract]))
+        ->get(route('customer.bookings.contracts.show', [$booking, $contract]))
         ->assertOk()
         ->assertSee('Own Participant')
         ->assertSee('Only this contract page renders these terms.')
@@ -147,7 +147,7 @@ test('customer cannot open a contract that does not belong to their booking', fu
     $otherContract = $otherBookingFamilyMember->contract()->firstOrFail();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('bookings.contracts.show', [$booking, $otherContract]))
+        ->get(route('customer.bookings.contracts.show', [$booking, $otherContract]))
         ->assertNotFound();
 });
 
@@ -169,7 +169,7 @@ test('signed contract can be downloaded from the dedicated contract page', funct
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
+    Livewire::test('pages::customer.bookings.contract', ['booking' => $booking, 'contract' => $contract])
         ->assertSee(__('ui.actions.download_pdf'))
         ->call('downloadContract')
         ->assertFileDownloaded("byruhaa-contract-{$booking->reference}-{$contract->id}.pdf");
@@ -325,7 +325,7 @@ test('required participant extra fields block contract signing', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $contract])
+    Livewire::test('pages::customer.bookings.contract', ['booking' => $booking, 'contract' => $contract])
         ->set('signedName', $customer->name)
         ->call('signContract', $signature)
         ->assertHasErrors(['participantExtraAnswers.medical_clearance']);
@@ -371,7 +371,7 @@ test('participant extra answers are saved on the correct contract and rendered f
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.contract', ['booking' => $booking, 'contract' => $firstContract])
+    Livewire::test('pages::customer.bookings.contract', ['booking' => $booking, 'contract' => $firstContract])
         ->set('participantExtraAnswers.swimming_level', 'Advanced')
         ->set('participantExtraAnswers.special_notes', 'Needs shade <script>')
         ->set('signedName', $customer->name)
@@ -387,7 +387,7 @@ test('participant extra answers are saved on the correct contract and rendered f
         ->participant_extra_completed_at->not->toBeNull()
         ->and($secondContract->refresh()->participant_extra_answers)->toBeNull();
 
-    $this->get(route('bookings.contracts.show', [$booking, $firstContract]))
+    $this->get(route('customer.bookings.contracts.show', [$booking, $firstContract]))
         ->assertOk()
         ->assertSee('Swimming level')
         ->assertSee('Advanced')
@@ -436,7 +436,7 @@ test('customer cannot select a payment plan before all contracts are signed', fu
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
         ->set('paymentPlanId', $paymentPlan->id)
         ->call('selectPaymentPlan')
         ->assertHasErrors('paymentPlanId');
@@ -486,7 +486,7 @@ test('customer can select a payment plan after all contracts are signed', functi
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
         ->assertSee('Three payments')
         ->set('paymentPlanId', $paymentPlan->id)
         ->call('selectPaymentPlan')
@@ -532,7 +532,7 @@ test('payment plan selection rejects invalid percentage totals', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::bookings.show', ['booking' => $booking])
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
         ->set('paymentPlanId', $paymentPlan->id)
         ->call('selectPaymentPlan')
         ->assertHasErrors('paymentPlanId');

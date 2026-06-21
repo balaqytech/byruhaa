@@ -81,7 +81,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
 
         Flux::toast(variant: 'success', text: __('ui.messages.booking_request_submitted'));
 
-        $this->redirectRoute('bookings.show', $booking, navigate: true);
+        $this->redirectRoute('customer.bookings.show', $booking, navigate: true);
     }
 
     public function with(): array
@@ -146,7 +146,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                         <x-hugeicon name="check-list" class="text-lg" />
                         {{ __('ui.actions.submit_request') }}
                     </flux:button>
-                    <flux:button :href="route('family-members.index')" wire:navigate>
+                    <flux:button :href="route('customer.family-members.index')" wire:navigate>
                         {{ __('ui.actions.manage_family') }}
                     </flux:button>
                 </div>

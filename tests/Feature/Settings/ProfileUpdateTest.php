@@ -7,7 +7,7 @@ test('profile page is displayed', function () {
     $customer = Customer::factory()->create();
 
     $this->actingAs($customer, 'customer')
-        ->get(route('profile.edit'))
+        ->get(route('customer.profile.edit'))
         ->assertOk();
 });
 
@@ -16,7 +16,7 @@ test('profile information can be updated', function () {
 
     $this->actingAs($customer, 'customer');
 
-    $response = Livewire::test('pages::settings.profile')
+    $response = Livewire::test('pages::customer.settings.profile')
         ->set('name', 'Test Customer')
         ->set('email', 'test@example.com')
         ->set('phone_number', null)
@@ -35,7 +35,7 @@ test('profile phone number is normalized', function () {
 
     $this->actingAs($customer, 'customer');
 
-    Livewire::test('pages::settings.profile')
+    Livewire::test('pages::customer.settings.profile')
         ->set('name', $customer->name)
         ->set('email', null)
         ->set('phone_number', '91234567')

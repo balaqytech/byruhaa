@@ -36,7 +36,7 @@ new #[Title('إعدادات الأمان')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('ui.security.settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('ui.security.heading')" :subheading="__('ui.security.subheading')">
+    <x-pages::customer.settings.layout :heading="__('ui.security.heading')" :subheading="__('ui.security.subheading')">
         <form wire:submit="updatePassword" class="my-6 w-full space-y-6">
             <flux:input wire:model="current_password" :label="__('ui.fields.current_password')" type="password" required autocomplete="current-password" viewable />
             <flux:input wire:model="password" :label="__('ui.fields.new_password')" type="password" required autocomplete="new-password" viewable />
@@ -46,5 +46,5 @@ new #[Title('إعدادات الأمان')] class extends Component {
                 {{ __('ui.actions.save_password') }}
             </flux:button>
         </form>
-    </x-pages::settings.layout>
+    </x-pages::customer.settings.layout>
 </section>

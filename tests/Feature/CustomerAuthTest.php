@@ -13,7 +13,7 @@ test('customers can register with email', function () {
     ]);
 
     $response->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('customer.dashboard', absolute: false));
 
     $this->assertAuthenticated('customer');
     expect(Customer::where('email', 'mona@example.com')->exists())->toBeTrue();
@@ -38,7 +38,7 @@ test('customers can register and login with an omani phone number', function () 
         'login' => '91234567',
         'password' => 'password',
     ])->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect(route('customer.dashboard', absolute: false));
 
     $this->assertAuthenticatedAs($customer, 'customer');
 });
