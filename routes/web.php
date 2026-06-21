@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
+
+Route::get('blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('blog/category/{category:slug}', [BlogController::class, 'category'])->name('blog.category');
+Route::get('blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::middleware('signed')->group(function () {
     Route::get('payments/thawani/{payment}/success', [ThawaniPaymentReturnController::class, 'success'])->name('payments.thawani.success');

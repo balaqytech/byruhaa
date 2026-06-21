@@ -145,7 +145,7 @@ new #[Title('العقد')] class extends Component {
             <flux:heading>{{ __('ui.bookings.contract_terms') }}</flux:heading>
         </div>
 
-        <div class="prose max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
+        <div class="prose prose-zinc max-w-none text-sm leading-7 text-emerald-950 prose-headings:text-emerald-800 prose-p:my-2 prose-ul:my-2 dark:prose-invert dark:text-emerald-50/90" dir="rtl">
             {!! $contract->contract_html !!}
         </div>
 

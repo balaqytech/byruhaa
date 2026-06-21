@@ -117,7 +117,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
     <div class="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div class="space-y-6">
             <div class="rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5">
-                <div class="prose max-w-none dark:prose-invert">
+                <div class="prose prose-zinc max-w-none dark:prose-invert prose-img:rounded-lg prose-a:text-emerald-700 dark:prose-a:text-emerald-300">
                     {!! $event->description_html !!}
                 </div>
             </div>

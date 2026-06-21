@@ -40,6 +40,11 @@ class BlogPostCategory extends Model
         return $query->where('is_visible', true);
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     /**
      * @return array<string, string>
      */

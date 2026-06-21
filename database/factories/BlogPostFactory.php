@@ -30,6 +30,7 @@ class BlogPostFactory extends Factory
             'content' => '<p>'.fake()->paragraph().'</p>',
             'featured_image_path' => null,
             'featured_image_id' => null,
+            'social_share_image_id' => null,
             'status' => BlogPostStatus::Draft,
             'published_at' => null,
             'meta_title' => fake()->optional()->sentence(4),

@@ -74,6 +74,16 @@ return [
         'subheading' => 'Track event booking requests and contracts.',
     ],
 
+    'blog' => [
+        'all_posts' => 'All posts',
+        'categories' => 'Categories',
+        'empty' => 'No published posts are available right now.',
+        'heading' => 'Blog',
+        'published_at' => 'Published :date',
+        'read_more' => 'Read more',
+        'subheading' => 'Stories, updates, and useful notes from Byruhaa.',
+    ],
+
     'dashboard' => [
         'bookings_description' => 'Track approvals, signatures, and downloadable contracts.',
         'events_description' => 'Browse published Byruhaa events.',
@@ -130,6 +140,7 @@ return [
         'event' => 'Event',
         'events' => 'Events',
         'family' => 'Family',
+        'blog' => 'Blog',
         'payments' => 'Payments',
         'no' => 'No',
         'platform' => 'Platform',

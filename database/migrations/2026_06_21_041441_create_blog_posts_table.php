@@ -20,6 +20,7 @@ return new class extends Migration
             $table->longText('content');
             $table->string('featured_image_path')->nullable();
             $table->foreignId('featured_image_id')->nullable()->constrained('media_files')->nullOnDelete();
+            $table->foreignId('social_share_image_id')->nullable()->constrained('media_files')->nullOnDelete();
             $table->string('status')->default('draft');
             $table->timestamp('published_at')->nullable();
             $table->string('meta_title')->nullable();

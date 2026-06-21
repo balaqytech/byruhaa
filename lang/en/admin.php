@@ -123,6 +123,18 @@ return [
         ],
     ],
 
+    'blog_post_form' => [
+        'sections' => [
+            'content' => 'Content',
+            'media' => 'Media',
+            'publishing' => 'Publishing',
+            'seo' => 'SEO',
+        ],
+        'help' => [
+            'social_share_image' => 'Used for social previews. Falls back to the featured image when empty.',
+        ],
+    ],
+
     'participant_extra_fields' => [
         'heading' => 'Participant extra fields',
         'key' => 'Key',
@@ -251,6 +263,7 @@ return [
         'seats' => 'Seats',
         'sequence' => 'Sequence',
         'slug' => 'Slug',
+        'social_share_image' => 'Social share image',
         'sort_order' => 'Sort order',
         'source' => 'Source',
         'starts_at' => 'Starts at',

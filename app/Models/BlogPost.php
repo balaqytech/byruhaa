@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Slimani\MediaManager\Concerns\InteractsWithMediaFiles;
 use Slimani\MediaManager\Form\RichEditor\MediaManagerRichContentPlugin;
 use Slimani\MediaManager\Models\File;
 
@@ -20,6 +19,7 @@ use Slimani\MediaManager\Models\File;
  * @property int $id
  * @property int|null $blog_post_category_id
  * @property int|null $featured_image_id
+ * @property int|null $social_share_image_id
  * @property string $title
  * @property string $slug
  * @property string|null $excerpt
@@ -30,13 +30,12 @@ use Slimani\MediaManager\Models\File;
  * @property string|null $meta_title
  * @property string|null $meta_description
  */
-#[Fillable(['blog_post_category_id', 'title', 'slug', 'excerpt', 'content', 'featured_image_path', 'featured_image_id', 'status', 'published_at', 'meta_title', 'meta_description'])]
+#[Fillable(['blog_post_category_id', 'title', 'slug', 'excerpt', 'content', 'featured_image_path', 'featured_image_id', 'social_share_image_id', 'status', 'published_at', 'meta_title', 'meta_description'])]
 class BlogPost extends Model implements HasRichContent
 {
     /** @use HasFactory<BlogPostFactory> */
     use HasFactory;
 
-    use InteractsWithMediaFiles;
     use InteractsWithRichContent;
 
     /**
@@ -68,7 +67,15 @@ class BlogPost extends Model implements HasRichContent
      */
     public function featuredImage(): BelongsTo
     {
-        return $this->mediaFile('featured_image_id');
+        return $this->belongsTo(File::class, 'featured_image_id');
+    }
+
+    /**
+     * @return BelongsTo<File, $this>
+     */
+    public function socialShareImage(): BelongsTo
+    {
+        return $this->belongsTo(File::class, 'social_share_image_id');
     }
 
     /**
@@ -81,6 +88,38 @@ class BlogPost extends Model implements HasRichContent
             ->where('status', BlogPostStatus::Published->value)
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
+    }
+
+    /**
+     * @param  Builder<BlogPost>  $query
+     * @return Builder<BlogPost>
+     */
+    public function scopePubliclyVisible(Builder $query): Builder
+    {
+        return $query
+            ->published()
+            ->where(function (Builder $query): void {
+                $query
+                    ->whereNull('blog_post_category_id')
+                    ->orWhereHas('category', fn (Builder $query): Builder => $query->visible());
+            });
+    }
+
+    public function socialShareImageUrl(): ?string
+    {
+        return $this->socialShareImage?->getUrl('preview')
+            ?? $this->featuredImageUrl();
+    }
+
+    public function featuredImageUrl(): ?string
+    {
+        return $this->featuredImage?->getUrl('preview')
+            ?? (filled($this->featured_image_path) ? asset($this->featured_image_path) : null);
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
     }
 
     /**
