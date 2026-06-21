@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\User;
 
@@ -48,6 +49,11 @@ return [
             'driver' => 'session',
             'provider' => 'customers',
         ],
+
+        'affiliate' => [
+            'driver' => 'session',
+            'provider' => 'affiliates',
+        ],
     ],
 
     /*
@@ -76,6 +82,11 @@ return [
         'customers' => [
             'driver' => 'eloquent',
             'model' => Customer::class,
+        ],
+
+        'affiliates' => [
+            'driver' => 'eloquent',
+            'model' => Affiliate::class,
         ],
 
         // 'users' => [
@@ -113,6 +124,13 @@ return [
 
         'customers' => [
             'provider' => 'customers',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
+        'affiliates' => [
+            'provider' => 'affiliates',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
             'expire' => 60,
             'throttle' => 60,

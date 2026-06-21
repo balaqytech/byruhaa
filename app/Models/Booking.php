@@ -114,6 +114,14 @@ class Booking extends Model
     }
 
     /**
+     * @return HasOne<AffiliateReferral, $this>
+     */
+    public function affiliateReferral(): HasOne
+    {
+        return $this->hasOne(AffiliateReferral::class);
+    }
+
+    /**
      * @return HasManyThrough<BookingInstallment, BookingPaymentSchedule, $this>
      */
     public function installments(): HasManyThrough

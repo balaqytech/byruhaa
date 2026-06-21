@@ -3,6 +3,7 @@
 use App\Actions\CreateCustomerBooking;
 use App\Enums\EventStatus;
 use App\Models\Event;
+use App\Services\AffiliateAttribution;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
@@ -21,7 +22,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
         $this->event = $event;
     }
 
-    public function book(CreateCustomerBooking $createCustomerBooking): void
+    public function book(CreateCustomerBooking $createCustomerBooking, AffiliateAttribution $affiliateAttribution): void
     {
         $customer = Auth::guard('customer')->user();
         $customer->ensureProfileIsComplete('familyMemberIds');
@@ -31,10 +32,14 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
             'familyMemberIds.*' => ['integer', 'distinct'],
         ]);
 
-        $booking = $createCustomerBooking->execute($customer, [
-            'event_id' => $this->event->id,
-            'family_member_ids' => $validated['familyMemberIds'],
-        ]);
+        $booking = $createCustomerBooking->execute(
+            $customer,
+            [
+                'event_id' => $this->event->id,
+                'family_member_ids' => $validated['familyMemberIds'],
+            ],
+            $affiliateAttribution->current(),
+        );
 
         Flux::toast(variant: 'success', text: __('ui.messages.booking_request_submitted'));
 

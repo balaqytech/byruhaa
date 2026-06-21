@@ -2,12 +2,15 @@
 
 namespace App\Actions;
 
+use App\Enums\AffiliateStatus;
 use App\Enums\EventStatus;
+use App\Models\Affiliate;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -17,12 +20,13 @@ class CreateCustomerBooking
 
     /**
      * @param  array{event_id: int, family_member_ids: array<int, int>}  $data
+     * @param  array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null  $affiliateAttribution
      */
-    public function execute(Customer $customer, array $data): Booking
+    public function execute(Customer $customer, array $data, ?array $affiliateAttribution = null): Booking
     {
         $customer->ensureProfileIsComplete('family_member_ids');
 
-        return DB::transaction(function () use ($customer, $data): Booking {
+        return DB::transaction(function () use ($customer, $data, $affiliateAttribution): Booking {
             $event = Event::query()
                 ->whereKey($data['event_id'])
                 ->where('status', EventStatus::Published)
@@ -47,8 +51,42 @@ class CreateCustomerBooking
                 ]);
             }
 
+            $this->createAffiliateReferral($booking, $affiliateAttribution);
+
             return $booking->load(['event', 'familyMembers.familyMember', 'paymentSchedule.installments']);
         });
+    }
+
+    /**
+     * @param  array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null  $affiliateAttribution
+     */
+    private function createAffiliateReferral(Booking $booking, ?array $affiliateAttribution): void
+    {
+        if ($affiliateAttribution === null) {
+            return;
+        }
+
+        if (now()->greaterThanOrEqualTo(Carbon::parse($affiliateAttribution['expires_at']))) {
+            return;
+        }
+
+        $affiliate = Affiliate::query()
+            ->whereKey($affiliateAttribution['affiliate_id'])
+            ->where('status', AffiliateStatus::Approved->value)
+            ->first();
+
+        if (! $affiliate instanceof Affiliate) {
+            return;
+        }
+
+        $booking->affiliateReferral()->create([
+            'affiliate_id' => $affiliate->id,
+            'affiliate_code' => $affiliateAttribution['code'],
+            'affiliate_name' => $affiliateAttribution['name'],
+            'captured_at' => $affiliateAttribution['captured_at'],
+            'expires_at' => $affiliateAttribution['expires_at'],
+            'attributed_at' => now(),
+        ]);
     }
 
     /**

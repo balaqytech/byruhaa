@@ -15,12 +15,14 @@ class ConfirmThawaniPayment
     public function __construct(
         private PaymentGatewayManager $paymentGateways,
         private PostPaymentLedgerTransaction $postPaymentLedgerTransaction,
+        private PostAffiliateCommissionForPayment $postAffiliateCommissionForPayment,
     ) {}
 
     public function confirm(Payment $payment): Payment
     {
         if ($payment->state === PaymentState::Paid) {
             $this->postPaymentLedgerTransaction->execute($payment);
+            $this->postAffiliateCommissionForPayment->execute($payment);
 
             return $payment;
         }
@@ -80,6 +82,7 @@ class ConfirmThawaniPayment
                 ])->save();
 
                 $this->postPaymentLedgerTransaction->execute($payment);
+                $this->postAffiliateCommissionForPayment->execute($payment);
             }
 
             return $payment->refresh();
