@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Bookings\Tables;
 use App\Models\Booking;
 use App\Models\User;
 use App\Services\BookingApprovalService;
-use App\States\Booking\BookingState;
 use App\States\Booking\Cancelled;
 use App\States\Booking\PendingReview;
 use App\States\Booking\Rejected;
@@ -39,7 +38,6 @@ class BookingsTable
                     ->counts('familyMembers'),
                 TextColumn::make('state')
                     ->label(__('admin.fields.state'))
-                    ->formatStateUsing(fn (mixed $state): string => $state instanceof BookingState ? $state->label() : (string) $state)
                     ->badge(),
                 TextColumn::make('created_at')
                     ->label(__('admin.fields.created_at'))

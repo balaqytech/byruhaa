@@ -6,8 +6,13 @@ class Cancelled extends BookingState
 {
     public static string $name = 'cancelled';
 
-    public function label(): string
+    public function getLabel(): string
     {
         return __('admin.statuses.cancelled');
+    }
+
+    public function getColor(): string
+    {
+        return 'gray';
     }
 }

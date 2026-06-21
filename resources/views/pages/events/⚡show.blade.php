@@ -99,7 +99,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
     <div class="rounded-2xl bg-emerald-900 p-6 text-white shadow-sm md:p-8">
         <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div class="space-y-3">
-                <span class="w-fit rounded-full border border-amber-300/30 bg-amber-300/15 px-3 py-1 text-sm font-medium text-amber-100">{{ trans()->has("admin.event_types.{$event->type}") ? __("admin.event_types.{$event->type}") : ucfirst($event->type) }}</span>
+                <span class="w-fit rounded-full border border-amber-300/30 bg-amber-300/15 px-3 py-1 text-sm font-medium text-amber-100">{{ $event->type->getLabel() }}</span>
                 <flux:heading size="xl" class="text-white">{{ $event->name }}</flux:heading>
                 <flux:text class="text-emerald-50">{{ $event->location }} · <span dir="ltr">{{ $event->starts_at?->format('Y-m-d H:i') ?? __('ui.events.date_to_be_announced') }}</span></flux:text>
             </div>

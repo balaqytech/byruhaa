@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Actions\ConfirmThawaniPayment;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Models\Payment;
 use Illuminate\Console\Attributes\Description;
@@ -21,7 +22,7 @@ class ReconcileThawaniPayments extends Command
     {
         $limit = max(1, (int) $this->option('limit'));
         $payments = Payment::query()
-            ->where('provider', 'thawani')
+            ->where('provider', PaymentProvider::Thawani->value)
             ->where('state', PaymentState::Pending->value)
             ->whereNotNull('provider_session_id')
             ->oldest()

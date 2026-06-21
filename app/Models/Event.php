@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\EventStatus;
+use App\Enums\EventType;
 use App\States\Booking\Approved;
 use Brick\Money\Money;
 use Database\Factories\EventFactory;
@@ -17,7 +18,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $slug
- * @property string $type
+ * @property EventType $type
  * @property EventStatus $status
  * @property string|null $excerpt
  * @property string|null $description_html
@@ -102,6 +103,7 @@ class Event extends Model
     {
         return [
             'status' => EventStatus::class,
+            'type' => EventType::class,
             'participant_extra_fields' => 'array',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',

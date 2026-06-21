@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Payments\Tables;
 
 use App\Actions\RefundPayment;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Models\Payment;
@@ -70,7 +71,6 @@ class PaymentsTable
                     ->formatStateUsing(fn (int $state, Payment $record): string => MoneyFormatter::baisa($state, $record->currency)),
                 TextColumn::make('state')
                     ->label(__('admin.fields.state'))
-                    ->formatStateUsing(fn (PaymentState $state): string => $state->label())
                     ->badge()
                     ->sortable(),
                 TextColumn::make('provider_payment_status')
@@ -91,12 +91,10 @@ class PaymentsTable
             ->filters([
                 SelectFilter::make('state')
                     ->label(__('admin.fields.state'))
-                    ->options(self::paymentStateOptions()),
+                    ->options(PaymentState::class),
                 SelectFilter::make('provider')
                     ->label(__('admin.fields.provider'))
-                    ->options([
-                        'thawani' => 'Thawani',
-                    ]),
+                    ->options(PaymentProvider::class),
                 Filter::make('refundable')
                     ->label(__('admin.filters.refundable'))
                     ->query(fn (Builder $query): Builder => $query
@@ -177,15 +175,5 @@ class PaymentsTable
                     ->success()
                     ->send();
             });
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function paymentStateOptions(): array
-    {
-        return collect(PaymentState::cases())
-            ->mapWithKeys(fn (PaymentState $state): array => [$state->value => $state->label()])
-            ->all();
     }
 }

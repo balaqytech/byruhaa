@@ -5,6 +5,9 @@ namespace App\Filament\Resources\Events;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
+use App\Filament\Resources\Events\RelationManagers\BookingsRelationManager;
+use App\Filament\Resources\Events\RelationManagers\DiscountsRelationManager;
+use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager;
 use App\Filament\Resources\Events\Schemas\EventForm;
 use App\Filament\Resources\Events\Tables\EventsTable;
 use App\Models\Event;
@@ -48,7 +51,9 @@ class EventResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            DiscountsRelationManager::class,
+            PaymentPlansRelationManager::class,
+            BookingsRelationManager::class,
         ];
     }
 

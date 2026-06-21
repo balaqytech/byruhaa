@@ -165,10 +165,10 @@ class RefundPayment
 
     private function gateway(Payment $payment): PaymentGateway
     {
-        $gateway = $this->paymentGateways->driver($payment->provider);
+        $gateway = $this->paymentGateways->driver($payment->provider->value);
 
         if (! $gateway instanceof PaymentGateway) {
-            throw new RuntimeException("Payment provider [{$payment->provider}] is not supported.");
+            throw new RuntimeException("Payment provider [{$payment->provider->value}] is not supported.");
         }
 
         return $gateway;

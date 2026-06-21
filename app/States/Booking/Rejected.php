@@ -6,8 +6,13 @@ class Rejected extends BookingState
 {
     public static string $name = 'rejected';
 
-    public function label(): string
+    public function getLabel(): string
     {
         return __('admin.statuses.rejected');
+    }
+
+    public function getColor(): string
+    {
+        return 'danger';
     }
 }

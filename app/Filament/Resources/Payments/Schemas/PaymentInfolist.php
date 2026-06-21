@@ -2,13 +2,9 @@
 
 namespace App\Filament\Resources\Payments\Schemas;
 
-use App\Enums\BookingInstallmentState;
-use App\Enums\PaymentState;
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
-use App\Filament\Resources\PaymentRefunds\PaymentRefundResource;
 use App\Models\Payment;
-use App\Models\PaymentRefund;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -37,7 +33,6 @@ class PaymentInfolist
                                             ->copyable(),
                                         TextEntry::make('state')
                                             ->label(__('admin.fields.state'))
-                                            ->formatStateUsing(fn (PaymentState $state): string => $state->label())
                                             ->badge(),
                                         TextEntry::make('provider')
                                             ->label(__('admin.fields.provider'))
@@ -97,23 +92,7 @@ class PaymentInfolist
                                             ->date(),
                                         TextEntry::make('bookingInstallment.state')
                                             ->label(__('admin.fields.installment_state'))
-                                            ->formatStateUsing(fn (BookingInstallmentState $state): string => $state->label())
                                             ->badge(),
-                                    ]),
-                            ]),
-                        Tab::make(__('admin.resources.payment_refunds.plural_label'))
-                            ->schema([
-                                Section::make(__('admin.resources.payment_refunds.plural_label'))
-                                    ->schema([
-                                        TextEntry::make('refunds')
-                                            ->label(__('admin.resources.payment_refunds.plural_label'))
-                                            ->state(fn (Payment $record): array => $record->refunds
-                                                ->map(fn (PaymentRefund $refund): string => self::refundSummary($refund))
-                                                ->all())
-                                            ->listWithLineBreaks()
-                                            ->bulleted()
-                                            ->placeholder('-')
-                                            ->columnSpanFull(),
                                     ]),
                             ]),
                         Tab::make(__('admin.resources.ledger_transactions.label'))
@@ -156,14 +135,6 @@ class PaymentInfolist
                             ]),
                     ]),
             ]);
-    }
-
-    private static function refundSummary(PaymentRefund $refund): string
-    {
-        $amount = MoneyFormatter::baisa($refund->amount_baisa, $refund->currency);
-        $url = PaymentRefundResource::getUrl('view', ['record' => $refund]);
-
-        return "{$refund->reference} | {$amount} | {$refund->state->label()} | {$refund->reason} | {$url}";
     }
 
     /**

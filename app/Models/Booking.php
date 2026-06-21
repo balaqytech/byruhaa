@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -110,6 +111,15 @@ class Booking extends Model
     public function paymentSchedule(): HasOne
     {
         return $this->hasOne(BookingPaymentSchedule::class);
+    }
+
+    /**
+     * @return HasManyThrough<BookingInstallment, BookingPaymentSchedule, $this>
+     */
+    public function installments(): HasManyThrough
+    {
+        return $this->hasManyThrough(BookingInstallment::class, BookingPaymentSchedule::class)
+            ->orderBy('sequence');
     }
 
     public function hasSignedContracts(): bool

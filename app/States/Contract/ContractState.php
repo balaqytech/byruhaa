@@ -3,15 +3,24 @@
 namespace App\States\Contract;
 
 use App\Models\EventContract;
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasLabel;
 use Spatie\ModelStates\State;
 use Spatie\ModelStates\StateConfig;
 
 /**
  * @extends State<EventContract>
  */
-abstract class ContractState extends State
+abstract class ContractState extends State implements HasColor, HasLabel
 {
-    abstract public function label(): string;
+    abstract public function getLabel(): string;
+
+    abstract public function getColor(): string;
+
+    public function label(): string
+    {
+        return $this->getLabel();
+    }
 
     public static function config(): StateConfig
     {

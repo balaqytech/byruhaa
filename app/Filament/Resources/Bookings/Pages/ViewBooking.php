@@ -11,6 +11,16 @@ class ViewBooking extends ViewRecord
 {
     protected static string $resource = BookingResource::class;
 
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return __('admin.resources.bookings.label');
+    }
+
     public function mount(int|string $record): void
     {
         parent::mount($record);

@@ -11,6 +11,16 @@ class EditCustomer extends EditRecord
 {
     protected static string $resource = CustomerResource::class;
 
+    public function hasCombinedRelationManagerTabsWithContent(): bool
+    {
+        return true;
+    }
+
+    public function getContentTabLabel(): ?string
+    {
+        return __('admin.resources.customers.label');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Events\Tables;
 
+use App\Enums\EventStatus;
 use App\Models\Event;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
@@ -44,11 +45,7 @@ class EventsTable
             ->filters([
                 SelectFilter::make('status')
                     ->label(__('admin.fields.status'))
-                    ->options([
-                        'draft' => __('admin.statuses.draft'),
-                        'published' => __('admin.statuses.published'),
-                        'archived' => __('admin.statuses.archived'),
-                    ]),
+                    ->options(EventStatus::class),
             ])
             ->recordActions([
                 EditAction::make(),

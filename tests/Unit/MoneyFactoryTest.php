@@ -1,6 +1,7 @@
 <?php
 
 use App\Support\Money\MoneyFactory;
+use App\Support\MoneyFormatter;
 use Brick\Math\Exception\RoundingNecessaryException;
 use Brick\Math\RoundingMode;
 use Brick\Money\Money;
@@ -36,6 +37,10 @@ test('it formats omr with three decimals without float math', function (int $bai
     'one baisa' => [1, 'OMR 0.001'],
     'negative one baisa' => [-1, 'OMR -0.001'],
 ]);
+
+test('money formatter defaults missing currencies to omr', function () {
+    expect(MoneyFormatter::baisa(2500, null))->toBe('OMR 2.500');
+});
 
 test('it requires explicit rounding for more than three omr decimals', function () {
     expect(fn () => MoneyFactory::omrStringToBaisa('1.0005'))

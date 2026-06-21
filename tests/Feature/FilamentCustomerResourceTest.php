@@ -4,13 +4,23 @@ use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Filament\Resources\Bookings\BookingResource;
+use App\Filament\Resources\Bookings\Pages\ViewBooking;
+use App\Filament\Resources\Bookings\RelationManagers\FamilyMembersRelationManager as BookingFamilyMembersRelationManager;
+use App\Filament\Resources\Bookings\RelationManagers\InstallmentsRelationManager as BookingInstallmentsRelationManager;
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\Customers\Pages\EditCustomer;
+use App\Filament\Resources\Customers\RelationManagers\BookingsRelationManager as CustomerBookingsRelationManager;
+use App\Filament\Resources\Customers\RelationManagers\FamilyMembersRelationManager as CustomerFamilyMembersRelationManager;
 use App\Filament\Resources\Discounts\DiscountResource;
 use App\Filament\Resources\Discounts\Pages\CreateDiscount;
 use App\Filament\Resources\EventPaymentPlans\EventPaymentPlanResource;
 use App\Filament\Resources\EventPaymentPlans\Pages\CreateEventPaymentPlan;
 use App\Filament\Resources\Events\EventResource;
 use App\Filament\Resources\Events\Pages\CreateEvent;
+use App\Filament\Resources\Events\Pages\EditEvent;
+use App\Filament\Resources\Events\RelationManagers\BookingsRelationManager as EventBookingsRelationManager;
+use App\Filament\Resources\Events\RelationManagers\DiscountsRelationManager as EventDiscountsRelationManager;
+use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager as EventPaymentPlansRelationManager;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
@@ -146,14 +156,36 @@ test('staff can view a booking with members contracts payments and refunds in fi
         ->assertSee('Approved after document check.')
         ->assertSee('Sibling discount')
         ->assertSee('OMR 5.000')
+        ->assertSee('Family members')
+        ->assertSee('Installments');
+
+    $this->actingAs($staff, 'web')
+        ->get(BookingResource::getUrl('edit', ['record' => $booking]))
+        ->assertOk()
+        ->assertSee(__('admin.resources.bookings.label'))
+        ->assertSee('Family members')
+        ->assertSee('Installments');
+
+    Livewire::test(BookingFamilyMembersRelationManager::class, [
+        'ownerRecord' => $booking,
+        'pageClass' => ViewBooking::class,
+    ])
+        ->assertCanSeeTableRecords([$bookingFamilyMember])
         ->assertSee('Maha Student')
         ->assertSee('Future School')
         ->assertSee(__('admin.statuses.signed'))
-        ->assertSee('Two payments')
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder([]);
+
+    Livewire::test(BookingInstallmentsRelationManager::class, [
+        'ownerRecord' => $booking,
+        'pageClass' => ViewBooking::class,
+    ])
+        ->assertCanSeeTableRecords([$installment])
         ->assertSee('Deposit')
-        ->assertSee('PAY-VIEW-1')
-        ->assertSee('REF-VIEW-1')
-        ->assertSee('Partial adjustment');
+        ->assertSee('OMR 2.500')
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder([]);
 });
 
 test('staff can view event prices in filament', function () {
@@ -195,11 +227,17 @@ test('staff can save participant extra fields on an event', function () {
             'slug' => 'participant-camp',
             'type' => 'camp',
             'status' => 'published',
+            'location' => 'Muscat',
             'seat_capacity' => 20,
             'price' => '12.000',
             'currency' => 'OMR',
             'minimum_age' => 9,
             'maximum_age' => 16,
+            'starts_at' => '2026-07-01 09:00:00',
+            'ends_at' => '2026-07-01 15:00:00',
+            'excerpt' => 'A concise public summary.',
+            'description_html' => '<p>Detailed public content.</p>',
+            'contract_terms_html' => '<p>Participant contract terms.</p>',
             'participant_extra_fields' => [
                 [
                     'key' => 'swimming_level',
@@ -221,7 +259,131 @@ test('staff can save participant extra fields on an event', function () {
         ->toHaveCount(1)
         ->and($event->participant_extra_fields[0]['key'])->toBe('swimming_level')
         ->and($event->participant_extra_fields[0]['required'])->toBeTrue()
-        ->and($event->price_baisa)->toBe(12000);
+        ->and($event->price_baisa)->toBe(12000)
+        ->and($event->location)->toBe('Muscat')
+        ->and($event->excerpt)->toBe('A concise public summary.')
+        ->and($event->description_html)->toContain('Detailed public content')
+        ->and($event->contract_terms_html)->toContain('Participant contract terms');
+});
+
+test('staff can edit all event wizard fields including price and participant fields', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create([
+        'slug' => 'editable-event',
+        'price_baisa' => 5000,
+    ]);
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(EditEvent::class, ['record' => $event->getRouteKey()])
+        ->fillForm([
+            'name' => 'Edited Participant Camp',
+            'slug' => 'edited-participant-camp',
+            'type' => 'festival',
+            'status' => 'draft',
+            'location' => 'Salalah',
+            'seat_capacity' => 25,
+            'price' => '10.500',
+            'currency' => 'OMR',
+            'minimum_age' => 10,
+            'maximum_age' => 17,
+            'starts_at' => '2026-08-01 09:00:00',
+            'ends_at' => '2026-08-03 15:00:00',
+            'excerpt' => 'Updated public summary.',
+            'description_html' => '<p>Updated detailed content.</p>',
+            'contract_terms_html' => '<p>Updated contract terms.</p>',
+            'participant_extra_fields' => [
+                [
+                    'key' => 'shirt_size',
+                    'label' => 'Shirt size',
+                    'type' => 'text',
+                    'required' => false,
+                    'placeholder' => 'Size',
+                    'help_text' => 'Used for kit preparation.',
+                ],
+            ],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $event->refresh();
+
+    expect($event->name)->toBe('Edited Participant Camp')
+        ->and($event->type->value)->toBe('festival')
+        ->and($event->status->value)->toBe('draft')
+        ->and($event->price_baisa)->toBe(10500)
+        ->and($event->participant_extra_fields)->toHaveCount(1)
+        ->and($event->participant_extra_fields[0]['key'])->toBe('shirt_size');
+});
+
+test('event edit page combines form and relation manager tabs', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create(['name' => 'Tabbed Event']);
+    $discount = Discount::factory()->for($event)->create(['name' => 'Tabbed Discount']);
+    $paymentPlan = EventPaymentPlan::factory()->for($event)->create(['name' => 'Tabbed Plan']);
+    $booking = Booking::factory()->for($event)->create(['reference' => 'BRH-EVENT-TAB']);
+
+    $this->actingAs($staff, 'web')
+        ->get(EventResource::getUrl('edit', ['record' => $event]))
+        ->assertOk()
+        ->assertSee(__('admin.resources.events.label'))
+        ->assertSee('Discounts')
+        ->assertSee('Payment plans')
+        ->assertSee('Bookings');
+
+    Livewire::test(EventDiscountsRelationManager::class, [
+        'ownerRecord' => $event,
+        'pageClass' => EditEvent::class,
+    ])
+        ->assertCanSeeTableRecords([$discount])
+        ->assertTableHeaderActionsExistInOrder(['create'])
+        ->assertTableActionsExistInOrder(['edit', 'delete']);
+
+    Livewire::test(EventPaymentPlansRelationManager::class, [
+        'ownerRecord' => $event,
+        'pageClass' => EditEvent::class,
+    ])
+        ->assertCanSeeTableRecords([$paymentPlan])
+        ->assertTableHeaderActionsExistInOrder(['create'])
+        ->assertTableActionsExistInOrder(['edit', 'delete']);
+
+    Livewire::test(EventBookingsRelationManager::class, [
+        'ownerRecord' => $event,
+        'pageClass' => EditEvent::class,
+    ])
+        ->assertCanSeeTableRecords([$booking])
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder(['view']);
+});
+
+test('customer edit page combines form and relation manager tabs', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create(['name' => 'Tabbed Customer']);
+    $familyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Tabbed Student']);
+    $booking = Booking::factory()->for($customer)->create(['reference' => 'BRH-CUSTOMER-TAB']);
+
+    $this->actingAs($staff, 'web')
+        ->get(CustomerResource::getUrl('edit', ['record' => $customer]))
+        ->assertOk()
+        ->assertSee(__('admin.resources.customers.label'))
+        ->assertSee('Family members')
+        ->assertSee('Bookings');
+
+    Livewire::test(CustomerFamilyMembersRelationManager::class, [
+        'ownerRecord' => $customer,
+        'pageClass' => EditCustomer::class,
+    ])
+        ->assertCanSeeTableRecords([$familyMember])
+        ->assertTableHeaderActionsExistInOrder(['create'])
+        ->assertTableActionsExistInOrder(['edit', 'delete']);
+
+    Livewire::test(CustomerBookingsRelationManager::class, [
+        'ownerRecord' => $customer,
+        'pageClass' => EditCustomer::class,
+    ])
+        ->assertCanSeeTableRecords([$booking])
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder(['view']);
 });
 
 test('staff can view discounts in filament', function () {

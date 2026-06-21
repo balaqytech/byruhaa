@@ -30,7 +30,6 @@ class LedgerAccountsTable
                     ->sortable(),
                 TextColumn::make('type')
                     ->label(__('admin.fields.type'))
-                    ->formatStateUsing(fn (LedgerAccountType $state): string => $state->label())
                     ->badge()
                     ->sortable(),
                 TextColumn::make('currency')
@@ -47,22 +46,12 @@ class LedgerAccountsTable
             ->filters([
                 SelectFilter::make('type')
                     ->label(__('admin.fields.type'))
-                    ->options(self::accountTypeOptions()),
+                    ->options(LedgerAccountType::class),
                 TernaryFilter::make('is_active')
                     ->label(__('admin.fields.is_active')),
             ])
             ->recordActions([
                 ViewAction::make(),
             ]);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function accountTypeOptions(): array
-    {
-        return collect(LedgerAccountType::cases())
-            ->mapWithKeys(fn (LedgerAccountType $type): array => [$type->value => $type->label()])
-            ->all();
     }
 }

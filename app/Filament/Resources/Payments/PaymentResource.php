@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Payments;
 
 use App\Filament\Resources\Payments\Pages\ListPayments;
 use App\Filament\Resources\Payments\Pages\ViewPayment;
+use App\Filament\Resources\Payments\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Payments\Schemas\PaymentInfolist;
 use App\Filament\Resources\Payments\Tables\PaymentsTable;
 use App\Models\Payment;
@@ -53,7 +54,7 @@ class PaymentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RefundsRelationManager::class,
         ];
     }
 

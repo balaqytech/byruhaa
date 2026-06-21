@@ -2,10 +2,8 @@
 
 namespace App\Filament\Resources\LedgerTransactions\Schemas;
 
-use App\Filament\Resources\LedgerAccounts\LedgerAccountResource;
 use App\Filament\Resources\PaymentRefunds\PaymentRefundResource;
 use App\Filament\Resources\Payments\PaymentResource;
-use App\Models\LedgerEntry;
 use App\Models\LedgerTransaction;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
@@ -41,17 +39,6 @@ class LedgerTransactionInfolist
                             ->label(__('admin.fields.occurred_at'))
                             ->dateTime(),
                     ]),
-                Section::make(__('admin.fields.entries'))
-                    ->schema([
-                        TextEntry::make('entries')
-                            ->label(__('admin.fields.entries'))
-                            ->state(fn (LedgerTransaction $record): array => $record->entries
-                                ->map(fn (LedgerEntry $entry): string => self::entrySummary($entry))
-                                ->all())
-                            ->listWithLineBreaks()
-                            ->bulleted()
-                            ->columnSpanFull(),
-                    ]),
             ]);
     }
 
@@ -73,15 +60,5 @@ class LedgerTransactionInfolist
             $record->source instanceof PaymentRefund => PaymentRefundResource::getUrl('view', ['record' => $record->source]),
             default => null,
         };
-    }
-
-    private static function entrySummary(LedgerEntry $entry): string
-    {
-        $account = $entry->ledgerAccount;
-        $debit = MoneyFormatter::baisa($entry->debit_baisa, $entry->currency);
-        $credit = MoneyFormatter::baisa($entry->credit_baisa, $entry->currency);
-        $url = LedgerAccountResource::getUrl('view', ['record' => $account]);
-
-        return "{$account->code} {$account->name} | {$debit} | {$credit} | {$entry->memo} | {$url}";
     }
 }

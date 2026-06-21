@@ -4,6 +4,7 @@ namespace App\Filament\Resources\LedgerAccounts;
 
 use App\Filament\Resources\LedgerAccounts\Pages\ListLedgerAccounts;
 use App\Filament\Resources\LedgerAccounts\Pages\ViewLedgerAccount;
+use App\Filament\Resources\LedgerAccounts\RelationManagers\EntriesRelationManager;
 use App\Filament\Resources\LedgerAccounts\Schemas\LedgerAccountInfolist;
 use App\Filament\Resources\LedgerAccounts\Tables\LedgerAccountsTable;
 use App\Models\LedgerAccount;
@@ -53,7 +54,7 @@ class LedgerAccountResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            EntriesRelationManager::class,
         ];
     }
 

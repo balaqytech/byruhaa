@@ -271,7 +271,7 @@
                     <th>اسم الفعالية</th>
                     <td>{{ $event->name }}</td>
                     <th>نوع الفعالية</th>
-                    <td>{{ trans()->has("admin.event_types.{$event->type}") ? __("admin.event_types.{$event->type}") : $event->type }}</td>
+                    <td>{{ $event->type->getLabel() }}</td>
                 </tr>
                 <tr>
                     <th>ولي الأمر</th>

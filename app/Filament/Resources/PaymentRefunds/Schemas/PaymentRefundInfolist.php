@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\PaymentRefunds\Schemas;
 
-use App\Enums\PaymentRefundState;
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
 use App\Filament\Resources\Payments\PaymentResource;
 use App\Models\PaymentRefund;
@@ -34,7 +33,6 @@ class PaymentRefundInfolist
                                             ->copyable(),
                                         TextEntry::make('state')
                                             ->label(__('admin.fields.state'))
-                                            ->formatStateUsing(fn (PaymentRefundState $state): string => $state->label())
                                             ->badge(),
                                         TextEntry::make('amount_baisa')
                                             ->label(__('admin.fields.amount'))

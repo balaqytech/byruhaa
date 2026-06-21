@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Support\Money\MoneyFactory;
@@ -20,7 +21,7 @@ use Illuminate\Support\Str;
 /**
  * @property int $id
  * @property int $booking_installment_id
- * @property string $provider
+ * @property PaymentProvider $provider
  * @property string $reference
  * @property int $amount_baisa
  * @property string $currency
@@ -121,6 +122,7 @@ class Payment extends Model
         return [
             'amount' => MoneyBaisaCast::of('amount_baisa'),
             'amount_baisa' => 'integer',
+            'provider' => PaymentProvider::class,
             'state' => PaymentState::class,
             'request_payload' => 'array',
             'response_payload' => 'array',

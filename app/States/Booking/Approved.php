@@ -6,8 +6,13 @@ class Approved extends BookingState
 {
     public static string $name = 'approved';
 
-    public function label(): string
+    public function getLabel(): string
     {
         return __('admin.statuses.approved');
+    }
+
+    public function getColor(): string
+    {
+        return 'success';
     }
 }

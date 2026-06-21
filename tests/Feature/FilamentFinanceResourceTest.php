@@ -5,10 +5,16 @@ use App\Enums\LedgerAccountType;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Filament\Resources\LedgerAccounts\LedgerAccountResource;
+use App\Filament\Resources\LedgerAccounts\Pages\ViewLedgerAccount;
+use App\Filament\Resources\LedgerAccounts\RelationManagers\EntriesRelationManager as LedgerAccountEntriesRelationManager;
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
+use App\Filament\Resources\LedgerTransactions\Pages\ViewLedgerTransaction;
+use App\Filament\Resources\LedgerTransactions\RelationManagers\EntriesRelationManager as LedgerTransactionEntriesRelationManager;
 use App\Filament\Resources\PaymentRefunds\PaymentRefundResource;
 use App\Filament\Resources\Payments\Pages\ListPayments;
+use App\Filament\Resources\Payments\Pages\ViewPayment;
 use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Payments\RelationManagers\RefundsRelationManager;
 use App\Models\Booking;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
@@ -52,7 +58,7 @@ test('staff can list and view payments with booking customer event refunds paylo
         'paid_at' => '2026-06-20 10:01:00',
     ]);
 
-    PaymentRefund::factory()
+    $refund = PaymentRefund::factory()
         ->for($payment)
         ->create([
             'reference' => 'REF-FINANCE-1',
@@ -78,9 +84,18 @@ test('staff can list and view payments with booking customer event refunds paylo
         ->assertSee('PAY-FINANCE-1')
         ->assertSee($event->name)
         ->assertSee('checkout_session_finance')
+        ->assertSee('Refunds')
+        ->assertSee('Payment accepted');
+
+    Livewire::test(RefundsRelationManager::class, [
+        'ownerRecord' => $payment,
+        'pageClass' => ViewPayment::class,
+    ])
+        ->assertCanSeeTableRecords([$refund])
         ->assertSee('REF-FINANCE-1')
         ->assertSee('Partial adjustment')
-        ->assertSee('Payment accepted');
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder(['view']);
 });
 
 test('staff can search and filter payments in filament', function () {
@@ -246,8 +261,7 @@ test('staff can list and view ledger accounts and transactions with entries', fu
     $this->actingAs($staff, 'web')
         ->get(LedgerAccountResource::getUrl('view', ['record' => $account]))
         ->assertOk()
-        ->assertSee('LED-PAY-LEDGER-VIEW')
-        ->assertSee('OMR 7.000');
+        ->assertSee('Entries');
 
     $this->actingAs($staff, 'web')
         ->get(LedgerTransactionResource::getUrl('index'))
@@ -258,9 +272,28 @@ test('staff can list and view ledger accounts and transactions with entries', fu
     $this->actingAs($staff, 'web')
         ->get(LedgerTransactionResource::getUrl('view', ['record' => $transaction]))
         ->assertOk()
+        ->assertSee('Entries');
+
+    Livewire::test(LedgerAccountEntriesRelationManager::class, [
+        'ownerRecord' => $account,
+        'pageClass' => ViewLedgerAccount::class,
+    ])
+        ->assertCanSeeTableRecords([$account->entries()->firstOrFail()])
+        ->assertSee('LED-PAY-LEDGER-VIEW')
+        ->assertSee('OMR 7.000')
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder([]);
+
+    Livewire::test(LedgerTransactionEntriesRelationManager::class, [
+        'ownerRecord' => $transaction,
+        'pageClass' => ViewLedgerTransaction::class,
+    ])
+        ->assertCanSeeTableRecords($transaction->entries)
         ->assertSee(LedgerAccount::THAWANI_CLEARING_CODE)
         ->assertSee(LedgerAccount::CUSTOMER_DEPOSITS_CODE)
-        ->assertSee('OMR 7.000');
+        ->assertSee('OMR 7.000')
+        ->assertTableHeaderActionsExistInOrder([])
+        ->assertTableActionsExistInOrder([]);
 });
 
 test('finance admin translations are available', function () {

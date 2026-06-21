@@ -4,6 +4,7 @@ namespace App\Filament\Resources\LedgerTransactions;
 
 use App\Filament\Resources\LedgerTransactions\Pages\ListLedgerTransactions;
 use App\Filament\Resources\LedgerTransactions\Pages\ViewLedgerTransaction;
+use App\Filament\Resources\LedgerTransactions\RelationManagers\EntriesRelationManager;
 use App\Filament\Resources\LedgerTransactions\Schemas\LedgerTransactionInfolist;
 use App\Filament\Resources\LedgerTransactions\Tables\LedgerTransactionsTable;
 use App\Models\LedgerTransaction;
@@ -53,7 +54,7 @@ class LedgerTransactionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            EntriesRelationManager::class,
         ];
     }
 

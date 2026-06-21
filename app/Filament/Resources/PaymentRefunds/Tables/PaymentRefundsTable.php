@@ -45,7 +45,6 @@ class PaymentRefundsTable
                     ->sortable(),
                 TextColumn::make('state')
                     ->label(__('admin.fields.state'))
-                    ->formatStateUsing(fn (PaymentRefundState $state): string => $state->label())
                     ->badge()
                     ->sortable(),
                 TextColumn::make('reason')
@@ -65,20 +64,10 @@ class PaymentRefundsTable
             ->filters([
                 SelectFilter::make('state')
                     ->label(__('admin.fields.state'))
-                    ->options(self::refundStateOptions()),
+                    ->options(PaymentRefundState::class),
             ])
             ->recordActions([
                 ViewAction::make(),
             ]);
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    private static function refundStateOptions(): array
-    {
-        return collect(PaymentRefundState::cases())
-            ->mapWithKeys(fn (PaymentRefundState $state): array => [$state->value => $state->label()])
-            ->all();
     }
 }
