@@ -45,6 +45,7 @@ test('customer can create a family member from the panel modal action', function
         ->set('birth_date', now()->subYears(12)->format('Y-m-d'))
         ->set('school_name', 'Future School')
         ->set('grade', '7')
+        ->set('relationship_to_customer', 'Daughter')
         ->call('saveFamilyMember')
         ->assertHasNoErrors();
 
@@ -53,6 +54,7 @@ test('customer can create a family member from the panel modal action', function
         'name' => 'Maha Al Harthy',
         'school_name' => 'Future School',
         'grade' => '7',
+        'relationship_to_customer' => 'Daughter',
     ]);
 });
 
@@ -73,12 +75,60 @@ test('customer can edit their family member from the panel modal action', functi
         ->assertSet('name', 'Old Name')
         ->set('name', 'Updated Name')
         ->set('school_name', 'Updated School')
+        ->set('relationship_to_customer', 'Son')
         ->call('saveFamilyMember')
         ->assertHasNoErrors();
 
     expect($familyMember->refresh())
         ->name->toBe('Updated Name')
-        ->school_name->toBe('Updated School');
+        ->school_name->toBe('Updated School')
+        ->relationship_to_customer->toBe('Son');
+});
+
+test('customer can delete their family member from the panel action', function () {
+    $customer = Customer::factory()->create();
+    $familyMember = FamilyMember::factory()
+        ->for($customer)
+        ->create();
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.family-members.index')
+        ->call('deleteFamilyMember', $familyMember->id)
+        ->assertHasNoErrors();
+
+    $this->assertModelMissing($familyMember);
+});
+
+test('customer with incomplete profile cannot mutate family members from the panel', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+    $familyMember = FamilyMember::factory()
+        ->for($customer)
+        ->create([
+            'name' => 'Old Name',
+            'school_name' => 'Old School',
+        ]);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.family-members.index')
+        ->set('name', 'Maha Al Harthy')
+        ->set('birth_date', now()->subYears(12)->format('Y-m-d'))
+        ->call('saveFamilyMember')
+        ->assertHasErrors(['profile']);
+
+    Livewire::test('pages::customer.family-members.index')
+        ->call('editFamilyMember', $familyMember->id)
+        ->set('name', 'Updated Name')
+        ->call('saveFamilyMember')
+        ->assertHasErrors(['profile']);
+
+    Livewire::test('pages::customer.family-members.index')
+        ->call('deleteFamilyMember', $familyMember->id)
+        ->assertHasErrors(['profile']);
+
+    expect(FamilyMember::query()->count())->toBe(1)
+        ->and($familyMember->refresh()->name)->toBe('Old Name');
 });
 
 test('bookings page renders existing bookings in a table', function () {

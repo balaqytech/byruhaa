@@ -8,6 +8,7 @@ return [
         'add' => 'Add',
         'back_to_login' => 'log in',
         'clear' => 'Clear',
+        'complete_profile' => 'Complete profile',
         'confirm' => 'Confirm',
         'create_account' => 'Create account',
         'cancel' => 'Cancel',
@@ -117,12 +118,16 @@ return [
         'heading' => 'Family',
         'medical_notes' => 'Medical notes',
         'no_school_set' => 'No school set',
+        'relationship_to_customer' => 'Relationship to customer',
         'school' => 'School',
         'subheading' => 'Create reusable family profiles for event bookings.',
         'edit_family_member' => 'Edit family member',
     ],
 
     'fields' => [
+        'address' => 'Address',
+        'area' => 'Area',
+        'civil_id' => 'Civil ID',
         'current_password' => 'Current password',
         'email' => 'Email',
         'email_address' => 'Email address',
@@ -132,6 +137,7 @@ return [
         'password' => 'Password',
         'password_confirmation' => 'Confirm password',
         'phone_number' => 'Phone number',
+        'wilaya' => 'Wilaya',
     ],
 
     'labels' => [
@@ -175,6 +181,8 @@ return [
         'payment_plan_selected' => 'Payment plan selected.',
         'payment_not_refundable' => 'This payment cannot be refunded.',
         'profile_updated' => 'Profile updated.',
+        'profile_incomplete' => 'Please complete your profile before continuing.',
+        'profile_incomplete_alert' => 'Complete your profile to continue booking, signing contracts, managing family members, and making payments.',
         'refund_amount_invalid' => 'The refund amount is invalid.',
         'refund_gateway_unavailable' => 'The refund could not be processed. Please try again.',
         'signature_must_be_png' => 'The signature must be a PNG image.',

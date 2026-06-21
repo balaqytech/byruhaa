@@ -31,6 +31,7 @@ class CustomerPaymentController extends Controller
     {
         $validated = $request->validated();
         $installment = $this->customerInstallment($customer, (int) $validated['booking_installment_id']);
+        $customer->ensureProfileIsComplete();
         unset($validated['booking_installment_id']);
 
         $payment = $installment->payments()->create($validated);
@@ -48,6 +49,7 @@ class CustomerPaymentController extends Controller
     public function update(UpdateCustomerPaymentRequest $request, Customer $customer, Payment $payment): PaymentResource
     {
         $payment = $this->resolveCustomerPayment($customer, $payment);
+        $customer->ensureProfileIsComplete();
         $validated = $request->validated();
 
         if (array_key_exists('booking_installment_id', $validated)) {
@@ -61,7 +63,9 @@ class CustomerPaymentController extends Controller
 
     public function destroy(Customer $customer, Payment $payment): Response
     {
-        $this->resolveCustomerPayment($customer, $payment)->delete();
+        $payment = $this->resolveCustomerPayment($customer, $payment);
+        $customer->ensureProfileIsComplete();
+        $payment->delete();
 
         return response()->noContent();
     }

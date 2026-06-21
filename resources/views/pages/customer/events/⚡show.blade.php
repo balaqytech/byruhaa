@@ -1,14 +1,10 @@
 <?php
 
-use App\Actions\CalculateBookingPrice;
+use App\Actions\CreateCustomerBooking;
 use App\Enums\EventStatus;
-use App\Models\Booking;
 use App\Models\Event;
-use App\Models\FamilyMember;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -25,59 +21,20 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
         $this->event = $event;
     }
 
-    public function book(CalculateBookingPrice $calculateBookingPrice): void
+    public function book(CreateCustomerBooking $createCustomerBooking): void
     {
         $customer = Auth::guard('customer')->user();
+        $customer->ensureProfileIsComplete('familyMemberIds');
 
         $validated = $this->validate([
             'familyMemberIds' => ['required', 'array', 'min:1'],
-            'familyMemberIds.*' => ['integer'],
+            'familyMemberIds.*' => ['integer', 'distinct'],
         ]);
 
-        $familyMembers = FamilyMember::query()
-            ->whereBelongsTo($customer)
-            ->whereIn('id', $validated['familyMemberIds'])
-            ->get();
-
-        if ($familyMembers->count() !== count(array_unique($validated['familyMemberIds']))) {
-            throw ValidationException::withMessages([
-                'familyMemberIds' => __('ui.messages.invalid_family_member_selection'),
-            ]);
-        }
-
-        foreach ($familyMembers as $familyMember) {
-            $age = $familyMember->ageAt($this->event->starts_at ?? now());
-
-            if ($age < $this->event->minimum_age || $age > $this->event->maximum_age) {
-                throw ValidationException::withMessages([
-                    'familyMemberIds' => __('ui.messages.all_family_members_age_range'),
-                ]);
-            }
-        }
-
-        if ($familyMembers->count() > $this->event->remainingSeats()) {
-            throw ValidationException::withMessages([
-                'familyMemberIds' => __('ui.messages.not_enough_seats'),
-            ]);
-        }
-
-        $booking = DB::transaction(function () use ($customer, $familyMembers, $calculateBookingPrice): Booking {
-            $priceSnapshot = $calculateBookingPrice->execute($this->event, $familyMembers->count());
-
-            $booking = Booking::create([
-                'customer_id' => $customer->id,
-                'event_id' => $this->event->id,
-                ...$priceSnapshot->toBookingAttributes(),
-            ]);
-
-            foreach ($familyMembers as $familyMember) {
-                $booking->familyMembers()->create([
-                    'family_member_id' => $familyMember->id,
-                ]);
-            }
-
-            return $booking;
-        });
+        $booking = $createCustomerBooking->execute($customer, [
+            'event_id' => $this->event->id,
+            'family_member_ids' => $validated['familyMemberIds'],
+        ]);
 
         Flux::toast(variant: 'success', text: __('ui.messages.booking_request_submitted'));
 

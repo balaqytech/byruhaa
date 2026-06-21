@@ -25,6 +25,7 @@ class ContractVariables
                 'guardian_phone' => __('admin.contract_variables.labels.guardian_phone'),
                 'guardian_wilaya' => __('admin.contract_variables.labels.guardian_wilaya'),
                 'guardian_area' => __('admin.contract_variables.labels.guardian_area'),
+                'guardian_address' => __('admin.contract_variables.labels.guardian_address'),
             ],
             __('admin.contract_variables.groups.student') => [
                 'student_name' => __('admin.contract_variables.labels.student_name'),
@@ -154,11 +155,12 @@ class ContractVariables
 
         return [
             'guardian_name' => self::value($customer->name),
-            'guardian_civil_id' => self::value($customer->getAttribute('guardian_civil_id')),
-            'guardian_relationship' => self::value($customer->getAttribute('guardian_relationship')),
+            'guardian_civil_id' => self::value($customer->civil_id),
+            'guardian_relationship' => self::value($familyMember->relationship_to_customer),
             'guardian_phone' => self::value($customer->phone_number),
-            'guardian_wilaya' => self::value($customer->getAttribute('guardian_wilaya')),
-            'guardian_area' => self::value($customer->getAttribute('guardian_area')),
+            'guardian_wilaya' => self::value($customer->wilaya),
+            'guardian_area' => self::value($customer->area),
+            'guardian_address' => self::value($customer->address),
 
             'student_name' => self::value($familyMember->name),
             'student_birth_date' => self::date($familyMember->birth_date),

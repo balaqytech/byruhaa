@@ -19,10 +19,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $school_name
  * @property string|null $grade
  * @property string|null $medical_notes
- * @property string|null $emergency_contact_name
- * @property string|null $emergency_contact_phone
+ * @property string|null $relationship_to_customer
  */
-#[Fillable(['customer_id', 'name', 'birth_date', 'school_name', 'grade', 'medical_notes', 'emergency_contact_name', 'emergency_contact_phone'])]
+#[Fillable(['customer_id', 'name', 'birth_date', 'school_name', 'grade', 'medical_notes', 'relationship_to_customer'])]
 class FamilyMember extends Model
 {
     /** @use HasFactory<FamilyMemberFactory> */

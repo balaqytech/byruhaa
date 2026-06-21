@@ -19,8 +19,7 @@ return new class extends Migration
             $table->string('school_name')->nullable();
             $table->string('grade')->nullable();
             $table->text('medical_notes')->nullable();
-            $table->string('emergency_contact_name')->nullable();
-            $table->string('emergency_contact_phone')->nullable();
+            $table->string('relationship_to_customer')->nullable();
             $table->timestamps();
 
             $table->index(['customer_id', 'birth_date']);

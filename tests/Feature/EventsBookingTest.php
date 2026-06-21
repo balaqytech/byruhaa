@@ -90,6 +90,24 @@ test('booking submission stores a price snapshot', function () {
         ->and(MoneyFactory::formatMoneyAmount($booking->total))->toBe('25.000');
 });
 
+test('customer with incomplete profile cannot submit a booking request', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+    $event = Event::factory()->create([
+        'price_baisa' => 12500,
+        'seat_capacity' => 5,
+    ]);
+    $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.events.show', ['event' => $event])
+        ->set('familyMemberIds', $familyMembers->pluck('id')->all())
+        ->call('book')
+        ->assertHasErrors(['familyMemberIds']);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
 test('booking submission applies the largest eligible discount per family member', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([

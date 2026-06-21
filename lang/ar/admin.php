@@ -171,6 +171,7 @@ return [
             'guardian_phone' => 'هاتف ولي الأمر',
             'guardian_wilaya' => 'ولاية ولي الأمر',
             'guardian_area' => 'منطقة ولي الأمر',
+            'guardian_address' => 'عنوان ولي الأمر',
             'student_name' => 'اسم الطالب',
             'student_birth_date' => 'تاريخ ميلاد الطالب',
             'student_age' => 'عمر الطالب',
@@ -199,6 +200,9 @@ return [
 
     'fields' => [
         'amount' => 'المبلغ',
+        'additional_info' => 'معلومات إضافية',
+        'address' => 'العنوان',
+        'area' => 'المنطقة',
         'booking' => 'الحجز',
         'bookings' => 'الحجوزات',
         'category' => 'التصنيف',
@@ -208,6 +212,7 @@ return [
         'created_at' => 'تاريخ الإنشاء',
         'currency' => 'العملة',
         'customer' => 'العميل',
+        'civil_id' => 'الرقم المدني',
         'description' => 'الوصف',
         'discount' => 'الخصم',
         'discount_amount' => 'قيمة الخصم',
@@ -251,6 +256,7 @@ return [
         'provider_session_id' => 'معرف جلسة المزود',
         'provider_status' => 'حالة المزود',
         'reason' => 'السبب',
+        'relationship_to_customer' => 'صلة القرابة بالعميل',
         'reference' => 'المرجع',
         'refundable_amount' => 'المبلغ القابل للاسترداد',
         'review_notes' => 'ملاحظات المراجعة',
@@ -274,6 +280,7 @@ return [
         'type' => 'النوع',
         'updated_at' => 'تاريخ التحديث',
         'verified_at' => 'تاريخ التحقق',
+        'wilaya' => 'الولاية',
     ],
 
     'filters' => [

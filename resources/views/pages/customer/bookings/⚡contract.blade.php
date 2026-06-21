@@ -38,6 +38,8 @@ new #[Title('العقد')] class extends Component {
 
     public function signContract(string $signatureDataUrl): void
     {
+        Auth::guard('customer')->user()->ensureProfileIsComplete();
+
         $contract = $this->ownedContract();
 
         abort_unless($contract->state instanceof AwaitingSignature, 403);
@@ -227,6 +229,8 @@ new #[Title('العقد')] class extends Component {
                 <x-hugeicon name="signature" class="text-xl" />
                 <flux:heading>{{ __('ui.actions.sign_contract') }}</flux:heading>
             </div>
+
+            <flux:error name="profile" />
 
             @if ($participantExtraFields !== [])
                 <div class="space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">

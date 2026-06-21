@@ -124,6 +124,26 @@
             </div>
         </flux:header>
 
+        @if ($customer && ! $customer->hasCompleteProfile())
+            <div
+                x-data="{ visible: true }"
+                x-show="visible"
+                @customer-profile-completed.window="visible = false"
+                class="border-b border-amber-300/40 bg-amber-50 text-amber-950 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-50"
+            >
+                <div class="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 text-sm font-medium sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+                    <div class="flex items-start gap-3">
+                        <x-hugeicon name="alert-02" class="mt-0.5 text-lg" />
+                        <span>{{ __('ui.messages.profile_incomplete_alert') }}</span>
+                    </div>
+
+                    <flux:button :href="route('customer.profile.edit')" wire:navigate size="sm" variant="primary">
+                        {{ __('ui.actions.complete_profile') }}
+                    </flux:button>
+                </div>
+            </div>
+        @endif
+
         <main class="relative mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-56 bg-[radial-gradient(circle_at_70%_0%,rgba(34,197,94,0.18),transparent_34%),linear-gradient(180deg,rgba(245,158,11,0.10),transparent)] dark:bg-[radial-gradient(circle_at_70%_0%,rgba(16,185,129,0.18),transparent_34%)]"></div>
 

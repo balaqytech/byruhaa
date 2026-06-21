@@ -24,9 +24,11 @@ class InitiateInstallmentPayment
             $installment = BookingInstallment::query()
                 ->whereKey($installment->id)
                 ->whereHas('paymentSchedule.booking', fn ($query) => $query->where('customer_id', $customerId))
-                ->with(['paymentSchedule.booking.event'])
+                ->with(['paymentSchedule.booking.customer', 'paymentSchedule.booking.event'])
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $installment->paymentSchedule->booking->customer->ensureProfileIsComplete('payment');
 
             if ($installment->state !== BookingInstallmentState::Pending) {
                 throw ValidationException::withMessages([

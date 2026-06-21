@@ -3,15 +3,18 @@
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
+use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
 use App\Models\FamilyMember;
+use App\Models\Payment;
 use App\Models\User;
 use App\Services\BookingApprovalService;
 use App\Services\ContractRenderer;
+use App\States\Booking\Approved;
 use App\States\Contract\Signed;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -69,6 +72,34 @@ test('customer can sign a contract from the dedicated contract page action', fun
         ->signed_name->toBe($customer->name);
 
     Storage::disk('local')->assertExists($contract->signature_path);
+});
+
+test('customer with incomplete profile cannot sign a contract', function () {
+    Storage::fake('local');
+
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->incompleteProfile()->create(['name' => 'Salim Al Balushi']);
+    $event = Event::factory()->create();
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create();
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+
+    $contract = $bookingFamilyMember->contract()->firstOrFail();
+    $signature = 'data:image/png;base64,'.base64_encode('fake-png-bytes');
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.bookings.contract', ['booking' => $booking, 'contract' => $contract])
+        ->set('signedName', $customer->name)
+        ->call('signContract', $signature)
+        ->assertHasErrors(['profile']);
+
+    expect($contract->refresh())
+        ->state->not->toBeInstanceOf(Signed::class)
+        ->signed_name->toBeNull()
+        ->signature_path->toBeNull();
 });
 
 test('booking show page lists participant contract cards without rendering contract bodies inline', function () {
@@ -212,10 +243,10 @@ test('contract variables are rendered and escaped when booking is approved', fun
     $staff = User::factory()->create();
     $customer = Customer::factory()->create([
         'name' => 'Mona <Guardian>',
-        'guardian_civil_id' => 'OM123456',
-        'guardian_relationship' => 'Mother',
-        'guardian_wilaya' => 'Muscat',
-        'guardian_area' => 'Qurum',
+        'civil_id' => 'OM123456',
+        'wilaya' => 'Muscat',
+        'area' => 'Qurum',
+        'address' => 'House 12',
     ]);
     $event = Event::factory()->create([
         'name' => 'Spring Camp',
@@ -231,11 +262,14 @@ test('contract variables are rendered and escaped when booking is approved', fun
             '<p>End: {{ event_end_date }}</p>',
             '<p>Fee: {{ agreed_fee }}</p>',
             '<p>Area: {{ guardian_area }}</p>',
+            '<p>Address: {{ guardian_address }}</p>',
+            '<p>Relationship: {{ guardian_relationship }}</p>',
         ]),
     ]);
     $familyMember = FamilyMember::factory()->for($customer)->create([
         'name' => 'Maha & Salim',
         'birth_date' => '2014-05-10',
+        'relationship_to_customer' => 'Daughter',
     ]);
     $booking = Booking::factory()->for($customer)->for($event)->create([
         'reference' => 'BRH-VARS',
@@ -259,6 +293,8 @@ test('contract variables are rendered and escaped when booking is approved', fun
         ->toContain('2026-07-03 12:30')
         ->toContain('OMR 9.000')
         ->toContain('Qurum')
+        ->toContain('House 12')
+        ->toContain('Daughter')
         ->not->toContain('{{')
         ->not->toContain('<Guardian>')
         ->not->toContain('Maha & Salim');
@@ -444,6 +480,39 @@ test('customer cannot select a payment plan before all contracts are signed', fu
     expect(BookingInstallment::query()->count())->toBe(0);
 });
 
+test('customer with incomplete profile cannot select a payment plan', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+    $event = Event::factory()->create();
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'state' => Approved::$name,
+        'subtotal_baisa' => 10000,
+        'total_baisa' => 10000,
+    ]);
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    EventContract::factory()->for($bookingFamilyMember)->create([
+        'state' => Signed::$name,
+        'signed_at' => now(),
+    ]);
+
+    $paymentPlan = EventPaymentPlan::factory()->for($event)->create(['name' => 'Two payments']);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'sequence' => 1,
+        'percentage' => 100,
+        'due_date' => now()->addWeek()->toDateString(),
+    ]);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
+        ->set('paymentPlanId', $paymentPlan->id)
+        ->call('selectPaymentPlan')
+        ->assertHasErrors(['paymentPlanId']);
+
+    expect($booking->refresh()->paymentSchedule)->toBeNull();
+});
+
 test('customer can select a payment plan after all contracts are signed', function () {
     Storage::fake('local');
 
@@ -538,4 +607,61 @@ test('payment plan selection rejects invalid percentage totals', function () {
         ->assertHasErrors('paymentPlanId');
 
     expect($booking->refresh()->paymentSchedule)->toBeNull();
+});
+
+test('customer with incomplete profile cannot start full payment', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+    $event = Event::factory()->create();
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'state' => Approved::$name,
+        'currency' => 'OMR',
+        'subtotal_baisa' => 12000,
+        'total_baisa' => 12000,
+    ]);
+    $bookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+
+    EventContract::factory()->for($bookingFamilyMember)->create([
+        'state' => Signed::$name,
+        'signed_at' => now(),
+    ]);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
+        ->call('payInFull')
+        ->assertHasErrors(['payment']);
+
+    expect($booking->refresh()->paymentSchedule)->toBeNull()
+        ->and(Payment::query()->count())->toBe(0);
+});
+
+test('customer with incomplete profile cannot start installment payment', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+    $event = Event::factory()->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'state' => Approved::$name,
+        'currency' => 'OMR',
+        'subtotal_baisa' => 12000,
+        'total_baisa' => 12000,
+    ]);
+    $schedule = BookingPaymentSchedule::factory()->for($booking)->create([
+        'currency' => 'OMR',
+        'subtotal_baisa' => 12000,
+        'total_baisa' => 12000,
+    ]);
+    $installment = BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create([
+        'name' => 'First',
+        'sequence' => 1,
+        'percentage' => 100,
+        'amount_baisa' => 12000,
+    ]);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
+        ->call('payInstallment', $installment->id)
+        ->assertHasErrors(['payment']);
+
+    expect(Payment::query()->count())->toBe(0);
 });

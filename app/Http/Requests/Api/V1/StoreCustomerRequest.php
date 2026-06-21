@@ -24,6 +24,11 @@ class StoreCustomerRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique(Customer::class)],
             'phone_number' => ['required', 'string', 'phone:OM', Rule::unique(Customer::class)],
+            'civil_id' => ['nullable', 'string', 'max:255'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'wilaya' => ['nullable', 'string', 'max:255'],
+            'area' => ['nullable', 'string', 'max:255'],
+            'additional_info' => ['nullable', 'array'],
             'password' => ['required', 'string', Password::default(), 'confirmed'],
         ];
     }
@@ -33,6 +38,10 @@ class StoreCustomerRequest extends FormRequest
         $this->merge([
             'email' => blank($this->input('email')) ? null : $this->input('email'),
             'phone_number' => app(PhoneNumberNormalizer::class)->normalize($this->input('phone_number')),
+            'civil_id' => blank($this->input('civil_id')) ? null : $this->input('civil_id'),
+            'address' => blank($this->input('address')) ? null : $this->input('address'),
+            'wilaya' => blank($this->input('wilaya')) ? null : $this->input('wilaya'),
+            'area' => blank($this->input('area')) ? null : $this->input('area'),
         ]);
     }
 }

@@ -8,6 +8,7 @@ return [
         'add' => 'إضافة',
         'back_to_login' => 'العودة إلى تسجيل الدخول',
         'clear' => 'مسح',
+        'complete_profile' => 'إكمال الملف الشخصي',
         'confirm' => 'تأكيد',
         'create_account' => 'إنشاء حساب',
         'cancel' => 'إلغاء',
@@ -117,12 +118,16 @@ return [
         'heading' => 'العائلة',
         'medical_notes' => 'ملاحظات طبية',
         'no_school_set' => 'لم يتم تحديد مدرسة',
+        'relationship_to_customer' => 'صلة القرابة بالعميل',
         'school' => 'المدرسة',
         'subheading' => 'أنشئ ملفات عائلية قابلة لإعادة الاستخدام لحجوزات الفعاليات.',
         'edit_family_member' => 'تعديل فرد من العائلة',
     ],
 
     'fields' => [
+        'address' => 'العنوان',
+        'area' => 'المنطقة',
+        'civil_id' => 'الرقم المدني',
         'current_password' => 'كلمة المرور الحالية',
         'email' => 'البريد الإلكتروني',
         'email_address' => 'البريد الإلكتروني',
@@ -132,6 +137,7 @@ return [
         'password' => 'كلمة المرور',
         'password_confirmation' => 'تأكيد كلمة المرور',
         'phone_number' => 'رقم الهاتف',
+        'wilaya' => 'الولاية',
     ],
 
     'labels' => [
@@ -175,6 +181,8 @@ return [
         'payment_plan_selected' => 'تم اختيار خطة الدفع.',
         'payment_not_refundable' => 'لا يمكن استرداد هذا الدفع.',
         'profile_updated' => 'تم تحديث الملف الشخصي.',
+        'profile_incomplete' => 'يرجى إكمال ملفك الشخصي قبل المتابعة.',
+        'profile_incomplete_alert' => 'أكمل ملفك الشخصي للمتابعة في الحجز وتوقيع العقود وإدارة أفراد العائلة وتنفيذ المدفوعات.',
         'refund_amount_invalid' => 'مبلغ الاسترداد غير صالح.',
         'refund_gateway_unavailable' => 'تعذر تنفيذ الاسترداد. يرجى المحاولة مرة أخرى.',
         'signature_must_be_png' => 'يجب أن يكون التوقيع صورة PNG.',

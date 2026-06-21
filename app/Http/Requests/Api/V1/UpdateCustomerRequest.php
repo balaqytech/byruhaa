@@ -23,7 +23,12 @@ class UpdateCustomerRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', Rule::unique(Customer::class)->ignore($this->route('customer'))],
-            'phone_number' => ['required', 'string', 'phone:OM', Rule::unique(Customer::class)->ignore($this->route('customer'))],
+            'phone_number' => ['sometimes', 'required', 'string', 'phone:OM', Rule::unique(Customer::class)->ignore($this->route('customer'))],
+            'civil_id' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'wilaya' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'area' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'additional_info' => ['sometimes', 'nullable', 'array'],
             'password' => ['sometimes', 'required', 'string', Password::default(), 'confirmed'],
         ];
     }
@@ -38,6 +43,12 @@ class UpdateCustomerRequest extends FormRequest
 
         if ($this->has('phone_number')) {
             $data['phone_number'] = app(PhoneNumberNormalizer::class)->normalize($this->input('phone_number'));
+        }
+
+        foreach (['civil_id', 'address', 'wilaya', 'area'] as $field) {
+            if ($this->has($field)) {
+                $data[$field] = blank($this->input($field)) ? null : $this->input($field);
+            }
         }
 
         $this->merge($data);

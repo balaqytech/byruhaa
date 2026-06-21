@@ -25,8 +25,7 @@ class FamilyMemberFactory extends Factory
             'school_name' => fake()->company().' School',
             'grade' => (string) fake()->numberBetween(4, 10),
             'medical_notes' => null,
-            'emergency_contact_name' => fake()->name(),
-            'emergency_contact_phone' => '+9689'.fake()->numerify('#######'),
+            'relationship_to_customer' => fake()->randomElement(['Son', 'Daughter', 'Sibling', 'Relative']),
         ];
     }
 }

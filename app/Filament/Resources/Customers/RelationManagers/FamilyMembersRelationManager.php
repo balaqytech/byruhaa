@@ -41,12 +41,8 @@ class FamilyMembersRelationManager extends RelationManager
                 Textarea::make('medical_notes')
                     ->label(__('ui.fields.medical_notes'))
                     ->columnSpanFull(),
-                TextInput::make('emergency_contact_name')
-                    ->label(__('ui.fields.emergency_contact_name'))
-                    ->maxLength(255),
-                TextInput::make('emergency_contact_phone')
-                    ->label(__('ui.fields.emergency_contact_phone'))
-                    ->tel()
+                TextInput::make('relationship_to_customer')
+                    ->label(__('admin.fields.relationship_to_customer'))
                     ->maxLength(255),
             ]);
     }
@@ -67,6 +63,9 @@ class FamilyMembersRelationManager extends RelationManager
                     ->placeholder('-'),
                 TextColumn::make('grade')
                     ->label(__('ui.fields.grade'))
+                    ->placeholder('-'),
+                TextColumn::make('relationship_to_customer')
+                    ->label(__('admin.fields.relationship_to_customer'))
                     ->placeholder('-'),
             ])
             ->headerActions([

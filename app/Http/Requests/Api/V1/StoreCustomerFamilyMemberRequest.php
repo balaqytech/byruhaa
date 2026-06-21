@@ -22,8 +22,7 @@ class StoreCustomerFamilyMemberRequest extends FormRequest
             'school_name' => ['nullable', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:255'],
             'medical_notes' => ['nullable', 'string'],
-            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_phone' => ['nullable', 'string', 'max:255'],
+            'relationship_to_customer' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

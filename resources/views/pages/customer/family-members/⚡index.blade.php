@@ -14,8 +14,7 @@ new #[Title('العائلة')] class extends Component {
     public ?string $school_name = null;
     public ?string $grade = null;
     public ?string $medical_notes = null;
-    public ?string $emergency_contact_name = null;
-    public ?string $emergency_contact_phone = null;
+    public ?string $relationship_to_customer = null;
 
     public function openCreateFamilyMemberModal(): void
     {
@@ -36,14 +35,15 @@ new #[Title('العائلة')] class extends Component {
         $this->school_name = $familyMember->school_name;
         $this->grade = $familyMember->grade;
         $this->medical_notes = $familyMember->medical_notes;
-        $this->emergency_contact_name = $familyMember->emergency_contact_name;
-        $this->emergency_contact_phone = $familyMember->emergency_contact_phone;
+        $this->relationship_to_customer = $familyMember->relationship_to_customer;
 
         Flux::modal('family-member-form')->show();
     }
 
     public function saveFamilyMember(): void
     {
+        Auth::guard('customer')->user()->ensureProfileIsComplete();
+
         $validated = $this->validate($this->familyMemberRules());
 
         if ($this->editingFamilyMemberId) {
@@ -66,6 +66,8 @@ new #[Title('العائلة')] class extends Component {
 
     public function deleteFamilyMember(int $familyMemberId): void
     {
+        Auth::guard('customer')->user()->ensureProfileIsComplete();
+
         $this->familyMemberQuery()
             ->whereKey($familyMemberId)
             ->delete();
@@ -93,8 +95,7 @@ new #[Title('العائلة')] class extends Component {
             'school_name' => ['nullable', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:50'],
             'medical_notes' => ['nullable', 'string', 'max:2000'],
-            'emergency_contact_name' => ['nullable', 'string', 'max:255'],
-            'emergency_contact_phone' => ['nullable', 'string', 'max:255'],
+            'relationship_to_customer' => ['nullable', 'string', 'max:255'],
         ];
     }
 
@@ -106,7 +107,7 @@ new #[Title('العائلة')] class extends Component {
 
     public function resetFamilyMemberForm(): void
     {
-        $this->reset('editingFamilyMemberId', 'name', 'birth_date', 'school_name', 'grade', 'medical_notes', 'emergency_contact_name', 'emergency_contact_phone');
+        $this->reset('editingFamilyMemberId', 'name', 'birth_date', 'school_name', 'grade', 'medical_notes', 'relationship_to_customer');
         $this->resetValidation();
     }
 }; ?>
@@ -130,12 +131,15 @@ new #[Title('العائلة')] class extends Component {
         </div>
     </div>
 
+    <flux:error name="profile" />
+
     <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
         @if ($familyMembers->isNotEmpty())
             <flux:table>
                 <flux:table.columns>
                     <flux:table.column>{{ __('ui.fields.name') }}</flux:table.column>
                     <flux:table.column>{{ __('ui.family.age') }}</flux:table.column>
+                    <flux:table.column>{{ __('ui.family.relationship_to_customer') }}</flux:table.column>
                     <flux:table.column>{{ __('ui.family.school') }}</flux:table.column>
                     <flux:table.column>{{ __('ui.family.grade') }}</flux:table.column>
                     <flux:table.column align="end">{{ __('ui.actions.manage_family') }}</flux:table.column>
@@ -146,6 +150,7 @@ new #[Title('العائلة')] class extends Component {
                         <flux:table.row wire:key="family-member-row-{{ $familyMember->id }}">
                             <flux:table.cell variant="strong">{{ $familyMember->name }}</flux:table.cell>
                             <flux:table.cell>{{ $familyMember->birth_date->age }}</flux:table.cell>
+                            <flux:table.cell>{{ $familyMember->relationship_to_customer ?: '-' }}</flux:table.cell>
                             <flux:table.cell>{{ $familyMember->school_name ?: __('ui.family.no_school_set') }}</flux:table.cell>
                             <flux:table.cell>{{ $familyMember->grade ?: '-' }}</flux:table.cell>
                             <flux:table.cell align="end">
@@ -181,10 +186,9 @@ new #[Title('العائلة')] class extends Component {
             <div class="grid gap-4 md:grid-cols-2">
                 <flux:input wire:model="name" :label="__('ui.fields.name')" required />
                 <flux:input wire:model="birth_date" :label="__('ui.family.birth_date')" type="date" required />
+                <flux:input wire:model="relationship_to_customer" :label="__('ui.family.relationship_to_customer')" />
                 <flux:input wire:model="school_name" :label="__('ui.family.school')" />
                 <flux:input wire:model="grade" :label="__('ui.family.grade')" />
-                <flux:input wire:model="emergency_contact_name" :label="__('ui.family.emergency_contact')" />
-                <flux:input wire:model="emergency_contact_phone" :label="__('ui.family.emergency_phone')" />
             </div>
 
             <flux:textarea wire:model="medical_notes" :label="__('ui.family.medical_notes')" />

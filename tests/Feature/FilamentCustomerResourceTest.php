@@ -211,9 +211,11 @@ test('staff can use rich editor merge tags for contract variables in event form'
         ->get(EventResource::getUrl('create'))
         ->assertOk()
         ->assertSee('guardian_name', false)
+        ->assertSee('guardian_address', false)
         ->assertSee('student_name', false)
         ->assertSee('agreed_fee', false)
         ->assertSee(__('admin.contract_variables.labels.guardian_name'))
+        ->assertSee(__('admin.contract_variables.labels.guardian_address'))
         ->assertDontSee('Contract variables');
 });
 
@@ -351,10 +353,51 @@ test('event view page combines infolist and relation manager tabs', function () 
         ->assertCanSeeTableRecords([$booking]);
 });
 
+test('staff can edit customer profile fields in filament', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create([
+        'name' => 'Editable Customer',
+        'email' => 'editable@example.test',
+        'phone_number' => '+96891234567',
+    ]);
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(EditCustomer::class, ['record' => $customer->getRouteKey()])
+        ->fillForm([
+            'name' => 'Updated Customer',
+            'email' => null,
+            'phone_number' => '92345678',
+            'civil_id' => '12345678',
+            'address' => 'House 12',
+            'wilaya' => 'Muscat',
+            'area' => 'Qurum',
+            'additional_info' => [
+                'preferred_language' => 'en',
+            ],
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $customer->refresh();
+
+    expect($customer->name)->toBe('Updated Customer')
+        ->and($customer->email)->toBeNull()
+        ->and($customer->phone_number)->toBe('+96892345678')
+        ->and($customer->civil_id)->toBe('12345678')
+        ->and($customer->address)->toBe('House 12')
+        ->and($customer->wilaya)->toBe('Muscat')
+        ->and($customer->area)->toBe('Qurum')
+        ->and($customer->additional_info)->toBe(['preferred_language' => 'en']);
+});
+
 test('customer edit page combines form and relation manager tabs', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create(['name' => 'Tabbed Customer']);
-    $familyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Tabbed Student']);
+    $familyMember = FamilyMember::factory()->for($customer)->create([
+        'name' => 'Tabbed Student',
+        'relationship_to_customer' => 'Daughter',
+    ]);
     $booking = Booking::factory()->for($customer)->create(['reference' => 'BRH-CUSTOMER-TAB']);
 
     $this->actingAs($staff, 'web')
@@ -369,6 +412,7 @@ test('customer edit page combines form and relation manager tabs', function () {
         'pageClass' => EditCustomer::class,
     ])
         ->assertCanSeeTableRecords([$familyMember])
+        ->assertSee('Daughter')
         ->assertTableHeaderActionsExistInOrder(['create'])
         ->assertTableActionsExistInOrder(['edit', 'delete']);
 

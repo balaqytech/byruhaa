@@ -20,6 +20,8 @@ class CreateCustomerBooking
      */
     public function execute(Customer $customer, array $data): Booking
     {
+        $customer->ensureProfileIsComplete('family_member_ids');
+
         return DB::transaction(function () use ($customer, $data): Booking {
             $event = Event::query()
                 ->whereKey($data['event_id'])

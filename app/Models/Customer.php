@@ -11,27 +11,71 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @property int $id
  * @property string $name
  * @property string|null $email
- * @property string|null $phone_number
- * @property string|null $guardian_civil_id
- * @property string|null $guardian_relationship
- * @property string|null $guardian_wilaya
- * @property string|null $guardian_area
+ * @property string $phone_number
+ * @property string|null $civil_id
+ * @property string|null $address
+ * @property string|null $wilaya
+ * @property string|null $area
  * @property Carbon|null $email_verified_at
  * @property string $password
+ * @property array<string, mixed>|null $additional_info
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'phone_number', 'guardian_civil_id', 'guardian_relationship', 'guardian_wilaya', 'guardian_area', 'password'])]
+#[Fillable(['name', 'email', 'phone_number', 'civil_id', 'address', 'wilaya', 'area', 'password', 'additional_info'])]
 #[Hidden(['password', 'remember_token'])]
 class Customer extends Authenticatable
 {
     /** @use HasFactory<CustomerFactory> */
     use HasFactory, Notifiable;
+
+    /**
+     * @return array<int, string>
+     */
+    public static function requiredProfileFields(): array
+    {
+        return [
+            'name',
+            'phone_number',
+            'civil_id',
+            'address',
+            'wilaya',
+            'area',
+        ];
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function missingRequiredProfileFields(): array
+    {
+        return collect(self::requiredProfileFields())
+            ->filter(fn (string $field): bool => blank($this->getAttribute($field)))
+            ->values()
+            ->all();
+    }
+
+    public function hasCompleteProfile(): bool
+    {
+        return $this->missingRequiredProfileFields() === [];
+    }
+
+    public function ensureProfileIsComplete(string $errorKey = 'profile'): void
+    {
+        if ($this->hasCompleteProfile()) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            $errorKey => __('ui.messages.profile_incomplete'),
+        ]);
+    }
 
     /**
      * @return HasMany<FamilyMember, $this>
@@ -57,6 +101,7 @@ class Customer extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'additional_info' => 'array',
         ];
     }
 

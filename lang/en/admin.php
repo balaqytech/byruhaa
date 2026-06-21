@@ -171,6 +171,7 @@ return [
             'guardian_phone' => 'Guardian phone',
             'guardian_wilaya' => 'Guardian wilaya',
             'guardian_area' => 'Guardian area',
+            'guardian_address' => 'Guardian address',
             'student_name' => 'Student name',
             'student_birth_date' => 'Student birth date',
             'student_age' => 'Student age',
@@ -199,6 +200,9 @@ return [
 
     'fields' => [
         'amount' => 'Amount',
+        'additional_info' => 'Additional info',
+        'address' => 'Address',
+        'area' => 'Area',
         'booking' => 'Booking',
         'bookings' => 'Bookings',
         'category' => 'Category',
@@ -208,6 +212,7 @@ return [
         'created_at' => 'Created at',
         'currency' => 'Currency',
         'customer' => 'Customer',
+        'civil_id' => 'Civil ID',
         'description' => 'Description',
         'discount' => 'Discount',
         'discount_amount' => 'Discount amount',
@@ -251,6 +256,7 @@ return [
         'provider_session_id' => 'Provider session ID',
         'provider_status' => 'Provider status',
         'reason' => 'Reason',
+        'relationship_to_customer' => 'Relationship to customer',
         'reference' => 'Reference',
         'refundable_amount' => 'Refundable amount',
         'review_notes' => 'Review notes',
@@ -274,6 +280,7 @@ return [
         'type' => 'Type',
         'updated_at' => 'Updated at',
         'verified_at' => 'Verified at',
+        'wilaya' => 'Wilaya',
     ],
 
     'filters' => [

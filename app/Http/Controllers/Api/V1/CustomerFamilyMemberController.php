@@ -26,6 +26,8 @@ class CustomerFamilyMemberController extends Controller
 
     public function store(StoreCustomerFamilyMemberRequest $request, Customer $customer): JsonResponse
     {
+        $customer->ensureProfileIsComplete();
+
         $familyMember = $customer->familyMembers()->create($request->validated());
 
         return FamilyMemberResource::make($familyMember)
@@ -43,6 +45,7 @@ class CustomerFamilyMemberController extends Controller
     public function update(UpdateCustomerFamilyMemberRequest $request, Customer $customer, FamilyMember $familyMember): FamilyMemberResource
     {
         abort_unless($familyMember->customer_id === $customer->id, 404);
+        $customer->ensureProfileIsComplete();
 
         $familyMember->update($request->validated());
 
@@ -52,6 +55,7 @@ class CustomerFamilyMemberController extends Controller
     public function destroy(Customer $customer, FamilyMember $familyMember): Response
     {
         abort_unless($familyMember->customer_id === $customer->id, 404);
+        $customer->ensureProfileIsComplete();
 
         $familyMember->delete();
 

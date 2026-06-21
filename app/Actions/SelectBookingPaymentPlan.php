@@ -17,9 +17,11 @@ class SelectBookingPaymentPlan
         return DB::transaction(function () use ($booking, $paymentPlan): BookingPaymentSchedule {
             $booking = Booking::query()
                 ->whereKey($booking->id)
-                ->with(['familyMembers.contract', 'paymentSchedule'])
+                ->with(['customer', 'familyMembers.contract', 'paymentSchedule'])
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $booking->customer->ensureProfileIsComplete('paymentPlanId');
 
             $paymentPlan = EventPaymentPlan::query()
                 ->whereKey($paymentPlan->id)

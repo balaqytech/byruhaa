@@ -23,6 +23,18 @@ class CustomersTable
                 TextColumn::make('phone_number')
                     ->label(__('admin.fields.phone_number'))
                     ->searchable(),
+                TextColumn::make('civil_id')
+                    ->label(__('admin.fields.civil_id'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('wilaya')
+                    ->label(__('admin.fields.wilaya'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('area')
+                    ->label(__('admin.fields.area'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('family_members_count')
                     ->label(__('admin.fields.family'))
                     ->counts('familyMembers')

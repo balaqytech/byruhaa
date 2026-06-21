@@ -15,9 +15,11 @@ class CreateFullPaymentSchedule
         return DB::transaction(function () use ($booking): BookingPaymentSchedule {
             $booking = Booking::query()
                 ->whereKey($booking->id)
-                ->with(['familyMembers.contract', 'paymentSchedule'])
+                ->with(['customer', 'familyMembers.contract', 'paymentSchedule'])
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $booking->customer->ensureProfileIsComplete('payment');
 
             if (! $booking->state instanceof Approved) {
                 throw ValidationException::withMessages([
