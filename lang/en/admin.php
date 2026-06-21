@@ -68,6 +68,50 @@ return [
         'trip' => 'Trip',
     ],
 
+    'event_form' => [
+        'steps' => [
+            'basic_information' => 'Basic information',
+            'capacity_pricing' => 'Capacity & pricing',
+            'contract_terms' => 'Contract terms',
+            'participant_fields' => 'Participant fields',
+        ],
+    ],
+
+    'event_infolist' => [
+        'tabs' => [
+            'overview' => 'Overview',
+            'capacity_pricing' => 'Capacity & pricing',
+            'public_content' => 'Public content',
+            'contract_participants' => 'Contract & participants',
+        ],
+        'sections' => [
+            'identity' => 'Identity & status',
+            'capacity_pricing' => 'Capacity & pricing',
+            'public_content' => 'Public content',
+            'contract' => 'Contract',
+            'participant_fields' => 'Participant fields',
+        ],
+        'fields' => [
+            'optional' => 'Optional',
+            'remaining_seats' => 'Remaining seats',
+        ],
+    ],
+
+    'event_relation_managers' => [
+        'bookings' => [
+            'label' => 'Bookings',
+            'heading' => 'Event bookings',
+        ],
+        'discounts' => [
+            'label' => 'Discounts',
+            'heading' => 'Event discounts',
+        ],
+        'payment_plans' => [
+            'label' => 'Payment plans',
+            'heading' => 'Event payment plans',
+        ],
+    ],
+
     'participant_extra_fields' => [
         'heading' => 'Participant extra fields',
         'key' => 'Key',

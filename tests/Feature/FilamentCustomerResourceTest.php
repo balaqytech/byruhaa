@@ -18,6 +18,7 @@ use App\Filament\Resources\EventPaymentPlans\Pages\CreateEventPaymentPlan;
 use App\Filament\Resources\Events\EventResource;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
+use App\Filament\Resources\Events\Pages\ViewEvent;
 use App\Filament\Resources\Events\RelationManagers\BookingsRelationManager as EventBookingsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\DiscountsRelationManager as EventDiscountsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager as EventPaymentPlansRelationManager;
@@ -316,7 +317,7 @@ test('staff can edit all event wizard fields including price and participant fie
         ->and($event->participant_extra_fields[0]['key'])->toBe('shirt_size');
 });
 
-test('event edit page combines form and relation manager tabs', function () {
+test('event view page combines infolist and relation manager tabs', function () {
     $staff = User::factory()->create();
     $event = Event::factory()->create(['name' => 'Tabbed Event']);
     $discount = Discount::factory()->for($event)->create(['name' => 'Tabbed Discount']);
@@ -324,36 +325,30 @@ test('event edit page combines form and relation manager tabs', function () {
     $booking = Booking::factory()->for($event)->create(['reference' => 'BRH-EVENT-TAB']);
 
     $this->actingAs($staff, 'web')
-        ->get(EventResource::getUrl('edit', ['record' => $event]))
+        ->get(EventResource::getUrl('view', ['record' => $event]))
         ->assertOk()
         ->assertSee(__('admin.resources.events.label'))
-        ->assertSee('Discounts')
-        ->assertSee('Payment plans')
-        ->assertSee('Bookings');
+        ->assertSee(__('admin.event_relation_managers.discounts.label'))
+        ->assertSee(__('admin.event_relation_managers.payment_plans.label'))
+        ->assertSee(__('admin.event_relation_managers.bookings.label'));
 
     Livewire::test(EventDiscountsRelationManager::class, [
         'ownerRecord' => $event,
-        'pageClass' => EditEvent::class,
+        'pageClass' => ViewEvent::class,
     ])
-        ->assertCanSeeTableRecords([$discount])
-        ->assertTableHeaderActionsExistInOrder(['create'])
-        ->assertTableActionsExistInOrder(['edit', 'delete']);
+        ->assertCanSeeTableRecords([$discount]);
 
     Livewire::test(EventPaymentPlansRelationManager::class, [
         'ownerRecord' => $event,
-        'pageClass' => EditEvent::class,
+        'pageClass' => ViewEvent::class,
     ])
-        ->assertCanSeeTableRecords([$paymentPlan])
-        ->assertTableHeaderActionsExistInOrder(['create'])
-        ->assertTableActionsExistInOrder(['edit', 'delete']);
+        ->assertCanSeeTableRecords([$paymentPlan]);
 
     Livewire::test(EventBookingsRelationManager::class, [
         'ownerRecord' => $event,
-        'pageClass' => EditEvent::class,
+        'pageClass' => ViewEvent::class,
     ])
-        ->assertCanSeeTableRecords([$booking])
-        ->assertTableHeaderActionsExistInOrder([])
-        ->assertTableActionsExistInOrder(['view']);
+        ->assertCanSeeTableRecords([$booking]);
 });
 
 test('customer edit page combines form and relation manager tabs', function () {

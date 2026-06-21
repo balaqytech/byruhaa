@@ -5,10 +5,12 @@ namespace App\Filament\Resources\Events;
 use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ListEvents;
+use App\Filament\Resources\Events\Pages\ViewEvent;
 use App\Filament\Resources\Events\RelationManagers\BookingsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\DiscountsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager;
 use App\Filament\Resources\Events\Schemas\EventForm;
+use App\Filament\Resources\Events\Schemas\EventInfolist;
 use App\Filament\Resources\Events\Tables\EventsTable;
 use App\Models\Event;
 use BackedEnum;
@@ -26,6 +28,11 @@ class EventResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return EventForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return EventInfolist::configure($schema);
     }
 
     public static function getModelLabel(): string
@@ -62,6 +69,7 @@ class EventResource extends Resource
         return [
             'index' => ListEvents::route('/'),
             'create' => CreateEvent::route('/create'),
+            'view' => ViewEvent::route('/{record}'),
             'edit' => EditEvent::route('/{record}/edit'),
         ];
     }

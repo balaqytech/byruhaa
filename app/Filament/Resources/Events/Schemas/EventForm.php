@@ -28,7 +28,7 @@ class EventForm
         return $schema
             ->components([
                 Wizard::make([
-                    Step::make('Basic information')
+                    Step::make(__('admin.event_form.steps.basic_information'))
                         ->columns(2)
                         ->schema([
                             TextInput::make('name')
@@ -55,8 +55,15 @@ class EventForm
                                 ->label(__('admin.fields.location'))
                                 ->maxLength(255)
                                 ->columnSpanFull(),
+                            Textarea::make('excerpt')
+                                ->label(__('admin.fields.excerpt'))
+                                ->columnSpanFull()
+                                ->maxLength(500),
+                            RichEditor::make('description_html')
+                                ->label(__('admin.fields.description'))
+                                ->columnSpanFull(),
                         ]),
-                    Step::make('Capacity & pricing')
+                    Step::make(__('admin.event_form.steps.capacity_pricing'))
                         ->columns(2)
                         ->schema([
                             TextInput::make('seat_capacity')
@@ -93,23 +100,16 @@ class EventForm
                             DateTimePicker::make('ends_at')
                                 ->label(__('admin.fields.ends_at')),
                         ]),
-                    Step::make('Public content')
-                        ->schema([
-                            Textarea::make('excerpt')
-                                ->label(__('admin.fields.excerpt'))
-                                ->columnSpanFull()
-                                ->maxLength(500),
-                            RichEditor::make('description_html')
-                                ->label(__('admin.fields.description'))
-                                ->columnSpanFull(),
-                        ]),
-                    Step::make('Contract & participant fields')
+                    Step::make(__('admin.event_form.steps.contract_terms'))
                         ->schema([
                             RichEditor::make('contract_terms_html')
                                 ->label(__('admin.fields.contract_terms'))
                                 ->mergeTags(ContractVariables::mergeTagLabels())
                                 ->activePanel('mergeTags')
                                 ->columnSpanFull(),
+                        ]),
+                    Step::make(__('admin.event_form.steps.participant_fields'))
+                        ->schema([
                             Repeater::make('participant_extra_fields')
                                 ->label(__('admin.participant_extra_fields.heading'))
                                 ->schema([

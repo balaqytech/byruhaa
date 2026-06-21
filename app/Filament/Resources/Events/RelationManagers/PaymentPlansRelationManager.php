@@ -16,12 +16,11 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class PaymentPlansRelationManager extends RelationManager
 {
     protected static string $relationship = 'paymentPlans';
-
-    protected static ?string $title = 'Payment plans';
 
     public function form(Schema $schema): Schema
     {
@@ -78,6 +77,7 @@ class PaymentPlansRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->heading(__('admin.event_relation_managers.payment_plans.heading'))
             ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('name')
@@ -103,5 +103,10 @@ class PaymentPlansRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('admin.event_relation_managers.payment_plans.label');
     }
 }

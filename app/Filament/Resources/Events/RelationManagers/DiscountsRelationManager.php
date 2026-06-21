@@ -18,12 +18,11 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class DiscountsRelationManager extends RelationManager
 {
     protected static string $relationship = 'discounts';
-
-    protected static ?string $title = 'Discounts';
 
     public function form(Schema $schema): Schema
     {
@@ -60,6 +59,7 @@ class DiscountsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->heading(__('admin.event_relation_managers.discounts.heading'))
             ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('name')
@@ -92,6 +92,11 @@ class DiscountsRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('admin.event_relation_managers.discounts.label');
     }
 
     private static function moneyInputState(mixed $state): ?string

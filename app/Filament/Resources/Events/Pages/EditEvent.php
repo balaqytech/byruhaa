@@ -10,20 +10,15 @@ class EditEvent extends EditRecord
 {
     protected static string $resource = EventResource::class;
 
-    public function hasCombinedRelationManagerTabsWithContent(): bool
-    {
-        return true;
-    }
-
-    public function getContentTabLabel(): ?string
-    {
-        return __('admin.resources.events.label');
-    }
-
     protected function getHeaderActions(): array
     {
         return [
             DeleteAction::make(),
         ];
+    }
+
+    protected function getAllRelationManagers(): array
+    {
+        return [];
     }
 }

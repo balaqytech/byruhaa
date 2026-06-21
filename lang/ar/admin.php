@@ -68,6 +68,50 @@ return [
         'trip' => 'رحلة',
     ],
 
+    'event_form' => [
+        'steps' => [
+            'basic_information' => 'البيانات الأساسية',
+            'capacity_pricing' => 'السعة والتسعير',
+            'contract_terms' => 'شروط العقد',
+            'participant_fields' => 'حقول المشاركين',
+        ],
+    ],
+
+    'event_infolist' => [
+        'tabs' => [
+            'overview' => 'نظرة عامة',
+            'capacity_pricing' => 'السعة والتسعير',
+            'public_content' => 'المحتوى العام',
+            'contract_participants' => 'العقد والمشاركون',
+        ],
+        'sections' => [
+            'identity' => 'الهوية والحالة',
+            'capacity_pricing' => 'السعة والتسعير',
+            'public_content' => 'المحتوى العام',
+            'contract' => 'العقد',
+            'participant_fields' => 'حقول المشاركين',
+        ],
+        'fields' => [
+            'optional' => 'اختياري',
+            'remaining_seats' => 'المقاعد المتبقية',
+        ],
+    ],
+
+    'event_relation_managers' => [
+        'bookings' => [
+            'label' => 'الحجوزات',
+            'heading' => 'حجوزات الفعالية',
+        ],
+        'discounts' => [
+            'label' => 'الخصومات',
+            'heading' => 'خصومات الفعالية',
+        ],
+        'payment_plans' => [
+            'label' => 'خطط الدفع',
+            'heading' => 'خطط دفع الفعالية',
+        ],
+    ],
+
     'participant_extra_fields' => [
         'heading' => 'حقول المشاركين الإضافية',
         'key' => 'المفتاح',
