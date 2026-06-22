@@ -37,7 +37,7 @@ use Livewire\Livewire;
 
 beforeEach(function () {
     config([
-        'affiliate.commission_rate_basis_points' => 500,
+        'affiliate.commission_amount_baisa' => 30000,
         'affiliate.minimum_payout_baisa' => 20000,
         'payments.default' => 'thawani',
         'thawani.mode' => 'test',
@@ -176,33 +176,45 @@ test('customer booking creates an affiliate referral snapshot from valid attribu
         ->attributed_at->not->toBeNull();
 });
 
-test('paid full and partial payments create proportional affiliate commissions once', function () {
-    [$affiliate, $fullPayment] = affiliatePaidPaymentFixture(amountBaisa: 50000);
-    $fullCommission = app(PostAffiliateCommissionForPayment::class)->execute($fullPayment);
-
-    expect($fullCommission)
-        ->not->toBeNull()
-        ->base_amount_baisa->toBe(50000)
-        ->commission_rate_basis_points->toBe(500)
-        ->commission_amount_baisa->toBe(2500)
-        ->and($fullCommission->ledgerTransaction()->exists())->toBeTrue();
-
-    [$affiliate, $partialPayment] = affiliatePaidPaymentFixture(
+test('paid booking creates one fixed affiliate commission once', function () {
+    [$affiliate, $firstPayment, $booking] = affiliatePaidPaymentFixture(
         amountBaisa: 10000,
-        affiliate: $affiliate,
         bookingTotalBaisa: 50000,
     );
-    $partialCommission = app(PostAffiliateCommissionForPayment::class)->execute($partialPayment);
+    $firstCommission = app(PostAffiliateCommissionForPayment::class)->execute($firstPayment);
 
-    expect($partialCommission)
+    expect($firstCommission)
         ->not->toBeNull()
-        ->base_amount_baisa->toBe(10000)
-        ->commission_amount_baisa->toBe(500);
+        ->base_amount_baisa->toBe(50000)
+        ->commission_rate_basis_points->toBe(0)
+        ->commission_amount_baisa->toBe(30000)
+        ->and($firstCommission->ledgerTransaction()->exists())->toBeTrue();
 
-    $repeatCommission = app(PostAffiliateCommissionForPayment::class)->execute($partialPayment);
+    $paymentSchedule = $booking->paymentSchedule()->firstOrFail();
+    $secondInstallment = BookingInstallment::factory()
+        ->for($paymentSchedule, 'paymentSchedule')
+        ->create([
+            'sequence' => 2,
+            'amount_baisa' => 40000,
+            'state' => BookingInstallmentState::Paid,
+            'paid_at' => now(),
+        ]);
+    $secondPayment = Payment::factory()
+        ->for($secondInstallment, 'bookingInstallment')
+        ->create([
+            'amount_baisa' => 40000,
+            'currency' => 'OMR',
+            'state' => PaymentState::Paid,
+            'paid_at' => now(),
+        ]);
 
-    expect($repeatCommission?->id)->toBe($partialCommission->id)
-        ->and($partialPayment->affiliateCommission()->count())->toBe(1);
+    $secondCommission = app(PostAffiliateCommissionForPayment::class)->execute($secondPayment);
+    $repeatCommission = app(PostAffiliateCommissionForPayment::class)->execute($firstPayment);
+
+    expect($secondCommission?->id)->toBe($firstCommission->id)
+        ->and($repeatCommission?->id)->toBe($firstCommission->id)
+        ->and(AffiliateCommission::query()->where('booking_id', $booking->id)->count())->toBe(1)
+        ->and($affiliate->refresh()->earnedCommissionBaisa())->toBe(30000);
 });
 
 test('thawani confirmation posts affiliate commission idempotently', function () {
@@ -231,7 +243,7 @@ test('thawani confirmation posts affiliate commission idempotently', function ()
     expect($payment->refresh())
         ->state->toBe(PaymentState::Paid)
         ->and($payment->affiliateCommission()->count())->toBe(1)
-        ->and(AffiliateCommission::query()->sum('commission_amount_baisa'))->toBe(600);
+        ->and(AffiliateCommission::query()->sum('commission_amount_baisa'))->toBe(30000);
 });
 
 test('payout requests require the minimum balance and reserve pending approved and paid amounts', function () {
@@ -254,14 +266,14 @@ test('payout requests require the minimum balance and reserve pending approved a
     expect($payout)
         ->status->toBe(AffiliatePayoutRequestStatus::Pending)
         ->amount_baisa->toBe(20000)
-        ->and($affiliate->refresh()->availableBalanceBaisa())->toBe(30000);
+        ->and($affiliate->refresh()->availableBalanceBaisa())->toBe(10000);
 
     AffiliatePayoutRequest::factory()
         ->for($affiliate)
         ->approved()
         ->create(['amount_baisa' => 10000]);
 
-    expect($affiliate->refresh()->availableBalanceBaisa())->toBe(20000);
+    expect($affiliate->refresh()->availableBalanceBaisa())->toBe(0);
 });
 
 test('affiliate payout form creates a payout request from available balance', function () {
@@ -295,12 +307,12 @@ test('affiliate commission and paid payout ledger postings are balanced and idem
 
     expect($commissionEntries)
         ->toHaveCount(2)
-        ->and($commissionEntries->sum('debit_baisa'))->toBe(2500)
-        ->and($commissionEntries->sum('credit_baisa'))->toBe(2500)
-        ->and($commissionEntries->firstWhere('debit_baisa', 2500)?->ledgerAccount)
+        ->and($commissionEntries->sum('debit_baisa'))->toBe(30000)
+        ->and($commissionEntries->sum('credit_baisa'))->toBe(30000)
+        ->and($commissionEntries->firstWhere('debit_baisa', 30000)?->ledgerAccount)
         ->code->toBe(LedgerAccount::AFFILIATE_COMMISSION_EXPENSE_CODE)
         ->type->toBe(LedgerAccountType::Expense)
-        ->and($commissionEntries->firstWhere('credit_baisa', 2500)?->ledgerAccount)
+        ->and($commissionEntries->firstWhere('credit_baisa', 30000)?->ledgerAccount)
         ->code->toBe(LedgerAccount::AFFILIATE_COMMISSION_LIABILITY_CODE)
         ->type->toBe(LedgerAccountType::Liability);
 

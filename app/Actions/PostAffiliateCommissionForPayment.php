@@ -26,21 +26,28 @@ class PostAffiliateCommissionForPayment
                 throw new RuntimeException('Only paid payments can earn affiliate commission.');
             }
 
-            $existingCommission = $payment->affiliateCommission()->first();
+            $booking = $payment->bookingInstallment->paymentSchedule->booking;
+
+            $booking->newQuery()
+                ->whereKey($booking->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $existingCommission = AffiliateCommission::query()
+                ->where('booking_id', $booking->id)
+                ->first();
 
             if ($existingCommission instanceof AffiliateCommission) {
                 return $existingCommission;
             }
 
-            $booking = $payment->bookingInstallment->paymentSchedule->booking;
             $referral = $booking->affiliateReferral;
 
             if (! $referral || $referral->affiliate->status !== AffiliateStatus::Approved) {
                 return null;
             }
 
-            $rateBasisPoints = (int) config('affiliate.commission_rate_basis_points', 500);
-            $commissionAmountBaisa = intdiv($payment->amount_baisa * $rateBasisPoints, 10000);
+            $commissionAmountBaisa = (int) config('affiliate.commission_amount_baisa', 30000);
 
             if ($commissionAmountBaisa <= 0) {
                 return null;
@@ -51,8 +58,8 @@ class PostAffiliateCommissionForPayment
                 'affiliate_referral_id' => $referral->id,
                 'booking_id' => $booking->id,
                 'payment_id' => $payment->id,
-                'base_amount_baisa' => $payment->amount_baisa,
-                'commission_rate_basis_points' => $rateBasisPoints,
+                'base_amount_baisa' => $booking->total_baisa,
+                'commission_rate_basis_points' => 0,
                 'commission_amount_baisa' => $commissionAmountBaisa,
                 'currency' => $payment->currency,
                 'earned_at' => $payment->paid_at ?? now(),

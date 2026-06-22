@@ -3,7 +3,6 @@
 use App\Actions\CreateAffiliatePayoutRequest;
 use App\Models\Affiliate;
 use App\Support\Money\MoneyFactory;
-use App\Support\MoneyFormatter;
 use Brick\Math\Exception\MathException;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -80,10 +79,6 @@ new #[Layout('layouts::affiliate')] #[Title('Request payout')] class extends Com
         ];
     }
 
-    public function money(int $amountBaisa): string
-    {
-        return MoneyFormatter::baisa($amountBaisa);
-    }
 };
 ?>
 
@@ -103,23 +98,27 @@ new #[Layout('layouts::affiliate')] #[Title('Request payout')] class extends Com
     <div class="grid gap-3 sm:grid-cols-2">
         <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <flux:text>{{ __('ui.affiliates.available_balance') }}</flux:text>
-            <flux:heading class="text-base">{{ $this->money($availableBalanceBaisa) }}</flux:heading>
+            <flux:heading class="text-base"><x-money :amount-baisa="$availableBalanceBaisa" /></flux:heading>
         </div>
         <div class="rounded-xl border border-emerald-900/10 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-white/5">
             <flux:text>{{ __('ui.affiliates.minimum_payout') }}</flux:text>
-            <flux:heading class="text-base">{{ $this->money($minimumPayoutBaisa) }}</flux:heading>
+            <flux:heading class="text-base"><x-money :amount-baisa="$minimumPayoutBaisa" /></flux:heading>
         </div>
     </div>
 
     <form wire:submit="submit" class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
         <div class="space-y-5">
-            <flux:input
-                wire:model="amount"
-                :label="__('ui.payments.amount')"
-                required
-                suffix="OMR"
-                dir="ltr"
-            />
+            <flux:input.group>
+                <flux:input
+                    wire:model="amount"
+                    :label="__('ui.payments.amount')"
+                    required
+                    dir="ltr"
+                />
+                <flux:input.group.suffix>
+                    <x-money symbol-only class="text-zinc-500 dark:text-white/60" />
+                </flux:input.group.suffix>
+            </flux:input.group>
 
             <flux:textarea
                 wire:model="payment_details"

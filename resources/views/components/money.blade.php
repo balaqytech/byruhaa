@@ -1,6 +1,7 @@
 @props([
-    'amountBaisa',
+    'amountBaisa' => 0,
     'currency' => 'OMR',
+    'symbolOnly' => false,
 ])
 
 @php
@@ -22,9 +23,13 @@
             <path d="M31 18c2 6 8 9 17 9h8l-5 8h-5c-13 0-22-6-25-17h10Z" />
         </svg>
         <span class="sr-only">OMR</span>
-        <span>{{ $amount }}</span>
+        @unless ($symbolOnly)
+            <span>{{ $amount }}</span>
+        @endunless
     @else
-        <span>{{ $amount }}</span>
+        @unless ($symbolOnly)
+            <span>{{ $amount }}</span>
+        @endunless
         <span>{{ $currencyCode }}</span>
     @endif
 </span>

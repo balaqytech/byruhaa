@@ -32,9 +32,6 @@ class CommissionsRelationManager extends RelationManager
                 TextEntry::make('commission_amount_baisa')
                     ->label(__('admin.fields.commission_amount'))
                     ->state(fn (AffiliateCommission $record): string => MoneyFormatter::baisa($record->commission_amount_baisa, $record->currency)),
-                TextEntry::make('commission_rate_basis_points')
-                    ->label(__('admin.fields.commission_rate'))
-                    ->state(fn (AffiliateCommission $record): string => ((string) ($record->commission_rate_basis_points / 100)).'%'),
                 TextEntry::make('earned_at')
                     ->label(__('admin.fields.earned_at'))
                     ->dateTime(),

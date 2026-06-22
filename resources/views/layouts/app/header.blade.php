@@ -129,7 +129,7 @@
                 x-data="{ visible: true }"
                 x-show="visible"
                 @customer-profile-completed.window="visible = false"
-                class="border-b border-amber-300/40 bg-amber-50 text-amber-950 dark:border-amber-300/20 dark:bg-amber-300/10 dark:text-amber-50"
+                class="border-b border-emerald-700/40 bg-emerald-900 text-emerald-50 dark:border-emerald-300/20 dark:bg-emerald-400/15 dark:text-emerald-50"
             >
                 <div class="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 text-sm font-medium sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
                     <div class="flex items-start gap-3">

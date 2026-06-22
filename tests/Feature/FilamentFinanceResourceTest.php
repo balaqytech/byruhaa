@@ -261,7 +261,7 @@ test('staff can list and view ledger accounts and transactions with entries', fu
     $this->actingAs($staff, 'web')
         ->get(LedgerAccountResource::getUrl('view', ['record' => $account]))
         ->assertOk()
-        ->assertSee('Entries');
+        ->assertSee(__('admin.fields.entries'));
 
     $this->actingAs($staff, 'web')
         ->get(LedgerTransactionResource::getUrl('index'))
@@ -272,7 +272,7 @@ test('staff can list and view ledger accounts and transactions with entries', fu
     $this->actingAs($staff, 'web')
         ->get(LedgerTransactionResource::getUrl('view', ['record' => $transaction]))
         ->assertOk()
-        ->assertSee('Entries');
+        ->assertSee(__('admin.fields.entries'));
 
     Livewire::test(LedgerAccountEntriesRelationManager::class, [
         'ownerRecord' => $account,

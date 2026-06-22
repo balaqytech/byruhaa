@@ -42,9 +42,6 @@ class AffiliateCommissionsTable
                     ->label(__('admin.fields.commission_amount'))
                     ->formatStateUsing(fn (int $state, AffiliateCommission $record): string => MoneyFormatter::baisa($state, $record->currency))
                     ->sortable(),
-                TextColumn::make('commission_rate_basis_points')
-                    ->label(__('admin.fields.commission_rate'))
-                    ->formatStateUsing(fn (int $state): string => ((string) ($state / 100)).'%'),
                 TextColumn::make('earned_at')
                     ->label(__('admin.fields.earned_at'))
                     ->dateTime()

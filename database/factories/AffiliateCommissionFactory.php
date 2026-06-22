@@ -27,8 +27,8 @@ class AffiliateCommissionFactory extends Factory
             'booking_id' => Booking::factory(),
             'payment_id' => Payment::factory(),
             'base_amount_baisa' => 10000,
-            'commission_rate_basis_points' => 500,
-            'commission_amount_baisa' => 500,
+            'commission_rate_basis_points' => 0,
+            'commission_amount_baisa' => 30000,
             'currency' => 'OMR',
             'earned_at' => now(),
         ];

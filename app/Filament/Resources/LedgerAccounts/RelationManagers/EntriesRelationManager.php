@@ -8,12 +8,16 @@ use App\Support\MoneyFormatter;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class EntriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'entries';
 
-    protected static ?string $title = 'Entries';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('admin.fields.entries');
+    }
 
     public function table(Table $table): Table
     {
@@ -25,13 +29,13 @@ class EntriesRelationManager extends RelationManager
                     ->searchable()
                     ->url(fn (LedgerEntry $record): string => LedgerTransactionResource::getUrl('view', ['record' => $record->ledgerTransaction])),
                 TextColumn::make('debit_baisa')
-                    ->label('Debit')
+                    ->label(__('admin.fields.debit'))
                     ->formatStateUsing(fn (int $state, LedgerEntry $record): string => MoneyFormatter::baisa($state, $record->currency)),
                 TextColumn::make('credit_baisa')
-                    ->label('Credit')
+                    ->label(__('admin.fields.credit'))
                     ->formatStateUsing(fn (int $state, LedgerEntry $record): string => MoneyFormatter::baisa($state, $record->currency)),
                 TextColumn::make('memo')
-                    ->label('Memo')
+                    ->label(__('admin.fields.memo'))
                     ->limit(50)
                     ->placeholder('-'),
                 TextColumn::make('created_at')
