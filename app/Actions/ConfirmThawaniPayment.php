@@ -7,6 +7,7 @@ use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
 use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayManager;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -16,6 +17,7 @@ class ConfirmThawaniPayment
         private PaymentGatewayManager $paymentGateways,
         private PostPaymentLedgerTransaction $postPaymentLedgerTransaction,
         private PostAffiliateCommissionForPayment $postAffiliateCommissionForPayment,
+        private ByruhaaWebhookSender $webhookSender,
     ) {}
 
     public function confirm(Payment $payment): Payment
@@ -43,7 +45,9 @@ class ConfirmThawaniPayment
         $providerInvoice = data_get($session, 'invoice');
         $providerAmount = data_get($session, 'total_amount');
 
-        return DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount): Payment {
+        $becamePaid = false;
+
+        $payment = DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, &$becamePaid): Payment {
             $payment = Payment::query()
                 ->whereKey($payment->id)
                 ->with('bookingInstallment')
@@ -83,10 +87,18 @@ class ConfirmThawaniPayment
 
                 $this->postPaymentLedgerTransaction->execute($payment);
                 $this->postAffiliateCommissionForPayment->execute($payment);
+
+                $becamePaid = true;
             }
 
             return $payment->refresh();
         });
+
+        if ($becamePaid) {
+            $this->webhookSender->sendPaymentPaid($payment);
+        }
+
+        return $payment;
     }
 
     public function cancel(Payment $payment): Payment

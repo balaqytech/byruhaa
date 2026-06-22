@@ -37,9 +37,10 @@ use Illuminate\Support\Str;
  * @property array<string, mixed>|null $response_payload
  * @property Carbon|null $verified_at
  * @property Carbon|null $paid_at
+ * @property Carbon|null $payment_paid_webhook_sent_at
  * @property-read int $refundable_amount_baisa
  */
-#[Fillable(['booking_installment_id', 'provider', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at'])]
+#[Fillable(['booking_installment_id', 'provider', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at', 'payment_paid_webhook_sent_at'])]
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
@@ -137,6 +138,7 @@ class Payment extends Model
             'response_payload' => 'array',
             'verified_at' => 'datetime',
             'paid_at' => 'datetime',
+            'payment_paid_webhook_sent_at' => 'datetime',
         ];
     }
 }

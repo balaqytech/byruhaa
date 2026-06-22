@@ -4,17 +4,21 @@ namespace App\Services;
 
 use App\Models\Booking;
 use App\Models\User;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingApprovalService
 {
-    public function __construct(private ContractRenderer $contractRenderer) {}
+    public function __construct(
+        private ContractRenderer $contractRenderer,
+        private ByruhaaWebhookSender $webhookSender,
+    ) {}
 
     public function approve(Booking $booking, User $reviewer, ?string $reviewNotes = null): Booking
     {
-        return DB::transaction(function () use ($booking, $reviewer, $reviewNotes): Booking {
+        $booking = DB::transaction(function () use ($booking, $reviewer, $reviewNotes): Booking {
             $booking = Booking::query()
                 ->whereKey($booking->id)
                 ->with(['event', 'customer', 'familyMembers.familyMember', 'familyMembers.contract'])
@@ -51,5 +55,9 @@ class BookingApprovalService
 
             return $booking->refresh();
         });
+
+        $this->webhookSender->sendBookingApproved($booking);
+
+        return $booking;
     }
 }
