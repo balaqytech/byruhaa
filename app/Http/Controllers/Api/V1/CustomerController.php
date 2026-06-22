@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCustomerRequest;
+use App\Http\Requests\Api\V1\UpdateCustomerProfileRequest;
 use App\Http\Requests\Api\V1\UpdateCustomerRequest;
 use App\Http\Resources\Api\V1\CustomerResource;
 use App\Models\Customer;
+use App\Services\PhoneNumberNormalizer;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -14,9 +17,27 @@ use Illuminate\Http\Response;
 
 class CustomerController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request, PhoneNumberNormalizer $phoneNumberNormalizer): AnonymousResourceCollection
     {
+        $search = is_string($request->query('search')) ? trim($request->query('search')) : '';
+        $phone = is_string($request->query('phone')) ? trim($request->query('phone')) : '';
+        $email = is_string($request->query('email')) ? trim($request->query('email')) : '';
+
         $customers = Customer::query()
+            ->when(
+                $search !== '',
+                fn (Builder $query): Builder => $query->where(fn (Builder $query): Builder => $query
+                    ->where('email', 'like', '%'.$search.'%')
+                    ->orWhere('phone_number', 'like', '%'.$phoneNumberNormalizer->normalize($search).'%')),
+            )
+            ->when(
+                $phone !== '',
+                fn (Builder $query): Builder => $query->where('phone_number', 'like', '%'.$phoneNumberNormalizer->normalize($phone).'%'),
+            )
+            ->when(
+                $email !== '',
+                fn (Builder $query): Builder => $query->where('email', 'like', '%'.$email.'%'),
+            )
             ->latest()
             ->paginate($this->perPage($request));
 
@@ -44,6 +65,13 @@ class CustomerController extends Controller
         $customer->update(
             collect($request->validated())->except('password_confirmation')->all(),
         );
+
+        return CustomerResource::make($customer->refresh());
+    }
+
+    public function updateProfile(UpdateCustomerProfileRequest $request, Customer $customer): CustomerResource
+    {
+        $customer->update($request->validated());
 
         return CustomerResource::make($customer->refresh());
     }

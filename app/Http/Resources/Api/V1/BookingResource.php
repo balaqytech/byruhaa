@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Http\Resources\Api\V1\Concerns\FormatsApiMoney;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use Illuminate\Http\Request;
@@ -9,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class BookingResource extends JsonResource
 {
+    use FormatsApiMoney;
+
     /**
      * Transform the resource into an array.
      *
@@ -26,14 +29,14 @@ class BookingResource extends JsonResource
             'reviewed_by_user_id' => $this->reviewed_by_user_id,
             'reviewed_at' => $this->reviewed_at?->toJSON(),
             'review_notes' => $this->review_notes,
-            'unit_price_baisa' => $this->unit_price_baisa,
+            'unit_price' => $this->money($this->unit_price),
             'currency' => $this->currency,
             'family_member_count' => $this->family_member_count,
-            'subtotal_baisa' => $this->subtotal_baisa,
+            'subtotal' => $this->money($this->subtotal),
             'discount_id' => $this->discount_id,
             'discount_name' => $this->discount_name,
-            'discount_amount_baisa' => $this->discount_amount_baisa,
-            'total_baisa' => $this->total_baisa,
+            'discount_amount' => $this->money($this->discount_amount),
+            'total' => $this->money($this->total),
             'created_at' => $this->created_at?->toJSON(),
             'updated_at' => $this->updated_at?->toJSON(),
             'event' => EventResource::make($this->whenLoaded('event')),
@@ -50,9 +53,9 @@ class BookingResource extends JsonResource
                 'event_payment_plan_id' => $this->paymentSchedule->event_payment_plan_id,
                 'plan_name' => $this->paymentSchedule->plan_name,
                 'currency' => $this->paymentSchedule->currency,
-                'subtotal_baisa' => $this->paymentSchedule->subtotal_baisa,
-                'discount_amount_baisa' => $this->paymentSchedule->discount_amount_baisa,
-                'total_baisa' => $this->paymentSchedule->total_baisa,
+                'subtotal' => $this->money($this->paymentSchedule->subtotal),
+                'discount_amount' => $this->money($this->paymentSchedule->discount_amount),
+                'total' => $this->money($this->paymentSchedule->total),
                 'installments' => $this->paymentSchedule->relationLoaded('installments')
                     ? $this->paymentSchedule->installments->map(
                         fn (BookingInstallment $installment): array => [
@@ -61,9 +64,10 @@ class BookingResource extends JsonResource
                             'sequence' => $installment->sequence,
                             'percentage' => $installment->percentage,
                             'due_date' => $installment->due_date?->toDateString(),
-                            'gross_amount_baisa' => $installment->gross_amount_baisa,
-                            'discount_amount_baisa' => $installment->discount_amount_baisa,
-                            'amount_baisa' => $installment->amount_baisa,
+                            'gross_amount' => $this->money($installment->gross_amount),
+                            'discount_amount' => $this->money($installment->discount_amount),
+                            'amount' => $this->money($installment->amount),
+                            'currency' => $installment->currency,
                             'state' => $installment->state->value,
                             'paid_at' => $installment->paid_at?->toJSON(),
                         ],

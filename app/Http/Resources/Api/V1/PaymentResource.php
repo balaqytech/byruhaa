@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Http\Resources\Api\V1\Concerns\FormatsApiMoney;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class PaymentResource extends JsonResource
 {
+    use FormatsApiMoney;
+
     /**
      * Transform the resource into an array.
      *
@@ -19,7 +22,7 @@ class PaymentResource extends JsonResource
             'booking_installment_id' => $this->booking_installment_id,
             'provider' => $this->provider->value,
             'reference' => $this->reference,
-            'amount_baisa' => $this->amount_baisa,
+            'amount' => $this->money($this->amount),
             'currency' => $this->currency,
             'state' => $this->state->value,
             'state_label' => $this->state->label(),
@@ -41,7 +44,8 @@ class PaymentResource extends JsonResource
                 'sequence' => $this->bookingInstallment->sequence,
                 'percentage' => $this->bookingInstallment->percentage,
                 'due_date' => $this->bookingInstallment->due_date?->toDateString(),
-                'amount_baisa' => $this->bookingInstallment->amount_baisa,
+                'amount' => $this->money($this->bookingInstallment->amount),
+                'currency' => $this->bookingInstallment->currency,
                 'state' => $this->bookingInstallment->state->value,
             ]),
         ];

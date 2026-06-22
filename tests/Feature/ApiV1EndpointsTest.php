@@ -5,7 +5,10 @@ use App\Models\Booking;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
+use App\Models\Discount;
 use App\Models\Event;
+use App\Models\EventPaymentPlan;
+use App\Models\EventPaymentPlanInstallment;
 use App\Models\FamilyMember;
 use App\Models\Payment;
 
@@ -73,6 +76,120 @@ test('customers can be managed through the api and require a phone number', func
     $this->assertModelMissing($customer);
 });
 
+test('customers can be searched by phone', function () {
+    $matchingCustomer = Customer::factory()->create([
+        'phone_number' => '+96891234567',
+        'email' => 'phone-match@example.com',
+    ]);
+    Customer::factory()->create([
+        'phone_number' => '+96892345678',
+        'email' => 'other-phone@example.com',
+    ]);
+
+    $this->getJson('/api/v1/customers?phone=91234567')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingCustomer->id);
+
+    $this->getJson('/api/v1/customers?search=91234567')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingCustomer->id);
+});
+
+test('customers can be searched by email', function () {
+    $matchingCustomer = Customer::factory()->create([
+        'email' => 'mona.search@example.com',
+    ]);
+    Customer::factory()->create([
+        'email' => 'salim.search@example.com',
+    ]);
+
+    $this->getJson('/api/v1/customers?email=mona.search@example.com')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingCustomer->id);
+
+    $this->getJson('/api/v1/customers?search=mona.search@example.com')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $matchingCustomer->id);
+});
+
+test('customer profile completion validates required input', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+
+    $this->patchJson("/api/v1/customers/{$customer->id}/profile", [])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors([
+            'name',
+            'phone_number',
+            'civil_id',
+            'address',
+            'wilaya',
+            'area',
+        ]);
+});
+
+test('customer profile completion updates allowed fields', function () {
+    $customer = Customer::factory()->incompleteProfile()->create();
+
+    $this->patchJson("/api/v1/customers/{$customer->id}/profile", [
+        'name' => 'Mona Profile',
+        'email' => 'profile@example.com',
+        'phone_number' => '91234567',
+        'civil_id' => '12345678',
+        'address' => 'House 12',
+        'wilaya' => 'Muscat',
+        'area' => 'Qurum',
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.name', 'Mona Profile')
+        ->assertJsonPath('data.email', 'profile@example.com')
+        ->assertJsonPath('data.phone_number', '+96891234567')
+        ->assertJsonPath('data.profile_complete', true)
+        ->assertJsonPath('data.missing_required_profile_fields', []);
+
+    $customer->refresh();
+
+    expect($customer->name)->toBe('Mona Profile')
+        ->and($customer->email)->toBe('profile@example.com')
+        ->and($customer->phone_number)->toBe('+96891234567')
+        ->and($customer->civil_id)->toBe('12345678')
+        ->and($customer->address)->toBe('House 12')
+        ->and($customer->wilaya)->toBe('Muscat')
+        ->and($customer->area)->toBe('Qurum');
+});
+
+test('customer profile completion rejects protected fields', function () {
+    $customer = Customer::factory()->create([
+        'name' => 'Original Customer',
+        'additional_info' => ['language' => 'en'],
+    ]);
+    $originalPassword = $customer->password;
+
+    $this->patchJson("/api/v1/customers/{$customer->id}/profile", [
+        'name' => 'Changed Customer',
+        'email' => 'changed@example.com',
+        'phone_number' => $customer->phone_number,
+        'civil_id' => $customer->civil_id,
+        'address' => $customer->address,
+        'wilaya' => $customer->wilaya,
+        'area' => $customer->area,
+        'additional_info' => ['language' => 'ar'],
+        'password' => 'new-password',
+        'status' => 'approved',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['additional_info', 'password', 'status']);
+
+    $customer->refresh();
+
+    expect($customer->name)->toBe('Original Customer')
+        ->and($customer->additional_info)->toBe(['language' => 'en'])
+        ->and($customer->password)->toBe($originalPassword);
+});
+
 test('customer bookings can be created listed and shown', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([
@@ -91,7 +208,14 @@ test('customer bookings can be created listed and shown', function () {
         ->assertJsonPath('data.customer_id', $customer->id)
         ->assertJsonPath('data.event_id', $event->id)
         ->assertJsonPath('data.family_member_count', 2)
-        ->assertJsonPath('data.total_baisa', 24000);
+        ->assertJsonPath('data.unit_price', '12.000')
+        ->assertJsonPath('data.subtotal', '24.000')
+        ->assertJsonPath('data.discount_amount', '0.000')
+        ->assertJsonPath('data.total', '24.000')
+        ->assertJsonPath('data.event.price', '12.000')
+        ->assertJsonMissingPath('data.total_baisa');
+
+    $this->assertStringNotContainsString('_baisa', $createResponse->getContent());
 
     $booking = Booking::firstOrFail();
 
@@ -123,20 +247,84 @@ test('customer with incomplete profile cannot create a booking through the api',
 });
 
 test('only available events can be listed and shown', function () {
-    $publishedEvent = Event::factory()->create(['name' => 'Published Camp']);
+    $publishedEvent = Event::factory()->create([
+        'name' => 'Published Camp',
+        'price_baisa' => 12000,
+    ]);
     $draftEvent = Event::factory()->draft()->create(['name' => 'Draft Camp']);
 
     $this->getJson('/api/v1/events')
         ->assertOk()
         ->assertJsonFragment(['name' => 'Published Camp'])
+        ->assertJsonPath('data.0.price', '12.000')
+        ->assertJsonMissingPath('data.0.price_baisa')
         ->assertJsonMissing(['name' => 'Draft Camp']);
 
     $this->getJson("/api/v1/events/{$publishedEvent->slug}")
         ->assertOk()
-        ->assertJsonPath('data.id', $publishedEvent->id);
+        ->assertJsonPath('data.id', $publishedEvent->id)
+        ->assertJsonPath('data.price', '12.000');
 
     $this->getJson("/api/v1/events/{$draftEvent->slug}")
         ->assertNotFound();
+});
+
+test('event show includes available discounts and payment plans', function () {
+    $event = Event::factory()->create([
+        'price_baisa' => 12000,
+    ]);
+    Discount::factory()->for($event)->create([
+        'name' => 'Sibling Discount',
+        'amount_baisa' => 2500,
+        'minimum_family_members' => 2,
+    ]);
+    Discount::factory()->create([
+        'name' => 'Global Discount',
+        'event_id' => null,
+        'amount_baisa' => 1000,
+    ]);
+    Discount::factory()->for($event)->create([
+        'name' => 'Expired Discount',
+        'amount_baisa' => 5000,
+        'ends_at' => now()->subDay(),
+    ]);
+
+    $paymentPlan = EventPaymentPlan::factory()->for($event)->create([
+        'name' => 'Two payments',
+    ]);
+    EventPaymentPlan::factory()->for($event)->create([
+        'name' => 'Inactive payments',
+        'is_active' => false,
+    ]);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'name' => 'Deposit',
+        'sequence' => 1,
+        'percentage' => 50,
+        'due_date' => '2026-07-01',
+    ]);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'name' => 'Final payment',
+        'sequence' => 2,
+        'percentage' => 50,
+        'due_date' => '2026-08-01',
+    ]);
+
+    $this->getJson("/api/v1/events/{$event->slug}")
+        ->assertOk()
+        ->assertJsonPath('data.available_discounts.0.name', 'Sibling Discount')
+        ->assertJsonPath('data.available_discounts.0.type', 'fixed_amount_per_family_member')
+        ->assertJsonPath('data.available_discounts.0.value', '2.500')
+        ->assertJsonPath('data.available_discounts.0.eligibility.minimum_family_members', 2)
+        ->assertJsonPath('data.available_discounts.1.name', 'Global Discount')
+        ->assertJsonPath('data.available_discounts.1.value', '1.000')
+        ->assertJsonMissing(['name' => 'Expired Discount'])
+        ->assertJsonPath('data.payment_plans.0.name', 'Two payments')
+        ->assertJsonPath('data.payment_plans.0.installments_count', 2)
+        ->assertJsonPath('data.payment_plans.0.installments.0.name', 'Deposit')
+        ->assertJsonPath('data.payment_plans.0.installments.0.amount', '6.000')
+        ->assertJsonPath('data.payment_plans.0.installments.1.name', 'Final payment')
+        ->assertJsonPath('data.payment_plans.0.installments.1.amount', '6.000')
+        ->assertJsonMissing(['name' => 'Inactive payments']);
 });
 
 test('customer payments can be managed through the api', function () {
@@ -160,7 +348,11 @@ test('customer payments can be managed through the api', function () {
     $createResponse
         ->assertCreated()
         ->assertJsonPath('data.booking_installment_id', $installment->id)
-        ->assertJsonPath('data.amount_baisa', 2500);
+        ->assertJsonPath('data.amount', '2.500')
+        ->assertJsonPath('data.booking_installment.amount', '2.500')
+        ->assertJsonMissingPath('data.amount_baisa');
+
+    $this->assertStringNotContainsString('_baisa', $createResponse->getContent());
 
     $payment = Payment::firstOrFail();
 
@@ -177,7 +369,7 @@ test('customer payments can be managed through the api', function () {
         'state' => PaymentState::Paid->value,
     ])
         ->assertOk()
-        ->assertJsonPath('data.amount_baisa', 3000)
+        ->assertJsonPath('data.amount', '3.000')
         ->assertJsonPath('data.state', PaymentState::Paid->value);
 
     $this->deleteJson("/api/v1/customers/{$customer->id}/payments/{$payment->id}")

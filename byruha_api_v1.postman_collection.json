@@ -61,7 +61,7 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/customers?per_page=15",
+              "raw": "{{base_url}}/api/v1/customers?per_page=15&search=&phone=&email=",
               "host": [
                 "{{base_url}}"
               ],
@@ -75,10 +75,25 @@
                   "key": "per_page",
                   "value": "15",
                   "description": "Optional. Integer from 1 to 100. Defaults to 15."
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Optional. Matches phone_number or email."
+                },
+                {
+                  "key": "phone",
+                  "value": "",
+                  "description": "Optional. Matches normalized Omani phone numbers."
+                },
+                {
+                  "key": "email",
+                  "value": "",
+                  "description": "Optional. Matches customer email addresses."
                 }
               ]
             },
-            "description": "Returns a paginated list of customers ordered by latest created."
+            "description": "Returns a paginated list of customers ordered by latest created. Optional filters: search matches phone_number or email; phone matches normalized Omani phone numbers; email matches email addresses."
           },
           "response": [
             {
@@ -92,7 +107,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Mona Said\",\n      \"email\": \"mona@example.com\",\n      \"phone_number\": \"+96891234567\",\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Mona Said\",\n      \"email\": \"mona@example.com\",\n      \"phone_number\": \"+96891234567\",\n      \"civil_id\": \"12345678\",\n      \"address\": \"House 12\",\n      \"wilaya\": \"Muscat\",\n      \"area\": \"Qurum\",\n      \"additional_info\": null,\n      \"profile_complete\": true,\n      \"missing_required_profile_fields\": [],\n      \"email_verified_at\": null,\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
             }
           ]
         },
@@ -144,7 +159,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Said\",\n    \"email\": \"mona@example.com\",\n    \"phone_number\": \"+96891234567\",\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Said\",\n    \"email\": \"mona@example.com\",\n    \"phone_number\": \"+96891234567\",\n    \"civil_id\": \"12345678\",\n    \"address\": \"House 12\",\n    \"wilaya\": \"Muscat\",\n    \"area\": \"Qurum\",\n    \"additional_info\": null,\n    \"profile_complete\": true,\n    \"missing_required_profile_fields\": [],\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -197,7 +212,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Said\",\n    \"email\": \"mona@example.com\",\n    \"phone_number\": \"+96891234567\",\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Said\",\n    \"email\": \"mona@example.com\",\n    \"phone_number\": \"+96891234567\",\n    \"civil_id\": \"12345678\",\n    \"address\": \"House 12\",\n    \"wilaya\": \"Muscat\",\n    \"area\": \"Qurum\",\n    \"additional_info\": null,\n    \"profile_complete\": true,\n    \"missing_required_profile_fields\": [],\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "404 Not found",
@@ -263,7 +278,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Al Said\",\n    \"email\": \"mona.updated@example.com\",\n    \"phone_number\": \"+96892345678\",\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T10:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Al Said\",\n    \"email\": \"mona.updated@example.com\",\n    \"phone_number\": \"+96892345678\",\n    \"civil_id\": \"12345678\",\n    \"address\": \"House 12\",\n    \"wilaya\": \"Muscat\",\n    \"area\": null,\n    \"additional_info\": null,\n    \"profile_complete\": false,\n    \"missing_required_profile_fields\": [\n      \"area\"\n    ],\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -277,6 +292,86 @@
                 }
               ],
               "body": "{\n  \"message\": \"The phone number field is required.\",\n  \"errors\": {\n    \"phone_number\": [\n      \"The phone number field is required.\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "404 Not found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Complete customer profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mona Said\",\n  \"email\": \"mona@example.com\",\n  \"phone_number\": \"91234567\",\n  \"civil_id\": \"12345678\",\n  \"address\": \"House 12\",\n  \"wilaya\": \"Muscat\",\n  \"area\": \"Qurum\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/{{customer_id}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "{{customer_id}}",
+                "profile"
+              ]
+            },
+            "description": "Completes or updates the safe profile fields for a customer. Required: name, phone_number, civil_id, address, wilaya, area. Optional: email. Protected fields such as password, additional_info, status, role, balance, and affiliate data are prohibited."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Mona Said\",\n    \"email\": \"mona@example.com\",\n    \"phone_number\": \"+96891234567\",\n    \"civil_id\": \"12345678\",\n    \"address\": \"House 12\",\n    \"wilaya\": \"Muscat\",\n    \"area\": \"Qurum\",\n    \"additional_info\": null,\n    \"profile_complete\": true,\n    \"missing_required_profile_fields\": [],\n    \"email_verified_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
+            },
+            {
+              "name": "422 Validation error",
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"The phone number field is required.\",\n  \"errors\": {\n    \"phone_number\": [\n      \"The phone number field is required.\"\n    ],\n    \"civil_id\": [\n      \"The civil id field is required.\"\n    ],\n    \"additional_info\": [\n      \"The additional info field is prohibited.\"\n    ]\n  }\n}"
             },
             {
               "name": "404 Not found",
@@ -390,7 +485,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customer_id\": 1,\n      \"event_id\": 1,\n      \"reference\": \"BRH-ABCDEFGH\",\n      \"state\": \"pending_review\",\n      \"state_label\": \"Pending review\",\n      \"reviewed_by_user_id\": null,\n      \"reviewed_at\": null,\n      \"review_notes\": null,\n      \"unit_price_baisa\": 12000,\n      \"currency\": \"OMR\",\n      \"family_member_count\": 2,\n      \"subtotal_baisa\": 24000,\n      \"discount_id\": null,\n      \"discount_name\": null,\n      \"discount_amount_baisa\": 0,\n      \"total_baisa\": 24000,\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"event\": {\n        \"id\": 1,\n        \"name\": \"Published Camp\",\n        \"slug\": \"published-camp\",\n        \"type\": \"camp\",\n        \"status\": \"published\",\n        \"excerpt\": \"A short event summary.\",\n        \"description_html\": \"<p>Event details.</p>\",\n        \"contract_terms_html\": \"<p>Contract terms.</p>\",\n        \"location\": \"Muscat\",\n        \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n        \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n        \"minimum_age\": 9,\n        \"maximum_age\": 16,\n        \"seat_capacity\": 30,\n        \"remaining_seats\": 28,\n        \"price_baisa\": 12000,\n        \"currency\": \"OMR\",\n        \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n        \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n      },\n      \"family_members\": [\n        {\n          \"booking_family_member_id\": 1,\n          \"id\": 1,\n          \"name\": \"Salim Said\",\n          \"birth_date\": \"2014-01-01\"\n        }\n      ],\n      \"payment_schedule\": null\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/bookings\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customer_id\": 1,\n      \"event_id\": 1,\n      \"reference\": \"BRH-ABCDEFGH\",\n      \"state\": \"pending_review\",\n      \"state_label\": \"Pending review\",\n      \"reviewed_by_user_id\": null,\n      \"reviewed_at\": null,\n      \"review_notes\": null,\n      \"unit_price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"family_member_count\": 2,\n      \"subtotal\": \"24.000\",\n      \"discount_id\": null,\n      \"discount_name\": null,\n      \"discount_amount\": \"0.000\",\n      \"total\": \"24.000\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"event\": {\n        \"id\": 1,\n        \"name\": \"Published Camp\",\n        \"slug\": \"published-camp\",\n        \"type\": \"camp\",\n        \"status\": \"published\",\n        \"excerpt\": \"A short event summary.\",\n        \"description_html\": \"<p>Event details.</p>\",\n        \"contract_terms_html\": \"<p>Contract terms.</p>\",\n        \"location\": \"Muscat\",\n        \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n        \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n        \"minimum_age\": 9,\n        \"maximum_age\": 16,\n        \"seat_capacity\": 30,\n        \"remaining_seats\": 28,\n        \"price\": \"12.000\",\n        \"currency\": \"OMR\",\n        \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n        \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n      },\n      \"family_members\": [\n        {\n          \"booking_family_member_id\": 1,\n          \"id\": 1,\n          \"name\": \"Salim Said\",\n          \"birth_date\": \"2014-01-01\"\n        }\n      ],\n      \"payment_schedule\": null\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/bookings\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
             },
             {
               "name": "404 Customer not found",
@@ -457,7 +552,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price_baisa\": 12000,\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal_baisa\": 24000,\n    \"discount_id\": null,\n    \"discount_name\": null,\n    \"discount_amount_baisa\": 0,\n    \"total_baisa\": 24000,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price_baisa\": 12000,\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      },\n      {\n        \"booking_family_member_id\": 2,\n        \"id\": 2,\n        \"name\": \"Aisha Said\",\n        \"birth_date\": \"2013-05-15\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal\": \"24.000\",\n    \"discount_id\": null,\n    \"discount_name\": null,\n    \"discount_amount\": \"0.000\",\n    \"total\": \"24.000\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      },\n      {\n        \"booking_family_member_id\": 2,\n        \"id\": 2,\n        \"name\": \"Aisha Said\",\n        \"birth_date\": \"2013-05-15\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -525,7 +620,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price_baisa\": 12000,\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal_baisa\": 24000,\n    \"discount_id\": null,\n    \"discount_name\": null,\n    \"discount_amount_baisa\": 0,\n    \"total_baisa\": 24000,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price_baisa\": 12000,\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal\": \"24.000\",\n    \"discount_id\": null,\n    \"discount_name\": null,\n    \"discount_amount\": \"0.000\",\n    \"total\": \"24.000\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
             },
             {
               "name": "404 Not found or booking belongs to another customer",
@@ -590,7 +685,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price_baisa\": 12000,\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/events?page=1\",\n    \"last\": \"http://byruha.test/api/v1/events?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/events\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/events?page=1\",\n    \"last\": \"http://byruha.test/api/v1/events?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/events\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
             }
           ]
         },
@@ -616,7 +711,7 @@
                 "{{event_slug}}"
               ]
             },
-            "description": "Returns one published event by slug. Draft or archived events return 404."
+            "description": "Returns one published event by slug. The show response includes currently available discounts and active event payment plans with installment breakdowns. Draft or archived events return 404."
           },
           "response": [
             {
@@ -630,7 +725,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Published Camp\",\n    \"slug\": \"published-camp\",\n    \"type\": \"camp\",\n    \"status\": \"published\",\n    \"excerpt\": \"A short event summary.\",\n    \"description_html\": \"<p>Event details.</p>\",\n    \"contract_terms_html\": \"<p>Contract terms.</p>\",\n    \"location\": \"Muscat\",\n    \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n    \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n    \"minimum_age\": 9,\n    \"maximum_age\": 16,\n    \"seat_capacity\": 30,\n    \"remaining_seats\": 28,\n    \"price_baisa\": 12000,\n    \"currency\": \"OMR\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"name\": \"Published Camp\",\n    \"slug\": \"published-camp\",\n    \"type\": \"camp\",\n    \"status\": \"published\",\n    \"excerpt\": \"A short event summary.\",\n    \"description_html\": \"<p>Event details.</p>\",\n    \"contract_terms_html\": \"<p>Contract terms.</p>\",\n    \"location\": \"Muscat\",\n    \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n    \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n    \"minimum_age\": 9,\n    \"maximum_age\": 16,\n    \"seat_capacity\": 30,\n    \"remaining_seats\": 28,\n    \"price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"available_discounts\": [\n      {\n        \"id\": 1,\n        \"name\": \"Sibling Discount\",\n        \"type\": \"fixed_amount_per_family_member\",\n        \"value\": \"2.500\",\n        \"currency\": \"OMR\",\n        \"starts_at\": \"2026-06-01T00:00:00.000000Z\",\n        \"ends_at\": \"2026-07-31T23:59:59.000000Z\",\n        \"eligibility\": {\n          \"minimum_family_members\": 2,\n          \"maximum_family_members\": null\n        }\n      }\n    ],\n    \"payment_plans\": [\n      {\n        \"id\": 1,\n        \"name\": \"Two payments\",\n        \"installments_count\": 2,\n        \"installments\": [\n          {\n            \"id\": 1,\n            \"name\": \"Deposit\",\n            \"sequence\": 1,\n            \"percentage\": 50,\n            \"due_date\": \"2026-07-01\",\n            \"amount\": \"6.000\",\n            \"currency\": \"OMR\"\n          },\n          {\n            \"id\": 2,\n            \"name\": \"Final payment\",\n            \"sequence\": 2,\n            \"percentage\": 50,\n            \"due_date\": \"2026-08-01\",\n            \"amount\": \"6.000\",\n            \"currency\": \"OMR\"\n          }\n        ]\n      }\n    ]\n  }\n}"
             },
             {
               "name": "404 Not found or event is not published",
@@ -697,7 +792,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"booking_installment_id\": 1,\n      \"provider\": \"thawani\",\n      \"reference\": \"PAY-ABCDEFGHIJKL\",\n      \"amount_baisa\": 2500,\n      \"currency\": \"OMR\",\n      \"state\": \"pending\",\n      \"state_label\": \"Pending\",\n      \"provider_session_id\": null,\n      \"provider_payment_id\": null,\n      \"provider_invoice\": null,\n      \"provider_payment_status\": null,\n      \"checkout_url\": null,\n      \"request_payload\": null,\n      \"response_payload\": null,\n      \"verified_at\": null,\n      \"paid_at\": null,\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"booking_installment\": {\n        \"id\": 1,\n        \"booking_payment_schedule_id\": 1,\n        \"name\": \"Deposit\",\n        \"sequence\": 1,\n        \"percentage\": 100,\n        \"due_date\": \"2026-07-01\",\n        \"amount_baisa\": 2500,\n        \"state\": \"pending\"\n      }\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/payments?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/payments?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/payments\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"booking_installment_id\": 1,\n      \"provider\": \"thawani\",\n      \"reference\": \"PAY-ABCDEFGHIJKL\",\n      \"amount\": \"2.500\",\n      \"currency\": \"OMR\",\n      \"state\": \"pending\",\n      \"state_label\": \"Pending\",\n      \"provider_session_id\": null,\n      \"provider_payment_id\": null,\n      \"provider_invoice\": null,\n      \"provider_payment_status\": null,\n      \"checkout_url\": null,\n      \"request_payload\": null,\n      \"response_payload\": null,\n      \"verified_at\": null,\n      \"paid_at\": null,\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"booking_installment\": {\n        \"id\": 1,\n        \"booking_payment_schedule_id\": 1,\n        \"name\": \"Deposit\",\n        \"sequence\": 1,\n        \"percentage\": 100,\n        \"due_date\": \"2026-07-01\",\n        \"amount\": \"2.500\",\n        \"state\": \"pending\"\n      }\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/payments?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/payments?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/payments\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
             }
           ]
         },
@@ -737,7 +832,7 @@
                 "payments"
               ]
             },
-            "description": "Creates a payment for one of the customer's booking installments. Required fields: booking_installment_id, amount_baisa. Optional fields include provider, reference, currency, state, provider identifiers, checkout_url, request_payload, response_payload, verified_at, paid_at."
+            "description": "Creates a payment for one of the customer's booking installments. Request amount is still sent as amount_baisa. API responses return amount as an OMR decimal string."
           },
           "response": [
             {
@@ -751,7 +846,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount_baisa\": 2500,\n    \"currency\": \"OMR\",\n    \"state\": \"pending\",\n    \"state_label\": \"Pending\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": null,\n    \"request_payload\": null,\n    \"response_payload\": null,\n    \"verified_at\": null,\n    \"paid_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Deposit\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount_baisa\": 2500,\n      \"state\": \"pending\"\n    }\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount\": \"2.500\",\n    \"currency\": \"OMR\",\n    \"state\": \"pending\",\n    \"state_label\": \"Pending\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": null,\n    \"request_payload\": null,\n    \"response_payload\": null,\n    \"verified_at\": null,\n    \"paid_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Deposit\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount\": \"2.500\",\n      \"state\": \"pending\"\n    }\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -819,7 +914,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount_baisa\": 2500,\n    \"currency\": \"OMR\",\n    \"state\": \"pending\",\n    \"state_label\": \"Pending\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": null,\n    \"request_payload\": null,\n    \"response_payload\": null,\n    \"verified_at\": null,\n    \"paid_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Deposit\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount_baisa\": 2500,\n      \"state\": \"pending\"\n    }\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount\": \"2.500\",\n    \"currency\": \"OMR\",\n    \"state\": \"pending\",\n    \"state_label\": \"Pending\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": null,\n    \"request_payload\": null,\n    \"response_payload\": null,\n    \"verified_at\": null,\n    \"paid_at\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Deposit\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount\": \"2.500\",\n      \"state\": \"pending\"\n    }\n  }\n}"
             },
             {
               "name": "404 Not found or payment belongs to another customer",
@@ -873,7 +968,7 @@
                 "{{payment_id}}"
               ]
             },
-            "description": "Updates payment fields. If booking_installment_id is supplied, the installment must belong to this customer."
+            "description": "Updates payment fields. Request amount is still sent as amount_baisa. If booking_installment_id is supplied, the installment must belong to this customer. API responses return amount as an OMR decimal string."
           },
           "response": [
             {
@@ -887,7 +982,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount_baisa\": 3000,\n    \"currency\": \"OMR\",\n    \"state\": \"paid\",\n    \"state_label\": \"Paid\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": null,\n    \"request_payload\": null,\n    \"response_payload\": null,\n    \"verified_at\": null,\n    \"paid_at\": \"2026-06-19T10:00:00.000000Z\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T10:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Deposit\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount_baisa\": 2500,\n      \"state\": \"pending\"\n    }\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount\": \"3.000\",\n    \"currency\": \"OMR\",\n    \"state\": \"paid\",\n    \"state_label\": \"Paid\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": null,\n    \"request_payload\": null,\n    \"response_payload\": null,\n    \"verified_at\": null,\n    \"paid_at\": \"2026-06-19T10:00:00.000000Z\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T10:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Deposit\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount\": \"2.500\",\n      \"state\": \"pending\"\n    }\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -1016,7 +1111,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customer_id\": 1,\n      \"name\": \"Salim Said\",\n      \"birth_date\": \"2014-01-01\",\n      \"school_name\": \"Muscat School\",\n      \"grade\": \"6\",\n      \"medical_notes\": null,\n      \"emergency_contact_name\": \"Mona Said\",\n      \"emergency_contact_phone\": \"+96891234567\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/family-members?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/family-members?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/family-members\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customer_id\": 1,\n      \"name\": \"Salim Said\",\n      \"birth_date\": \"2014-01-01\",\n      \"school_name\": \"Muscat School\",\n      \"grade\": \"6\",\n      \"medical_notes\": null,\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/family-members?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/family-members?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/family-members\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
             }
           ]
         },
@@ -1036,7 +1131,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Salim Said\",\n  \"birth_date\": \"2014-01-01\",\n  \"school_name\": \"Muscat School\",\n  \"grade\": \"6\",\n  \"medical_notes\": null,\n  \"emergency_contact_name\": \"Mona Said\",\n  \"emergency_contact_phone\": \"+96891234567\"\n}",
+              "raw": "{\n  \"name\": \"Salim Said\",\n  \"birth_date\": \"2014-01-01\",\n  \"school_name\": \"Muscat School\",\n  \"grade\": \"6\",\n  \"medical_notes\": null,\n  \"relationship_to_customer\": \"Son\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1056,7 +1151,7 @@
                 "family-members"
               ]
             },
-            "description": "Creates a family member for the customer. Required fields: name, birth_date. Optional fields: school_name, grade, medical_notes, emergency_contact_name, emergency_contact_phone."
+            "description": "Creates a family member for the customer. Required fields: name, birth_date. Optional fields: school_name, grade, medical_notes, relationship_to_customer."
           },
           "response": [
             {
@@ -1070,7 +1165,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"name\": \"Salim Said\",\n    \"birth_date\": \"2014-01-01\",\n    \"school_name\": \"Muscat School\",\n    \"grade\": \"6\",\n    \"medical_notes\": null,\n    \"emergency_contact_name\": \"Mona Said\",\n    \"emergency_contact_phone\": \"+96891234567\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"name\": \"Salim Said\",\n    \"birth_date\": \"2014-01-01\",\n    \"school_name\": \"Muscat School\",\n    \"grade\": \"6\",\n    \"medical_notes\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -1125,7 +1220,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"name\": \"Salim Said\",\n    \"birth_date\": \"2014-01-01\",\n    \"school_name\": \"Muscat School\",\n    \"grade\": \"6\",\n    \"medical_notes\": null,\n    \"emergency_contact_name\": \"Mona Said\",\n    \"emergency_contact_phone\": \"+96891234567\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"name\": \"Salim Said\",\n    \"birth_date\": \"2014-01-01\",\n    \"school_name\": \"Muscat School\",\n    \"grade\": \"6\",\n    \"medical_notes\": null,\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "404 Not found or family member belongs to another customer",
@@ -1158,7 +1253,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"grade\": \"7\",\n  \"medical_notes\": \"Peanut allergy\"\n}",
+              "raw": "{\n  \"grade\": \"7\",\n  \"medical_notes\": \"Peanut allergy\",\n  \"relationship_to_customer\": \"Brother\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1193,7 +1288,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"name\": \"Salim Said\",\n    \"birth_date\": \"2014-01-01\",\n    \"school_name\": \"Muscat School\",\n    \"grade\": \"7\",\n    \"medical_notes\": \"Peanut allergy\",\n    \"emergency_contact_name\": \"Mona Said\",\n    \"emergency_contact_phone\": \"+96891234567\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T10:00:00.000000Z\"\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"name\": \"Salim Said\",\n    \"birth_date\": \"2014-01-01\",\n    \"school_name\": \"Muscat School\",\n    \"grade\": \"7\",\n    \"medical_notes\": \"Peanut allergy\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T10:00:00.000000Z\"\n  }\n}"
             },
             {
               "name": "422 Validation error",

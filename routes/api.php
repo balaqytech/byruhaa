@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')
     ->name('api.v1.')
     ->group(function (): void {
+        Route::patch('customers/{customer}/profile', [CustomerController::class, 'updateProfile'])->name('customers.profile.update');
         Route::apiResource('customers', CustomerController::class);
 
         Route::scopeBindings()->group(function (): void {

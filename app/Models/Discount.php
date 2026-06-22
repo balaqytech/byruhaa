@@ -87,22 +87,34 @@ class Discount extends Model
     public function scopeEligibleFor(Builder $query, Event $event, int $familyMemberCount, CarbonInterface $bookedAt): Builder
     {
         return $query
-            ->where('is_active', true)
-            ->where(fn (Builder $query) => $query
-                ->whereNull('event_id')
-                ->orWhere('event_id', $event->id))
-            ->where(fn (Builder $query) => $query
-                ->whereNull('starts_at')
-                ->orWhere('starts_at', '<=', $bookedAt))
-            ->where(fn (Builder $query) => $query
-                ->whereNull('ends_at')
-                ->orWhere('ends_at', '>=', $bookedAt))
+            ->availableForEvent($event, $bookedAt)
             ->where(fn (Builder $query) => $query
                 ->whereNull('minimum_family_members')
                 ->orWhere('minimum_family_members', '<=', $familyMemberCount))
             ->where(fn (Builder $query) => $query
                 ->whereNull('maximum_family_members')
                 ->orWhere('maximum_family_members', '>=', $familyMemberCount));
+    }
+
+    /**
+     * @param  Builder<Discount>  $query
+     * @return Builder<Discount>
+     */
+    public function scopeAvailableForEvent(Builder $query, Event $event, ?CarbonInterface $availableAt = null): Builder
+    {
+        $availableAt ??= now();
+
+        return $query
+            ->where('is_active', true)
+            ->where(fn (Builder $query) => $query
+                ->whereNull('event_id')
+                ->orWhere('event_id', $event->id))
+            ->where(fn (Builder $query) => $query
+                ->whereNull('starts_at')
+                ->orWhere('starts_at', '<=', $availableAt))
+            ->where(fn (Builder $query) => $query
+                ->whereNull('ends_at')
+                ->orWhere('ends_at', '>=', $availableAt));
     }
 
     /**
