@@ -16,7 +16,7 @@ class BookingApprovalService
         private ByruhaaWebhookSender $webhookSender,
     ) {}
 
-    public function approve(Booking $booking, User $reviewer, ?string $reviewNotes = null): Booking
+    public function approve(Booking $booking, ?User $reviewer = null, ?string $reviewNotes = null): Booking
     {
         $booking = DB::transaction(function () use ($booking, $reviewer, $reviewNotes): Booking {
             $booking = Booking::query()
@@ -40,7 +40,7 @@ class BookingApprovalService
             }
 
             $booking->forceFill([
-                'reviewed_by_user_id' => $reviewer->id,
+                'reviewed_by_user_id' => $reviewer?->id,
                 'reviewed_at' => now(),
                 'review_notes' => $reviewNotes,
             ])->save();
