@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -37,10 +38,9 @@ use Illuminate\Support\Str;
  * @property array<string, mixed>|null $response_payload
  * @property Carbon|null $verified_at
  * @property Carbon|null $paid_at
- * @property Carbon|null $payment_paid_webhook_sent_at
  * @property-read int $refundable_amount_baisa
  */
-#[Fillable(['booking_installment_id', 'provider', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at', 'payment_paid_webhook_sent_at'])]
+#[Fillable(['booking_installment_id', 'provider', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at'])]
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
@@ -76,6 +76,14 @@ class Payment extends Model
     public function ledgerTransaction(): MorphOne
     {
         return $this->morphOne(LedgerTransaction::class, 'source');
+    }
+
+    /**
+     * @return MorphMany<WebhookDelivery, $this>
+     */
+    public function webhookDeliveries(): MorphMany
+    {
+        return $this->morphMany(WebhookDelivery::class, 'webhookable');
     }
 
     /**
@@ -138,7 +146,6 @@ class Payment extends Model
             'response_payload' => 'array',
             'verified_at' => 'datetime',
             'paid_at' => 'datetime',
-            'payment_paid_webhook_sent_at' => 'datetime',
         ];
     }
 }

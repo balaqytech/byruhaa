@@ -2,11 +2,16 @@
 
 namespace App\Providers;
 
+use App\Listeners\UpdateWebhookDeliveryStatus;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
+use Spatie\WebhookServer\Events\WebhookCallFailedEvent;
+use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +28,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->registerWebhookDeliveryListeners();
         $this->configureDefaults();
+    }
+
+    protected function registerWebhookDeliveryListeners(): void
+    {
+        Event::listen(WebhookCallSucceededEvent::class, UpdateWebhookDeliveryStatus::class);
+        Event::listen(WebhookCallFailedEvent::class, UpdateWebhookDeliveryStatus::class);
+        Event::listen(FinalWebhookCallFailedEvent::class, UpdateWebhookDeliveryStatus::class);
     }
 
     /**

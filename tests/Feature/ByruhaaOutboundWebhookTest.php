@@ -4,6 +4,7 @@ use App\Actions\ConfirmThawaniPayment;
 use App\Actions\CreateCustomerBooking;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
+use App\Enums\WebhookDeliveryStatus;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
@@ -13,13 +14,18 @@ use App\Models\Event;
 use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\User;
+use App\Models\WebhookDelivery;
 use App\Services\BookingApprovalService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Spatie\WebhookServer\CallWebhookJob;
+use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
+use Spatie\WebhookServer\Events\WebhookCallFailedEvent;
+use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
 
 beforeEach(function (): void {
     config([
@@ -71,7 +77,11 @@ test('booking creation queues a webhook with booking event customer and family m
     $job = byruhaaQueuedWebhook('https://partner.test/webhooks/booking-created');
     $payload = $job->payload;
 
-    expect($booking->refresh()->booking_created_webhook_sent_at)->not->toBeNull()
+    $delivery = byruhaaWebhookDelivery('booking.created', $booking, 'https://partner.test/webhooks/booking-created');
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
+        ->and($delivery->queued_at)->not->toBeNull()
+        ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
         ->and($job->queue)->toBe('webhooks')
         ->and($job->headers)->not->toHaveKey('Signature')
         ->and($payload['event'])->toBe('booking.created')
@@ -104,7 +114,7 @@ test('booking creation does not queue a webhook when url is empty', function () 
     ]);
 
     Queue::assertNotPushed(CallWebhookJob::class);
-    expect($booking->refresh()->booking_created_webhook_sent_at)->toBeNull();
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $booking)->count())->toBe(0);
 });
 
 test('repeated booking created sender call does not queue duplicate webhooks', function () {
@@ -124,6 +134,7 @@ test('repeated booking created sender call does not queue duplicate webhooks', f
     app(ByruhaaWebhookSender::class)->sendBookingCreated($booking->refresh());
 
     Queue::assertPushed(CallWebhookJob::class, 1);
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $booking)->where('event', 'booking.created')->count())->toBe(1);
 });
 
 test('booking approval queues a signed webhook with booking payload', function () {
@@ -142,7 +153,11 @@ test('booking approval queues a signed webhook with booking payload', function (
     $job = byruhaaQueuedWebhook('https://partner.test/webhooks/booking-approved');
     $payload = $job->payload;
 
-    expect($approvedBooking->refresh()->booking_approved_webhook_sent_at)->not->toBeNull()
+    $delivery = byruhaaWebhookDelivery('booking.approved', $approvedBooking, 'https://partner.test/webhooks/booking-approved');
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
+        ->and($delivery->queued_at)->not->toBeNull()
+        ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
         ->and($job->queue)->toBe('webhooks')
         ->and($job->requestTimeout)->toBe(10)
         ->and($job->headers)->toHaveKey('Signature')
@@ -169,7 +184,7 @@ test('booking approval does not queue a webhook when url is empty', function () 
     $approvedBooking = app(BookingApprovalService::class)->approve($booking, $staff);
 
     Queue::assertNotPushed(CallWebhookJob::class);
-    expect($approvedBooking->refresh()->booking_approved_webhook_sent_at)->toBeNull();
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $approvedBooking)->count())->toBe(0);
 });
 
 test('paid thawani confirmation queues a payment webhook with paid booking status', function () {
@@ -188,7 +203,11 @@ test('paid thawani confirmation queues a payment webhook with paid booking statu
     $payload = $job->payload;
     $payment->refresh();
 
-    expect($payment->payment_paid_webhook_sent_at)->not->toBeNull()
+    $delivery = byruhaaWebhookDelivery('payment.paid', $payment, 'https://partner.test/webhooks/payment-paid');
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
+        ->and($delivery->queued_at)->not->toBeNull()
+        ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
         ->and($payload['event'])->toBe('payment.paid')
         ->and($payload['data']['payment']['id'])->toBe($payment->id)
         ->and($payload['data']['payment']['provider'])->toBe('thawani')
@@ -244,6 +263,93 @@ test('repeated paid thawani confirmation does not queue duplicate webhooks', fun
     app(ConfirmThawaniPayment::class)->confirm($confirmedPayment->refresh());
 
     Queue::assertPushed(CallWebhookJob::class, 1);
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $payment)->where('event', 'payment.paid')->count())->toBe(1);
+});
+
+test('webhook delivery audit is marked delivered after successful call', function () {
+    $delivery = WebhookDelivery::factory()->create([
+        'uuid' => '123e4567-e89b-12d3-a456-426614174000',
+        'status' => WebhookDeliveryStatus::Queued,
+        'queued_at' => now(),
+    ]);
+
+    event(new WebhookCallSucceededEvent(
+        'post',
+        $delivery->webhook_url,
+        $delivery->payload,
+        [],
+        ['webhook_delivery_id' => $delivery->id],
+        [],
+        2,
+        new Response(200, [], 'ok'),
+        null,
+        null,
+        $delivery->uuid,
+        null,
+    ));
+
+    $delivery->refresh();
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Delivered)
+        ->and($delivery->attempts)->toBe(2)
+        ->and($delivery->delivered_at)->not->toBeNull()
+        ->and($delivery->response_status)->toBe(200)
+        ->and($delivery->response_body)->toBe('ok');
+});
+
+test('webhook delivery audit records failed and final failed attempts', function () {
+    $delivery = WebhookDelivery::factory()->create([
+        'uuid' => '123e4567-e89b-12d3-a456-426614174001',
+        'status' => WebhookDeliveryStatus::Queued,
+        'queued_at' => now(),
+    ]);
+
+    event(new WebhookCallFailedEvent(
+        'post',
+        $delivery->webhook_url,
+        $delivery->payload,
+        [],
+        ['webhook_delivery_id' => $delivery->id],
+        [],
+        1,
+        new Response(500, [], 'server error'),
+        'RuntimeException',
+        'Webhook failed',
+        $delivery->uuid,
+        null,
+    ));
+
+    $delivery->refresh();
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Failed)
+        ->and($delivery->attempts)->toBe(1)
+        ->and($delivery->failed_at)->not->toBeNull()
+        ->and($delivery->response_status)->toBe(500)
+        ->and($delivery->error_type)->toBe('RuntimeException')
+        ->and($delivery->error_message)->toBe('Webhook failed');
+
+    event(new FinalWebhookCallFailedEvent(
+        'post',
+        $delivery->webhook_url,
+        $delivery->payload,
+        [],
+        ['webhook_delivery_id' => $delivery->id],
+        [],
+        3,
+        new Response(500, [], 'final error'),
+        'RuntimeException',
+        'Webhook finally failed',
+        $delivery->uuid,
+        null,
+    ));
+
+    $delivery->refresh();
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::FinalFailed)
+        ->and($delivery->attempts)->toBe(3)
+        ->and($delivery->final_failed_at)->not->toBeNull()
+        ->and($delivery->response_body)->toBe('final error')
+        ->and($delivery->error_message)->toBe('Webhook finally failed');
 });
 
 /**
@@ -390,4 +496,17 @@ function byruhaaQueuedWebhook(string $url): CallWebhookJob
     expect($queuedJob)->toBeInstanceOf(CallWebhookJob::class);
 
     return $queuedJob;
+}
+
+function byruhaaWebhookDelivery(string $event, Booking|Payment $webhookable, string $url): WebhookDelivery
+{
+    $delivery = WebhookDelivery::query()
+        ->where('event', $event)
+        ->where('webhook_url_hash', hash('sha256', $url))
+        ->whereMorphedTo('webhookable', $webhookable)
+        ->sole();
+
+    expect($delivery)->toBeInstanceOf(WebhookDelivery::class);
+
+    return $delivery;
 }

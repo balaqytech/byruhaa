@@ -3,12 +3,16 @@
 namespace App\Services\Webhooks;
 
 use App\Enums\BookingInstallmentState;
+use App\Enums\WebhookDeliveryStatus;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\Payment;
+use App\Models\WebhookDelivery;
 use App\Support\Money\MoneyFactory;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Spatie\WebhookServer\WebhookCall;
 use Throwable;
@@ -23,23 +27,17 @@ class ByruhaaWebhookSender
             return;
         }
 
-        $sentAt = now();
-
         try {
-            $claimed = Booking::query()
-                ->whereKey($booking->getKey())
-                ->whereNull('booking_created_webhook_sent_at')
-                ->update(['booking_created_webhook_sent_at' => $sentAt]);
-
-            if ($claimed === 0) {
-                return;
-            }
-
             $freshBooking = Booking::query()
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
                 ->findOrFail($booking->getKey());
 
-            $this->dispatch($url, $this->bookingPayload('booking.created', $freshBooking, $sentAt));
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'booking.created',
+                webhookable: $freshBooking,
+                payload: $this->bookingPayload('booking.created', $freshBooking, now()),
+            );
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -53,23 +51,17 @@ class ByruhaaWebhookSender
             return;
         }
 
-        $sentAt = now();
-
         try {
-            $claimed = Booking::query()
-                ->whereKey($booking->getKey())
-                ->whereNull('booking_approved_webhook_sent_at')
-                ->update(['booking_approved_webhook_sent_at' => $sentAt]);
-
-            if ($claimed === 0) {
-                return;
-            }
-
             $freshBooking = Booking::query()
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
                 ->findOrFail($booking->getKey());
 
-            $this->dispatch($url, $this->bookingPayload('booking.approved', $freshBooking, $sentAt));
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'booking.approved',
+                webhookable: $freshBooking,
+                payload: $this->bookingPayload('booking.approved', $freshBooking, now()),
+            );
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -83,18 +75,7 @@ class ByruhaaWebhookSender
             return;
         }
 
-        $sentAt = now();
-
         try {
-            $claimed = Payment::query()
-                ->whereKey($payment->getKey())
-                ->whereNull('payment_paid_webhook_sent_at')
-                ->update(['payment_paid_webhook_sent_at' => $sentAt]);
-
-            if ($claimed === 0) {
-                return;
-            }
-
             $freshPayment = Payment::query()
                 ->with([
                     'bookingInstallment.paymentSchedule.booking.customer',
@@ -103,7 +84,12 @@ class ByruhaaWebhookSender
                 ])
                 ->findOrFail($payment->getKey());
 
-            $this->dispatch($url, $this->paymentPaidPayload($freshPayment, $sentAt));
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'payment.paid',
+                webhookable: $freshPayment,
+                payload: $this->paymentPaidPayload($freshPayment, now()),
+            );
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -239,13 +225,19 @@ class ByruhaaWebhookSender
     /**
      * @param  array<string, mixed>  $payload
      */
-    private function dispatch(string $url, array $payload): void
+    private function dispatchWebhook(string $url, string $event, Model $webhookable, array $payload): void
     {
         $webhookCall = WebhookCall::create()
             ->url($url)
             ->payload($payload)
             ->onQueue($this->queue())
             ->timeoutInSeconds((int) config('byruhaa.webhooks.timeout', 10));
+
+        $delivery = $this->createDelivery($webhookCall, $event, $url, $webhookable, $payload);
+
+        if (! $delivery instanceof WebhookDelivery) {
+            return;
+        }
 
         $secret = $this->configString('byruhaa.webhooks.signing_secret');
 
@@ -255,7 +247,50 @@ class ByruhaaWebhookSender
             $webhookCall->doNotSign();
         }
 
-        $webhookCall->dispatch();
+        try {
+            $webhookCall
+                ->meta(['webhook_delivery_id' => $delivery->id])
+                ->dispatch();
+
+            $delivery->forceFill([
+                'status' => WebhookDeliveryStatus::Queued,
+                'queued_at' => now(),
+            ])->save();
+        } catch (Throwable $exception) {
+            $delivery->forceFill([
+                'status' => WebhookDeliveryStatus::Failed,
+                'failed_at' => now(),
+                'error_type' => $exception::class,
+                'error_message' => $this->truncate($exception->getMessage()),
+            ])->save();
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function createDelivery(WebhookCall $webhookCall, string $event, string $url, Model $webhookable, array $payload): ?WebhookDelivery
+    {
+        try {
+            return WebhookDelivery::query()->create([
+                'uuid' => $webhookCall->getUuid(),
+                'event' => $event,
+                'webhook_url' => $url,
+                'webhook_url_hash' => hash('sha256', $url),
+                'webhookable_type' => $webhookable->getMorphClass(),
+                'webhookable_id' => $webhookable->getKey(),
+                'payload' => $payload,
+                'status' => WebhookDeliveryStatus::Pending,
+            ]);
+        } catch (QueryException $exception) {
+            if ($this->isUniqueConstraintViolation($exception)) {
+                return null;
+            }
+
+            throw $exception;
+        }
     }
 
     private function money(int $amountBaisa, string $currency): string
@@ -280,5 +315,15 @@ class ByruhaaWebhookSender
         $value = config($key, $default);
 
         return is_scalar($value) ? trim((string) $value) : '';
+    }
+
+    private function isUniqueConstraintViolation(QueryException $exception): bool
+    {
+        return in_array((string) $exception->getCode(), ['23000', '23505'], true);
+    }
+
+    private function truncate(string $value, int $limit = 10000): string
+    {
+        return str($value)->limit($limit, '')->toString();
     }
 }

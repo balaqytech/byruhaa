@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Spatie\ModelStates\HasStates;
@@ -26,8 +27,6 @@ use Spatie\ModelStates\HasStates;
  * @property BookingState $state
  * @property int|null $reviewed_by_user_id
  * @property Carbon|null $reviewed_at
- * @property Carbon|null $booking_created_webhook_sent_at
- * @property Carbon|null $booking_approved_webhook_sent_at
  * @property string|null $review_notes
  * @property int $unit_price_baisa
  * @property string $currency
@@ -42,7 +41,7 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $discount_amount
  * @property-read Money $total
  */
-#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'booking_created_webhook_sent_at', 'booking_approved_webhook_sent_at', 'review_notes', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
+#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -124,6 +123,14 @@ class Booking extends Model
     }
 
     /**
+     * @return MorphMany<WebhookDelivery, $this>
+     */
+    public function webhookDeliveries(): MorphMany
+    {
+        return $this->morphMany(WebhookDelivery::class, 'webhookable');
+    }
+
+    /**
      * @return HasManyThrough<BookingInstallment, BookingPaymentSchedule, $this>
      */
     public function installments(): HasManyThrough
@@ -150,8 +157,6 @@ class Booking extends Model
         return [
             'state' => BookingState::class,
             'reviewed_at' => 'datetime',
-            'booking_created_webhook_sent_at' => 'datetime',
-            'booking_approved_webhook_sent_at' => 'datetime',
             'unit_price' => MoneyBaisaCast::of('unit_price_baisa'),
             'unit_price_baisa' => 'integer',
             'family_member_count' => 'integer',
