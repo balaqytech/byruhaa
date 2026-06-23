@@ -15,6 +15,36 @@ use Throwable;
 
 class ByruhaaWebhookSender
 {
+    public function sendBookingCreated(Booking $booking): void
+    {
+        $url = $this->webhookUrl('booking_created_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        $sentAt = now();
+
+        try {
+            $claimed = Booking::query()
+                ->whereKey($booking->getKey())
+                ->whereNull('booking_created_webhook_sent_at')
+                ->update(['booking_created_webhook_sent_at' => $sentAt]);
+
+            if ($claimed === 0) {
+                return;
+            }
+
+            $freshBooking = Booking::query()
+                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+                ->findOrFail($booking->getKey());
+
+            $this->dispatch($url, $this->bookingPayload('booking.created', $freshBooking, $sentAt));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
     public function sendBookingApproved(Booking $booking): void
     {
         $url = $this->webhookUrl('booking_approved_url');
@@ -39,7 +69,7 @@ class ByruhaaWebhookSender
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
                 ->findOrFail($booking->getKey());
 
-            $this->dispatch($url, $this->bookingApprovedPayload($freshBooking, $sentAt));
+            $this->dispatch($url, $this->bookingPayload('booking.approved', $freshBooking, $sentAt));
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -82,10 +112,10 @@ class ByruhaaWebhookSender
     /**
      * @return array<string, mixed>
      */
-    private function bookingApprovedPayload(Booking $booking, CarbonInterface $occurredAt): array
+    private function bookingPayload(string $eventName, Booking $booking, CarbonInterface $occurredAt): array
     {
         return [
-            'event' => 'booking.approved',
+            'event' => $eventName,
             'occurred_at' => $occurredAt->toJSON(),
             'data' => [
                 'booking' => [

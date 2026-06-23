@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 class CreateCustomerBooking
 {
-    public function __construct(private CalculateBookingPrice $calculateBookingPrice) {}
+    public function __construct(
+        private CalculateBookingPrice $calculateBookingPrice,
+        private ByruhaaWebhookSender $webhookSender,
+    ) {}
 
     /**
      * @param  array{event_id: int, family_member_ids: array<int, int>}  $data
@@ -26,7 +30,7 @@ class CreateCustomerBooking
     {
         $customer->ensureProfileIsComplete('family_member_ids');
 
-        return DB::transaction(function () use ($customer, $data, $affiliateAttribution): Booking {
+        $booking = DB::transaction(function () use ($customer, $data, $affiliateAttribution): Booking {
             $event = Event::query()
                 ->whereKey($data['event_id'])
                 ->where('status', EventStatus::Published)
@@ -55,6 +59,10 @@ class CreateCustomerBooking
 
             return $booking->load(['event', 'familyMembers.familyMember', 'paymentSchedule.installments']);
         });
+
+        $this->webhookSender->sendBookingCreated($booking);
+
+        return $booking;
     }
 
     /**

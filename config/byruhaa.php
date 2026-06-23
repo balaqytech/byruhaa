@@ -2,6 +2,7 @@
 
 return [
     'webhooks' => [
+        'booking_created_url' => env('BYRUHAA_BOOKING_CREATED_WEBHOOK_URL'),
         'booking_approved_url' => env('BYRUHAA_BOOKING_APPROVED_WEBHOOK_URL'),
         'payment_paid_url' => env('BYRUHAA_PAYMENT_PAID_WEBHOOK_URL'),
         'signing_secret' => env('BYRUHAA_WEBHOOK_SIGNING_SECRET'),

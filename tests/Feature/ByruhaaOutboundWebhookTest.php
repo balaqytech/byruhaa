@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\ConfirmThawaniPayment;
+use App\Actions\CreateCustomerBooking;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
 use App\Models\Booking;
@@ -13,7 +14,9 @@ use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\BookingApprovalService;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Spatie\WebhookServer\CallWebhookJob;
@@ -21,6 +24,7 @@ use Spatie\WebhookServer\CallWebhookJob;
 beforeEach(function (): void {
     config([
         'app.url' => 'https://byruhaa.test',
+        'byruhaa.webhooks.booking_created_url' => null,
         'byruhaa.webhooks.booking_approved_url' => null,
         'byruhaa.webhooks.payment_paid_url' => null,
         'byruhaa.webhooks.signing_secret' => null,
@@ -38,6 +42,7 @@ beforeEach(function (): void {
 test('byruhaa webhook config values exist', function () {
     expect(config('byruhaa.webhooks'))
         ->toHaveKeys([
+            'booking_created_url',
             'booking_approved_url',
             'payment_paid_url',
             'signing_secret',
@@ -46,6 +51,79 @@ test('byruhaa webhook config values exist', function () {
         ])
         ->and(config('byruhaa.webhooks.timeout'))->toBe(10)
         ->and(config('byruhaa.webhooks.queue'))->toBe('default');
+});
+
+test('booking creation queues a webhook with booking event customer and family member payload', function () {
+    [$customer, $event, $familyMembers] = byruhaaBookingCreationFixture();
+
+    config([
+        'byruhaa.webhooks.booking_created_url' => 'https://partner.test/webhooks/booking-created',
+        'byruhaa.webhooks.queue' => 'webhooks',
+    ]);
+
+    Queue::fake();
+
+    $booking = app(CreateCustomerBooking::class)->execute($customer, [
+        'event_id' => $event->id,
+        'family_member_ids' => $familyMembers->pluck('id')->all(),
+    ]);
+
+    $job = byruhaaQueuedWebhook('https://partner.test/webhooks/booking-created');
+    $payload = $job->payload;
+
+    expect($booking->refresh()->booking_created_webhook_sent_at)->not->toBeNull()
+        ->and($job->queue)->toBe('webhooks')
+        ->and($job->headers)->not->toHaveKey('Signature')
+        ->and($payload['event'])->toBe('booking.created')
+        ->and($payload['data']['booking']['id'])->toBe($booking->id)
+        ->and($payload['data']['booking']['status'])->toBe('pending_review')
+        ->and($payload['data']['booking']['customer_panel_url'])->toBe(route('customer.bookings.show', $booking))
+        ->and($payload['data']['event']['id'])->toBe($event->id)
+        ->and($payload['data']['event']['name'])->toBe('Created Booking Camp')
+        ->and($payload['data']['customer']['id'])->toBe($customer->id)
+        ->and($payload['data']['customer']['phone'])->toBe('+96892345678')
+        ->and($payload['data']['participants'])->toHaveCount(2)
+        ->and($payload['data']['participants'][0]['name'])->toBe('First Created Member')
+        ->and($payload['data']['participants'][0]['contract_id'])->toBeNull()
+        ->and($payload['data']['participants'][0]['contract_status'])->toBeNull()
+        ->and($payload['data']['pricing']['unit_price'])->toBe('12.000')
+        ->and($payload['data']['pricing']['subtotal'])->toBe('24.000')
+        ->and($payload['data']['pricing']['total'])->toBe('24.000');
+
+    expect(json_encode($payload))->not->toContain('_baisa');
+});
+
+test('booking creation does not queue a webhook when url is empty', function () {
+    [$customer, $event, $familyMembers] = byruhaaBookingCreationFixture();
+
+    Queue::fake();
+
+    $booking = app(CreateCustomerBooking::class)->execute($customer, [
+        'event_id' => $event->id,
+        'family_member_ids' => $familyMembers->pluck('id')->all(),
+    ]);
+
+    Queue::assertNotPushed(CallWebhookJob::class);
+    expect($booking->refresh()->booking_created_webhook_sent_at)->toBeNull();
+});
+
+test('repeated booking created sender call does not queue duplicate webhooks', function () {
+    [$customer, $event, $familyMembers] = byruhaaBookingCreationFixture();
+
+    config([
+        'byruhaa.webhooks.booking_created_url' => 'https://partner.test/webhooks/booking-created',
+    ]);
+
+    Queue::fake();
+
+    $booking = app(CreateCustomerBooking::class)->execute($customer, [
+        'event_id' => $event->id,
+        'family_member_ids' => $familyMembers->pluck('id')->all(),
+    ]);
+
+    app(ByruhaaWebhookSender::class)->sendBookingCreated($booking->refresh());
+
+    Queue::assertPushed(CallWebhookJob::class, 1);
 });
 
 test('booking approval queues a signed webhook with booking payload', function () {
@@ -200,6 +278,35 @@ function byruhaaWebhookBookingFixture(): array
     BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
 
     return [$booking, $staff];
+}
+
+/**
+ * @return array{0: Customer, 1: Event, 2: Collection<int, FamilyMember>}
+ */
+function byruhaaBookingCreationFixture(): array
+{
+    $customer = Customer::factory()->create([
+        'name' => 'Created Booking Customer',
+        'email' => 'created.booking@example.com',
+        'phone_number' => '+96892345678',
+    ]);
+    $event = Event::factory()->create([
+        'name' => 'Created Booking Camp',
+        'seat_capacity' => 10,
+        'price_baisa' => 12000,
+        'minimum_age' => 9,
+        'maximum_age' => 16,
+    ]);
+    $familyMembers = FamilyMember::factory()
+        ->count(2)
+        ->sequence(
+            ['name' => 'First Created Member', 'birth_date' => now()->subYears(12)->toDateString()],
+            ['name' => 'Second Created Member', 'birth_date' => now()->subYears(13)->toDateString()],
+        )
+        ->for($customer)
+        ->create();
+
+    return [$customer, $event, $familyMembers];
 }
 
 function byruhaaWebhookPaymentFixture(int $amountBaisa, ?int $remainingAmountBaisa = null): Payment
