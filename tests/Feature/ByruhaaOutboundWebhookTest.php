@@ -20,8 +20,10 @@ use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Spatie\WebhookServer\CallWebhookJob;
 use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallFailedEvent;
@@ -33,6 +35,7 @@ beforeEach(function (): void {
         'byruhaa.webhooks.customer_registered_url' => null,
         'byruhaa.webhooks.booking_created_url' => null,
         'byruhaa.webhooks.booking_approved_url' => null,
+        'byruhaa.webhooks.booking_contracts_signed_url' => null,
         'byruhaa.webhooks.payment_paid_url' => null,
         'byruhaa.webhooks.signing_secret' => null,
         'byruhaa.webhooks.timeout' => 10,
@@ -52,6 +55,7 @@ test('byruhaa webhook config values exist', function () {
             'customer_registered_url',
             'booking_created_url',
             'booking_approved_url',
+            'booking_contracts_signed_url',
             'payment_paid_url',
             'signing_secret',
             'timeout',
@@ -289,6 +293,73 @@ test('booking approval does not queue a webhook when url is empty', function () 
     expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $approvedBooking)->count())->toBe(0);
 });
 
+test('signing all booking contracts queues a webhook with contract summary', function () {
+    [$booking, $staff] = byruhaaWebhookBookingFixture(familyMemberCount: 2);
+
+    config([
+        'byruhaa.webhooks.booking_contracts_signed_url' => 'https://partner.test/webhooks/booking-contracts-signed',
+        'byruhaa.webhooks.queue' => 'webhooks',
+    ]);
+
+    $approvedBooking = app(BookingApprovalService::class)->approve($booking, $staff)
+        ->load('familyMembers.contract');
+    $contracts = $approvedBooking->familyMembers->pluck('contract');
+
+    Storage::fake('local');
+    Queue::fake();
+
+    $contracts[0]->sign(byruhaaSignatureDataUrl(), 'First signer', '127.0.0.1');
+
+    Queue::assertNotPushed(CallWebhookJob::class);
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $approvedBooking)->where('event', 'booking.contracts_signed')->count())->toBe(0);
+
+    $contracts[1]->sign(byruhaaSignatureDataUrl(), 'Second signer', '127.0.0.1');
+
+    $job = byruhaaQueuedWebhook('https://partner.test/webhooks/booking-contracts-signed');
+    $payload = $job->payload;
+    $delivery = byruhaaWebhookDelivery('booking.contracts_signed', $approvedBooking, 'https://partner.test/webhooks/booking-contracts-signed');
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
+        ->and($job->queue)->toBe('webhooks')
+        ->and($payload['event'])->toBe('booking.contracts_signed')
+        ->and($payload['data']['booking']['id'])->toBe($approvedBooking->id)
+        ->and($payload['data']['booking']['status'])->toBe('approved')
+        ->and($payload['data']['booking']['customer_panel_url'])->toBe(route('customer.bookings.show', $approvedBooking))
+        ->and($payload['data']['event']['name'])->toBe('Webhook Camp')
+        ->and($payload['data']['customer']['phone'])->toBe('+96891234567')
+        ->and($payload['data']['participants'])->toHaveCount(2)
+        ->and($payload['data']['participants'][0]['contract_status'])->toBe('signed')
+        ->and($payload['data']['participants'][0]['contract_signed_at'])->not->toBeNull()
+        ->and($payload['data']['participants'][1]['contract_status'])->toBe('signed')
+        ->and($payload['data']['contracts']['total_count'])->toBe(2)
+        ->and($payload['data']['contracts']['signed_count'])->toBe(2)
+        ->and($payload['data']['contracts']['all_signed'])->toBeTrue()
+        ->and($payload['data']['contracts']['latest_signed_at'])->not->toBeNull()
+        ->and($payload['data']['pricing']['total'])->toBe('978.000');
+
+    expect(json_encode($payload))->not->toContain('_baisa');
+});
+
+test('all contracts signed webhook is idempotent', function () {
+    [$booking, $staff] = byruhaaWebhookBookingFixture();
+
+    config([
+        'byruhaa.webhooks.booking_contracts_signed_url' => 'https://partner.test/webhooks/booking-contracts-signed',
+    ]);
+
+    $approvedBooking = app(BookingApprovalService::class)->approve($booking, $staff)
+        ->load('familyMembers.contract');
+
+    Storage::fake('local');
+    Queue::fake();
+
+    $approvedBooking->familyMembers->first()->contract->sign(byruhaaSignatureDataUrl(), 'Only signer', '127.0.0.1');
+    app(ByruhaaWebhookSender::class)->sendBookingContractsSigned($approvedBooking->refresh());
+
+    Queue::assertPushed(CallWebhookJob::class, 1);
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $approvedBooking)->where('event', 'booking.contracts_signed')->count())->toBe(1);
+});
+
 test('paid thawani confirmation queues a payment webhook with paid booking status', function () {
     $payment = byruhaaWebhookPaymentFixture(amountBaisa: 489000);
 
@@ -457,7 +528,7 @@ test('webhook delivery audit records failed and final failed attempts', function
 /**
  * @return array{0: Booking, 1: User}
  */
-function byruhaaWebhookBookingFixture(): array
+function byruhaaWebhookBookingFixture(int $familyMemberCount = 1): array
 {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create([
@@ -470,20 +541,24 @@ function byruhaaWebhookBookingFixture(): array
         'seat_capacity' => 10,
         'price_baisa' => 489000,
     ]);
-    $familyMember = FamilyMember::factory()->for($customer)->create([
-        'name' => 'Maha Webhook',
-    ]);
     $booking = Booking::factory()->for($customer)->for($event)->create([
         'reference' => 'BRH-WEBHOOK',
         'unit_price_baisa' => 489000,
-        'family_member_count' => 1,
-        'subtotal_baisa' => 489000,
+        'family_member_count' => $familyMemberCount,
+        'subtotal_baisa' => 489000 * $familyMemberCount,
         'discount_amount_baisa' => 0,
-        'total_baisa' => 489000,
+        'total_baisa' => 489000 * $familyMemberCount,
         'currency' => 'OMR',
     ]);
 
-    BookingFamilyMember::factory()->for($booking)->for($familyMember)->create();
+    FamilyMember::factory()
+        ->count($familyMemberCount)
+        ->sequence(fn (Sequence $sequence): array => [
+            'name' => $sequence->index === 0 ? 'Maha Webhook' : 'Maha Webhook '.$sequence->index,
+        ])
+        ->for($customer)
+        ->create()
+        ->each(fn (FamilyMember $familyMember): BookingFamilyMember => BookingFamilyMember::factory()->for($booking)->for($familyMember)->create());
 
     return [$booking, $staff];
 }
@@ -598,6 +673,11 @@ function byruhaaQueuedWebhook(string $url): CallWebhookJob
     expect($queuedJob)->toBeInstanceOf(CallWebhookJob::class);
 
     return $queuedJob;
+}
+
+function byruhaaSignatureDataUrl(): string
+{
+    return 'data:image/png;base64,'.base64_encode('fake-png');
 }
 
 function byruhaaWebhookDelivery(string $event, Booking|Customer|Payment $webhookable, string $url): WebhookDelivery

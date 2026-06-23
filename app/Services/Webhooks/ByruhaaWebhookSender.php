@@ -90,6 +90,37 @@ class ByruhaaWebhookSender
         }
     }
 
+    public function sendBookingContractsSigned(Booking $booking): void
+    {
+        $url = $this->webhookUrl('booking_contracts_signed_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        try {
+            $freshBooking = Booking::query()
+                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+                ->findOrFail($booking->getKey());
+
+            if (! $freshBooking->hasSignedContracts()) {
+                return;
+            }
+
+            $payload = $this->bookingPayload('booking.contracts_signed', $freshBooking, now());
+            $payload['data']['contracts'] = $this->bookingContractsPayload($freshBooking);
+
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'booking.contracts_signed',
+                webhookable: $freshBooking,
+                payload: $payload,
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
     public function sendPaymentPaid(Payment $payment): void
     {
         $url = $this->webhookUrl('payment_paid_url');
@@ -142,6 +173,30 @@ class ByruhaaWebhookSender
                     'created_at' => $customer->created_at?->toJSON(),
                 ],
             ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function bookingContractsPayload(Booking $booking): array
+    {
+        $contracts = $booking->familyMembers
+            ->map(fn (BookingFamilyMember $bookingFamilyMember) => $bookingFamilyMember->contract)
+            ->filter();
+        $signedContracts = $contracts
+            ->filter(fn ($contract): bool => $contract->signed_at !== null);
+        $latestSignedAt = $signedContracts
+            ->map(fn ($contract) => $contract->signed_at)
+            ->filter()
+            ->sort()
+            ->last();
+
+        return [
+            'total_count' => $contracts->count(),
+            'signed_count' => $signedContracts->count(),
+            'all_signed' => $contracts->isNotEmpty() && $contracts->count() === $signedContracts->count(),
+            'latest_signed_at' => $latestSignedAt?->toJSON(),
         ];
     }
 

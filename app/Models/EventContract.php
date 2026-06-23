@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Contract\ContractState;
 use App\States\Contract\Signed;
 use Database\Factories\EventContractFactory;
@@ -68,6 +69,15 @@ class EventContract extends Model
         ])->save();
 
         $this->state->transitionTo(Signed::class);
+
+        $booking = $this->bookingFamilyMember()
+            ->with('booking.familyMembers.contract')
+            ->first()
+            ?->booking;
+
+        if ($booking?->hasSignedContracts()) {
+            app(ByruhaaWebhookSender::class)->sendBookingContractsSigned($booking);
+        }
     }
 
     /**
