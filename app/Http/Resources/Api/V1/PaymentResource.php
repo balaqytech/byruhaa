@@ -31,8 +31,8 @@ class PaymentResource extends JsonResource
             'provider_invoice' => $this->provider_invoice,
             'provider_payment_status' => $this->provider_payment_status,
             'checkout_url' => $this->checkout_url,
-            'request_payload' => $this->request_payload,
-            'response_payload' => $this->response_payload,
+            'request_payload' => $this->providerRequestPayload(),
+            'response_payload' => $this->providerResponsePayload(),
             'verified_at' => $this->verified_at?->toJSON(),
             'paid_at' => $this->paid_at?->toJSON(),
             'created_at' => $this->created_at?->toJSON(),
@@ -49,5 +49,43 @@ class PaymentResource extends JsonResource
                 'state' => $this->bookingInstallment->state->value,
             ]),
         ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function providerRequestPayload(): ?array
+    {
+        if ($this->request_payload === null) {
+            return null;
+        }
+
+        $payload = $this->request_payload;
+
+        foreach (($payload['products'] ?? []) as $index => $product) {
+            if (is_array($product) && is_numeric($product['unit_amount'] ?? null)) {
+                $payload['products'][$index]['unit_amount'] = $this->money((int) $product['unit_amount'], $this->currency);
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function providerResponsePayload(): ?array
+    {
+        if ($this->response_payload === null) {
+            return null;
+        }
+
+        $payload = $this->response_payload;
+
+        if (is_numeric(data_get($payload, 'data.total_amount'))) {
+            data_set($payload, 'data.total_amount', $this->money((int) data_get($payload, 'data.total_amount'), $this->currency));
+        }
+
+        return $payload;
     }
 }

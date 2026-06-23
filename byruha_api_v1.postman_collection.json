@@ -35,6 +35,11 @@
       "type": "string"
     },
     {
+      "key": "payment_plan_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
       "key": "booking_installment_id",
       "value": "1",
       "type": "string"
@@ -636,6 +641,88 @@
               "body": "{\n  \"message\": \"Not Found\"\n}"
             }
           ]
+        },
+        {
+          "name": "Initiate booking payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_plan_id\": null,\n  \"booking_installment_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/customers/{{customer_id}}/bookings/{{booking_id}}/payments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customers",
+                "{{customer_id}}",
+                "bookings",
+                "{{booking_id}}",
+                "payments"
+              ]
+            },
+            "description": "Creates a full-payment schedule when the booking has no payment schedule, or selects an event payment plan when payment_plan_id is provided. Then initiates the requested booking_installment_id, or the next pending installment when omitted/null. Returns a pending Thawani payment with checkout_url. Booking must belong to the customer, be approved, have signed contracts, and the customer profile must be complete."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"state\": \"pending\",\n    \"state_label\": \"Pending\",\n    \"provider_session_id\": \"checkout_session_123\",\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": \"https://uatcheckout.thawani.om/pay/checkout_session_123?key=test_publishable_key\",\n    \"request_payload\": {\n      \"client_reference_id\": \"PAY-ABCDEFGHIJKL\",\n      \"mode\": \"payment\",\n      \"products\": [\n        {\n          \"name\": \"Published Camp Full payment\",\n          \"quantity\": 1,\n          \"unit_amount\": \"12.000\"\n        }\n      ],\n      \"success_url\": \"http://byruha.test/payments/thawani/1/success?expires=1780000000&signature=abc123\",\n      \"cancel_url\": \"http://byruha.test/payments/thawani/1/cancel?expires=1780000000&signature=abc123\",\n      \"metadata\": {\n        \"payment_id\": 1,\n        \"booking_id\": 1,\n        \"installment_id\": 1,\n        \"customer_id\": 1\n      }\n    },\n    \"response_payload\": {\n      \"success\": true,\n      \"data\": {\n        \"session_id\": \"checkout_session_123\",\n        \"redirect_url\": \"https://uatcheckout.thawani.om/pay/checkout_session_123?key=test_publishable_key\"\n      }\n    },\n    \"verified_at\": null,\n    \"paid_at\": null,\n    \"created_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Full payment\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"state\": \"pending\"\n    }\n  }\n}"
+            },
+            {
+              "name": "422 Not payable yet",
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"The booking must be approved before selecting a payment plan.\",\n  \"errors\": {\n    \"payment\": [\n      \"The booking must be approved before selecting a payment plan.\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "404 Booking or installment not found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Not Found\"\n}"
+            }
+          ]
         }
       ]
     },
@@ -746,7 +833,7 @@
     },
     {
       "name": "Customer Payments",
-      "description": "CRUD endpoints for payments owned by a customer through the payment's booking installment. Valid payment states: pending, paid, failed, cancelled, partially_refunded, refunded.",
+      "description": "Low-level CRUD endpoints for payments owned by a customer through the payment's booking installment. To create a Thawani checkout_url, use Customer Bookings / Initiate booking payment. Valid payment states: pending, paid, failed, cancelled, partially_refunded, refunded.",
       "item": [
         {
           "name": "List customer payments",
@@ -832,7 +919,7 @@
                 "payments"
               ]
             },
-            "description": "Creates a payment for one of the customer's booking installments. Request amount is still sent as amount_baisa. API responses return amount as an OMR decimal string."
+            "description": "Low-level create endpoint for one of the customer's booking installments. This does not contact Thawani and does not generate checkout_url. Use Customer Bookings / Initiate booking payment for real customer checkout. Request amount is still sent as amount_baisa; API responses return amount as an OMR decimal string."
           },
           "response": [
             {
