@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\UpdateCustomerRequest;
 use App\Http\Resources\Api\V1\CustomerResource;
 use App\Models\Customer;
 use App\Services\PhoneNumberNormalizer;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -44,11 +45,13 @@ class CustomerController extends Controller
         return CustomerResource::collection($customers);
     }
 
-    public function store(StoreCustomerRequest $request): JsonResponse
+    public function store(StoreCustomerRequest $request, ByruhaaWebhookSender $webhookSender): JsonResponse
     {
         $customer = Customer::create(
             collect($request->validated())->except('password_confirmation')->all(),
         );
+
+        $webhookSender->sendCustomerRegistered($customer);
 
         return CustomerResource::make($customer)
             ->response()

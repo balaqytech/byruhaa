@@ -30,6 +30,7 @@ use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
 beforeEach(function (): void {
     config([
         'app.url' => 'https://byruhaa.test',
+        'byruhaa.webhooks.customer_registered_url' => null,
         'byruhaa.webhooks.booking_created_url' => null,
         'byruhaa.webhooks.booking_approved_url' => null,
         'byruhaa.webhooks.payment_paid_url' => null,
@@ -48,6 +49,7 @@ beforeEach(function (): void {
 test('byruhaa webhook config values exist', function () {
     expect(config('byruhaa.webhooks'))
         ->toHaveKeys([
+            'customer_registered_url',
             'booking_created_url',
             'booking_approved_url',
             'payment_paid_url',
@@ -57,6 +59,106 @@ test('byruhaa webhook config values exist', function () {
         ])
         ->and(config('byruhaa.webhooks.timeout'))->toBe(10)
         ->and(config('byruhaa.webhooks.queue'))->toBe('default');
+});
+
+test('customer registration through the api queues a webhook with safe customer payload', function () {
+    config([
+        'byruhaa.webhooks.customer_registered_url' => 'https://partner.test/webhooks/customer-registered',
+        'byruhaa.webhooks.queue' => 'webhooks',
+    ]);
+
+    Queue::fake();
+
+    $this->postJson('/api/v1/customers', [
+        'name' => 'Registered Customer',
+        'email' => 'registered@example.com',
+        'phone_number' => '91234567',
+        'civil_id' => '12345678',
+        'address' => 'House 12',
+        'wilaya' => 'Muscat',
+        'area' => 'Qurum',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertCreated();
+
+    $customer = Customer::query()->where('email', 'registered@example.com')->firstOrFail();
+    $job = byruhaaQueuedWebhook('https://partner.test/webhooks/customer-registered');
+    $payload = $job->payload;
+    $delivery = byruhaaWebhookDelivery('customer.registered', $customer, 'https://partner.test/webhooks/customer-registered');
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
+        ->and($job->queue)->toBe('webhooks')
+        ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
+        ->and($payload['event'])->toBe('customer.registered')
+        ->and($payload['data']['customer']['id'])->toBe($customer->id)
+        ->and($payload['data']['customer']['name'])->toBe('Registered Customer')
+        ->and($payload['data']['customer']['phone'])->toBe('+96891234567')
+        ->and($payload['data']['customer']['email'])->toBe('registered@example.com')
+        ->and($payload['data']['customer']['civil_id'])->toBe('12345678')
+        ->and($payload['data']['customer']['profile_complete'])->toBeTrue()
+        ->and($payload['data']['customer']['customer_panel_url'])->toBe(route('customer.dashboard'));
+
+    expect(json_encode($payload))
+        ->not->toContain('password')
+        ->not->toContain('remember_token');
+});
+
+test('customer registration through fortify queues a webhook', function () {
+    config([
+        'byruhaa.webhooks.customer_registered_url' => 'https://partner.test/webhooks/customer-registered',
+    ]);
+
+    Queue::fake();
+
+    $this->post(route('register.store'), [
+        'name' => 'Fortify Customer',
+        'email' => 'fortify.webhook@example.com',
+        'phone_number' => '92345678',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertSessionHasNoErrors();
+
+    $customer = Customer::query()->where('email', 'fortify.webhook@example.com')->firstOrFail();
+    $payload = byruhaaQueuedWebhook('https://partner.test/webhooks/customer-registered')->payload;
+
+    expect($payload['event'])->toBe('customer.registered')
+        ->and($payload['data']['customer']['id'])->toBe($customer->id)
+        ->and($payload['data']['customer']['phone'])->toBe('+96892345678')
+        ->and($payload['data']['customer']['profile_complete'])->toBeFalse()
+        ->and($payload['data']['customer']['missing_required_profile_fields'])->toBe(['civil_id', 'address', 'wilaya', 'area']);
+});
+
+test('customer registration does not queue a webhook when url is empty', function () {
+    Queue::fake();
+
+    $this->postJson('/api/v1/customers', [
+        'name' => 'No Webhook Customer',
+        'email' => 'no.webhook@example.com',
+        'phone_number' => '91234568',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertCreated();
+
+    $customer = Customer::query()->where('email', 'no.webhook@example.com')->firstOrFail();
+
+    Queue::assertNotPushed(CallWebhookJob::class);
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $customer)->count())->toBe(0);
+});
+
+test('repeated customer registered sender call does not queue duplicate webhooks', function () {
+    config([
+        'byruhaa.webhooks.customer_registered_url' => 'https://partner.test/webhooks/customer-registered',
+    ]);
+
+    Queue::fake();
+
+    $customer = Customer::factory()->create();
+
+    app(ByruhaaWebhookSender::class)->sendCustomerRegistered($customer);
+    app(ByruhaaWebhookSender::class)->sendCustomerRegistered($customer->refresh());
+
+    Queue::assertPushed(CallWebhookJob::class, 1);
+    expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $customer)->where('event', 'customer.registered')->count())->toBe(1);
 });
 
 test('booking creation queues a webhook with booking event customer and family member payload', function () {
@@ -498,7 +600,7 @@ function byruhaaQueuedWebhook(string $url): CallWebhookJob
     return $queuedJob;
 }
 
-function byruhaaWebhookDelivery(string $event, Booking|Payment $webhookable, string $url): WebhookDelivery
+function byruhaaWebhookDelivery(string $event, Booking|Customer|Payment $webhookable, string $url): WebhookDelivery
 {
     $delivery = WebhookDelivery::query()
         ->where('event', $event)

@@ -7,6 +7,7 @@ use App\Enums\WebhookDeliveryStatus;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
+use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\WebhookDelivery;
 use App\Support\Money\MoneyFactory;
@@ -19,6 +20,28 @@ use Throwable;
 
 class ByruhaaWebhookSender
 {
+    public function sendCustomerRegistered(Customer $customer): void
+    {
+        $url = $this->webhookUrl('customer_registered_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        try {
+            $freshCustomer = Customer::query()->findOrFail($customer->getKey());
+
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'customer.registered',
+                webhookable: $freshCustomer,
+                payload: $this->customerPayload('customer.registered', $freshCustomer, now()),
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
     public function sendBookingCreated(Booking $booking): void
     {
         $url = $this->webhookUrl('booking_created_url');
@@ -93,6 +116,33 @@ class ByruhaaWebhookSender
         } catch (Throwable $exception) {
             report($exception);
         }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function customerPayload(string $eventName, Customer $customer, CarbonInterface $occurredAt): array
+    {
+        return [
+            'event' => $eventName,
+            'occurred_at' => $occurredAt->toJSON(),
+            'data' => [
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => $customer->name,
+                    'phone' => $customer->phone_number,
+                    'email' => $customer->email,
+                    'civil_id' => $customer->civil_id,
+                    'wilaya' => $customer->wilaya,
+                    'area' => $customer->area,
+                    'address' => $customer->address,
+                    'profile_complete' => $customer->hasCompleteProfile(),
+                    'missing_required_profile_fields' => $customer->missingRequiredProfileFields(),
+                    'customer_panel_url' => route('customer.dashboard'),
+                    'created_at' => $customer->created_at?->toJSON(),
+                ],
+            ],
+        ];
     }
 
     /**

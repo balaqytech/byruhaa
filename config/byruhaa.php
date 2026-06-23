@@ -4,6 +4,7 @@ return [
     'approval_mechanism' => env('BYRUHAA_APPROVAL_MECHANISM', 'manual'),
 
     'webhooks' => [
+        'customer_registered_url' => env('BYRUHAA_CUSTOMER_REGISTERED_WEBHOOK_URL'),
         'booking_created_url' => env('BYRUHAA_BOOKING_CREATED_WEBHOOK_URL'),
         'booking_approved_url' => env('BYRUHAA_BOOKING_APPROVED_WEBHOOK_URL'),
         'payment_paid_url' => env('BYRUHAA_PAYMENT_PAID_WEBHOOK_URL'),
