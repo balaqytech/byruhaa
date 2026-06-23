@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'approval_mechanism' => env('BYRUHAA_APPROVAL_MECHANISM', 'manual'),
+
     'webhooks' => [
         'booking_created_url' => env('BYRUHAA_BOOKING_CREATED_WEBHOOK_URL'),
         'booking_approved_url' => env('BYRUHAA_BOOKING_APPROVED_WEBHOOK_URL'),

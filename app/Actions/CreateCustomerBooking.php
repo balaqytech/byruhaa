@@ -9,6 +9,7 @@ use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
+use App\Services\BookingApprovalService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
@@ -20,6 +21,7 @@ class CreateCustomerBooking
     public function __construct(
         private CalculateBookingPrice $calculateBookingPrice,
         private ByruhaaWebhookSender $webhookSender,
+        private BookingApprovalService $bookingApprovalService,
     ) {}
 
     /**
@@ -62,7 +64,21 @@ class CreateCustomerBooking
 
         $this->webhookSender->sendBookingCreated($booking);
 
+        if ($this->usesAutomaticApproval()) {
+            return $this->bookingApprovalService
+                ->approve($booking)
+                ->load(['event', 'familyMembers.familyMember', 'paymentSchedule.installments']);
+        }
+
         return $booking;
+    }
+
+    private function usesAutomaticApproval(): bool
+    {
+        return str(config('byruhaa.approval_mechanism', 'manual'))
+            ->trim()
+            ->lower()
+            ->toString() === 'auto';
     }
 
     /**
