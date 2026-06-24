@@ -94,6 +94,7 @@ test('customer registration through the api queues a webhook with safe customer 
         ->and($job->queue)->toBe('webhooks')
         ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
         ->and($payload['event'])->toBe('customer.registered')
+        ->and($payload['customer_phone'])->toBe('+96891234567')
         ->and($payload['data']['customer']['id'])->toBe($customer->id)
         ->and($payload['data']['customer']['name'])->toBe('Registered Customer')
         ->and($payload['data']['customer']['phone'])->toBe('+96891234567')
@@ -126,6 +127,7 @@ test('customer registration through fortify queues a webhook', function () {
     $payload = byruhaaQueuedWebhook('https://partner.test/webhooks/customer-registered')->payload;
 
     expect($payload['event'])->toBe('customer.registered')
+        ->and($payload['customer_phone'])->toBe('+96892345678')
         ->and($payload['data']['customer']['id'])->toBe($customer->id)
         ->and($payload['data']['customer']['phone'])->toBe('+96892345678')
         ->and($payload['data']['customer']['profile_complete'])->toBeFalse()
@@ -191,6 +193,7 @@ test('booking creation queues a webhook with booking event customer and family m
         ->and($job->queue)->toBe('webhooks')
         ->and($job->headers)->not->toHaveKey('Signature')
         ->and($payload['event'])->toBe('booking.created')
+        ->and($payload['customer_phone'])->toBe('+96892345678')
         ->and($payload['data']['booking']['id'])->toBe($booking->id)
         ->and($payload['data']['booking']['status'])->toBe('pending_review')
         ->and($payload['data']['booking']['customer_panel_url'])->toBe(route('customer.bookings.show', $booking))
@@ -268,6 +271,7 @@ test('booking approval queues a signed webhook with booking payload', function (
         ->and($job->requestTimeout)->toBe(10)
         ->and($job->headers)->toHaveKey('Signature')
         ->and($payload['event'])->toBe('booking.approved')
+        ->and($payload['customer_phone'])->toBe('+96891234567')
         ->and($payload['data']['booking']['id'])->toBe($approvedBooking->id)
         ->and($payload['data']['booking']['reference'])->toBe('BRH-WEBHOOK')
         ->and($payload['data']['booking']['status'])->toBe('approved')
@@ -322,6 +326,7 @@ test('signing all booking contracts queues a webhook with contract summary', fun
     expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
         ->and($job->queue)->toBe('webhooks')
         ->and($payload['event'])->toBe('booking.contracts_signed')
+        ->and($payload['customer_phone'])->toBe('+96891234567')
         ->and($payload['data']['booking']['id'])->toBe($approvedBooking->id)
         ->and($payload['data']['booking']['status'])->toBe('approved')
         ->and($payload['data']['booking']['customer_panel_url'])->toBe(route('customer.bookings.show', $approvedBooking))
@@ -382,6 +387,7 @@ test('paid thawani confirmation queues a payment webhook with paid booking statu
         ->and($delivery->queued_at)->not->toBeNull()
         ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
         ->and($payload['event'])->toBe('payment.paid')
+        ->and($payload['customer_phone'])->toBe($payment->bookingInstallment->paymentSchedule->booking->customer->phone_number)
         ->and($payload['data']['payment']['id'])->toBe($payment->id)
         ->and($payload['data']['payment']['provider'])->toBe('thawani')
         ->and($payload['data']['payment']['status'])->toBe('paid')
@@ -390,6 +396,8 @@ test('paid thawani confirmation queues a payment webhook with paid booking statu
         ->and($payload['data']['payment']['provider_reference'])->toBe('payment_'.$payment->id)
         ->and($payload['data']['booking']['payment_status'])->toBe('paid')
         ->and($payload['data']['booking']['customer_panel_url'])->toBe(route('customer.bookings.show', $payment->bookingInstallment->paymentSchedule->booking))
+        ->and($payload['data']['customer']['id'])->toBe($payment->bookingInstallment->paymentSchedule->booking->customer_id)
+        ->and($payload['data']['customer']['phone'])->toBe($payment->bookingInstallment->paymentSchedule->booking->customer->phone_number)
         ->and($payload['data'])->not->toHaveKey('installments');
 
     expect(json_encode($payload))->not->toContain('_baisa');

@@ -47,7 +47,7 @@ class UpdateCustomerProfileRequest extends FormRequest
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique(Customer::class)->ignore($customer)],
-            'phone_number' => ['required', 'string', 'phone:OM', Rule::unique(Customer::class)->ignore($customer)],
+            'phone_number' => ['required', 'string', 'phone:INTERNATIONAL,OM', Rule::unique(Customer::class)->ignore($customer)],
             'civil_id' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'wilaya' => ['required', 'string', 'max:255'],

@@ -23,7 +23,7 @@ class StoreCustomerRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique(Customer::class)],
-            'phone_number' => ['required', 'string', 'phone:OM', Rule::unique(Customer::class)],
+            'phone_number' => ['required', 'string', 'phone:INTERNATIONAL,OM', Rule::unique(Customer::class)],
             'civil_id' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
             'wilaya' => ['nullable', 'string', 'max:255'],

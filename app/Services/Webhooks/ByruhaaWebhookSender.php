@@ -156,6 +156,7 @@ class ByruhaaWebhookSender
     {
         return [
             'event' => $eventName,
+            'customer_phone' => $customer->phone_number,
             'occurred_at' => $occurredAt->toJSON(),
             'data' => [
                 'customer' => [
@@ -207,6 +208,7 @@ class ByruhaaWebhookSender
     {
         return [
             'event' => $eventName,
+            'customer_phone' => $booking->customer?->phone_number,
             'occurred_at' => $occurredAt->toJSON(),
             'data' => [
                 'booking' => [
@@ -263,6 +265,7 @@ class ByruhaaWebhookSender
 
         $payload = [
             'event' => 'payment.paid',
+            'customer_phone' => $booking->customer?->phone_number,
             'occurred_at' => $occurredAt->toJSON(),
             'data' => [
                 'payment' => [
@@ -283,6 +286,12 @@ class ByruhaaWebhookSender
                     'status' => $booking->state->getValue(),
                     'payment_status' => $paymentStatus,
                     'customer_panel_url' => route('customer.bookings.show', $booking),
+                ],
+                'customer' => [
+                    'id' => $booking->customer?->id,
+                    'name' => $booking->customer?->name,
+                    'phone' => $booking->customer?->phone_number,
+                    'email' => $booking->customer?->email,
                 ],
             ],
         ];

@@ -62,6 +62,20 @@ test('customers can register and login with an omani phone number', function () 
     $this->assertAuthenticatedAs($customer, 'customer');
 });
 
+test('customers can register with an international e164 phone number', function () {
+    $this->post(route('register.store'), [
+        'name' => 'International Customer',
+        'email' => 'international@example.com',
+        'phone_number' => '+14155552671',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ])->assertSessionHasNoErrors();
+
+    $customer = Customer::query()->where('email', 'international@example.com')->firstOrFail();
+
+    expect($customer->phone_number)->toBe('+14155552671');
+});
+
 test('customers cannot access filament while staff users can', function () {
     $customer = Customer::factory()->create();
     $staff = User::factory()->create();

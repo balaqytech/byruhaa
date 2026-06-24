@@ -14,7 +14,13 @@ class PhoneNumberNormalizer
         }
 
         try {
-            return (string) new PhoneNumber($phoneNumber, $country);
+            return (new PhoneNumber($phoneNumber, $country))->formatE164();
+        } catch (Throwable) {
+            //
+        }
+
+        try {
+            return (new PhoneNumber($phoneNumber))->formatE164();
         } catch (Throwable) {
             return $phoneNumber;
         }

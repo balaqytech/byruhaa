@@ -64,6 +64,18 @@ test('customers can be managed through the api and require a phone number', func
         ->assertOk()
         ->assertJsonPath('data.email', 'mona@example.com');
 
+    $internationalCreateResponse = $this->postJson('/api/v1/customers', [
+        'name' => 'International Customer',
+        'email' => 'international.api@example.com',
+        'phone_number' => '+14155552671',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    $internationalCreateResponse
+        ->assertCreated()
+        ->assertJsonPath('data.phone_number', '+14155552671');
+
     $this->patchJson("/api/v1/customers/{$customer->id}", [
         'name' => 'Mona Al Said',
         'phone_number' => '92345678',

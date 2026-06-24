@@ -23,7 +23,7 @@ class UpdateCustomerRequest extends FormRequest
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'string', 'email', 'max:255', Rule::unique(Customer::class)->ignore($this->route('customer'))],
-            'phone_number' => ['sometimes', 'required', 'string', 'phone:OM', Rule::unique(Customer::class)->ignore($this->route('customer'))],
+            'phone_number' => ['sometimes', 'required', 'string', 'phone:INTERNATIONAL,OM', Rule::unique(Customer::class)->ignore($this->route('customer'))],
             'civil_id' => ['sometimes', 'nullable', 'string', 'max:255'],
             'address' => ['sometimes', 'nullable', 'string', 'max:255'],
             'wilaya' => ['sometimes', 'nullable', 'string', 'max:255'],
