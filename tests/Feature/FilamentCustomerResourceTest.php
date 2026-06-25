@@ -38,7 +38,28 @@ use App\Models\PaymentRefund;
 use App\Models\User;
 use App\States\Booking\Approved;
 use App\States\Contract\Signed;
+use Livewire\Component;
 use Livewire\Livewire;
+
+class NestedRichEditorPayloadComponent extends Component
+{
+    /**
+     * @var array<string, mixed>
+     */
+    public array $data = [
+        'contract_terms_html' => [
+            'type' => 'doc',
+            'content' => [],
+        ],
+    ];
+
+    public function render(): string
+    {
+        return <<<'HTML'
+            <div></div>
+        HTML;
+    }
+}
 
 test('staff can view customers in filament', function () {
     $staff = User::factory()->create();
@@ -217,6 +238,14 @@ test('staff can use rich editor merge tags for contract variables in event form'
         ->assertSee(__('admin.contract_variables.labels.guardian_name'))
         ->assertSee(__('admin.contract_variables.labels.guardian_address'))
         ->assertDontSee('Contract variables');
+});
+
+test('livewire accepts nested rich editor update paths for event forms', function () {
+    $path = 'data.contract_terms_html.content.63.content.0.content.0.content.0.content.0';
+
+    Livewire::test(NestedRichEditorPayloadComponent::class)
+        ->set($path, 'Nested rich editor text')
+        ->assertSet($path, 'Nested rich editor text');
 });
 
 test('staff can save participant extra fields on an event', function () {
