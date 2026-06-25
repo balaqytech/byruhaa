@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\EventStatus;
+use App\Models\Discount;
 use App\Models\Event;
 use Illuminate\Contracts\View\View;
 
@@ -25,6 +26,29 @@ class PublicSiteController extends Controller
                 ->get(),
             'title' => 'الفعاليات',
             'metaDescription' => 'فعاليات وتجارب منتجع بيرحاء السياحية والتعليمية.',
+        ]);
+    }
+
+    public function event(Event $event): View
+    {
+        abort_unless($event->status === EventStatus::Published, 404);
+
+        $event->load([
+            'paymentPlans' => fn ($query) => $query
+                ->where('is_active', true)
+                ->with('installments')
+                ->orderBy('name'),
+        ]);
+
+        return view('pages.public.site.events.show', [
+            'event' => $event,
+            'availableDiscounts' => Discount::query()
+                ->availableForEvent($event)
+                ->orderByDesc('amount_baisa')
+                ->orderBy('id')
+                ->get(),
+            'title' => $event->name,
+            'metaDescription' => $event->excerpt ?: 'Event details for '.$event->name,
         ]);
     }
 

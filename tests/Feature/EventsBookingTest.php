@@ -6,6 +6,8 @@ use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Event;
 use App\Models\EventContract;
+use App\Models\EventPaymentPlan;
+use App\Models\EventPaymentPlanInstallment;
 use App\Models\FamilyMember;
 use App\Models\User;
 use App\Services\AffiliateAttribution;
@@ -117,6 +119,57 @@ test('customer event view shows available discounts', function () {
         ->assertSee('1.000')
         ->assertDontSee('Expired Discount')
         ->assertDontSee('Other Event Discount');
+});
+
+test('customer event checkout updates totals and payment plan previews after selecting members', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'price_baisa' => 10000,
+        'seat_capacity' => 5,
+    ]);
+    $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
+    $paymentPlan = EventPaymentPlan::factory()->for($event)->create(['name' => 'Two payments']);
+
+    Discount::factory()->for($event)->create([
+        'name' => 'Sibling Discount',
+        'amount_baisa' => 2000,
+        'minimum_family_members' => 2,
+    ]);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'name' => 'Deposit',
+        'sequence' => 1,
+        'percentage' => 50,
+        'due_date' => '2026-07-01',
+    ]);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'name' => 'Final',
+        'sequence' => 2,
+        'percentage' => 50,
+        'due_date' => '2026-08-01',
+    ]);
+
+    $this->actingAs($customer, 'customer');
+
+    $component = Livewire::test('pages::customer.events.show', ['event' => $event])
+        ->assertSee(__('ui.events.checkout_title'))
+        ->assertSee(__('ui.events.order_summary'))
+        ->assertSee('0.000')
+        ->set('familyMemberIds', $familyMembers->pluck('id')->all())
+        ->assertSee('20.000')
+        ->assertSee('4.000')
+        ->assertSee('16.000')
+        ->assertSee('Sibling Discount')
+        ->assertSee(__('ui.payments.full_payment'))
+        ->assertSee(__('ui.payments.full_payment_description'))
+        ->assertSee('Two payments')
+        ->assertSee('Deposit')
+        ->assertSee('Final')
+        ->assertSee('8.000');
+
+    $html = $component->html();
+
+    expect(mb_strpos($html, __('ui.payments.full_payment')))
+        ->toBeLessThan(mb_strpos($html, 'Two payments'));
 });
 
 test('booking submission stores a price snapshot', function () {

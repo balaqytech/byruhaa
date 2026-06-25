@@ -1,9 +1,13 @@
 <?php
 
+use App\Actions\CalculateBookingPrice;
 use App\Actions\CreateCustomerBooking;
+use App\Data\BookingPriceSnapshot;
 use App\Enums\EventStatus;
 use App\Models\Discount;
 use App\Models\Event;
+use App\Models\EventPaymentPlan;
+use App\Models\EventPaymentPlanInstallment;
 use App\Services\AffiliateAttribution;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -50,9 +54,16 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
 
     public function with(): array
     {
+        $priceSnapshot = $this->priceSnapshot();
+        $paymentPlans = $this->paymentPlans();
+
         return [
             'availableDiscounts' => $this->availableDiscounts(),
             'familyMembers' => Auth::guard('customer')->user()->familyMembers()->oldest('birth_date')->get(),
+            'paymentPlans' => $paymentPlans,
+            'paymentPlanPreviews' => $this->paymentPlanPreviews($paymentPlans, $priceSnapshot->totalBaisa),
+            'priceSnapshot' => $priceSnapshot,
+            'selectedFamilyMemberCount' => count(array_unique($this->familyMemberIds)),
         ];
     }
 
@@ -62,6 +73,61 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
     private function availableDiscounts(): EloquentCollection
     {
         return Discount::query()->availableForEvent($this->event)->orderByDesc('amount_baisa')->orderBy('id')->get();
+    }
+
+    private function priceSnapshot(): BookingPriceSnapshot
+    {
+        return app(CalculateBookingPrice::class)->execute(
+            $this->event,
+            count(array_unique($this->familyMemberIds)),
+        );
+    }
+
+    /**
+     * @return EloquentCollection<int, EventPaymentPlan>
+     */
+    private function paymentPlans(): EloquentCollection
+    {
+        return $this->event
+            ->paymentPlans()
+            ->where('is_active', true)
+            ->with('installments')
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * @param  EloquentCollection<int, EventPaymentPlan>  $paymentPlans
+     * @return array<int, array<int, array{name: string, percentage: int, due_date: string|null, amount_baisa: int}>>
+     */
+    private function paymentPlanPreviews(EloquentCollection $paymentPlans, int $totalBaisa): array
+    {
+        return $paymentPlans
+            ->mapWithKeys(function (EventPaymentPlan $paymentPlan) use ($totalBaisa): array {
+                $installments = $paymentPlan->installments->values();
+
+                if ($installments->isEmpty() || (int) $installments->sum('percentage') !== 100) {
+                    return [$paymentPlan->id => []];
+                }
+
+                $remainingBaisa = $totalBaisa;
+                $rows = $installments->map(function (EventPaymentPlanInstallment $installment, int $index) use ($installments, $totalBaisa, &$remainingBaisa): array {
+                    $amountBaisa = $index === $installments->count() - 1
+                        ? $remainingBaisa
+                        : intdiv($totalBaisa * $installment->percentage, 100);
+                    $remainingBaisa -= $amountBaisa;
+
+                    return [
+                        'name' => $installment->name ?: __('ui.payments.installment_number', ['number' => $installment->sequence]),
+                        'percentage' => $installment->percentage,
+                        'due_date' => $installment->due_date?->format('Y-m-d'),
+                        'amount_baisa' => $amountBaisa,
+                    ];
+                })->all();
+
+                return [$paymentPlan->id => $rows];
+            })
+            ->all();
     }
 }; ?>
 
@@ -160,35 +226,131 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                     </div>
                 </div>
             @endif
-            <form wire:submit="book"
-                class="space-y-5 rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
-                <div>
-                    <flux:heading>{{ __('ui.events.book_this_event') }}</flux:heading>
-                    <flux:text>{{ $event->remainingSeats() }} {{ __('ui.events.approved_seats_remain') }}</flux:text>
-                    <flux:text>{{ __('ui.events.price_per_family_member') }}: <x-money :amount-baisa="$event->price_baisa"
-                            :currency="$event->currency" /></flux:text>
+            <form wire:submit="book" class="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+                <div class="border-b border-emerald-900/10 bg-emerald-950 p-5 text-white dark:border-white/10">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <flux:heading class="text-white">{{ __('ui.events.checkout_title') }}</flux:heading>
+                            <flux:text class="text-emerald-50">{{ __('ui.events.checkout_subheading') }}</flux:text>
+                        </div>
+                        <span class="flex size-11 items-center justify-center rounded-xl bg-amber-300/15 text-amber-100">
+                            <x-hugeicon name="wallet-02" class="text-2xl" />
+                        </span>
+                    </div>
                 </div>
 
-                <flux:checkbox.group wire:model="familyMemberIds" :label="__('ui.events.family_members')">
-                    @forelse ($familyMembers as $familyMember)
-                        <flux:checkbox wire:key="event-family-member-{{ $familyMember->id }}"
-                            value="{{ $familyMember->id }}"
-                            :label="$familyMember->name.' · '.__('ui.family.age').' '.$familyMember->ageAt($event->starts_at ?? now())" />
-                    @empty
-                        <flux:text>{{ __('ui.events.add_family_before_booking') }}</flux:text>
-                    @endforelse
-                </flux:checkbox.group>
+                <div class="space-y-5 p-5">
+                    <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/60 p-4 dark:border-white/10 dark:bg-white/5">
+                        <flux:checkbox.group wire:model.live="familyMemberIds" :label="__('ui.events.family_members')">
+                            @forelse ($familyMembers as $familyMember)
+                                <flux:checkbox
+                                    wire:key="event-family-member-{{ $familyMember->id }}"
+                                    value="{{ $familyMember->id }}"
+                                    :label="$familyMember->name.' · '.__('ui.family.age').' '.$familyMember->ageAt($event->starts_at ?? now())"
+                                />
+                            @empty
+                                <flux:text>{{ __('ui.events.add_family_before_booking') }}</flux:text>
+                            @endforelse
+                        </flux:checkbox.group>
 
-                <flux:error name="familyMemberIds" />
+                        <flux:error name="familyMemberIds" />
+                    </div>
 
-                <div class="flex flex-wrap gap-3">
-                    <flux:button type="submit" variant="primary" :disabled="$familyMembers->isEmpty()">
-                        <x-hugeicon name="check-list" class="text-lg" />
-                        {{ __('ui.actions.submit_request') }}
-                    </flux:button>
-                    <flux:button :href="route('customer.family-members.index')" wire:navigate>
-                        {{ __('ui.actions.manage_family') }}
-                    </flux:button>
+                    <section class="rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                        <div class="flex items-center justify-between gap-3">
+                            <flux:heading class="text-base">{{ __('ui.events.order_summary') }}</flux:heading>
+                            <flux:badge color="emerald">{{ trans_choice('ui.bookings.family_member_count', $selectedFamilyMemberCount, ['count' => $selectedFamilyMemberCount]) }}</flux:badge>
+                        </div>
+
+                        <dl class="mt-4 grid gap-3 text-sm">
+                            <div class="flex items-center justify-between gap-4">
+                                <dt class="text-zinc-600 dark:text-zinc-300">{{ __('ui.events.price_per_family_member') }}</dt>
+                                <dd class="font-semibold text-emerald-950 dark:text-emerald-50">
+                                    <x-money :amount-baisa="$priceSnapshot->unitPriceBaisa" :currency="$priceSnapshot->currency" />
+                                </dd>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-4">
+                                <dt class="text-zinc-600 dark:text-zinc-300">{{ __('ui.payments.subtotal') }}</dt>
+                                <dd class="font-semibold text-emerald-950 dark:text-emerald-50">
+                                    <x-money :amount-baisa="$priceSnapshot->subtotalBaisa" :currency="$priceSnapshot->currency" />
+                                </dd>
+                            </div>
+
+                            <div class="flex items-center justify-between gap-4">
+                                <dt class="text-zinc-600 dark:text-zinc-300">{{ __('ui.payments.discount') }}</dt>
+                                <dd class="font-semibold text-amber-700 dark:text-amber-200">
+                                    <x-money :amount-baisa="$priceSnapshot->discountAmountBaisa" :currency="$priceSnapshot->currency" />
+                                </dd>
+                            </div>
+
+                            @if ($priceSnapshot->discountName)
+                                <div class="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:bg-amber-300/10 dark:text-amber-100">
+                                    {{ __('ui.events.applied_discount') }}: {{ $priceSnapshot->discountName }}
+                                </div>
+                            @endif
+
+                            <div class="flex items-center justify-between gap-4 border-t border-emerald-900/10 pt-3 dark:border-white/10">
+                                <dt class="font-semibold text-emerald-950 dark:text-emerald-50">{{ __('ui.payments.total') }}</dt>
+                                <dd class="text-2xl font-bold text-emerald-700 dark:text-emerald-200">
+                                    <x-money :amount-baisa="$priceSnapshot->totalBaisa" :currency="$priceSnapshot->currency" />
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    @if ($paymentPlans->isNotEmpty())
+                        <section class="rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+                            <div class="mb-4 flex items-center justify-between gap-3">
+                                <flux:heading class="text-base">{{ __('ui.events.payment_plan_preview') }}</flux:heading>
+                                <x-hugeicon name="payment-02" class="text-xl text-emerald-700 dark:text-emerald-200" />
+                            </div>
+
+                            <div class="mb-3 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-300/20 dark:bg-emerald-300/10">
+                                <div>
+                                    <p class="font-medium text-emerald-950 dark:text-emerald-50">{{ __('ui.payments.full_payment') }}</p>
+                                    <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ __('ui.payments.full_payment_description') }}</p>
+                                </div>
+                                <x-money :amount-baisa="$priceSnapshot->totalBaisa" :currency="$priceSnapshot->currency" class="font-semibold text-emerald-700 dark:text-emerald-200" />
+                            </div>
+
+                            <div class="grid gap-3">
+                                @foreach ($paymentPlans as $paymentPlan)
+                                    @php($previewRows = $paymentPlanPreviews[$paymentPlan->id] ?? [])
+
+                                    <div class="rounded-lg border border-emerald-900/10 p-3 dark:border-white/10">
+                                        <p class="font-semibold text-emerald-950 dark:text-emerald-50">{{ $paymentPlan->name }}</p>
+
+                                        @if ($previewRows === [])
+                                            <flux:text class="mt-2 text-sm">{{ __('ui.events.payment_plan_preview_empty') }}</flux:text>
+                                        @else
+                                            <div class="mt-3 grid gap-2">
+                                                @foreach ($previewRows as $row)
+                                                    <div class="flex items-center justify-between gap-3 rounded-lg bg-emerald-50/60 px-3 py-2 text-sm dark:bg-white/5">
+                                                        <div>
+                                                            <p class="font-medium text-emerald-950 dark:text-emerald-50">{{ $row['name'] }}</p>
+                                                            <p class="text-xs text-zinc-500 dark:text-zinc-400">{{ $row['percentage'] }}%@if ($row['due_date']) · <span dir="ltr">{{ $row['due_date'] }}</span>@endif</p>
+                                                        </div>
+                                                        <x-money :amount-baisa="$row['amount_baisa']" :currency="$priceSnapshot->currency" class="font-semibold text-emerald-700 dark:text-emerald-200" />
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+                        </section>
+                    @endif
+
+                    <div class="flex flex-wrap gap-3">
+                        <flux:button type="submit" variant="primary" :disabled="$familyMembers->isEmpty()">
+                            <x-hugeicon name="check-list" class="text-lg" />
+                            {{ __('ui.actions.submit_request') }}
+                        </flux:button>
+                        <flux:button :href="route('customer.family-members.index')" wire:navigate>
+                            {{ __('ui.actions.manage_family') }}
+                        </flux:button>
+                    </div>
                 </div>
             </form>
         </div>

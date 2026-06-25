@@ -24,7 +24,7 @@
         @php
             $navigationLinks = [
                 ['label' => 'الرئيسية', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
-                ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.index', 'icon' => 'calendar-03'],
+                ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
                 ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
                 ['label' => 'عن المنتجع', 'route' => 'about', 'active' => 'about', 'icon' => 'information-circle'],
                 ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
@@ -33,7 +33,7 @@
             $accountRoute = auth('customer')->check() ? 'customer.dashboard' : 'login';
             $bottomNavigationLinks = [
                 ['label' => 'الرئيسية', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
-                ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.index', 'icon' => 'calendar-03'],
+                ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
                 ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
                 ['label' => 'حسابي', 'route' => $accountRoute, 'active' => 'customer.*', 'icon' => 'user-circle'],
             ];

@@ -60,10 +60,10 @@
                             </div>
                         </div>
 
-                        @if (Route::has('customer.events.show'))
+                        @if (Route::has('events.show'))
                             <div class="mt-auto pt-8">
-                                <a href="{{ route('customer.events.show', $event) }}" class="inline-flex min-h-11 items-center gap-2 rounded-sm border border-[#009060]/18 px-4 py-2 text-sm font-bold text-[#009060] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-[#e0a800]/24 dark:text-[#e0a800] dark:hover:bg-[#e0a800]/10">
-                                    <span>تفاصيل الحجز</span>
+                                <a href="{{ route('events.show', $event) }}" class="inline-flex min-h-11 items-center gap-2 rounded-sm border border-[#009060]/18 px-4 py-2 text-sm font-bold text-[#009060] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-[#e0a800]/24 dark:text-[#e0a800] dark:hover:bg-[#e0a800]/10">
+                                    <span>تفاصيل الفعالية</span>
                                     <x-hugeicon name="arrow-left-02" class="text-lg" />
                                 </a>
                             </div>

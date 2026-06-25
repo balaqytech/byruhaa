@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(CaptureAffiliateReferral::class)->group(function (): void {
     Route::get('/', [PublicSiteController::class, 'home'])->name('home');
     Route::get('events', [PublicSiteController::class, 'events'])->name('events.index');
+    Route::get('events/{event:slug}', [PublicSiteController::class, 'event'])->name('events.show');
     Route::get('about', [PublicSiteController::class, 'about'])->name('about');
     Route::get('contact', [PublicSiteController::class, 'contact'])->name('contact');
 
