@@ -145,13 +145,14 @@ class ContractVariables
             ? $source->loadMissing('bookingFamilyMember.booking.customer', 'bookingFamilyMember.booking.event', 'bookingFamilyMember.familyMember')->bookingFamilyMember
             : $source;
 
-        $bookingFamilyMember->loadMissing(['booking.customer', 'booking.event', 'familyMember']);
+        $bookingFamilyMember->loadMissing(['booking.customer', 'booking.event', 'booking.familyMembers', 'familyMember']);
 
         $booking = $bookingFamilyMember->booking;
         $customer = $booking->customer;
         $event = $booking->event;
         $familyMember = $bookingFamilyMember->familyMember;
         $eventDate = $event->starts_at ?? now();
+        $amounts = self::perMemberAmounts($bookingFamilyMember);
 
         return [
             'guardian_name' => self::value($customer->name),
@@ -179,16 +180,51 @@ class ContractVariables
 
             'booking_reference' => self::value($booking->reference),
             'booking_date' => self::date($booking->created_at),
-            'agreed_fee' => MoneyFormatter::baisa($booking->total_baisa, $booking->currency),
+            'agreed_fee' => MoneyFormatter::baisa($amounts['total_baisa'], $booking->currency),
             'discount_name' => self::value($booking->discount_name),
-            'subtotal' => MoneyFormatter::baisa($booking->subtotal_baisa, $booking->currency),
-            'discount_amount' => MoneyFormatter::baisa($booking->discount_amount_baisa, $booking->currency),
-            'total_amount' => MoneyFormatter::baisa($booking->total_baisa, $booking->currency),
+            'subtotal' => MoneyFormatter::baisa($amounts['subtotal_baisa'], $booking->currency),
+            'discount_amount' => MoneyFormatter::baisa($amounts['discount_amount_baisa'], $booking->currency),
+            'total_amount' => MoneyFormatter::baisa($amounts['total_baisa'], $booking->currency),
 
             'contract_date' => self::date($contract?->created_at ?? now()),
             'contract_signed_name' => self::value($contract?->signed_name),
             'contract_signed_at' => self::dateTime($contract?->signed_at),
         ];
+    }
+
+    /**
+     * @return array{subtotal_baisa: int, discount_amount_baisa: int, total_baisa: int}
+     */
+    private static function perMemberAmounts(BookingFamilyMember $bookingFamilyMember): array
+    {
+        $booking = $bookingFamilyMember->booking;
+        $familyMembers = $booking->familyMembers->sortBy('id')->values();
+        $familyMemberCount = max(1, $familyMembers->count(), $booking->family_member_count);
+        $familyMemberIndex = $familyMembers->search(
+            fn (BookingFamilyMember $member): bool => $member->is($bookingFamilyMember),
+        );
+        $familyMemberIndex = $familyMemberIndex === false ? 0 : (int) $familyMemberIndex;
+        $subtotalBaisa = $booking->unit_price_baisa > 0
+            ? $booking->unit_price_baisa
+            : self::allocatedAmount($booking->subtotal_baisa, $familyMemberCount, $familyMemberIndex);
+
+        return [
+            'subtotal_baisa' => $subtotalBaisa,
+            'discount_amount_baisa' => self::allocatedAmount($booking->discount_amount_baisa, $familyMemberCount, $familyMemberIndex),
+            'total_baisa' => self::allocatedAmount($booking->total_baisa, $familyMemberCount, $familyMemberIndex),
+        ];
+    }
+
+    private static function allocatedAmount(int $amountBaisa, int $parts, int $index): int
+    {
+        $amountBaisa = max(0, $amountBaisa);
+        $parts = max(1, $parts);
+        $index = min(max(0, $index), $parts - 1);
+        $baseAmount = intdiv($amountBaisa, $parts);
+
+        return $index === $parts - 1
+            ? $baseAmount + ($amountBaisa % $parts)
+            : $baseAmount;
     }
 
     private static function value(mixed $value): string

@@ -300,6 +300,77 @@ test('contract variables are rendered and escaped when booking is approved', fun
         ->not->toContain('Maha & Salim');
 });
 
+test('contract amount variables are rendered per family member', function () {
+    $staff = User::factory()->create();
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'name' => 'Per Member Camp',
+        'price_baisa' => 12000,
+        'contract_terms_html' => implode('', [
+            '<p>Subtotal: {{ subtotal }}</p>',
+            '<p>Discount: {{ discount_amount }}</p>',
+            '<p>Total: {{ total_amount }}</p>',
+            '<p>Agreed: {{ agreed_fee }}</p>',
+        ]),
+    ]);
+    $firstFamilyMember = FamilyMember::factory()->for($customer)->create(['name' => 'First Participant']);
+    $secondFamilyMember = FamilyMember::factory()->for($customer)->create(['name' => 'Second Participant']);
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'reference' => 'BRH-PER-MEMBER',
+        'unit_price_baisa' => 12000,
+        'currency' => 'OMR',
+        'family_member_count' => 2,
+        'subtotal_baisa' => 24000,
+        'discount_amount_baisa' => 4000,
+        'total_baisa' => 20000,
+    ]);
+    $firstBookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($firstFamilyMember)->create();
+    $secondBookingFamilyMember = BookingFamilyMember::factory()->for($booking)->for($secondFamilyMember)->create();
+
+    $booking = app(BookingApprovalService::class)->approve($booking, $staff);
+    $firstContract = $firstBookingFamilyMember->contract()->firstOrFail();
+    $secondContract = $secondBookingFamilyMember->contract()->firstOrFail();
+
+    foreach ([$firstContract, $secondContract] as $contract) {
+        expect($contract->contract_html)
+            ->toContain('Subtotal: OMR 12.000')
+            ->toContain('Discount: OMR 2.000')
+            ->toContain('Total: OMR 10.000')
+            ->toContain('Agreed: OMR 10.000')
+            ->not->toContain('OMR 24.000')
+            ->not->toContain('OMR 20.000');
+    }
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('customer.bookings.contracts.show', [$booking, $firstContract]))
+        ->assertOk()
+        ->assertSee('Subtotal: OMR 12.000')
+        ->assertSee('Discount: OMR 2.000')
+        ->assertSee('Total: OMR 10.000')
+        ->assertSee('Agreed: OMR 10.000')
+        ->assertDontSee('OMR 24.000')
+        ->assertDontSee('OMR 20.000');
+
+    $firstContract->loadMissing('bookingFamilyMember.booking.customer', 'bookingFamilyMember.booking.event', 'bookingFamilyMember.familyMember');
+
+    $pdfHtml = view('contracts.event-pdf', [
+        'contract' => $firstContract,
+        'bookingFamilyMember' => $firstContract->bookingFamilyMember,
+        'booking' => $firstContract->bookingFamilyMember->booking,
+        'customer' => $firstContract->bookingFamilyMember->booking->customer,
+        'event' => $firstContract->bookingFamilyMember->booking->event,
+        'familyMember' => $firstContract->bookingFamilyMember->familyMember,
+    ])->render();
+
+    expect($pdfHtml)
+        ->toContain('Subtotal: OMR 12.000')
+        ->toContain('Discount: OMR 2.000')
+        ->toContain('Total: OMR 10.000')
+        ->toContain('Agreed: OMR 10.000')
+        ->not->toContain('OMR 24.000')
+        ->not->toContain('OMR 20.000');
+});
+
 test('filament rich editor merge tags are rendered when booking is approved', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create([
