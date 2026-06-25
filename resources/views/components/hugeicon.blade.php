@@ -1,3 +1,9 @@
 @props(['name'])
 
-<i {{ $attributes->class(['hgi-stroke', 'hgi-'.$name]) }} aria-hidden="true"></i>
+@php($component = 'icons.'.$name)
+
+@if (View::exists('components.'.$component))
+    <x-dynamic-component :component="$component" {{ $attributes }} />
+@else
+    <x-icons.icon :name="$name" {{ $attributes }} />
+@endif

@@ -9,7 +9,11 @@ beforeEach(function () {
 test('registration screen can be rendered', function () {
     $response = $this->get(route('register'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertSee('logo-dark.png', false)
+        ->assertSee(route('affiliate.register'), false)
+        ->assertSee('data-icon="user-circle"', false)
+        ->assertDontSee('cdn.hugeicons.com', false);
 });
 
 test('new customers can register', function () {

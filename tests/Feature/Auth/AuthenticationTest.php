@@ -6,7 +6,11 @@ use Laravel\Fortify\Features;
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertSee('logo-dark.png', false)
+        ->assertSee(route('affiliate.login'), false)
+        ->assertSee('data-icon="home-01"', false)
+        ->assertDontSee('cdn.hugeicons.com', false);
 });
 
 test('customers can authenticate using the login screen', function () {

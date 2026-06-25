@@ -221,8 +221,8 @@ test('payments page renders customer installments payment attempts and refunds',
         ->assertSee('Balance')
         ->assertSee('PAY-CUSTOMER')
         ->assertSee('REF-CUSTOMER')
-        ->assertSee('hgi-wallet-02', false)
-        ->assertSee('hgi-invoice-03', false)
+        ->assertSee('data-icon="wallet-02"', false)
+        ->assertSee('data-icon="invoice-03"', false)
         ->assertSee('data-status-color="green"', false)
         ->assertSee('data-status-color="amber"', false)
         ->assertSee('data-omr-symbol', false)
@@ -264,8 +264,8 @@ test('booking details page renders a compact contract overview for a single part
         ->assertSee(route('customer.bookings.contracts.show', [$booking, $contract]), false)
         ->assertDontSee('Safety terms must be reviewed before signature.')
         ->assertDontSee('<canvas', false)
-        ->assertSee('hgi-stroke', false)
-        ->assertSee('hgi-contracts', false);
+        ->assertSee('data-icon="contracts"', false)
+        ->assertDontSee('hgi-stroke', false);
 
     $this->actingAs($customer, 'customer')
         ->get(route('customer.bookings.contracts.show', [$booking, $contract]))

@@ -15,7 +15,13 @@ test('homepage loads', function () {
         ->assertSee('منتجع بيرحاء')
         ->assertSee('نصنع تجارب سياحية وتعليمية بروح عُمانية فاخرة')
         ->assertSee('الموقع قيد التجهيز')
-        ->assertSee('حسابي');
+        ->assertSee('حسابي')
+        ->assertSee('logo-dark.png', false)
+        ->assertSee(route('affiliate.login'), false)
+        ->assertSee(route('affiliate.register'), false)
+        ->assertSee('data-icon="home-01"', false)
+        ->assertDontSee('cdn.hugeicons.com', false)
+        ->assertDontSee('hgi-stroke', false);
 });
 
 test('events page loads', function () {

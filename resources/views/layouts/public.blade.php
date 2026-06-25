@@ -11,7 +11,7 @@
         <meta property="og:title" content="{{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}">
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
-        <meta name="theme-color" content="#009060">
+        <meta name="theme-color" content="#dff6ef">
 
         @isset($metaImage)
             <meta property="og:image" content="{{ $metaImage }}">
@@ -20,7 +20,7 @@
 
         @vite('resources/js/public-site.js')
     </head>
-    <body class="min-h-screen overflow-x-hidden bg-[#fbf9f1] text-[#123329] antialiased selection:bg-[#e0a800]/35 selection:text-[#123329] dark:bg-[#07120f] dark:text-[#f7f1df]">
+    <body class="min-h-screen overflow-x-hidden bg-[#f6fbf8] text-[#173f35] antialiased selection:bg-[#bfe7da] selection:text-[#173f35] dark:bg-[#07120f] dark:text-[#f7f1df]">
         @php
             $navigationLinks = [
                 ['label' => 'الرئيسية', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
@@ -45,17 +45,18 @@
             ];
         @endphp
 
-        <div class="pointer-events-none fixed inset-0 -z-10 bg-[#fbf9f1] dark:bg-[#07120f]"></div>
-        <div class="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(135deg,rgba(0,144,96,0.08)_0%,rgba(255,255,255,0.88)_38%,rgba(24,152,176,0.05)_66%,rgba(224,168,0,0.08)_100%)] dark:bg-[linear-gradient(135deg,rgba(0,144,96,0.16)_0%,rgba(7,18,15,0.92)_44%,rgba(224,24,56,0.08)_100%)]"></div>
-        <div class="pointer-events-none fixed inset-0 -z-10 opacity-45 bg-[radial-gradient(circle_at_1px_1px,rgba(0,144,96,0.16)_1px,transparent_0)] [background-size:28px_28px] dark:opacity-20 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(224,168,0,0.22)_1px,transparent_0)]"></div>
+        <div class="pointer-events-none fixed inset-0 -z-10 bg-[#f6fbf8] dark:bg-[#07120f]"></div>
+        <div class="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(135deg,rgba(209,244,235,0.96)_0%,rgba(255,255,255,0.90)_36%,rgba(219,240,250,0.66)_67%,rgba(248,232,196,0.58)_100%)] dark:bg-[linear-gradient(135deg,rgba(0,144,96,0.16)_0%,rgba(7,18,15,0.92)_44%,rgba(24,152,176,0.10)_100%)]"></div>
+        <div class="pointer-events-none fixed inset-0 -z-10 opacity-35 bg-[radial-gradient(circle_at_1px_1px,rgba(42,128,105,0.13)_1px,transparent_0)] [background-size:30px_30px] dark:opacity-20 dark:bg-[radial-gradient(circle_at_1px_1px,rgba(224,168,0,0.18)_1px,transparent_0)]"></div>
 
-        <header data-public-header class="fixed inset-x-0 top-0 z-50 border-b border-[#009060]/12 bg-[#fbf9f1]/86 shadow-sm shadow-[#123329]/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#07120f]/84 dark:shadow-black/20">
+        <header data-public-header class="fixed inset-x-0 top-0 z-50 border-b border-[#2a8069]/12 bg-[#f6fbf8]/88 shadow-sm shadow-[#123329]/5 backdrop-blur-xl dark:border-white/10 dark:bg-[#07120f]/84 dark:shadow-black/20">
             <input id="public-navigation-toggle" type="checkbox" class="peer sr-only">
 
             <div class="mx-auto flex min-h-20 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
                 <a href="{{ route('home') }}" class="group inline-flex items-center gap-3" aria-label="منتجع بيرحاء">
-                    <span class="flex size-12 items-center justify-center overflow-hidden rounded-sm border border-[#009060]/16 bg-white/70 shadow-sm shadow-[#123329]/5 dark:border-white/10 dark:bg-white/10">
-                        <img src="{{ asset('logo.png') }}" alt="منتجع بيرحاء" class="h-10 w-auto object-contain">
+                    <span class="flex size-12 items-center justify-center overflow-hidden rounded-sm border border-[#2a8069]/16 bg-white/74 shadow-sm shadow-[#123329]/5 dark:border-white/10 dark:bg-white/10">
+                        <img src="{{ asset('logo-dark.png') }}" alt="منتجع بيرحاء" class="h-10 w-auto object-contain dark:hidden">
+                        <img src="{{ asset('logo.png') }}" alt="منتجع بيرحاء" class="hidden h-10 w-auto object-contain dark:block">
                     </span>
                     <span class="grid leading-none">
                         <span class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">منتجع بيرحاء</span>
@@ -142,11 +143,14 @@
             </div>
         </nav>
 
-        <footer class="border-t border-[#009060]/12 bg-white/56 dark:border-white/10 dark:bg-white/5">
-            <div class="mx-auto grid w-full max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_auto] lg:px-8">
+        <footer class="border-t border-[#2a8069]/12 bg-white/68 pb-28 dark:border-white/10 dark:bg-white/5 lg:pb-0">
+            <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_.8fr_.8fr] lg:px-8">
                 <div class="max-w-xl">
                     <div class="flex items-center gap-3">
-                        <img src="{{ asset('logo.png') }}" alt="منتجع بيرحاء" class="h-10 w-auto rounded-sm bg-white/70 p-1 dark:bg-white/10">
+                        <span class="flex size-12 items-center justify-center rounded-sm bg-white/76 p-1 ring-1 ring-[#2a8069]/12 dark:bg-white/10 dark:ring-white/10">
+                            <img src="{{ asset('logo-dark.png') }}" alt="منتجع بيرحاء" class="h-10 w-auto object-contain dark:hidden">
+                            <img src="{{ asset('logo.png') }}" alt="منتجع بيرحاء" class="hidden h-10 w-auto object-contain dark:block">
+                        </span>
                         <div>
                             <p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">منتجع بيرحاء</p>
                             <p class="mt-1 text-sm text-[#123329]/58 dark:text-[#f7f1df]/62">تجارب سياحية وتعليمية بروح عُمانية فاخرة.</p>
@@ -154,12 +158,37 @@
                     </div>
                 </div>
 
-                <nav class="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62" aria-label="روابط التذييل">
+                <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62" aria-label="روابط التذييل">
+                    <p class="font-heading text-base font-bold text-[#123329] dark:text-[#f7f1df]">الموقع</p>
                     @foreach ($navigationLinks as $link)
                         <a href="{{ route($link['route']) }}" class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $link['label'] }}</a>
                     @endforeach
                 </nav>
+
+                <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62" aria-label="روابط الحسابات">
+                    <p class="font-heading text-base font-bold text-[#123329] dark:text-[#f7f1df]">الحسابات</p>
+                    @if (Route::has('login'))
+                        <a href="{{ route('login') }}" class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.auth.login_title') }}</a>
+                    @endif
+                    @if (Route::has('register'))
+                        <a href="{{ route('register') }}" class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.auth.create_account') }}</a>
+                    @endif
+                    @if (Route::has('affiliate.login'))
+                        <a href="{{ route('affiliate.login') }}" class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.login_title') }}</a>
+                    @endif
+                    @if (Route::has('affiliate.register'))
+                        <a href="{{ route('affiliate.register') }}" class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
+                    @endif
+                </nav>
             </div>
         </footer>
+
+        @persist('toast')
+            <flux:toast.group>
+                <flux:toast />
+            </flux:toast.group>
+        @endpersist
+
+        @fluxScripts
     </body>
 </html>

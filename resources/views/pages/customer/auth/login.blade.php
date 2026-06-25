@@ -1,5 +1,9 @@
-<x-layouts::auth :title="__('ui.actions.log_in')">
-    <div class="flex flex-col gap-6">
+@extends('layouts.public', ['title' => __('ui.actions.log_in')])
+
+@section('content')
+    <section class="mx-auto flex min-h-[calc(100svh-5rem)] w-full max-w-md items-center px-4 py-16 sm:px-6 lg:px-8">
+        <div class="public-card w-full rounded-sm border border-[#2a8069]/12 bg-white/78 p-6 shadow-xl shadow-[#123329]/8 dark:border-white/10 dark:bg-white/8 dark:shadow-black/20">
+            <div class="flex flex-col gap-6">
         <x-auth-header :title="__('ui.auth.login_title')" :description="__('ui.auth.login_description')" />
 
         <!-- Session Status -->
@@ -53,5 +57,7 @@
             <span>{{ __('ui.auth.dont_have_account') }}</span>
             <flux:link :href="route('register')" wire:navigate>{{ __('ui.actions.sign_up') }}</flux:link>
         </div>
-    </div>
-</x-layouts::auth>
+            </div>
+        </div>
+    </section>
+@endsection
