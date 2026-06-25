@@ -135,16 +135,28 @@ return [
 
     'events' => [
         'add_family_before_booking' => 'Add a family member before booking.',
+        'all_family_sizes' => 'All family sizes',
         'approved_seats_remain' => 'approved seats remain',
+        'always_available' => 'Always available',
+        'available_discounts' => 'Available discounts',
+        'available_discounts_subheading' => 'Active discounts that can apply to this event.',
         'book_this_event' => 'Book this event',
         'date_to_be_announced' => 'Date to be announced',
         'details_title' => 'Event details',
+        'discount_per_family_member' => 'Discount per family member',
+        'eligibility' => 'Eligibility',
         'empty' => 'No published events are available right now.',
+        'exact_family_members' => 'For :count family members',
         'family_members' => 'Family members',
+        'family_member_range' => ':min - :max family members',
         'heading' => 'Events',
+        'maximum_family_members' => 'Up to :count family members',
+        'minimum_family_members' => ':count+ family members',
+        'open_ended' => 'Open ended',
         'price_per_family_member' => 'Price per family member',
         'seats_left' => 'seats left',
         'subheading' => 'Browse published trips, camps, and festivals.',
+        'validity' => 'Validity',
     ],
 
     'family' => [

@@ -135,16 +135,28 @@ return [
 
     'events' => [
         'add_family_before_booking' => 'أضف فرداً من العائلة قبل الحجز.',
+        'all_family_sizes' => 'كل أحجام العائلة',
         'approved_seats_remain' => 'مقاعد معتمدة متبقية',
+        'always_available' => 'متاح دائماً',
+        'available_discounts' => 'الخصومات المتاحة',
+        'available_discounts_subheading' => 'الخصومات النشطة التي يمكن تطبيقها على هذه الفعالية.',
         'book_this_event' => 'احجز هذه الفعالية',
         'date_to_be_announced' => 'سيتم إعلان التاريخ لاحقاً',
         'details_title' => 'تفاصيل الفعالية',
+        'discount_per_family_member' => 'الخصم لكل فرد من العائلة',
+        'eligibility' => 'الأهلية',
         'empty' => 'لا توجد فعاليات منشورة حالياً.',
+        'exact_family_members' => 'لـ :count أفراد من العائلة',
         'family_members' => 'أفراد العائلة',
+        'family_member_range' => 'من :min إلى :max أفراد من العائلة',
         'heading' => 'الفعاليات',
+        'maximum_family_members' => 'حتى :count أفراد من العائلة',
+        'minimum_family_members' => ':count أفراد من العائلة فأكثر',
+        'open_ended' => 'بدون تاريخ انتهاء',
         'price_per_family_member' => 'السعر لكل فرد من العائلة',
         'seats_left' => 'مقاعد متبقية',
         'subheading' => 'تصفح الرحلات والمخيمات والمهرجانات المنشورة.',
+        'validity' => 'الصلاحية',
     ],
 
     'family' => [

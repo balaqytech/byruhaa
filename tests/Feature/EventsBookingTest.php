@@ -8,12 +8,28 @@ use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\FamilyMember;
 use App\Models\User;
+use App\Services\AffiliateAttribution;
 use App\Services\BookingApprovalService;
 use App\States\Booking\Approved;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+
+function fakeAffiliateAttribution(): void
+{
+    app()->instance(AffiliateAttribution::class, new class extends AffiliateAttribution
+    {
+        /**
+         * @return array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null
+         */
+        public function current(?Request $request = null): ?array
+        {
+            return null;
+        }
+    });
+}
 
 test('customer can submit a booking request for multiple family members', function () {
     $customer = Customer::factory()->create();
@@ -60,6 +76,49 @@ test('customer event views show the per family member price', function () {
         ->assertSee('12.500');
 });
 
+test('customer event view shows available discounts', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'name' => 'Mountain Trip',
+        'price_baisa' => 12500,
+    ]);
+    $otherEvent = Event::factory()->create();
+
+    Discount::factory()->for($event)->create([
+        'name' => 'Sibling Discount',
+        'amount_baisa' => 2500,
+        'minimum_family_members' => 2,
+        'maximum_family_members' => 2,
+    ]);
+    Discount::factory()->create([
+        'name' => 'Global Discount',
+        'amount_baisa' => 1000,
+    ]);
+    Discount::factory()->for($event)->create([
+        'name' => 'Expired Discount',
+        'amount_baisa' => 5000,
+        'starts_at' => now()->subDays(3),
+        'ends_at' => now()->subDay(),
+    ]);
+    Discount::factory()->for($otherEvent)->create([
+        'name' => 'Other Event Discount',
+        'amount_baisa' => 7000,
+    ]);
+
+    $this->actingAs($customer, 'customer')
+        ->get(route('customer.events.show', $event))
+        ->assertOk()
+        ->assertSee(__('ui.events.available_discounts'))
+        ->assertSee('Sibling Discount')
+        ->assertSee('2.500')
+        ->assertSee(__('ui.events.exact_family_members', ['count' => 2]))
+        ->assertDontSee(__('ui.events.family_member_range', ['min' => 2, 'max' => 2]))
+        ->assertSee('Global Discount')
+        ->assertSee('1.000')
+        ->assertDontSee('Expired Discount')
+        ->assertDontSee('Other Event Discount');
+});
+
 test('booking submission stores a price snapshot', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([
@@ -69,6 +128,7 @@ test('booking submission stores a price snapshot', function () {
     $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
 
     $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
 
     Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
@@ -99,6 +159,7 @@ test('customer with incomplete profile cannot submit a booking request', functio
     $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
 
     $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
 
     Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
@@ -137,6 +198,7 @@ test('booking submission applies the largest eligible discount per family member
     ]);
 
     $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
 
     Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
@@ -169,6 +231,7 @@ test('discount amount is capped at the booking subtotal', function () {
     ]);
 
     $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
 
     Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
@@ -196,6 +259,7 @@ test('booking price snapshot does not change when event price or discount change
     ]);
 
     $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
 
     Livewire::test('pages::customer.events.show', ['event' => $event])
         ->set('familyMemberIds', $familyMembers->pluck('id')->all())
