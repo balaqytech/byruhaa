@@ -11,9 +11,25 @@ class PublicSiteController extends Controller
 {
     public function home(): View
     {
+        $event = Event::query()
+            ->with([
+                'discounts' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->orderByDesc('amount_baisa')
+                    ->orderBy('id'),
+                'paymentPlans' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->with('installments')
+                    ->orderBy('name'),
+            ])
+            ->orderBy('id')
+            ->first();
+
         return view('pages.public.site.home', [
-            'title' => 'منتجع بيرحاء',
-            'metaDescription' => 'نصنع تجارب سياحية وتعليمية بروح عُمانية فاخرة',
+            'event' => $event,
+            'remainingSeats' => $event?->remainingSeats(),
+            'title' => $event?->name ?? 'برنامج مهاجر إلى ربي',
+            'metaDescription' => $event?->excerpt ?: '٣٠ يوماً منظّمة تجمع القرآن الكريم، والنحو بالفطرة، ومهارات الحياة في بيئة آمنة ملهمة.',
         ]);
     }
 
