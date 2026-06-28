@@ -19,7 +19,7 @@ export default defineConfig({
                 bunny('IBM Plex Sans Arabic', {
                     weights: [400, 500, 600],
                 }),
-                bunny('Reem Kufi', {
+                bunny('Aref Ruqaa', {
                     weights: [400, 700],
                 }),
             ],
