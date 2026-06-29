@@ -50,6 +50,8 @@ class ImportMigrantsEventBookings
 
     private const PaymentPledge = 'تعهد بالدفع';
 
+    private const SendWebhookHeader = 'send webhook';
+
     public function __construct(
         private PhoneNumberNormalizer $phoneNumberNormalizer,
         private ContractRenderer $contractRenderer,
@@ -76,7 +78,7 @@ class ImportMigrantsEventBookings
             throw new InvalidArgumentException('The workbook does not contain any importable rows.');
         }
 
-        $bookingsForWebhook = DB::transaction(function () use ($rows, $temporaryPassword): Collection {
+        $bookings = DB::transaction(function () use ($rows, $temporaryPassword): Collection {
             $event = $this->upsertEvent($rows->count());
             $discounts = $this->upsertDiscounts($event);
             $paymentPlan = $this->upsertPaymentPlan($event);
@@ -84,15 +86,15 @@ class ImportMigrantsEventBookings
             return $this->importBookings($rows, $temporaryPassword, $event, $discounts, $paymentPlan);
         });
 
-        $approvalWebhookCount = $this->sendApprovalWebhooks($bookingsForWebhook);
+        $approvalWebhookCount = $this->sendApprovalWebhooks($bookings);
 
         return [
             'events' => 1,
-            'bookings' => $bookingsForWebhook->count(),
+            'bookings' => $bookings->count(),
             'participants' => $rows->count(),
             'payments' => Payment::query()
                 ->whereHas('bookingInstallment.paymentSchedule.booking', fn ($query) => $query
-                    ->whereIn('id', $bookingsForWebhook->pluck('id')))
+                    ->whereIn('id', $bookings->pluck('id')))
                 ->count(),
             'approval_webhooks' => $approvalWebhookCount,
         ];
@@ -215,7 +217,8 @@ class ImportMigrantsEventBookings
      *     address: string,
      *     amount_baisa: int,
      *     payment_method: string|null,
-     *     status: string
+     *     status: string,
+     *     send_webhook: bool
      * }
      */
     private function row(array $headers, array $values, int $rowNumber): array
@@ -246,6 +249,7 @@ class ImportMigrantsEventBookings
             'amount_baisa' => $this->money($this->cell($values, $headers, 'المبلغ المطلوب دفعه'), $rowNumber),
             'payment_method' => $paymentMethod,
             'status' => $status,
+            'send_webhook' => $this->parseSendWebhookFlag($this->cell($values, $headers, self::SendWebhookHeader)),
         ];
     }
 
@@ -369,6 +373,7 @@ class ImportMigrantsEventBookings
             throw new RuntimeException('Cannot import an empty booking group.');
         }
 
+        $sendWebhook = $rows->contains(fn (array $row): bool => $row['send_webhook'] ?? false);
         $customer = $this->upsertCustomer($firstRow, $temporaryPassword);
         $familyMembers = $rows->map(fn (array $row): FamilyMember => $this->upsertFamilyMember($customer, $row));
         $booking = $this->upsertBooking($customer, $event, $rows, $discounts);
@@ -388,7 +393,10 @@ class ImportMigrantsEventBookings
 
         $this->upsertScheduleAndPayments($booking->refresh(), $rows, $paymentPlan);
 
-        return $booking->refresh()->load(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract']);
+        $booking = $booking->refresh()->load(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract']);
+        $booking->setAttribute('send_webhook', $sendWebhook);
+
+        return $booking;
     }
 
     /**
@@ -781,6 +789,12 @@ class ImportMigrantsEventBookings
      */
     private function sendApprovalWebhooks(Collection $bookings): int
     {
+        $bookings = $bookings->filter(fn (Booking $booking): bool => $booking->send_webhook ?? false);
+
+        if ($bookings->isEmpty()) {
+            return 0;
+        }
+
         $bookingIds = $bookings->pluck('id');
         $existingDeliveryCount = WebhookDelivery::query()
             ->where('event', 'booking.created')
@@ -801,7 +815,7 @@ class ImportMigrantsEventBookings
 
     private function sendApprovalWebhook(Booking $booking): null
     {
-        $this->webhookSender->sendBookingApproved($booking);
+        $this->webhookSender->sendBookingCreated($booking);
 
         return null;
     }
@@ -843,6 +857,10 @@ class ImportMigrantsEventBookings
      */
     private function cell(array $values, array $headers, string $header): mixed
     {
+        if (! array_key_exists($header, $headers)) {
+            return null;
+        }
+
         return $values[$headers[$header]] ?? null;
     }
 
@@ -900,6 +918,13 @@ class ImportMigrantsEventBookings
         $email = $this->nullableString($value);
 
         return $email === null ? null : Str::lower($email);
+    }
+
+    private function parseSendWebhookFlag(mixed $value): bool
+    {
+        $string = $this->nullableString($value);
+
+        return $string !== null && in_array(strtolower($string), ['1', 'true', 'yes', 'y'], true);
     }
 
     private function date(mixed $value, int $rowNumber, string $header): CarbonImmutable

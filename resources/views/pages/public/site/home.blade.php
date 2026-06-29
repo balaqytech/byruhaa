@@ -2038,35 +2038,81 @@
                 التسجيل المبكر تنتهي ٣٠ يونيو — أو بنفاد المقاعد</div>
 
             <div class="price-grid" style="text-align:start">
-                <div class="price-card feat-card reveal">
-                    <span class="ribbon">الأكثر طلباً</span>
-                    <div class="plan">التسجيل المبكر</div>
-                    <div class="amount">٤٨٩ <small>ر.ع</small></div>
-                    <div class="full">٧٠٠ ر.ع</div>
-                    <div class="save">توفير ٢١١ ريالاً</div>
-                    <div class="cond">للطالب الواحد — قبل ٣٠ يونيو</div>
-                </div>
-                <div class="price-card reveal">
-                    <div class="plan">عرض الإخوة</div>
-                    <div class="amount">٤٦٩ <small>ر.ع</small></div>
-                    <div class="full">٧٠٠ ر.ع</div>
-                    <div class="save">لكلّ أخٍ من العائلة</div>
-                    <div class="cond">عند تسجيل أخوين من نفس العائلة</div>
-                </div>
-                <div class="price-card reveal">
-                    <div class="plan">التسجيل الجماعي</div>
-                    <div class="amount">٤٥٩ <small>ر.ع</small></div>
-                    <div class="full">٧٠٠ ر.ع</div>
-                    <div class="save">توفير ٢٤١ ريالاً</div>
-                    <div class="cond">للطالب — عند تسجيل ٣ فأكثر</div>
-                </div>
-                <div class="price-card reveal">
-                    <div class="plan">السعر الكامل</div>
-                    <div class="amount">٧٠٠ <small>ر.ع</small></div>
-                    <div class="full" style="visibility:hidden">—</div>
-                    <div class="save">شهرٌ كامل · إقامةٌ وإعاشة</div>
-                    <div class="cond">يشمل ثلاث وجباتٍ يومياً والإشراف التام</div>
-                </div>
+                @if(isset($event) && $event instanceof \App\Models\Event && $event->discounts->isNotEmpty())
+                    @foreach($event->discounts as $discount)
+                        @php
+                            $discountedAmount = $event->price->minus($discount->amount)->getAmount()->toInt();
+                            $fullAmount = $event->price->getAmount()->toInt();
+                            $saveAmount = $discount->amount->getAmount()->toInt();
+                            $isSibling = $discount->minimum_family_members == 2;
+                            $isGroup = $discount->minimum_family_members > 2;
+                        @endphp
+                        <div class="price-card {{ $loop->first ? 'feat-card' : '' }} reveal">
+                            @if($loop->first)
+                                <span class="ribbon">الأكثر طلباً</span>
+                            @endif
+                            <div class="plan">{{ str_replace('خصم ', '', $discount->name) }}</div>
+                            <div class="amount">{{ $discountedAmount }} <small>ر.ع</small></div>
+                            <div class="full">{{ $fullAmount }} ر.ع</div>
+                            <div class="save">
+                                @if($isSibling)
+                                    لكلّ أخٍ من العائلة
+                                @else
+                                    توفير {{ $saveAmount }} ريالاً
+                                @endif
+                            </div>
+                            <div class="cond">
+                                @if($isSibling)
+                                    عند تسجيل أخوين من نفس العائلة
+                                @elseif($isGroup)
+                                    للطالب — عند تسجيل {{ $discount->minimum_family_members }} فأكثر
+                                @else
+                                    للطالب الواحد
+                                @endif
+                                @if($discount->ends_at)
+                                    — قبل {{ $discount->ends_at->translatedFormat('j F') }}
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                    <div class="price-card reveal">
+                        <div class="plan">السعر الكامل</div>
+                        <div class="amount">{{ $event->price->getAmount()->toInt() }} <small>ر.ع</small></div>
+                        <div class="full" style="visibility:hidden">—</div>
+                        <div class="save">شهرٌ كامل · إقامةٌ وإعاشة</div>
+                        <div class="cond">يشمل ثلاث وجباتٍ يومياً والإشراف التام</div>
+                    </div>
+                @else
+                    <div class="price-card feat-card reveal">
+                        <span class="ribbon">الأكثر طلباً</span>
+                        <div class="plan">التسجيل المبكر</div>
+                        <div class="amount">٤٨٩ <small>ر.ع</small></div>
+                        <div class="full">٧٠٠ ر.ع</div>
+                        <div class="save">توفير ٢١١ ريالاً</div>
+                        <div class="cond">للطالب الواحد — قبل ٣٠ يونيو</div>
+                    </div>
+                    <div class="price-card reveal">
+                        <div class="plan">عرض الإخوة</div>
+                        <div class="amount">٤٦٩ <small>ر.ع</small></div>
+                        <div class="full">٧٠٠ ر.ع</div>
+                        <div class="save">لكلّ أخٍ من العائلة</div>
+                        <div class="cond">عند تسجيل أخوين من نفس العائلة</div>
+                    </div>
+                    <div class="price-card reveal">
+                        <div class="plan">التسجيل الجماعي</div>
+                        <div class="amount">٤٥٩ <small>ر.ع</small></div>
+                        <div class="full">٧٠٠ ر.ع</div>
+                        <div class="save">توفير ٢٤١ ريالاً</div>
+                        <div class="cond">للطالب — عند تسجيل ٣ فأكثر</div>
+                    </div>
+                    <div class="price-card reveal">
+                        <div class="plan">السعر الكامل</div>
+                        <div class="amount">٧٠٠ <small>ر.ع</small></div>
+                        <div class="full" style="visibility:hidden">—</div>
+                        <div class="save">شهرٌ كامل · إقامةٌ وإعاشة</div>
+                        <div class="cond">يشمل ثلاث وجباتٍ يومياً والإشراف التام</div>
+                    </div>
+                @endif
             </div>
             <div style="margin-top:30px;color:rgba(255,255,255,.75);font-size:.96rem">
                 الدفع عبر منصة «ثواني» الآمنة — دفعةً واحدة أو على ثلاثة أقساط · لا يُطلب أيّ دفعٍ قبل القبول والتوقيع.
