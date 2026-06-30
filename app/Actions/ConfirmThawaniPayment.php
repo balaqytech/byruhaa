@@ -44,10 +44,13 @@ class ConfirmThawaniPayment
         $providerPaymentId = data_get($session, 'payment_id') ?? data_get($session, 'id');
         $providerInvoice = data_get($session, 'invoice');
         $providerAmount = data_get($session, 'total_amount');
+        $providerReference = data_get($session, 'client_reference_id');
+        $providerSessionId = data_get($session, 'session_id');
 
         $becamePaid = false;
+        $paidVerificationError = null;
 
-        $payment = DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, &$becamePaid): Payment {
+        $payment = DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, $providerReference, $providerSessionId, &$becamePaid, &$paidVerificationError): Payment {
             $payment = Payment::query()
                 ->whereKey($payment->id)
                 ->with('bookingInstallment')
@@ -65,14 +68,23 @@ class ConfirmThawaniPayment
                 default => PaymentState::Pending,
             };
 
-            if ($state === PaymentState::Paid && is_numeric($providerAmount) && (int) $providerAmount !== $payment->amount_baisa) {
+            if ($state === PaymentState::Paid) {
+                $paidVerificationError = $this->paidVerificationError(
+                    $payment,
+                    $providerAmount,
+                    $providerReference,
+                    $providerSessionId,
+                );
+            }
+
+            if ($paidVerificationError !== null) {
                 $state = PaymentState::Failed;
             }
 
             $payment->forceFill([
                 'state' => $state,
                 'provider_payment_id' => is_scalar($providerPaymentId) ? (string) $providerPaymentId : $payment->provider_payment_id,
-                'provider_invoice' => is_scalar($providerInvoice) ? (string) $providerInvoice : null,
+                'provider_invoice' => is_scalar($providerInvoice) ? (string) $providerInvoice : $payment->provider_invoice,
                 'provider_payment_status' => $providerPaymentStatus ?: null,
                 'response_payload' => $response,
                 'verified_at' => now(),
@@ -96,6 +108,10 @@ class ConfirmThawaniPayment
 
         if ($becamePaid) {
             $this->webhookSender->sendPaymentPaid($payment);
+        }
+
+        if ($paidVerificationError !== null) {
+            throw new RuntimeException($paidVerificationError);
         }
 
         return $payment;
@@ -130,5 +146,30 @@ class ConfirmThawaniPayment
         }
 
         return $gateway;
+    }
+
+    private function paidVerificationError(
+        Payment $payment,
+        mixed $providerAmount,
+        mixed $providerReference,
+        mixed $providerSessionId,
+    ): ?string {
+        if (! is_numeric($providerAmount)) {
+            return 'Paid Thawani session is missing a valid total amount.';
+        }
+
+        if ((int) $providerAmount !== $payment->amount_baisa) {
+            return 'Paid Thawani session amount does not match the local payment.';
+        }
+
+        if (is_scalar($providerReference) && trim((string) $providerReference) !== '' && (string) $providerReference !== $payment->reference) {
+            return 'Paid Thawani session reference does not match the local payment.';
+        }
+
+        if (is_scalar($providerSessionId) && trim((string) $providerSessionId) !== '' && (string) $providerSessionId !== $payment->provider_session_id) {
+            return 'Paid Thawani session ID does not match the local payment.';
+        }
+
+        return null;
     }
 }

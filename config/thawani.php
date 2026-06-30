@@ -18,6 +18,10 @@ $liveCheckoutBaseUrl = $checkoutBaseUrl($env('THAWANI_LIVE_CHECKOUT_BASE_URL', $
 return [
     'mode' => $env('THAWANI_MODE', 'test'),
 
+    'webhook' => [
+        'token' => $env('THAWANI_WEBHOOK_TOKEN'),
+    ],
+
     'test' => [
         'base_url' => $env('THAWANI_TEST_API_BASE_URL', $env('THAWANI_API_BASE_URL', 'https://uatcheckout.thawani.om/api/v1')),
         'checkout_base_url' => $testCheckoutBaseUrl,

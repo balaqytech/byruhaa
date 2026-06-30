@@ -88,9 +88,13 @@ class InitiateInstallmentPayment
         try {
             $response = $this->paymentGateway->createSession($payment->request_payload ?? []);
             $sessionId = (string) data_get($response, 'data.session_id');
+            $providerInvoice = data_get($response, 'data.invoice');
+            $providerPaymentStatus = data_get($response, 'data.payment_status');
 
             $payment->forceFill([
                 'provider_session_id' => $sessionId,
+                'provider_invoice' => is_scalar($providerInvoice) ? (string) $providerInvoice : $payment->provider_invoice,
+                'provider_payment_status' => is_scalar($providerPaymentStatus) ? strtolower((string) $providerPaymentStatus) : $payment->provider_payment_status,
                 'checkout_url' => (string) (data_get($response, 'data.redirect_url') ?? $this->paymentGateway->checkoutUrl($sessionId)),
                 'response_payload' => $response,
             ])->save();

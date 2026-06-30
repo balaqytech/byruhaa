@@ -4,6 +4,10 @@ use App\Actions\InitiateInstallmentPayment;
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
+use App\Enums\ThawaniWebhookEventStatus;
+use App\Models\Affiliate;
+use App\Models\AffiliateCommission;
+use App\Models\AffiliateReferral;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
@@ -13,13 +17,17 @@ use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\FamilyMember;
 use App\Models\Payment;
+use App\Models\ThawaniWebhookEvent;
+use App\Models\WebhookDelivery;
 use App\States\Booking\Approved;
 use App\States\Contract\Signed;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Spatie\WebhookServer\CallWebhookJob;
 
 beforeEach(function () {
     config([
@@ -304,6 +312,186 @@ test('scheduled thawani reconciliation leaves unpaid sessions pending', function
         ->state->toBe(BookingInstallmentState::Pending);
 });
 
+test('thawani webhook maps common identifiers to local payments', function () {
+    Http::preventStrayRequests();
+
+    $cases = [
+        'client reference' => fn (Payment $payment): array => ['client_reference_id' => $payment->reference],
+        'session id' => fn (Payment $payment): array => ['data' => ['session_id' => $payment->provider_session_id]],
+        'invoice' => fn (Payment $payment): array => ['invoice' => $payment->provider_invoice],
+        'payment id' => fn (Payment $payment): array => ['payment_id' => $payment->provider_payment_id],
+        'metadata payment id' => fn (Payment $payment): array => ['data' => ['metadata' => ['payment_id' => $payment->id]]],
+    ];
+
+    $amountBaisa = 8000;
+
+    foreach ($cases as $name => $payloadFor) {
+        $suffix = str_replace(' ', '_', $name);
+        [, $installment] = paymentInstallmentFixture(amountBaisa: $amountBaisa);
+        $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+            'amount_baisa' => $amountBaisa,
+            'provider_session_id' => 'checkout_'.$suffix,
+            'provider_invoice' => 'invoice_'.$suffix,
+            'provider_payment_id' => 'payment_'.$suffix,
+        ]);
+
+        fakeThawaniSession($payment);
+
+        $this->postJson(route('api.webhooks.thawani'), $payloadFor($payment))
+            ->assertOk()
+            ->assertJsonPath('status', ThawaniWebhookEventStatus::Processed->value)
+            ->assertJsonPath('payment_id', $payment->id);
+
+        expect($payment->refresh()->state)->toBe(PaymentState::Paid)
+            ->and($installment->refresh()->state)->toBe(BookingInstallmentState::Paid);
+
+        $amountBaisa++;
+    }
+
+    expect(ThawaniWebhookEvent::query()->count())->toBe(count($cases));
+});
+
+test('thawani webhook does not trust paid payload when retrieved session is unpaid', function () {
+    Http::preventStrayRequests();
+
+    [, $installment] = paymentInstallmentFixture(amountBaisa: 5000);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+        'amount_baisa' => 5000,
+        'provider_session_id' => 'checkout_payload_paid_provider_unpaid',
+    ]);
+
+    fakeThawaniSession($payment, ['payment_status' => 'unpaid']);
+
+    $this->postJson(route('api.webhooks.thawani'), [
+        'client_reference_id' => $payment->reference,
+        'payment_status' => 'paid',
+        'total_amount' => 5000,
+    ])
+        ->assertOk()
+        ->assertJsonPath('status', ThawaniWebhookEventStatus::Processed->value);
+
+    expect($payment->refresh())
+        ->state->toBe(PaymentState::Pending)
+        ->provider_payment_status->toBe('unpaid')
+        ->and($installment->refresh()->state)->toBe(BookingInstallmentState::Pending);
+});
+
+test('thawani webhook rejects paid sessions with mismatched verification data', function () {
+    Http::preventStrayRequests();
+
+    config([
+        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+    ]);
+
+    Queue::fake();
+
+    $cases = [
+        'amount mismatch' => ['total_amount' => 5001],
+        'reference mismatch' => ['client_reference_id' => 'PAY-WRONGREF123'],
+        'missing amount' => ['total_amount' => null],
+    ];
+
+    foreach ($cases as $name => $sessionOverrides) {
+        $suffix = str_replace(' ', '_', $name);
+        [, $installment] = paymentInstallmentFixture(amountBaisa: 5000);
+        $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+            'amount_baisa' => 5000,
+            'provider_session_id' => 'checkout_rejected_'.$suffix,
+        ]);
+
+        fakeThawaniSession($payment, $sessionOverrides);
+
+        $this->postJson(route('api.webhooks.thawani'), [
+            'client_reference_id' => $payment->reference,
+        ])
+            ->assertAccepted()
+            ->assertJsonPath('status', ThawaniWebhookEventStatus::Rejected->value);
+
+        expect($payment->refresh()->state)->toBe(PaymentState::Failed)
+            ->and($payment->ledgerTransaction()->exists())->toBeFalse()
+            ->and($installment->refresh()->state)->toBe(BookingInstallmentState::Pending);
+    }
+
+    Queue::assertNotPushed(CallWebhookJob::class);
+    expect(WebhookDelivery::query()->count())->toBe(0);
+});
+
+test('duplicate thawani webhooks are idempotent for side effects', function () {
+    Http::preventStrayRequests();
+
+    config([
+        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+    ]);
+
+    [, $installment] = paymentInstallmentFixture(amountBaisa: 489000);
+    $booking = $installment->paymentSchedule->booking;
+    $affiliate = Affiliate::factory()->create();
+    AffiliateReferral::factory()->for($affiliate)->for($booking)->create([
+        'affiliate_code' => $affiliate->code,
+        'affiliate_name' => $affiliate->name,
+    ]);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+        'amount_baisa' => 489000,
+        'provider_session_id' => 'checkout_duplicate_webhook',
+    ]);
+
+    fakeThawaniSession($payment);
+    Queue::fake();
+
+    $payload = ['client_reference_id' => $payment->reference];
+
+    $this->postJson(route('api.webhooks.thawani'), $payload)->assertOk();
+    $this->postJson(route('api.webhooks.thawani'), $payload)->assertOk();
+
+    Queue::assertPushed(CallWebhookJob::class, 1);
+    expect($payment->refresh()->state)->toBe(PaymentState::Paid)
+        ->and($payment->ledgerTransaction()->count())->toBe(1)
+        ->and(AffiliateCommission::query()->where('payment_id', $payment->id)->count())->toBe(1)
+        ->and(WebhookDelivery::query()->whereMorphedTo('webhookable', $payment)->where('event', 'payment.paid')->count())->toBe(1)
+        ->and(ThawaniWebhookEvent::query()->where('payment_id', $payment->id)->count())->toBe(2);
+});
+
+test('thawani webhook rejects invalid production token without contacting gateway', function () {
+    Http::preventStrayRequests();
+
+    config([
+        'app.env' => 'production',
+        'thawani.webhook.token' => 'valid-token',
+    ]);
+
+    [, $installment] = paymentInstallmentFixture(amountBaisa: 5000);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+        'amount_baisa' => 5000,
+        'provider_session_id' => 'checkout_invalid_token',
+    ]);
+
+    $this->postJson(route('api.webhooks.thawani', ['token' => 'wrong-token']), [
+        'client_reference_id' => $payment->reference,
+    ])->assertForbidden();
+
+    expect($payment->refresh()->state)->toBe(PaymentState::Pending)
+        ->and(ThawaniWebhookEvent::query()->count())->toBe(0);
+});
+
+test('thawani webhook records unmatched payloads without contacting gateway', function () {
+    Http::preventStrayRequests();
+
+    $this->postJson(route('api.webhooks.thawani'), [
+        'event' => 'checkout.paid',
+        'client_reference_id' => 'PAY-UNKNOWN',
+        'session_id' => 'checkout_unknown',
+    ])
+        ->assertAccepted()
+        ->assertJsonPath('status', ThawaniWebhookEventStatus::Unmatched->value)
+        ->assertJsonPath('payment_id', null);
+
+    $event = ThawaniWebhookEvent::query()->sole();
+
+    expect($event->status)->toBe(ThawaniWebhookEventStatus::Unmatched)
+        ->and($event->client_reference_id)->toBe('PAY-UNKNOWN')
+        ->and($event->provider_session_id)->toBe('checkout_unknown');
+});
+
 test('thawani cancel return cancels the payment attempt only', function () {
     [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 5000);
     $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
@@ -393,4 +581,24 @@ function payableBookingFixture(int $amountBaisa): array
     ]);
 
     return [$customer, $booking];
+}
+
+/**
+ * @param  array<string, mixed>  $overrides
+ */
+function fakeThawaniSession(Payment $payment, array $overrides = []): void
+{
+    Http::fake([
+        "https://uatcheckout.thawani.om/api/v1/checkout/session/{$payment->provider_session_id}" => Http::response([
+            'success' => true,
+            'data' => array_replace([
+                'session_id' => $payment->provider_session_id,
+                'client_reference_id' => $payment->reference,
+                'payment_status' => 'paid',
+                'payment_id' => $payment->provider_payment_id ?? 'payment_'.$payment->id,
+                'invoice' => $payment->provider_invoice ?? 'invoice_'.$payment->id,
+                'total_amount' => $payment->amount_baisa,
+            ], $overrides),
+        ]),
+    ]);
 }

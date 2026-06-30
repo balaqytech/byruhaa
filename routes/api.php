@@ -6,7 +6,11 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerFamilyMemberController;
 use App\Http\Controllers\Api\V1\CustomerPaymentController;
 use App\Http\Controllers\Api\V1\EventController;
+use App\Http\Controllers\ThawaniPaymentWebhookController;
 use Illuminate\Support\Facades\Route;
+
+Route::post('webhooks/thawani', ThawaniPaymentWebhookController::class)
+    ->name('api.webhooks.thawani');
 
 Route::prefix('v1')
     ->name('api.v1.')
