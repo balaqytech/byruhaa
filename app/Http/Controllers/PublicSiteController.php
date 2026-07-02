@@ -6,12 +6,43 @@ use App\Enums\EventStatus;
 use App\Models\Discount;
 use App\Models\Event;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 
 class PublicSiteController extends Controller
 {
+    private const HomepageEventId = 2;
+
+    private const HomepageEventSlug = 'your-guide-to-life-after-school';
+
     public function home(): View
     {
-        $event = Event::query()
+        $event = $this->homepageEvent();
+
+        return view('pages.public.site.home', [
+            'event' => $event,
+            'remainingSeats' => $event?->remainingSeats(),
+            'title' => $event?->name ?? 'دليلك إلى الحياة بعد المدرسة',
+            'metaDescription' => $event?->excerpt ?: 'ثلاثة أيام في إبراء تساعد خريج الصف الثاني عشر على اكتشاف مساره، وبناء خطة تسعين يومًا للحياة بعد المدرسة.',
+        ]);
+    }
+
+    private function homepageEvent(): ?Event
+    {
+        return $this->homepageEventQuery()
+            ->whereKey(self::HomepageEventId)
+            ->where('slug', self::HomepageEventSlug)
+            ->first()
+            ?? $this->homepageEventQuery()
+                ->where('slug', self::HomepageEventSlug)
+                ->first();
+    }
+
+    /**
+     * @return Builder<Event>
+     */
+    private function homepageEventQuery(): Builder
+    {
+        return Event::query()
             ->with([
                 'discounts' => fn ($query) => $query
                     ->where('is_active', true)
@@ -21,16 +52,7 @@ class PublicSiteController extends Controller
                     ->where('is_active', true)
                     ->with('installments')
                     ->orderBy('name'),
-            ])
-            ->orderBy('id')
-            ->first();
-
-        return view('pages.public.site.home', [
-            'event' => $event,
-            'remainingSeats' => $event?->remainingSeats(),
-            'title' => $event?->name ?? 'برنامج مهاجر إلى ربي',
-            'metaDescription' => $event?->excerpt ?: '٣٠ يوماً منظّمة تجمع القرآن الكريم، والنحو بالفطرة، ومهارات الحياة في بيئة آمنة ملهمة.',
-        ]);
+            ]);
     }
 
     public function events(): View

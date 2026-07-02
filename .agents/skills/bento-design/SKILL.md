@@ -1,6 +1,6 @@
 # Design System - Bento Pro for Laravel
 
-This skill defines a premium bento-oriented interface language for Laravel projects. It applies the Bento Pro visual system to Blade, Livewire, Filament, Inertia/Vue, and Vite/Tailwind codebases without assuming a specific frontend stack. The design language remains dark-first, editorial, bento-oriented, tactile, and conversion-focused.
+This skill defines a premium bento-oriented interface language for Laravel projects. It applies the Bento Pro visual system to Blade, Livewire, Filament, Inertia/Vue, and Vite/Tailwind codebases without assuming a specific frontend stack. The design language remains theme-flexible, editorial, bento-oriented, tactile, and conversion-focused.
 
 ## Before Writing Any Code
 
@@ -51,14 +51,17 @@ Use CSS custom properties as the safest bridge between this skill and Tailwind/B
 ```css
 /* resources/css/app.css or resources/css/filament/admin/theme.css */
 :root {
-  --bp-bg-base: #0a0a0a;
-  --bp-bg-panel: #0a0a0a;
-  --bp-bg-panel-soft: rgba(10, 10, 10, 0.78);
-  --bp-text-primary: #ffffff;
-  --bp-text-secondary: #a1a1aa;
-  --bp-text-muted: #71717a;
-  --bp-border-default: rgba(255, 255, 255, 0.10);
-  --bp-border-strong: rgba(255, 255, 255, 0.20);
+  --bp-bg-base: #f8fafc;
+  --bp-bg-panel: #ffffff;
+  --bp-bg-panel-soft: rgba(255, 255, 255, 0.78);
+  --bp-bg-elevated: #f1f5f9;
+  --bp-bg-hover: #e2e8f0;
+  --bp-text-primary: #111827;
+  --bp-text-secondary: #4b5563;
+  --bp-text-muted: #6b7280;
+  --bp-text-inverse: #ffffff;
+  --bp-border-default: rgba(17, 24, 39, 0.10);
+  --bp-border-strong: rgba(17, 24, 39, 0.20);
   --bp-primary: #F9A474;
   --bp-accent-secondary: #c3a3ff;
   --bp-success: #59d9a6;
@@ -68,8 +71,9 @@ Use CSS custom properties as the safest bridge between this skill and Tailwind/B
   --bp-radius-lg: 24px;
   --bp-radius-xl: 32px;
   --bp-radius-pill: 9999px;
-  --bp-shadow-xs: 0 2px 10px rgba(0, 0, 0, 0.22);
-  --bp-shadow-sm: 0 10px 24px rgba(4, 8, 15, 0.30);
+  --bp-ring-neutral: rgba(17, 24, 39, 0.12);
+  --bp-shadow-xs: 0 2px 10px rgba(15, 23, 42, 0.08);
+  --bp-shadow-sm: 0 10px 24px rgba(15, 23, 42, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -133,9 +137,9 @@ Example button component pattern:
 
     $variants = [
         'brand' => 'border-transparent bg-[linear-gradient(135deg,var(--bp-primary)_0%,#F7B38E_55%,#FCD2B7_100%)] text-[#1A120D] shadow-[var(--bp-shadow-xs),inset_rgba(255,255,255,.35)_0_6px_0_-5px,rgba(249,164,116,.45)_0_4px_10px_-5px] hover:bg-[linear-gradient(135deg,#F39A67_0%,var(--bp-primary)_55%,#F7B38E_100%)] focus-visible:ring-[rgba(249,164,116,.4)]',
-        'secondary' => 'border-[var(--bp-border-default)] bg-white/[0.06] text-[var(--bp-text-primary)] hover:border-[var(--bp-border-strong)] hover:bg-white/[0.09] focus-visible:ring-white/10',
-        'ghost' => 'border-transparent bg-transparent text-[var(--bp-text-primary)] hover:bg-white/[0.06] focus-visible:ring-white/10 shadow-none',
-        'danger' => 'border-transparent bg-[var(--bp-danger)] text-white hover:brightness-110 focus-visible:ring-red-300/30',
+        'secondary' => 'border-[var(--bp-border-default)] bg-[var(--bp-bg-elevated)] text-[var(--bp-text-primary)] hover:border-[var(--bp-border-strong)] hover:bg-[var(--bp-bg-hover)] focus-visible:ring-[var(--bp-ring-neutral)]',
+        'ghost' => 'border-transparent bg-transparent text-[var(--bp-text-primary)] hover:bg-[var(--bp-bg-elevated)] focus-visible:ring-[var(--bp-ring-neutral)] shadow-none',
+        'danger' => 'border-transparent bg-[var(--bp-danger)] text-[var(--bp-text-inverse)] hover:brightness-110 focus-visible:ring-red-300/30',
     ];
 @endphp
 
@@ -365,7 +369,7 @@ Borders define layers and card boundaries without visual noise.
 ## Rules
 - Use border + glow together for premium surfaces.
 - Avoid 2px borders except explicit focus or selected states.
-- Do not use fully opaque white borders in dark mode.
+- Do not use fully opaque borders on high-contrast surfaces unless they are explicit focus or selected states.
 
 ---
 
@@ -451,7 +455,7 @@ Grouped actions should feel compact and intentional within dense bento cards.
 ### Success
 - **Background:** success token
 - **Border:** transparent
-- **Text:** white
+- **Text:** inverse text token
 - **Hover:** success-strong background
 - **Focus ring:** 4px, success-medium color
 - **Glint:** yes
@@ -459,7 +463,7 @@ Grouped actions should feel compact and intentional within dense bento cards.
 ### Danger
 - **Background:** danger token
 - **Border:** transparent
-- **Text:** white
+- **Text:** inverse text token
 - **Hover:** danger-strong background
 - **Focus ring:** 4px, danger-medium color
 - **Glint:** yes
@@ -467,17 +471,9 @@ Grouped actions should feel compact and intentional within dense bento cards.
 ### Warning
 - **Background:** warning token
 - **Border:** transparent
-- **Text:** white
+- **Text:** inverse text token
 - **Hover:** warning-strong background
 - **Focus ring:** 4px, warning-medium color
-- **Glint:** yes
-
-### Dark
-- **Background:** dark token
-- **Border:** transparent
-- **Text:** white
-- **Hover:** dark-strong background
-- **Focus ring:** 4px, neutral-tertiary color
 - **Glint:** yes
 
 ### Ghost (NO shadow, NO glint)
@@ -510,7 +506,7 @@ Grouped actions should feel compact and intentional within dense bento cards.
 > Dependencies: `colors.md`, `radius.md`, `shadows.md`, `typography.md`
 
 ## Core Specs
-- Background: exact same shade as the base canvas (`bg.panel` which is `#0a0a0a`)
+- Background: current panel surface token (`bg.panel`)
 - Border: 1px `border.default` (crisp, subtle line)
 - Radius: 32px desktop, 20px mobile
 - Shadow: none by default, rely on borders for a flat, premium look
@@ -537,18 +533,19 @@ Grouped actions should feel compact and intentional within dense bento cards.
 # Colors
 
 ## Intent
-A premium, ultra-dark palette built on pure black bases, high-clarity white text, and selective accent warmth for call-to-action emphasis.
+A premium, theme-flexible palette built on adaptable surface tokens, strong readability, and selective accent warmth for call-to-action emphasis.
 
 ## Core Tokens
-- `bg.base`: #0a0a0a
-- `bg.elevated`: #0a0a0a
-- `bg.panel`: #0a0a0a
-- `bg.panel-soft`: rgba(10, 10, 10, 0.78)
-- `text.primary`: #ffffff
-- `text.secondary`: #a1a1aa
-- `text.muted`: #71717a
-- `border.default`: rgba(255, 255, 255, 0.10)
-- `border.strong`: rgba(255, 255, 255, 0.20)
+- `bg.base`: #f8fafc
+- `bg.elevated`: #f1f5f9
+- `bg.panel`: #ffffff
+- `bg.panel-soft`: rgba(255, 255, 255, 0.78)
+- `text.primary`: #111827
+- `text.secondary`: #4b5563
+- `text.muted`: #6b7280
+- `text.inverse`: #ffffff
+- `border.default`: rgba(17, 24, 39, 0.10)
+- `border.strong`: rgba(17, 24, 39, 0.20)
 - `primary`: #F9A474
 - `accent.primary`: #F9A474
 - `accent.secondary`: #c3a3ff
@@ -557,15 +554,15 @@ A premium, ultra-dark palette built on pure black bases, high-clarity white text
 - `accent.danger`: #ff7d8b
 
 ## Usage Rules
-- Large surfaces and cards must use the flat `#0a0a0a` background to create a seamless, premium look.
-- Primary text must keep maximum contrast against all panel backgrounds.
+- Large surfaces and cards must use the active `bg.base`, `bg.elevated`, and `bg.panel` tokens rather than hardcoded canvas colors.
+- Primary text must keep strong contrast against all panel backgrounds.
 - Accent colors should highlight interaction, stats, and key claims only.
 - The primary website and brand CTA color must always resolve to `primary` (`#F9A474`).
 - Avoid using more than two accent families in one viewport section.
 
 ## Gradients
 - Hero ambient: radial accent bloom over `bg.base`.
-- Card glow: cards share the exact same background as the canvas (`#0a0a0a`), relying entirely on crisp borders (`border.default`) and subtle hover glows for definition.
+- Card glow: cards use the current panel token and rely on crisp borders (`border.default`) and subtle hover glows for definition.
 
 ---
 
@@ -601,7 +598,7 @@ Default to bento composition for feature communication and benefit storytelling.
 # Dropdown
 
 ## Intent
-Dropdowns provide lightweight actions and selections over dark surfaces.
+Dropdowns provide lightweight actions and selections over layered surfaces.
 
 ## Surface
 - Background: `bg.panel-soft` with blur support fallback
@@ -631,26 +628,26 @@ The hero section must feel premium, technical, and visually striking, setting th
 
 ## Background & Ambient Light
 - **Base Glow**: A massive, highly blurred radial element (e.g., 800x800px, 180px blur, 10% opacity) centered behind the text using the primary accent color (`#F9A474`).
-- **Body Background**: The page body uses a dark `#0a0a0a` canvas with two low-opacity (3%) radial overlays in opposite corners (primary and secondary accents) to break up the solid black.
+- **Body Background**: The page body uses the `bg.base` canvas with two low-opacity radial overlays in opposite corners (primary and secondary accents) to add depth without locking the design to one theme.
 
 ## Modern Geometric Patterns
-The hero must include a complex, layered geometric pattern behind the main typography, masked by a radial gradient (`mask-image: radial-gradient(ellipse_at_center,black_40%,transparent_80%)`) so it fades smoothly into the background edges or other pattern in the same professional way.
+The hero should include a complex, layered geometric pattern behind the main typography, masked by a radial gradient (`mask-image: radial-gradient(ellipse_at_center,rgba(0,0,0,1)_40%,transparent_80%)`) so it fades smoothly into the background edges or other pattern in the same professional way.
 
 **Pattern Elements:**
 1. **Subtle Grid**: A 60x60px square grid overlay using a very faint stroke (`rgba(255, 255, 255, 0.02)`).
 2. **Concentric Rings**: A series of 5+ perfectly centered circles ranging from 250px to 1400px.
-   - Use very subtle white borders (2% to 8% opacity).
+   - Use very subtle borders derived from `text.primary` or `border.default` at low opacity.
    - Introduce varied textures (e.g., one dashed ring) for a technical feel.
-3. **Crosshairs**: Two intersecting 1px lines (horizontal and vertical) that run through the center, using a gradient that fades from transparent to `white/[0.08]` back to transparent at the edges.
+3. **Crosshairs**: Two intersecting 1px lines (horizontal and vertical) that run through the center, using a gradient that fades from transparent to the active foreground color at low opacity and back to transparent at the edges.
 
 ## Typography & Badges
 - **Badge**: A pill-shaped label above the H1. Uses a subtle glow (`shadow-[0_0_20px_rgba(249,164,116,0.1)]`), a 3% background fill, a 20% border, and a backdrop blur.
-- **H1 Headline**: Uses `text-display-xl` with tight tracking. The text should have a subtle gradient clip (`from-white via-white to-[#a1a1aa]`) and a drop shadow for depth.
+- **H1 Headline**: Uses `text-display-xl` with tight tracking. The text may use a subtle gradient clip derived from `text.primary` and `text.secondary`, with a soft shadow for depth when appropriate.
 - **Subheadline**: Uses `text-body-l` in a muted secondary color (`#a1a1aa`), constrained to a readable max-width (e.g., `max-w-2xl`).
 
 ## Call to Action
-- **Primary button**: Solid white background, dark text, with a subtle white glow (`shadow-[0_0_30px_rgba(255,255,255,0.15)]`).
-- **Secondary button**: Transparent with a 10% white border, white text, and a backdrop blur (`backdrop-blur-sm`).
+- **Primary button**: Brand gradient or solid primary token background, high-contrast text, and a subtle accent glow.
+- **Secondary button**: Transparent or elevated surface background with `border.default`, readable text, and optional backdrop blur (`backdrop-blur-sm`).
 
 ---
 
@@ -716,7 +713,7 @@ Compose pages as a bento narrative: alternating dense and open zones with clear 
 - Use asymmetry intentionally: 2:1 and 3:2 visual weight ratios are preferred.
 
 ## Surface Layers
-- Base canvas uses two low-opacity (3%) radial overlays in opposite corners (e.g., primary and secondary accents) to break up the solid `#0a0a0a` background.
+- Base canvas may use two low-opacity radial overlays in opposite corners (e.g., primary and secondary accents) to add depth to the active `bg.base` background.
 - Section shells may include soft noise texture at <= 3% opacity.
 
 ## Motion
@@ -758,7 +755,7 @@ Modals isolate high-priority tasks without breaking the bento visual language.
 - Max width: 560px standard, 760px wide
 - Radius: `radius-xl`
 - Background: layered panel with soft highlight
-- Backdrop: dark blur at 60-72% opacity
+- Backdrop: blurred overlay at 50-72% opacity, tuned to the active theme
 
 ## Behavior
 - Trap focus while open.
@@ -804,7 +801,7 @@ Selection controls should be clear at a glance and easy to operate on touch and 
 
 ## Rules
 - Pair each control with explicit label text.
-- Focus-visible must be obvious on dark backgrounds.
+- Focus-visible must be obvious on the active surface background.
 - Use toggles only for immediate binary settings, not form submission choices.
 
 ---
@@ -856,7 +853,7 @@ Sidebars anchor navigation in data-heavy or multi-section experiences.
 
 ## Layout
 - Width: 264px desktop, collapsible to icon rail.
-- Surface: layered dark panel with right-side separator.
+- Surface: layered panel with a side separator.
 - Section groups separated by 16-20px.
 
 ## Item States
@@ -875,7 +872,7 @@ Sidebars anchor navigation in data-heavy or multi-section experiences.
 # Tables
 
 ## Intent
-Tables should remain readable inside dark, premium dashboards and data cards.
+Tables should remain readable inside premium dashboards and data cards.
 
 ## Specs
 - Header background: slightly elevated from rows.
@@ -924,7 +921,7 @@ Contextual help should feel lightweight and non-disruptive.
 
 ## Tooltip
 - Max width: 280px
-- Background: elevated dark with strong text contrast
+- Background: elevated surface with strong text contrast
 - Radius: `radius-sm`
 - Delay: 150-250ms on hover; instant on focus
 
@@ -963,7 +960,7 @@ Editorial and cinematic: oversized value statements, compact supporting copy, an
 - Label: 12/16, weight 600, uppercase 0.08em
 
 ## Copy Style
-- Text MUST be in the brand color. Never use neutral grays or creams for text unless explicitly requested.
+- Text must use semantic typography tokens (`text.primary`, `text.secondary`, `text.muted`) rather than hardcoded theme colors unless the brand requires a specific override.
 - Lead with short high-impact claims.
 - Prefer one clear promise per line.
 - Keep paragraph blocks to 2-4 lines on desktop.

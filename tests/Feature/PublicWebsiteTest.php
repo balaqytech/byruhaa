@@ -10,11 +10,18 @@ use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
 
 test('homepage loads', function () {
+    $eventUrl = route('events.show', 'your-guide-to-life-after-school');
+    $customerEventUrl = route('customer.events.show', 'your-guide-to-life-after-school');
+
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSee('منتجع بيرحاء')
-        ->assertSee('نصنع تجارب سياحية وتعليمية بروح عُمانية فاخرة')
-        ->assertSee('الموقع قيد التجهيز')
+        ->assertSee('دليلك إلى الحياة بعد المدرسة')
+        ->assertSee('بعد الثاني عشر، الطريق يبدأ من هنا')
+        ->assertSee('ابدأ الحجز من صفحة الفعالية')
+        ->assertSee('images/life-after-school-hero.png', false)
+        ->assertSee($eventUrl, false)
+        ->assertSee($customerEventUrl, false)
         ->assertSee('حسابي')
         ->assertSee('logo-dark.png', false)
         ->assertSee(route('affiliate.login'), false)
@@ -22,6 +29,30 @@ test('homepage loads', function () {
         ->assertSee('data-icon="home-01"', false)
         ->assertDontSee('cdn.hugeicons.com', false)
         ->assertDontSee('hgi-stroke', false);
+});
+
+test('homepage uses the configured life after school event when it exists', function () {
+    Event::factory()->create([
+        'id' => 1,
+        'name' => 'Older public event',
+        'slug' => 'older-public-event',
+        'status' => EventStatus::Published,
+    ]);
+
+    $event = Event::factory()->create([
+        'id' => 2,
+        'name' => 'دليلك إلى الحياة بعد المدرسة الرسمي',
+        'slug' => 'your-guide-to-life-after-school',
+        'status' => EventStatus::Published,
+        'seat_capacity' => 40,
+    ]);
+
+    $this->get(route('home'))
+        ->assertSuccessful()
+        ->assertSee('دليلك إلى الحياة بعد المدرسة الرسمي')
+        ->assertSee(route('events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee(route('events.show', 'older-public-event'), false);
 });
 
 test('events page loads', function () {
