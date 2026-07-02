@@ -49,7 +49,7 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         Flux::toast(variant: 'success', text: __('ui.messages.payment_plan_selected'));
     }
 
-    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse|Redirector
+    public function payInstallment(int $installmentId, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse|Redirector|null
     {
         try {
             $installment = BookingInstallment::query()
@@ -61,6 +61,14 @@ new #[Title('تفاصيل الحجز')] class extends Component {
 
             $payment = $initiateInstallmentPayment->execute($installment, (int) Auth::guard('customer')->id());
 
+            if (blank($payment->checkout_url)) {
+                $this->refreshBooking();
+
+                Flux::toast(variant: 'success', text: __('ui.messages.payment_completed'));
+
+                return null;
+            }
+
             return redirect()->away((string) $payment->checkout_url);
         } catch (ValidationException $exception) {
             $this->refreshBooking();
@@ -69,12 +77,20 @@ new #[Title('تفاصيل الحجز')] class extends Component {
         }
     }
 
-    public function payInFull(CreateFullPaymentSchedule $createFullPaymentSchedule, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse|Redirector
+    public function payInFull(CreateFullPaymentSchedule $createFullPaymentSchedule, InitiateInstallmentPayment $initiateInstallmentPayment): RedirectResponse|Redirector|null
     {
         try {
             $schedule = $createFullPaymentSchedule->execute($this->booking);
             $installment = $schedule->installments()->firstOrFail();
             $payment = $initiateInstallmentPayment->execute($installment, (int) Auth::guard('customer')->id());
+
+            if (blank($payment->checkout_url)) {
+                $this->refreshBooking();
+
+                Flux::toast(variant: 'success', text: __('ui.messages.payment_completed'));
+
+                return null;
+            }
 
             return redirect()->away((string) $payment->checkout_url);
         } catch (ValidationException $exception) {
@@ -279,6 +295,11 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                                             <x-hugeicon name="wallet-02" class="text-lg" />
                                             {{ __('ui.payments.pay_with_thawani') }}
                                         </flux:button>
+                                    @elseif ($installment->state === BookingInstallmentState::Pending && $installment->id === $payableInstallmentId && $installment->amount_baisa === 0)
+                                        <flux:button wire:click="payInstallment({{ $installment->id }})" wire:target="payInstallment({{ $installment->id }})" size="sm" variant="primary">
+                                            <x-hugeicon name="checkmark-badge-01" class="text-lg" />
+                                            {{ __('ui.payments.complete_free_booking') }}
+                                        </flux:button>
                                     @elseif ($installment->state === BookingInstallmentState::Pending)
                                         <span class="text-sm text-zinc-500 dark:text-white/60">{{ __('ui.payments.waiting_for_previous') }}</span>
                                     @else
@@ -294,8 +315,12 @@ new #[Title('تفاصيل الحجز')] class extends Component {
             <div class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-300/20 dark:bg-emerald-300/10">
                 <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
                     <div class="space-y-2">
-                        <flux:heading class="text-base">{{ __('ui.payments.full_payment') }}</flux:heading>
-                        <flux:text>{{ __('ui.payments.full_payment_description') }}</flux:text>
+                        <flux:heading class="text-base">
+                            {{ $booking->total_baisa === 0 ? __('ui.payments.free_booking') : __('ui.payments.full_payment') }}
+                        </flux:heading>
+                        <flux:text>
+                            {{ $booking->total_baisa === 0 ? __('ui.payments.free_booking_description') : __('ui.payments.full_payment_description') }}
+                        </flux:text>
                         <div class="text-lg font-semibold text-emerald-950 dark:text-emerald-50">
                             <x-money :amount-baisa="$booking->total_baisa" :currency="$booking->currency" />
                         </div>
@@ -306,13 +331,18 @@ new #[Title('تفاصيل الحجز')] class extends Component {
                             <x-hugeicon name="wallet-02" class="text-lg" />
                             {{ __('ui.payments.pay_full_amount') }}
                         </flux:button>
+                    @elseif ($booking->total_baisa === 0)
+                        <flux:button wire:click="payInFull" wire:target="payInFull" variant="primary">
+                            <x-hugeicon name="checkmark-badge-01" class="text-lg" />
+                            {{ __('ui.payments.complete_free_booking') }}
+                        </flux:button>
                     @else
                         <span class="text-sm text-zinc-500 dark:text-white/60">{{ __('ui.messages.installment_amount_too_small') }}</span>
                     @endif
                 </div>
             </div>
 
-            @if ($activePaymentPlans->isNotEmpty())
+            @if ($booking->total_baisa > 0 && $activePaymentPlans->isNotEmpty())
                 <form wire:submit="selectPaymentPlan" class="mt-5 space-y-4 rounded-xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-300/20 dark:bg-sky-300/10">
                     <div>
                         <flux:heading class="text-base">{{ __('ui.payments.installment_options') }}</flux:heading>

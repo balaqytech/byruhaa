@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\BookingInstallment;
@@ -36,12 +37,6 @@ class InitiateInstallmentPayment
                 ]);
             }
 
-            if ($installment->amount_baisa < 100) {
-                throw ValidationException::withMessages([
-                    'payment' => __('ui.messages.installment_amount_too_small'),
-                ]);
-            }
-
             $firstPendingInstallmentId = $installment->paymentSchedule
                 ->installments()
                 ->where('state', BookingInstallmentState::Pending->value)
@@ -51,6 +46,16 @@ class InitiateInstallmentPayment
             if ($firstPendingInstallmentId !== $installment->id) {
                 throw ValidationException::withMessages([
                     'payment' => __('ui.messages.pay_installments_in_order'),
+                ]);
+            }
+
+            if ($installment->amount_baisa === 0) {
+                return $this->settleFreeInstallment($installment);
+            }
+
+            if ($installment->amount_baisa < 100) {
+                throw ValidationException::withMessages([
+                    'payment' => __('ui.messages.installment_amount_too_small'),
                 ]);
             }
 
@@ -85,6 +90,10 @@ class InitiateInstallmentPayment
             return $payment->refresh();
         }
 
+        if ($payment->state === PaymentState::Paid && $payment->amount_baisa === 0) {
+            return $payment->refresh();
+        }
+
         try {
             $response = $this->paymentGateway->createSession($payment->request_payload ?? []);
             $sessionId = (string) data_get($response, 'data.session_id');
@@ -110,6 +119,32 @@ class InitiateInstallmentPayment
         }
 
         return $payment->refresh();
+    }
+
+    private function settleFreeInstallment(BookingInstallment $installment): Payment
+    {
+        $settledAt = now();
+
+        $installment->forceFill([
+            'state' => BookingInstallmentState::Paid,
+            'paid_at' => $settledAt,
+        ])->save();
+
+        return $installment->payments()->create([
+            'provider' => PaymentProvider::Manual,
+            'amount_baisa' => 0,
+            'currency' => $installment->paymentSchedule->currency,
+            'state' => PaymentState::Paid,
+            'provider_payment_status' => 'paid',
+            'request_payload' => [
+                'reason' => 'zero_amount_installment',
+            ],
+            'response_payload' => [
+                'message' => 'Settled without a payment gateway because the installment amount is zero.',
+            ],
+            'verified_at' => $settledAt,
+            'paid_at' => $settledAt,
+        ]);
     }
 
     /**

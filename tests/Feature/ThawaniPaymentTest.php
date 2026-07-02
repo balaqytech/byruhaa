@@ -3,6 +3,7 @@
 use App\Actions\InitiateInstallmentPayment;
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Enums\ThawaniWebhookEventStatus;
 use App\Models\Affiliate;
@@ -15,6 +16,8 @@ use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventContract;
+use App\Models\EventPaymentPlan;
+use App\Models\EventPaymentPlanInstallment;
 use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\ThawaniWebhookEvent;
@@ -95,6 +98,25 @@ test('customer reuses an active pending checkout for the same installment', func
     Http::assertSentCount(1);
 });
 
+test('zero amount installments are settled without a gateway checkout', function () {
+    Http::preventStrayRequests();
+
+    [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 0);
+
+    $payment = app(InitiateInstallmentPayment::class)->execute($installment, $customer->id);
+
+    expect($payment->state)->toBe(PaymentState::Paid)
+        ->and($payment->provider)->toBe(PaymentProvider::Manual)
+        ->and($payment->amount_baisa)->toBe(0)
+        ->and($payment->checkout_url)->toBeNull()
+        ->and($payment->ledgerTransaction()->exists())->toBeFalse()
+        ->and($installment->refresh())
+        ->state->toBe(BookingInstallmentState::Paid)
+        ->paid_at->not->toBeNull();
+
+    Http::assertNothingSent();
+});
+
 test('booking page shows thawani payment action for the next installment', function () {
     [$customer, $installment] = paymentInstallmentFixture(amountBaisa: 4500);
 
@@ -150,6 +172,78 @@ test('customer can initiate a full thawani payment by default', function () {
         ->toHaveCount(1)
         ->and($installment->payments->first())
         ->provider_session_id->toBe('checkout_full_payment');
+});
+
+test('customer can complete a zero total booking without a gateway checkout', function () {
+    Http::preventStrayRequests();
+
+    [$customer, $booking] = payableBookingFixture(amountBaisa: 12000);
+
+    $booking->forceFill([
+        'discount_amount_baisa' => 12000,
+        'total_baisa' => 0,
+    ])->save();
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
+        ->assertSee(__('ui.payments.free_booking'))
+        ->assertSee(__('ui.payments.free_booking_description'))
+        ->assertSee(__('ui.payments.complete_free_booking'))
+        ->assertDontSee(__('ui.payments.pay_full_amount'))
+        ->assertDontSee(__('ui.payments.full_payment_description'))
+        ->call('payInFull')
+        ->assertHasNoErrors()
+        ->assertSee(__('ui.payments.completed'));
+
+    $schedule = $booking->refresh()->paymentSchedule()->with('installments.payments')->firstOrFail();
+    $installment = $schedule->installments->first();
+    $payment = $installment?->payments->first();
+
+    expect($schedule->total_baisa)->toBe(0)
+        ->and($installment)->not->toBeNull()
+        ->and($installment->amount_baisa)->toBe(0)
+        ->and($installment->state)->toBe(BookingInstallmentState::Paid)
+        ->and($payment)->not->toBeNull()
+        ->and($payment->provider)->toBe(PaymentProvider::Manual)
+        ->and($payment->state)->toBe(PaymentState::Paid)
+        ->and($payment->checkout_url)->toBeNull()
+        ->and($payment->ledgerTransaction()->exists())->toBeFalse();
+
+    Http::assertNothingSent();
+});
+
+test('customer cannot select an installment plan for a zero total booking', function () {
+    [$customer, $booking] = payableBookingFixture(amountBaisa: 12000);
+
+    $booking->forceFill([
+        'discount_amount_baisa' => 12000,
+        'total_baisa' => 0,
+    ])->save();
+
+    $paymentPlan = EventPaymentPlan::factory()->for($booking->event)->create([
+        'name' => 'Two payments',
+    ]);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'sequence' => 1,
+        'percentage' => 50,
+        'due_date' => now()->toDateString(),
+    ]);
+    EventPaymentPlanInstallment::factory()->for($paymentPlan, 'paymentPlan')->create([
+        'sequence' => 2,
+        'percentage' => 50,
+        'due_date' => now()->addMonth()->toDateString(),
+    ]);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.bookings.show', ['booking' => $booking])
+        ->assertDontSee(__('ui.payments.installment_options'))
+        ->set('paymentPlanId', $paymentPlan->id)
+        ->call('selectPaymentPlan')
+        ->assertHasErrors(['paymentPlanId']);
+
+    expect($booking->refresh()->paymentSchedule()->exists())->toBeFalse();
 });
 
 test('failed full thawani payment shows an error and stores gateway details', function () {

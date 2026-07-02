@@ -34,9 +34,9 @@ return [
             'navigation_label' => 'الخصومات',
         ],
         'coupons' => [
-            'label' => 'Coupon',
-            'plural_label' => 'Coupons',
-            'navigation_label' => 'Coupons',
+            'label' => 'قسيمة',
+            'plural_label' => 'القسائم',
+            'navigation_label' => 'القسائم',
         ],
         'events' => [
             'label' => 'فعالية',
@@ -141,8 +141,8 @@ return [
             'heading' => 'خصومات الفعالية',
         ],
         'coupons' => [
-            'label' => 'Coupons',
-            'heading' => 'Event coupons',
+            'label' => 'القسائم',
+            'heading' => 'قسائم الفعالية',
         ],
         'payment_plans' => [
             'label' => 'خطط الدفع',
@@ -184,8 +184,8 @@ return [
     ],
 
     'coupon_types' => [
-        'fixed_amount_per_member' => 'Fixed amount per member',
-        'percentage_per_member' => 'Percentage per member',
+        'fixed_amount_per_member' => 'مبلغ ثابت لكل فرد',
+        'percentage_per_member' => 'نسبة مئوية لكل فرد',
     ],
 
     'contract_variables' => [
@@ -268,7 +268,7 @@ return [
         'code' => 'الرمز',
         'content' => 'المحتوى',
         'contract_terms' => 'شروط العقد',
-        'coupon_code' => 'Coupon code',
+        'coupon_code' => 'رمز القسيمة',
         'created_at' => 'تاريخ الإنشاء',
         'credit' => 'دائن',
         'currency' => 'العملة',
@@ -279,7 +279,7 @@ return [
         'discount' => 'الخصم',
         'discount_amount' => 'قيمة الخصم',
         'discount_amount_per_member' => 'قيمة الخصم لكل فرد',
-        'discount_percentage' => 'Discount percentage',
+        'discount_percentage' => 'نسبة الخصم',
         'due_date' => 'تاريخ الاستحقاق',
         'email_address' => 'البريد الإلكتروني',
         'email_verified_at' => 'تاريخ التحقق من البريد',

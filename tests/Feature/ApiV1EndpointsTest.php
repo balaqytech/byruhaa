@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
@@ -467,6 +468,43 @@ test('customer can initiate a full booking payment through the api', function ()
 
     Http::assertSent(fn (Request $request): bool => $request->url() === 'https://uatcheckout.thawani.om/api/v1/checkout/session'
         && $request['products'][0]['unit_amount'] === 12000);
+});
+
+test('customer can settle a zero total booking payment through the api', function () {
+    apiV1ConfigureThawani();
+    Http::preventStrayRequests();
+
+    [$customer, $booking] = apiV1PayableBookingFixture(amountBaisa: 12000);
+
+    $booking->forceFill([
+        'discount_amount_baisa' => 12000,
+        'total_baisa' => 0,
+    ])->save();
+
+    $response = $this->postJson("/api/v1/customers/{$customer->id}/bookings/{$booking->id}/payments");
+
+    $response
+        ->assertCreated()
+        ->assertJsonPath('data.amount', '0.000')
+        ->assertJsonPath('data.provider', 'manual')
+        ->assertJsonPath('data.state', 'paid')
+        ->assertJsonPath('data.checkout_url', null)
+        ->assertJsonPath('data.booking_installment.amount', '0.000')
+        ->assertJsonPath('data.booking_installment.state', 'paid');
+
+    $schedule = $booking->refresh()->paymentSchedule()->with('installments.payments')->firstOrFail();
+    $installment = $schedule->installments->first();
+    $payment = $installment?->payments->first();
+
+    expect($schedule->total_baisa)->toBe(0)
+        ->and($installment)->not->toBeNull()
+        ->and($installment->amount_baisa)->toBe(0)
+        ->and($payment)->not->toBeNull()
+        ->and($payment->provider)->toBe(PaymentProvider::Manual)
+        ->and($payment->state)->toBe(PaymentState::Paid)
+        ->and($payment->checkout_url)->toBeNull();
+
+    Http::assertNothingSent();
 });
 
 test('customer can select a payment plan and initiate first installment through the api', function () {

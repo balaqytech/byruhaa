@@ -107,6 +107,33 @@ test('automatic discount wins when it is larger than the entered coupon', functi
         ->and($booking->discountSource())->toBe('discount');
 });
 
+test('automatic discounts are capped at the booking subtotal', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'price_baisa' => 5000,
+        'seat_capacity' => 5,
+    ]);
+    $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
+    $discount = Discount::factory()->for($event)->create([
+        'name' => 'Full automatic discount',
+        'amount_baisa' => 5000,
+        'minimum_family_members' => 2,
+    ]);
+
+    $booking = app(CreateCustomerBooking::class)->execute($customer, [
+        'event_id' => $event->id,
+        'family_member_ids' => $familyMembers->pluck('id')->all(),
+    ]);
+
+    expect($booking)
+        ->discount_id->toBe($discount->id)
+        ->coupon_id->toBeNull()
+        ->discount_name->toBe('Full automatic discount')
+        ->discount_amount_baisa->toBe(10000)
+        ->total_baisa->toBe(0)
+        ->and($booking->discountSource())->toBe('discount');
+});
+
 test('percentage coupons are capped at the booking subtotal', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([

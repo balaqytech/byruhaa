@@ -48,6 +48,12 @@ class SelectBookingPaymentPlan
                 ]);
             }
 
+            if ($booking->total_baisa === 0) {
+                throw ValidationException::withMessages([
+                    'paymentPlanId' => __('ui.messages.payment_plan_not_required_for_free_booking'),
+                ]);
+            }
+
             if ($paymentPlan->installments->isEmpty() || $paymentPlan->installments->sum('percentage') !== 100) {
                 throw ValidationException::withMessages([
                     'paymentPlanId' => __('ui.messages.payment_plan_percentages_invalid'),
