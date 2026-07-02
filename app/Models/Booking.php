@@ -33,6 +33,8 @@ use Spatie\ModelStates\HasStates;
  * @property int $family_member_count
  * @property int $subtotal_baisa
  * @property int|null $discount_id
+ * @property int|null $coupon_id
+ * @property string|null $coupon_code
  * @property string|null $discount_name
  * @property int $discount_amount_baisa
  * @property int $total_baisa
@@ -41,7 +43,7 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $discount_amount
  * @property-read Money $total
  */
-#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
+#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'coupon_id', 'coupon_code', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -96,6 +98,14 @@ class Booking extends Model
     public function discount(): BelongsTo
     {
         return $this->belongsTo(Discount::class);
+    }
+
+    /**
+     * @return BelongsTo<Coupon, $this>
+     */
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     /**
@@ -167,5 +177,18 @@ class Booking extends Model
             'total' => MoneyBaisaCast::of('total_baisa'),
             'total_baisa' => 'integer',
         ];
+    }
+
+    public function discountSource(): ?string
+    {
+        if ($this->coupon_id !== null || filled($this->coupon_code)) {
+            return 'coupon';
+        }
+
+        if ($this->discount_id !== null || filled($this->discount_name)) {
+            return 'discount';
+        }
+
+        return null;
     }
 }

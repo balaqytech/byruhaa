@@ -33,6 +33,11 @@ return [
             'plural_label' => 'Discounts',
             'navigation_label' => 'Discounts',
         ],
+        'coupons' => [
+            'label' => 'Coupon',
+            'plural_label' => 'Coupons',
+            'navigation_label' => 'Coupons',
+        ],
         'events' => [
             'label' => 'Event',
             'plural_label' => 'Events',
@@ -135,6 +140,10 @@ return [
             'label' => 'Discounts',
             'heading' => 'Event discounts',
         ],
+        'coupons' => [
+            'label' => 'Coupons',
+            'heading' => 'Event coupons',
+        ],
         'payment_plans' => [
             'label' => 'Payment plans',
             'heading' => 'Event payment plans',
@@ -172,6 +181,11 @@ return [
             'date' => 'Date',
             'number' => 'Number',
         ],
+    ],
+
+    'coupon_types' => [
+        'fixed_amount_per_member' => 'Fixed amount per member',
+        'percentage_per_member' => 'Percentage per member',
     ],
 
     'contract_variables' => [
@@ -232,12 +246,14 @@ return [
         'attributed_at' => 'Attributed at',
         'available_balance' => 'Available balance',
         'base_amount' => 'Base amount',
+        'basis_points' => 'basis points',
         'booking' => 'Booking',
         'bookings' => 'Bookings',
         'category' => 'Category',
         'code' => 'Code',
         'content' => 'Content',
         'contract_terms' => 'Contract terms',
+        'coupon_code' => 'Coupon code',
         'created_at' => 'Created at',
         'credit' => 'Credit',
         'currency' => 'Currency',
@@ -252,6 +268,7 @@ return [
         'discount' => 'Discount',
         'discount_amount' => 'Discount amount',
         'discount_amount_per_member' => 'Discount per member',
+        'discount_percentage' => 'Discount percentage',
         'due_date' => 'Due date',
         'email_address' => 'Email address',
         'email_verified_at' => 'Email verified at',

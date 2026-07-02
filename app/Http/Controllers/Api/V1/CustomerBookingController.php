@@ -27,7 +27,13 @@ class CustomerBookingController extends Controller
 
     public function store(StoreCustomerBookingRequest $request, Customer $customer, CreateCustomerBooking $createCustomerBooking): JsonResponse
     {
-        $booking = $createCustomerBooking->execute($customer, $request->validated());
+        $validated = $request->validated();
+
+        $booking = $createCustomerBooking->execute($customer, [
+            'event_id' => (int) $validated['event_id'],
+            'family_member_ids' => array_map('intval', $validated['family_member_ids']),
+            'coupon_code' => $validated['coupon_code'] ?? null,
+        ]);
 
         return BookingResource::make($booking)
             ->response()

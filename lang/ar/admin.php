@@ -33,6 +33,11 @@ return [
             'plural_label' => 'الخصومات',
             'navigation_label' => 'الخصومات',
         ],
+        'coupons' => [
+            'label' => 'Coupon',
+            'plural_label' => 'Coupons',
+            'navigation_label' => 'Coupons',
+        ],
         'events' => [
             'label' => 'فعالية',
             'plural_label' => 'الفعاليات',
@@ -135,6 +140,10 @@ return [
             'label' => 'الخصومات',
             'heading' => 'خصومات الفعالية',
         ],
+        'coupons' => [
+            'label' => 'Coupons',
+            'heading' => 'Event coupons',
+        ],
         'payment_plans' => [
             'label' => 'خطط الدفع',
             'heading' => 'خطط دفع الفعالية',
@@ -172,6 +181,11 @@ return [
             'date' => 'تاريخ',
             'number' => 'رقم',
         ],
+    ],
+
+    'coupon_types' => [
+        'fixed_amount_per_member' => 'Fixed amount per member',
+        'percentage_per_member' => 'Percentage per member',
     ],
 
     'contract_variables' => [
@@ -228,6 +242,7 @@ return [
         'attributed_at' => 'تاريخ الإسناد',
         'available_balance' => 'الرصيد المتاح',
         'base_amount' => 'المبلغ الأساسي',
+        'basis_points' => 'basis points',
         'captured_at' => 'تاريخ الالتقاط',
         'commission_amount' => 'مبلغ العمولة',
         'commission_rate' => 'نسبة العمولة',
@@ -253,6 +268,7 @@ return [
         'code' => 'الرمز',
         'content' => 'المحتوى',
         'contract_terms' => 'شروط العقد',
+        'coupon_code' => 'Coupon code',
         'created_at' => 'تاريخ الإنشاء',
         'credit' => 'دائن',
         'currency' => 'العملة',
@@ -263,6 +279,7 @@ return [
         'discount' => 'الخصم',
         'discount_amount' => 'قيمة الخصم',
         'discount_amount_per_member' => 'قيمة الخصم لكل فرد',
+        'discount_percentage' => 'Discount percentage',
         'due_date' => 'تاريخ الاستحقاق',
         'email_address' => 'البريد الإلكتروني',
         'email_verified_at' => 'تاريخ التحقق من البريد',

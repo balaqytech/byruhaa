@@ -7,6 +7,8 @@ use App\Filament\Resources\Bookings\BookingResource;
 use App\Filament\Resources\Bookings\Pages\ViewBooking;
 use App\Filament\Resources\Bookings\RelationManagers\FamilyMembersRelationManager as BookingFamilyMembersRelationManager;
 use App\Filament\Resources\Bookings\RelationManagers\InstallmentsRelationManager as BookingInstallmentsRelationManager;
+use App\Filament\Resources\Coupons\CouponResource;
+use App\Filament\Resources\Coupons\Pages\CreateCoupon;
 use App\Filament\Resources\Customers\CustomerResource;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\RelationManagers\BookingsRelationManager as CustomerBookingsRelationManager;
@@ -20,12 +22,14 @@ use App\Filament\Resources\Events\Pages\CreateEvent;
 use App\Filament\Resources\Events\Pages\EditEvent;
 use App\Filament\Resources\Events\Pages\ViewEvent;
 use App\Filament\Resources\Events\RelationManagers\BookingsRelationManager as EventBookingsRelationManager;
+use App\Filament\Resources\Events\RelationManagers\CouponsRelationManager as EventCouponsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\DiscountsRelationManager as EventDiscountsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager as EventPaymentPlansRelationManager;
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Event;
@@ -352,6 +356,7 @@ test('event view page combines infolist and relation manager tabs', function () 
     $staff = User::factory()->create();
     $event = Event::factory()->create(['name' => 'Tabbed Event']);
     $discount = Discount::factory()->for($event)->create(['name' => 'Tabbed Discount']);
+    $coupon = Coupon::factory()->for($event)->create(['code' => 'TABBED10', 'name' => 'Tabbed Coupon']);
     $paymentPlan = EventPaymentPlan::factory()->for($event)->create(['name' => 'Tabbed Plan']);
     $booking = Booking::factory()->for($event)->create(['reference' => 'BRH-EVENT-TAB']);
 
@@ -360,6 +365,7 @@ test('event view page combines infolist and relation manager tabs', function () 
         ->assertOk()
         ->assertSee(__('admin.resources.events.label'))
         ->assertSee(__('admin.event_relation_managers.discounts.label'))
+        ->assertSee(__('admin.event_relation_managers.coupons.label'))
         ->assertSee(__('admin.event_relation_managers.payment_plans.label'))
         ->assertSee(__('admin.event_relation_managers.bookings.label'));
 
@@ -368,6 +374,12 @@ test('event view page combines infolist and relation manager tabs', function () 
         'pageClass' => ViewEvent::class,
     ])
         ->assertCanSeeTableRecords([$discount]);
+
+    Livewire::test(EventCouponsRelationManager::class, [
+        'ownerRecord' => $event,
+        'pageClass' => ViewEvent::class,
+    ])
+        ->assertCanSeeTableRecords([$coupon]);
 
     Livewire::test(EventPaymentPlansRelationManager::class, [
         'ownerRecord' => $event,
@@ -487,6 +499,123 @@ test('staff can save discount amount as omr in filament', function () {
 
     expect($discount->amount_baisa)->toBe(2500)
         ->and($discount->currency)->toBe('OMR');
+});
+
+test('staff can manage coupons in filament', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create(['name' => 'Coupon Event']);
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateCoupon::class)
+        ->fillForm([
+            'event_id' => $event->id,
+            'code' => ' summer10 ',
+            'name' => 'Summer coupon',
+            'type' => 'fixed_amount_per_member',
+            'amount' => '2.500',
+            'currency' => 'OMR',
+            'expires_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+            'minimum_family_members' => 1,
+            'maximum_family_members' => 3,
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $coupon = Coupon::query()->where('code', 'SUMMER10')->firstOrFail();
+
+    expect($coupon->amount_baisa)->toBe(2500)
+        ->and($coupon->currency)->toBe('OMR')
+        ->and($coupon->maximum_family_members)->toBe(3);
+
+    $this->get(CouponResource::getUrl('index'))
+        ->assertOk()
+        ->assertSee('SUMMER10')
+        ->assertSee('Summer coupon')
+        ->assertSee('OMR 2.500');
+});
+
+test('staff can save coupon percentage as a normal percent in filament', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create(['name' => 'Percentage Coupon Event']);
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateCoupon::class)
+        ->fillForm([
+            'event_id' => $event->id,
+            'code' => 'PERCENT105',
+            'name' => 'Percentage coupon',
+            'type' => 'percentage_per_member',
+            'percentage_basis_points' => '10.5',
+            'currency' => 'OMR',
+            'expires_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+            'minimum_family_members' => 1,
+            'maximum_family_members' => null,
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $coupon = Coupon::query()->where('code', 'PERCENT105')->firstOrFail();
+
+    expect($coupon->type->value)->toBe('percentage_per_member')
+        ->and($coupon->percentage_basis_points)->toBe(1050)
+        ->and($coupon->amount_baisa)->toBeNull();
+});
+
+test('staff cannot reuse a coupon code after normalization in filament', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create();
+
+    Coupon::factory()->for($event)->create([
+        'code' => 'SUMMER10',
+    ]);
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateCoupon::class)
+        ->fillForm([
+            'event_id' => $event->id,
+            'code' => ' summer 10 ',
+            'name' => 'Duplicate coupon',
+            'type' => 'fixed_amount_per_member',
+            'amount' => '2.500',
+            'currency' => 'OMR',
+            'expires_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+            'minimum_family_members' => 1,
+            'maximum_family_members' => null,
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['code']);
+});
+
+test('staff must enter valid coupon range and value in filament', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($staff, 'web');
+
+    Livewire::test(CreateCoupon::class)
+        ->fillForm([
+            'event_id' => $event->id,
+            'code' => 'INVALID',
+            'name' => 'Invalid coupon',
+            'type' => 'percentage_per_member',
+            'percentage_basis_points' => '150',
+            'currency' => 'OMR',
+            'expires_at' => now()->addWeek()->format('Y-m-d H:i:s'),
+            'minimum_family_members' => 5,
+            'maximum_family_members' => 2,
+            'is_active' => true,
+        ])
+        ->call('create')
+        ->assertHasFormErrors([
+            'percentage_basis_points',
+            'maximum_family_members',
+        ]);
 });
 
 test('staff must enter a valid discount date and family member range', function () {

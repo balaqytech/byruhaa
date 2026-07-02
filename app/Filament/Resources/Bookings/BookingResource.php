@@ -104,6 +104,9 @@ class BookingResource extends Resource
                                         TextEntry::make('discount_name')
                                             ->label(__('admin.fields.discount'))
                                             ->placeholder('-'),
+                                        TextEntry::make('coupon_code')
+                                            ->label(__('admin.fields.coupon_code'))
+                                            ->placeholder('-'),
                                         TextEntry::make('discount_amount_baisa')
                                             ->label(__('admin.fields.discount_amount'))
                                             ->state(fn (Booking $record): string => self::money($record->discount_amount_baisa, $record->currency)),

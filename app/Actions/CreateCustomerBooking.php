@@ -6,11 +6,13 @@ use App\Enums\AffiliateStatus;
 use App\Enums\EventStatus;
 use App\Models\Affiliate;
 use App\Models\Booking;
+use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
 use App\Services\BookingApprovalService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +27,7 @@ class CreateCustomerBooking
     ) {}
 
     /**
-     * @param  array{event_id: int, family_member_ids: array<int, int>}  $data
+     * @param  array{event_id: int, family_member_ids: array<int, int>, coupon_code?: string|null}  $data
      * @param  array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null  $affiliateAttribution
      */
     public function execute(Customer $customer, array $data, ?array $affiliateAttribution = null): Booking
@@ -44,7 +46,16 @@ class CreateCustomerBooking
 
             $this->validateFamilyMembers($event, $familyMembers, count($familyMemberIds));
 
-            $priceSnapshot = $this->calculateBookingPrice->execute($event, $familyMembers->count());
+            $bookedAt = now();
+            $couponCode = $this->couponCode($data);
+            $priceSnapshot = $this->calculateBookingPrice->execute($event, $familyMembers->count(), $bookedAt, $couponCode);
+
+            if ($couponCode !== null && ! $this->hasEligibleCoupon($event, $familyMembers->count(), $bookedAt, $couponCode)) {
+                throw ValidationException::withMessages([
+                    'coupon_code' => __('ui.messages.invalid_coupon_code'),
+                ]);
+            }
+
             $booking = Booking::create([
                 'customer_id' => $customer->id,
                 'event_id' => $event->id,
@@ -71,6 +82,28 @@ class CreateCustomerBooking
         }
 
         return $booking;
+    }
+
+    /**
+     * @param  array{coupon_code?: string|null}  $data
+     */
+    private function couponCode(array $data): ?string
+    {
+        $couponCode = $data['coupon_code'] ?? null;
+
+        if (! is_string($couponCode) || blank($couponCode)) {
+            return null;
+        }
+
+        return Coupon::normalizeCode($couponCode);
+    }
+
+    private function hasEligibleCoupon(Event $event, int $familyMemberCount, CarbonInterface $bookedAt, string $couponCode): bool
+    {
+        return Coupon::query()
+            ->matchingCode($couponCode)
+            ->eligibleFor($event, $familyMemberCount, $bookedAt)
+            ->exists();
     }
 
     private function usesAutomaticApproval(): bool

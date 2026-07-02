@@ -21,6 +21,8 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
     /** @var array<int> */
     public array $familyMemberIds = [];
 
+    public ?string $couponCode = null;
+
     public function mount(Event $event): void
     {
         abort_unless($event->status === EventStatus::Published, 404);
@@ -36,6 +38,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
         $validated = $this->validate([
             'familyMemberIds' => ['required', 'array', 'min:1'],
             'familyMemberIds.*' => ['integer', 'distinct'],
+            'couponCode' => ['nullable', 'string', 'max:255'],
         ]);
 
         $booking = $createCustomerBooking->execute(
@@ -43,6 +46,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
             [
                 'event_id' => $this->event->id,
                 'family_member_ids' => $validated['familyMemberIds'],
+                'coupon_code' => $validated['couponCode'] ?? null,
             ],
             $affiliateAttribution->current(),
         );
@@ -80,6 +84,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
         return app(CalculateBookingPrice::class)->execute(
             $this->event,
             count(array_unique($this->familyMemberIds)),
+            couponCode: $this->couponCode,
         );
     }
 
@@ -256,6 +261,18 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                         <flux:error name="familyMemberIds" />
                     </div>
 
+                    <flux:field>
+                        <flux:label>{{ __('ui.events.coupon_code') }}</flux:label>
+                        <div class="flex gap-2">
+                            <flux:input wire:model.live.debounce.500ms="couponCode" placeholder="{{ __('ui.events.coupon_code_placeholder') }}" />
+                            <flux:button type="button" wire:click="$set('couponCode', null)">
+                                {{ __('ui.actions.clear') }}
+                            </flux:button>
+                        </div>
+                        <flux:error name="couponCode" />
+                        <flux:error name="coupon_code" />
+                    </flux:field>
+
                     <section class="rounded-xl border border-emerald-900/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                         <div class="flex items-center justify-between gap-3">
                             <flux:heading class="text-base">{{ __('ui.events.order_summary') }}</flux:heading>
@@ -287,6 +304,9 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                             @if ($priceSnapshot->discountName)
                                 <div class="rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:bg-amber-300/10 dark:text-amber-100">
                                     {{ __('ui.events.applied_discount') }}: {{ $priceSnapshot->discountName }}
+                                    @if ($priceSnapshot->couponCode)
+                                        <span dir="ltr">({{ $priceSnapshot->couponCode }})</span>
+                                    @endif
                                 </div>
                             @endif
 

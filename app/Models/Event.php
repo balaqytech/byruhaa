@@ -65,6 +65,14 @@ class Event extends Model
     }
 
     /**
+     * @return HasMany<Coupon, $this>
+     */
+    public function coupons(): HasMany
+    {
+        return $this->hasMany(Coupon::class);
+    }
+
+    /**
      * @return HasMany<EventPaymentPlan, $this>
      */
     public function paymentPlans(): HasMany

@@ -241,6 +241,8 @@ class ByruhaaWebhookSender
                 'pricing' => [
                     'unit_price' => $this->money($booking->unit_price_baisa, $booking->currency),
                     'subtotal' => $this->money($booking->subtotal_baisa, $booking->currency),
+                    'discount_source' => $booking->discountSource(),
+                    'coupon_code' => $booking->coupon_code,
                     'discount_amount' => $this->money($booking->discount_amount_baisa, $booking->currency),
                     'total' => $this->money($booking->total_baisa, $booking->currency),
                     'currency' => $booking->currency,

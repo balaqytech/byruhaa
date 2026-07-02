@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Enums\EventStatus;
+use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
 use Illuminate\Foundation\Http\FormRequest;
@@ -21,6 +22,7 @@ class StoreCustomerBookingRequest extends FormRequest
     public function rules(): array
     {
         $customer = $this->route('customer');
+        $customerId = $customer instanceof Customer ? $customer->id : null;
 
         return [
             'event_id' => [
@@ -33,8 +35,9 @@ class StoreCustomerBookingRequest extends FormRequest
                 'required',
                 'integer',
                 'distinct',
-                Rule::exists(FamilyMember::class, 'id')->where('customer_id', $customer?->id),
+                Rule::exists(FamilyMember::class, 'id')->where('customer_id', $customerId),
             ],
+            'coupon_code' => ['nullable', 'string', 'max:255'],
         ];
     }
 }
