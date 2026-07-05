@@ -79,6 +79,23 @@ test('contact page loads', function () {
         ->assertSee('صفحة التواصل قيد التجهيز');
 });
 
+test('public error pages use the public website style', function () {
+    foreach ([403, 404, 419, 429, 500, 503] as $status) {
+        $this->view("errors.{$status}")
+            ->assertSee((string) $status)
+            ->assertSee(__('ui.errors.label'))
+            ->assertSee(__('ui.errors.home'))
+            ->assertSee('logo-dark.png', false)
+            ->assertSee('data-icon=', false);
+    }
+
+    $this->get('/missing-public-page')
+        ->assertNotFound()
+        ->assertSee(__('ui.errors.404.title'))
+        ->assertSee(route('home'), false)
+        ->assertDontSee('hgi-stroke', false);
+});
+
 test('events page only shows published events', function () {
     $published = Event::factory()->create([
         'name' => 'Published desert retreat',

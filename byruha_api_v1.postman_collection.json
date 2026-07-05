@@ -48,6 +48,11 @@
       "key": "family_member_id",
       "value": "1",
       "type": "string"
+    },
+    {
+      "key": "coupon_code",
+      "value": "API10",
+      "type": "string"
     }
   ],
   "item": [
@@ -444,7 +449,7 @@
     },
     {
       "name": "Customer Bookings",
-      "description": "Create, list, and show bookings for a customer. Booking creation validates that the selected event is published, selected family members belong to the customer, ages match the event age range, seats are available, and pricing is snapshotted.",
+      "description": "Create, list, and show bookings for a customer. Booking creation validates that the selected event is published, selected family members belong to the customer, ages match the event age range, seats are available, optional coupon_code is valid for the selected event and family member count, and pricing is snapshotted.",
       "item": [
         {
           "name": "List customer bookings",
@@ -490,7 +495,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customer_id\": 1,\n      \"event_id\": 1,\n      \"reference\": \"BRH-ABCDEFGH\",\n      \"state\": \"pending_review\",\n      \"state_label\": \"Pending review\",\n      \"reviewed_by_user_id\": null,\n      \"reviewed_at\": null,\n      \"review_notes\": null,\n      \"unit_price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"family_member_count\": 2,\n      \"subtotal\": \"24.000\",\n      \"discount_id\": null,\n      \"discount_name\": null,\n      \"discount_amount\": \"0.000\",\n      \"total\": \"24.000\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"event\": {\n        \"id\": 1,\n        \"name\": \"Published Camp\",\n        \"slug\": \"published-camp\",\n        \"type\": \"camp\",\n        \"status\": \"published\",\n        \"excerpt\": \"A short event summary.\",\n        \"description_html\": \"<p>Event details.</p>\",\n        \"contract_terms_html\": \"<p>Contract terms.</p>\",\n        \"location\": \"Muscat\",\n        \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n        \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n        \"minimum_age\": 9,\n        \"maximum_age\": 16,\n        \"seat_capacity\": 30,\n        \"remaining_seats\": 28,\n        \"price\": \"12.000\",\n        \"currency\": \"OMR\",\n        \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n        \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n      },\n      \"family_members\": [\n        {\n          \"booking_family_member_id\": 1,\n          \"id\": 1,\n          \"name\": \"Salim Said\",\n          \"birth_date\": \"2014-01-01\"\n        }\n      ],\n      \"payment_schedule\": null\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/bookings\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
+              "body": "{\n  \"data\": [\n    {\n      \"id\": 1,\n      \"customer_id\": 1,\n      \"event_id\": 1,\n      \"reference\": \"BRH-ABCDEFGH\",\n      \"state\": \"pending_review\",\n      \"state_label\": \"Pending review\",\n      \"reviewed_by_user_id\": null,\n      \"reviewed_at\": null,\n      \"review_notes\": null,\n      \"unit_price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"family_member_count\": 2,\n      \"subtotal\": \"24.000\",\n      \"discount_id\": null,\n      \"coupon_id\": null,\n      \"coupon_code\": null,\n      \"discount_name\": null,\n      \"discount_source\": null,\n      \"discount_amount\": \"0.000\",\n      \"total\": \"24.000\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"event\": {\n        \"id\": 1,\n        \"name\": \"Published Camp\",\n        \"slug\": \"published-camp\",\n        \"type\": \"camp\",\n        \"status\": \"published\",\n        \"excerpt\": \"A short event summary.\",\n        \"description_html\": \"<p>Event details.</p>\",\n        \"contract_terms_html\": \"<p>Contract terms.</p>\",\n        \"location\": \"Muscat\",\n        \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n        \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n        \"minimum_age\": 9,\n        \"maximum_age\": 16,\n        \"seat_capacity\": 30,\n        \"remaining_seats\": 28,\n        \"price\": \"12.000\",\n        \"currency\": \"OMR\",\n        \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n        \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n      },\n      \"family_members\": [\n        {\n          \"booking_family_member_id\": 1,\n          \"id\": 1,\n          \"name\": \"Salim Said\",\n          \"birth_date\": \"2014-01-01\"\n        }\n      ],\n      \"payment_schedule\": null\n    }\n  ],\n  \"links\": {\n    \"first\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"last\": \"http://byruha.test/api/v1/customers/1/bookings?page=1\",\n    \"prev\": null,\n    \"next\": null\n  },\n  \"meta\": {\n    \"current_page\": 1,\n    \"from\": 1,\n    \"last_page\": 1,\n    \"path\": \"http://byruha.test/api/v1/customers/1/bookings\",\n    \"per_page\": 15,\n    \"to\": 1,\n    \"total\": 1\n  }\n}"
             },
             {
               "name": "404 Customer not found",
@@ -523,7 +528,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"event_id\": 1,\n  \"family_member_ids\": [\n    1,\n    2\n  ]\n}",
+              "raw": "{\n  \"event_id\": 1,\n  \"family_member_ids\": [\n    1,\n    2\n  ],\n  \"coupon_code\": \"{{coupon_code}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -543,7 +548,7 @@
                 "bookings"
               ]
             },
-            "description": "Creates a pending_review booking for the customer. Required fields: event_id, family_member_ids. The event must be published, and family members must belong to this customer."
+            "description": "Creates a pending_review booking for the customer. Required fields: event_id, family_member_ids. Optional: coupon_code. The event must be published, family members must belong to this customer, and coupon_code must match an active, unexpired coupon for the selected event and family member count. Coupon codes are normalized by the API, so casing and surrounding spaces are not important. If the coupon beats the automatic discount, the response snapshots coupon_id, coupon_code, discount_source=\"coupon\", discount_name, discount_amount, and total. If an automatic discount is larger than the coupon, discount_source remains \"discount\" and coupon_id/coupon_code are null."
           },
           "response": [
             {
@@ -557,7 +562,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal\": \"24.000\",\n    \"discount_id\": null,\n    \"discount_name\": null,\n    \"discount_amount\": \"0.000\",\n    \"total\": \"24.000\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      },\n      {\n        \"booking_family_member_id\": 2,\n        \"id\": 2,\n        \"name\": \"Aisha Said\",\n        \"birth_date\": \"2013-05-15\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal\": \"24.000\",\n    \"discount_id\": null,\n    \"coupon_id\": 1,\n    \"coupon_code\": \"API10\",\n    \"discount_name\": \"API coupon\",\n    \"discount_source\": \"coupon\",\n    \"discount_amount\": \"5.000\",\n    \"total\": \"19.000\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      },\n      {\n        \"booking_family_member_id\": 2,\n        \"id\": 2,\n        \"name\": \"Aisha Said\",\n        \"birth_date\": \"2013-05-15\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
             },
             {
               "name": "422 Validation error",
@@ -571,6 +576,19 @@
                 }
               ],
               "body": "{\n  \"message\": \"The selected family member ids.0 is invalid.\",\n  \"errors\": {\n    \"family_member_ids.0\": [\n      \"The selected family member ids.0 is invalid.\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Invalid coupon code",
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"This coupon is invalid for the selected event and family members.\",\n  \"errors\": {\n    \"coupon_code\": [\n      \"This coupon is invalid for the selected event and family members.\"\n    ]\n  }\n}"
             },
             {
               "name": "404 Customer or event not found",
@@ -625,7 +643,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal\": \"24.000\",\n    \"discount_id\": null,\n    \"discount_name\": null,\n    \"discount_amount\": \"0.000\",\n    \"total\": \"24.000\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
+              "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"customer_id\": 1,\n    \"event_id\": 1,\n    \"reference\": \"BRH-ABCDEFGH\",\n    \"state\": \"pending_review\",\n    \"state_label\": \"Pending review\",\n    \"reviewed_by_user_id\": null,\n    \"reviewed_at\": null,\n    \"review_notes\": null,\n    \"unit_price\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"family_member_count\": 2,\n    \"subtotal\": \"24.000\",\n    \"discount_id\": null,\n    \"coupon_id\": 1,\n    \"coupon_code\": \"API10\",\n    \"discount_name\": \"API coupon\",\n    \"discount_source\": \"coupon\",\n    \"discount_amount\": \"5.000\",\n    \"total\": \"19.000\",\n    \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-19T09:00:00.000000Z\",\n    \"event\": {\n      \"id\": 1,\n      \"name\": \"Published Camp\",\n      \"slug\": \"published-camp\",\n      \"type\": \"camp\",\n      \"status\": \"published\",\n      \"excerpt\": \"A short event summary.\",\n      \"description_html\": \"<p>Event details.</p>\",\n      \"contract_terms_html\": \"<p>Contract terms.</p>\",\n      \"location\": \"Muscat\",\n      \"starts_at\": \"2026-07-01T06:00:00.000000Z\",\n      \"ends_at\": \"2026-07-01T12:00:00.000000Z\",\n      \"minimum_age\": 9,\n      \"maximum_age\": 16,\n      \"seat_capacity\": 30,\n      \"remaining_seats\": 28,\n      \"price\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"created_at\": \"2026-06-19T09:00:00.000000Z\",\n      \"updated_at\": \"2026-06-19T09:00:00.000000Z\"\n    },\n    \"family_members\": [\n      {\n        \"booking_family_member_id\": 1,\n        \"id\": 1,\n        \"name\": \"Salim Said\",\n        \"birth_date\": \"2014-01-01\"\n      }\n    ],\n    \"payment_schedule\": null\n  }\n}"
             },
             {
               "name": "404 Not found or booking belongs to another customer",
@@ -680,7 +698,7 @@
                 "payments"
               ]
             },
-            "description": "Creates a full-payment schedule when the booking has no payment schedule, or selects an event payment plan when payment_plan_id is provided. Then initiates the requested booking_installment_id, or the next pending installment when omitted/null. Returns a pending Thawani payment with checkout_url. Booking must belong to the customer, be approved, have signed contracts, and the customer profile must be complete."
+            "description": "Creates a full-payment schedule when the booking has no payment schedule, or selects an event payment plan when payment_plan_id is provided. Then initiates the requested booking_installment_id, or the next pending installment when omitted/null. For positive balances, returns a pending Thawani payment with checkout_url. If a coupon or discount covered the full balance and total is 0.000, the API settles the installment immediately as a paid manual payment with checkout_url=null; do not open a payment webview in that case. Booking must belong to the customer, be approved, have signed contracts, and the customer profile must be complete."
           },
           "response": [
             {
@@ -695,6 +713,19 @@
                 }
               ],
               "body": "{\n  \"data\": {\n    \"id\": 1,\n    \"booking_installment_id\": 1,\n    \"provider\": \"thawani\",\n    \"reference\": \"PAY-ABCDEFGHIJKL\",\n    \"amount\": \"12.000\",\n    \"currency\": \"OMR\",\n    \"state\": \"pending\",\n    \"state_label\": \"Pending\",\n    \"provider_session_id\": \"checkout_session_123\",\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": null,\n    \"checkout_url\": \"https://uatcheckout.thawani.om/pay/checkout_session_123?key=test_publishable_key\",\n    \"request_payload\": {\n      \"client_reference_id\": \"PAY-ABCDEFGHIJKL\",\n      \"mode\": \"payment\",\n      \"products\": [\n        {\n          \"name\": \"Published Camp Full payment\",\n          \"quantity\": 1,\n          \"unit_amount\": \"12.000\"\n        }\n      ],\n      \"success_url\": \"http://byruha.test/payments/thawani/1/success?expires=1780000000&signature=abc123\",\n      \"cancel_url\": \"http://byruha.test/payments/thawani/1/cancel?expires=1780000000&signature=abc123\",\n      \"metadata\": {\n        \"payment_id\": 1,\n        \"booking_id\": 1,\n        \"installment_id\": 1,\n        \"customer_id\": 1\n      }\n    },\n    \"response_payload\": {\n      \"success\": true,\n      \"data\": {\n        \"session_id\": \"checkout_session_123\",\n        \"redirect_url\": \"https://uatcheckout.thawani.om/pay/checkout_session_123?key=test_publishable_key\"\n      }\n    },\n    \"verified_at\": null,\n    \"paid_at\": null,\n    \"created_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 1,\n      \"booking_payment_schedule_id\": 1,\n      \"name\": \"Full payment\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount\": \"12.000\",\n      \"currency\": \"OMR\",\n      \"state\": \"pending\"\n    }\n  }\n}"
+            },
+            {
+              "name": "201 Created - zero total settled",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"data\": {\n    \"id\": 2,\n    \"booking_installment_id\": 2,\n    \"provider\": \"manual\",\n    \"reference\": \"PAY-FREEBOOKING1\",\n    \"amount\": \"0.000\",\n    \"currency\": \"OMR\",\n    \"state\": \"paid\",\n    \"state_label\": \"Paid\",\n    \"provider_session_id\": null,\n    \"provider_payment_id\": null,\n    \"provider_invoice\": null,\n    \"provider_payment_status\": \"paid\",\n    \"checkout_url\": null,\n    \"request_payload\": {\n      \"reason\": \"zero_amount_installment\"\n    },\n    \"response_payload\": {\n      \"message\": \"Settled without a payment gateway because the installment amount is zero.\"\n    },\n    \"verified_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"paid_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"created_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"updated_at\": \"2026-06-23T09:00:00.000000Z\",\n    \"booking_installment\": {\n      \"id\": 2,\n      \"booking_payment_schedule_id\": 2,\n      \"name\": \"Full payment\",\n      \"sequence\": 1,\n      \"percentage\": 100,\n      \"due_date\": \"2026-07-01\",\n      \"amount\": \"0.000\",\n      \"currency\": \"OMR\",\n      \"state\": \"paid\"\n    }\n  }\n}"
             },
             {
               "name": "422 Not payable yet",

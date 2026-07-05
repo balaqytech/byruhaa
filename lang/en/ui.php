@@ -167,6 +167,36 @@ return [
         'validity' => 'Validity',
     ],
 
+    'errors' => [
+        'label' => 'Page notice',
+        'home' => 'Return home',
+        'events' => 'Browse events',
+        '403' => [
+            'title' => 'This area is private',
+            'description' => 'The page you tried to open is reserved for accounts with the right access.',
+        ],
+        '404' => [
+            'title' => 'This path is off the map',
+            'description' => 'The page may have moved, or the link no longer points to an available Byruhaa experience.',
+        ],
+        '419' => [
+            'title' => 'Your session has refreshed',
+            'description' => 'For your security, please return and try the action again from a fresh page.',
+        ],
+        '429' => [
+            'title' => 'Too many requests',
+            'description' => 'Please pause for a moment before trying again.',
+        ],
+        '500' => [
+            'title' => 'Something needs attention',
+            'description' => 'We could not complete this request right now. Please try again shortly.',
+        ],
+        '503' => [
+            'title' => 'We will be back shortly',
+            'description' => 'Byruhaa is temporarily unavailable while we prepare the experience.',
+        ],
+    ],
+
     'family' => [
         'add_family_member' => 'Add family member',
         'age' => 'Age',
