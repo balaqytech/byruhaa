@@ -10,28 +10,28 @@ use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
 
 test('homepage loads', function () {
-    $eventUrl = route('events.show', 'your-guide-to-life-after-school');
-    $customerEventUrl = route('customer.events.show', 'your-guide-to-life-after-school');
-
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSee('منتجع بيرحاء')
-        ->assertSee('دليلك إلى الحياة بعد المدرسة')
-        ->assertSee('بعد الثاني عشر، الطريق يبدأ من هنا')
-        ->assertSee('ابدأ الحجز من صفحة الفعالية')
-        ->assertSee('images/life-after-school-hero.png', false)
-        ->assertSee($eventUrl, false)
-        ->assertSee($customerEventUrl, false)
+        ->assertSee('قريبًا فعاليات أكثر في بيرحاء')
+        ->assertSee('رزنامة بيرحاء قيد التجهيز')
+        ->assertSee('تصفح الفعاليات الحالية')
+        ->assertSee('رحلات في الطبيعة')
+        ->assertSee('ورش وتجارب تعليمية')
+        ->assertSee('مخيمات عائلية')
+        ->assertSee(route('events.index'), false)
+        ->assertSee(route('register'), false)
         ->assertSee('حسابي')
         ->assertSee('logo-dark.png', false)
         ->assertSee(route('affiliate.login'), false)
         ->assertSee(route('affiliate.register'), false)
         ->assertSee('data-icon="home-01"', false)
+        ->assertSee('data-icon="calendar-03"', false)
         ->assertDontSee('cdn.hugeicons.com', false)
         ->assertDontSee('hgi-stroke', false);
 });
 
-test('homepage uses the configured life after school event when it exists', function () {
+test('homepage keeps the coming soon page when the configured event exists', function () {
     Event::factory()->create([
         'id' => 1,
         'name' => 'Older public event',
@@ -41,7 +41,7 @@ test('homepage uses the configured life after school event when it exists', func
 
     $event = Event::factory()->create([
         'id' => 2,
-        'name' => 'دليلك إلى الحياة بعد المدرسة الرسمي',
+        'name' => 'Official life after school event',
         'slug' => 'your-guide-to-life-after-school',
         'status' => EventStatus::Published,
         'seat_capacity' => 40,
@@ -49,9 +49,10 @@ test('homepage uses the configured life after school event when it exists', func
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSee('دليلك إلى الحياة بعد المدرسة الرسمي')
-        ->assertSee(route('events.show', $event), false)
-        ->assertSee(route('customer.events.show', $event), false)
+        ->assertSee('قريبًا فعاليات أكثر في بيرحاء')
+        ->assertSee(route('events.index'), false)
+        ->assertDontSee(route('events.show', $event), false)
+        ->assertDontSee(route('customer.events.show', $event), false)
         ->assertDontSee(route('events.show', 'older-public-event'), false);
 });
 

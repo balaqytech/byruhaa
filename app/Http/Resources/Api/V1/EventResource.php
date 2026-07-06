@@ -29,8 +29,6 @@ class EventResource extends JsonResource
             'type' => $this->type->value,
             'status' => $this->status->value,
             'excerpt' => $this->excerpt,
-            'description_html' => $this->description_html,
-            'contract_terms_html' => $this->contract_terms_html,
             'location' => $this->location,
             'starts_at' => $this->starts_at?->toJSON(),
             'ends_at' => $this->ends_at?->toJSON(),
@@ -40,8 +38,8 @@ class EventResource extends JsonResource
             'remaining_seats' => $this->remainingSeats(),
             'price' => $this->money($this->price),
             'currency' => $this->currency,
-            'available_discounts' => $this->whenLoaded('availableDiscounts', fn () => $this->availableDiscounts->map(
-                fn (Discount $discount): array => [
+            'available_discounts' => $this->whenLoaded('availableDiscounts', fn() => $this->availableDiscounts->map(
+                fn(Discount $discount): array => [
                     'id' => $discount->id,
                     'name' => $discount->name,
                     'type' => 'fixed_amount_per_family_member',
@@ -55,8 +53,8 @@ class EventResource extends JsonResource
                     ],
                 ],
             )->values()),
-            'payment_plans' => $this->whenLoaded('paymentPlans', fn () => $this->paymentPlans->map(
-                fn (EventPaymentPlan $paymentPlan): array => [
+            'payment_plans' => $this->whenLoaded('paymentPlans', fn() => $this->paymentPlans->map(
+                fn(EventPaymentPlan $paymentPlan): array => [
                     'id' => $paymentPlan->id,
                     'name' => $paymentPlan->name,
                     'installments_count' => $paymentPlan->relationLoaded('installments')
@@ -80,7 +78,7 @@ class EventResource extends JsonResource
         $amounts = $this->paymentPlanInstallmentAmounts($paymentPlan);
 
         return $paymentPlan->installments->values()->map(
-            fn (EventPaymentPlanInstallment $installment, int $index): array => [
+            fn(EventPaymentPlanInstallment $installment, int $index): array => [
                 'id' => $installment->id,
                 'name' => $installment->name,
                 'sequence' => $installment->sequence,

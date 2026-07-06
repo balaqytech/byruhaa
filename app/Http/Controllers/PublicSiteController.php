@@ -16,9 +16,14 @@ class PublicSiteController extends Controller
 
     public function home(): View
     {
+        return view('pages.public.site.home');
+    }
+
+    public function newHome(): View
+    {
         $event = $this->homepageEvent();
 
-        return view('pages.public.site.home', [
+        return view('pages.public.site.new-home', [
             'event' => $event,
             'remainingSeats' => $event?->remainingSeats(),
             'title' => $event?->name ?? 'دليلك إلى الحياة بعد المدرسة',
