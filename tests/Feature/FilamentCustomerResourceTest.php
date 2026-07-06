@@ -518,6 +518,8 @@ test('staff can manage coupons in filament', function () {
             'expires_at' => now()->addWeek()->format('Y-m-d H:i:s'),
             'minimum_family_members' => 1,
             'maximum_family_members' => 3,
+            'maximum_uses' => 10,
+            'maximum_uses_per_customer' => 1,
             'is_active' => true,
         ])
         ->call('create')
@@ -527,7 +529,9 @@ test('staff can manage coupons in filament', function () {
 
     expect($coupon->amount_baisa)->toBe(2500)
         ->and($coupon->currency)->toBe('OMR')
-        ->and($coupon->maximum_family_members)->toBe(3);
+        ->and($coupon->maximum_family_members)->toBe(3)
+        ->and($coupon->maximum_uses)->toBe(10)
+        ->and($coupon->maximum_uses_per_customer)->toBe(1);
 
     $this->get(CouponResource::getUrl('index'))
         ->assertOk()

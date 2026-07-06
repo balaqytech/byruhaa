@@ -99,6 +99,18 @@ class CouponForm
                             }
                         },
                     ]),
+                TextInput::make('maximum_uses')
+                    ->label(__('admin.fields.maximum_uses'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->rules(['nullable', 'integer'])
+                    ->helperText(__('admin.coupon_form.help.blank_usage_limit')),
+                TextInput::make('maximum_uses_per_customer')
+                    ->label(__('admin.fields.maximum_uses_per_customer'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->rules(['nullable', 'integer'])
+                    ->helperText(__('admin.coupon_form.help.blank_usage_limit')),
                 Toggle::make('is_active')
                     ->label(__('admin.fields.is_active'))
                     ->default(true),

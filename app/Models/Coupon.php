@@ -31,9 +31,11 @@ use Illuminate\Support\Str;
  * @property Carbon $expires_at
  * @property int $minimum_family_members
  * @property int|null $maximum_family_members
+ * @property int|null $maximum_uses
+ * @property int|null $maximum_uses_per_customer
  * @property bool $is_active
  */
-#[Fillable(['event_id', 'code', 'name', 'type', 'amount', 'amount_baisa', 'percentage_basis_points', 'currency', 'expires_at', 'minimum_family_members', 'maximum_family_members', 'is_active'])]
+#[Fillable(['event_id', 'code', 'name', 'type', 'amount', 'amount_baisa', 'percentage_basis_points', 'currency', 'expires_at', 'minimum_family_members', 'maximum_family_members', 'maximum_uses', 'maximum_uses_per_customer', 'is_active'])]
 class Coupon extends Model
 {
     /** @use HasFactory<CouponFactory> */
@@ -83,6 +85,29 @@ class Coupon extends Model
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * @return HasMany<CouponRedemption, $this>
+     */
+    public function redemptions(): HasMany
+    {
+        return $this->hasMany(CouponRedemption::class);
+    }
+
+    public function activeRedemptionsCount(): int
+    {
+        return (int) $this->redemptions()
+            ->whereNull('released_at')
+            ->count();
+    }
+
+    public function activeRedemptionsCountForCustomer(int $customerId): int
+    {
+        return (int) $this->redemptions()
+            ->where('customer_id', $customerId)
+            ->whereNull('released_at')
+            ->count();
     }
 
     public function amountForFamilyMembers(int $familyMemberCount, Money $subtotal): Money
@@ -153,6 +178,8 @@ class Coupon extends Model
             'expires_at' => 'datetime',
             'minimum_family_members' => 'integer',
             'maximum_family_members' => 'integer',
+            'maximum_uses' => 'integer',
+            'maximum_uses_per_customer' => 'integer',
             'is_active' => 'boolean',
         ];
     }

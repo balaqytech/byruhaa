@@ -105,6 +105,18 @@ class CouponsRelationManager extends RelationManager
                             }
                         },
                     ]),
+                TextInput::make('maximum_uses')
+                    ->label(__('admin.fields.maximum_uses'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->rules(['nullable', 'integer'])
+                    ->helperText(__('admin.coupon_form.help.blank_usage_limit')),
+                TextInput::make('maximum_uses_per_customer')
+                    ->label(__('admin.fields.maximum_uses_per_customer'))
+                    ->numeric()
+                    ->minValue(1)
+                    ->rules(['nullable', 'integer'])
+                    ->helperText(__('admin.coupon_form.help.blank_usage_limit')),
                 Toggle::make('is_active')
                     ->label(__('admin.fields.is_active'))
                     ->default(true),
@@ -135,6 +147,9 @@ class CouponsRelationManager extends RelationManager
                 TextColumn::make('maximum_family_members')
                     ->label(__('admin.fields.maximum_family_members'))
                     ->placeholder('-'),
+                TextColumn::make('usage')
+                    ->label(__('admin.fields.usage'))
+                    ->state(fn (Coupon $record): string => self::usage($record)),
                 TextColumn::make('is_active')
                     ->label(__('admin.fields.is_active'))
                     ->formatStateUsing(fn (bool $state): string => $state ? __('admin.statuses.active') : __('admin.statuses.inactive'))
@@ -169,6 +184,13 @@ class CouponsRelationManager extends RelationManager
         }
 
         return MoneyFormatter::baisa((int) $record->amount_baisa, $record->currency);
+    }
+
+    private static function usage(Coupon $record): string
+    {
+        $maximumUses = $record->maximum_uses === null ? __('admin.fields.unlimited') : (string) $record->maximum_uses;
+
+        return $record->activeRedemptionsCount().' / '.$maximumUses;
     }
 
     private static function moneyInputState(mixed $state): ?string

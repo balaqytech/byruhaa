@@ -41,6 +41,9 @@ class CouponsTable
                 TextColumn::make('maximum_family_members')
                     ->label(__('admin.fields.maximum_family_members'))
                     ->placeholder('-'),
+                TextColumn::make('usage')
+                    ->label(__('admin.fields.usage'))
+                    ->state(fn (Coupon $record): string => self::usage($record)),
                 TextColumn::make('is_active')
                     ->label(__('admin.fields.is_active'))
                     ->formatStateUsing(fn (bool $state): string => $state ? __('admin.statuses.active') : __('admin.statuses.inactive'))
@@ -71,5 +74,12 @@ class CouponsTable
         }
 
         return MoneyFormatter::baisa((int) $record->amount_baisa, $record->currency);
+    }
+
+    private static function usage(Coupon $record): string
+    {
+        $maximumUses = $record->maximum_uses === null ? __('admin.fields.unlimited') : (string) $record->maximum_uses;
+
+        return $record->activeRedemptionsCount().' / '.$maximumUses;
     }
 }

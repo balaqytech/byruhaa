@@ -31,6 +31,8 @@ class CouponFactory extends Factory
             'expires_at' => now()->addWeek(),
             'minimum_family_members' => 1,
             'maximum_family_members' => null,
+            'maximum_uses' => null,
+            'maximum_uses_per_customer' => null,
             'is_active' => true,
         ];
     }

@@ -162,6 +162,12 @@ return [
         ],
     ],
 
+    'coupon_form' => [
+        'help' => [
+            'blank_usage_limit' => 'Leave blank for unlimited usage.',
+        ],
+    ],
+
     'participant_extra_fields' => [
         'heading' => 'Participant extra fields',
         'key' => 'Key',
@@ -290,6 +296,8 @@ return [
         'location' => 'Location',
         'maximum_age' => 'Maximum age',
         'maximum_family_members' => 'Maximum family members',
+        'maximum_uses' => 'Maximum uses',
+        'maximum_uses_per_customer' => 'Maximum uses per customer',
         'meta_description' => 'Meta description',
         'meta_title' => 'Meta title',
         'minimum_age' => 'Minimum age',
@@ -342,7 +350,9 @@ return [
         'title' => 'Title',
         'total' => 'Total',
         'type' => 'Type',
+        'unlimited' => 'Unlimited',
         'updated_at' => 'Updated at',
+        'usage' => 'Usage',
         'verified_at' => 'Verified at',
         'wilaya' => 'Wilaya',
     ],

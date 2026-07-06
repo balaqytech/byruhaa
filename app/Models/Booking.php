@@ -3,7 +3,10 @@
 namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Services\CouponUsageService;
 use App\States\Booking\BookingState;
+use App\States\Booking\Cancelled;
+use App\States\Booking\Rejected;
 use App\States\Contract\Signed;
 use Brick\Money\Money;
 use Database\Factories\BookingFactory;
@@ -66,6 +69,16 @@ class Booking extends Model
         static::creating(function (Booking $booking): void {
             $booking->reference ??= 'BRH-'.Str::upper(Str::random(8));
         });
+
+        static::updated(function (Booking $booking): void {
+            if (! $booking->wasChanged('state')) {
+                return;
+            }
+
+            if ($booking->state instanceof Cancelled || $booking->state instanceof Rejected) {
+                app(CouponUsageService::class)->releaseForBooking($booking);
+            }
+        });
     }
 
     /**
@@ -106,6 +119,14 @@ class Booking extends Model
     public function coupon(): BelongsTo
     {
         return $this->belongsTo(Coupon::class);
+    }
+
+    /**
+     * @return HasOne<CouponRedemption, $this>
+     */
+    public function couponRedemption(): HasOne
+    {
+        return $this->hasOne(CouponRedemption::class);
     }
 
     /**

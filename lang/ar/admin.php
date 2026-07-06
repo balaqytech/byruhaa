@@ -162,6 +162,12 @@ return [
         ],
     ],
 
+    'coupon_form' => [
+        'help' => [
+            'blank_usage_limit' => 'اتركه فارغًا لاستخدام غير محدود.',
+        ],
+    ],
+
     'participant_extra_fields' => [
         'heading' => 'حقول المشاركين الإضافية',
         'key' => 'المفتاح',
@@ -298,6 +304,8 @@ return [
         'location' => 'الموقع',
         'maximum_age' => 'العمر الأقصى',
         'maximum_family_members' => 'الحد الأقصى لأفراد العائلة',
+        'maximum_uses' => 'الحد الأقصى للاستخدامات',
+        'maximum_uses_per_customer' => 'الحد الأقصى للاستخدامات لكل عميل',
         'meta_description' => 'وصف محركات البحث',
         'meta_title' => 'عنوان محركات البحث',
         'minimum_age' => 'العمر الأدنى',
@@ -342,7 +350,9 @@ return [
         'title' => 'العنوان',
         'total' => 'الإجمالي',
         'type' => 'النوع',
+        'unlimited' => 'غير محدود',
         'updated_at' => 'تاريخ التحديث',
+        'usage' => 'الاستخدام',
         'verified_at' => 'تاريخ التحقق',
         'wilaya' => 'الولاية',
     ],

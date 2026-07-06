@@ -449,7 +449,7 @@
     },
     {
       "name": "Customer Bookings",
-      "description": "Create, list, and show bookings for a customer. Booking creation validates that the selected event is published, selected family members belong to the customer, ages match the event age range, seats are available, optional coupon_code is valid for the selected event and family member count, and pricing is snapshotted.",
+      "description": "Create, list, and show bookings for a customer. Booking creation validates that the selected event is published, selected family members belong to the customer, ages match the event age range, seats are available, optional coupon_code is valid for the selected event and family member count with remaining usage, and pricing is snapshotted.",
       "item": [
         {
           "name": "List customer bookings",
@@ -548,7 +548,7 @@
                 "bookings"
               ]
             },
-            "description": "Creates a pending_review booking for the customer. Required fields: event_id, family_member_ids. Optional: coupon_code. The event must be published, family members must belong to this customer, and coupon_code must match an active, unexpired coupon for the selected event and family member count. Coupon codes are normalized by the API, so casing and surrounding spaces are not important. If the coupon beats the automatic discount, the response snapshots coupon_id, coupon_code, discount_source=\"coupon\", discount_name, discount_amount, and total. If an automatic discount is larger than the coupon, discount_source remains \"discount\" and coupon_id/coupon_code are null."
+            "description": "Creates a pending_review booking for the customer. Required fields: event_id, family_member_ids. Optional: coupon_code. The event must be published, family members must belong to this customer, and coupon_code must match an active, unexpired coupon for the selected event and family member count with remaining usage. Coupon codes are normalized by the API, so casing and surrounding spaces are not important. If the coupon beats the automatic discount, the response snapshots coupon_id, coupon_code, discount_source=\"coupon\", discount_name, discount_amount, and total, and consumes one coupon use for this booking. Rejected or cancelled bookings release that coupon use. If an automatic discount is larger than the coupon, discount_source remains \"discount\" and coupon_id/coupon_code are null."
           },
           "response": [
             {
@@ -589,6 +589,19 @@
                 }
               ],
               "body": "{\n  \"message\": \"This coupon is invalid for the selected event and family members.\",\n  \"errors\": {\n    \"coupon_code\": [\n      \"This coupon is invalid for the selected event and family members.\"\n    ]\n  }\n}"
+            },
+            {
+              "name": "422 Coupon usage limit reached",
+              "status": "Unprocessable Content",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"This coupon has reached its usage limit.\",\n  \"errors\": {\n    \"coupon_code\": [\n      \"This coupon has reached its usage limit.\"\n    ]\n  }\n}"
             },
             {
               "name": "404 Customer or event not found",

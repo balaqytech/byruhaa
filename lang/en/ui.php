@@ -257,6 +257,7 @@ return [
         'family_member_updated' => 'Family member updated.',
         'installment_amount_too_small' => 'This installment amount cannot be paid online.',
         'installment_not_payable' => 'This installment cannot be paid right now.',
+        'coupon_usage_limit_reached' => 'This coupon has reached its usage limit.',
         'invalid_coupon_code' => 'This coupon is invalid for the selected event and family members.',
         'invalid_family_member_selection' => 'One or more selected family members are invalid.',
         'invalid_signature' => 'The signature is invalid.',

@@ -11,6 +11,7 @@ use App\Models\Customer;
 use App\Models\Event;
 use App\Models\FamilyMember;
 use App\Services\BookingApprovalService;
+use App\Services\CouponUsageService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
@@ -24,6 +25,7 @@ class CreateCustomerBooking
         private CalculateBookingPrice $calculateBookingPrice,
         private ByruhaaWebhookSender $webhookSender,
         private BookingApprovalService $bookingApprovalService,
+        private CouponUsageService $couponUsageService,
     ) {}
 
     /**
@@ -61,6 +63,12 @@ class CreateCustomerBooking
                 'event_id' => $event->id,
                 ...$priceSnapshot->toBookingAttributes(),
             ]);
+
+            if ($priceSnapshot->couponId !== null) {
+                $coupon = Coupon::query()->findOrFail($priceSnapshot->couponId);
+
+                $this->couponUsageService->redeemForBooking($coupon, $booking);
+            }
 
             foreach ($familyMembers as $familyMember) {
                 $booking->familyMembers()->create([

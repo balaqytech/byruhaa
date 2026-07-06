@@ -9,6 +9,8 @@ use App\Models\Discount;
 use App\Models\Event;
 use App\Models\FamilyMember;
 use App\Services\AffiliateAttribution;
+use App\States\Booking\Cancelled;
+use App\States\Booking\Rejected;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Request;
 use Livewire\Livewire;
@@ -240,3 +242,120 @@ test('customer booking api accepts a valid coupon code and returns coupon snapsh
         ->assertJsonPath('data.discount_amount', '5.000')
         ->assertJsonPath('data.total', '15.000');
 });
+
+test('coupon maximum uses are consumed when bookings are created', function () {
+    $event = Event::factory()->create([
+        'price_baisa' => 10000,
+        'seat_capacity' => 5,
+    ]);
+    $firstCustomer = Customer::factory()->create();
+    $secondCustomer = Customer::factory()->create();
+    $firstFamilyMember = FamilyMember::factory()->for($firstCustomer)->create();
+    $secondFamilyMember = FamilyMember::factory()->for($secondCustomer)->create();
+
+    $coupon = Coupon::factory()->for($event)->create([
+        'code' => 'ONCE',
+        'amount_baisa' => 5000,
+        'maximum_uses' => 1,
+    ]);
+
+    app(CreateCustomerBooking::class)->execute($firstCustomer, [
+        'event_id' => $event->id,
+        'family_member_ids' => [$firstFamilyMember->id],
+        'coupon_code' => 'ONCE',
+    ]);
+
+    expect($coupon->activeRedemptionsCount())->toBe(1);
+
+    $this->postJson("/api/v1/customers/{$secondCustomer->id}/bookings", [
+        'event_id' => $event->id,
+        'family_member_ids' => [$secondFamilyMember->id],
+        'coupon_code' => 'ONCE',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('coupon_code')
+        ->assertJsonPath('errors.coupon_code.0', __('ui.messages.coupon_usage_limit_reached'));
+
+    expect(Booking::query()->count())->toBe(1);
+});
+
+test('coupon maximum uses per customer are enforced independently from global uses', function () {
+    $event = Event::factory()->create([
+        'price_baisa' => 10000,
+        'seat_capacity' => 5,
+    ]);
+    $firstCustomer = Customer::factory()->create();
+    $secondCustomer = Customer::factory()->create();
+    $firstCustomerFamilyMembers = FamilyMember::factory()->count(2)->for($firstCustomer)->create();
+    $secondCustomerFamilyMember = FamilyMember::factory()->for($secondCustomer)->create();
+
+    $coupon = Coupon::factory()->for($event)->create([
+        'code' => 'ONEPER',
+        'amount_baisa' => 5000,
+        'maximum_uses' => 5,
+        'maximum_uses_per_customer' => 1,
+    ]);
+
+    app(CreateCustomerBooking::class)->execute($firstCustomer, [
+        'event_id' => $event->id,
+        'family_member_ids' => [$firstCustomerFamilyMembers[0]->id],
+        'coupon_code' => 'ONEPER',
+    ]);
+
+    $this->postJson("/api/v1/customers/{$firstCustomer->id}/bookings", [
+        'event_id' => $event->id,
+        'family_member_ids' => [$firstCustomerFamilyMembers[1]->id],
+        'coupon_code' => 'ONEPER',
+    ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('coupon_code');
+
+    app(CreateCustomerBooking::class)->execute($secondCustomer, [
+        'event_id' => $event->id,
+        'family_member_ids' => [$secondCustomerFamilyMember->id],
+        'coupon_code' => 'ONEPER',
+    ]);
+
+    expect($coupon->activeRedemptionsCount())->toBe(2)
+        ->and($coupon->activeRedemptionsCountForCustomer($firstCustomer->id))->toBe(1)
+        ->and($coupon->activeRedemptionsCountForCustomer($secondCustomer->id))->toBe(1);
+});
+
+test('rejected and cancelled bookings release coupon usage', function (string $stateClass) {
+    config(['byruhaa.approval_mechanism' => 'manual']);
+
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'price_baisa' => 10000,
+        'seat_capacity' => 5,
+    ]);
+    $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
+    $coupon = Coupon::factory()->for($event)->create([
+        'code' => 'RELEASE',
+        'amount_baisa' => 5000,
+        'maximum_uses' => 1,
+    ]);
+
+    $booking = app(CreateCustomerBooking::class)->execute($customer, [
+        'event_id' => $event->id,
+        'family_member_ids' => [$familyMembers[0]->id],
+        'coupon_code' => 'RELEASE',
+    ]);
+
+    expect($coupon->activeRedemptionsCount())->toBe(1);
+
+    $booking->state->transitionTo($stateClass);
+
+    expect($coupon->activeRedemptionsCount())->toBe(0);
+
+    app(CreateCustomerBooking::class)->execute($customer, [
+        'event_id' => $event->id,
+        'family_member_ids' => [$familyMembers[1]->id],
+        'coupon_code' => 'RELEASE',
+    ]);
+
+    expect($coupon->activeRedemptionsCount())->toBe(1);
+})->with([
+    'rejected' => Rejected::class,
+    'cancelled' => Cancelled::class,
+]);

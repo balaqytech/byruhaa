@@ -86,7 +86,9 @@ class BookingsTable
                     ->visible(fn (Booking $record): bool => ! $record->state instanceof Cancelled)
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->action(fn (Booking $record) => $record->state->transitionTo(Cancelled::class)),
+                    ->action(function (Booking $record): void {
+                        $record->state->transitionTo(Cancelled::class);
+                    }),
                 ViewAction::make(),
                 EditAction::make(),
             ])
