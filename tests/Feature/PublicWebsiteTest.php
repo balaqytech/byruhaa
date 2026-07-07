@@ -31,6 +31,20 @@ test('homepage loads', function () {
         ->assertDontSee('hgi-stroke', false);
 });
 
+test('new home hero uses the Omani graduate reel image for mobile', function () {
+    $this->assertFileExists(public_path('images/after-twelfth-omani-graduate-hero.png'));
+
+    $this->get(route('new-home'))
+        ->assertSuccessful()
+        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
+        ->assertSee('aspect-[9/16]', false)
+        ->assertSee('width="941" height="1672"', false)
+        ->assertSee('order-1 overflow-hidden', false)
+        ->assertSee('order-2 max-w-4xl', false)
+        ->assertSee('lg:order-2', false)
+        ->assertSee('lg:order-1', false);
+});
+
 test('homepage keeps the coming soon page when the configured event exists', function () {
     Event::factory()->create([
         'id' => 1,
