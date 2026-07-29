@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Actions\ReleaseBookingSeats;
 use App\Casts\MoneyBaisaCast;
 use App\Services\CouponUsageService;
 use App\States\Booking\BookingState;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\ModelStates\HasStates;
 
@@ -77,6 +79,10 @@ class Booking extends Model
 
             if ($booking->state instanceof Cancelled || $booking->state instanceof Rejected) {
                 app(CouponUsageService::class)->releaseForBooking($booking);
+                DB::afterCommit(fn () => app(ReleaseBookingSeats::class)->execute(
+                    $booking,
+                    releaseCapturedBooking: true,
+                ));
             }
         });
     }
@@ -143,6 +149,14 @@ class Booking extends Model
     public function paymentSchedule(): HasOne
     {
         return $this->hasOne(BookingPaymentSchedule::class);
+    }
+
+    /**
+     * @return HasOne<BookingSeatAllocation, $this>
+     */
+    public function seatAllocation(): HasOne
+    {
+        return $this->hasOne(BookingSeatAllocation::class);
     }
 
     /**

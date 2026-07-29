@@ -57,6 +57,7 @@ class ImportMigrantsEventBookings
         private ContractRenderer $contractRenderer,
         private PostPaymentLedgerTransaction $postPaymentLedgerTransaction,
         private ByruhaaWebhookSender $webhookSender,
+        private ReserveBookingSeats $reserveBookingSeats,
     ) {}
 
     /**
@@ -720,6 +721,7 @@ class ImportMigrantsEventBookings
         ])->save();
 
         $this->postPaymentLedgerTransaction->execute($payment->refresh());
+        $this->reserveBookingSeats->execute($payment->refresh());
 
         return $payment->refresh();
     }

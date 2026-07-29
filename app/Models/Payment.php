@@ -95,6 +95,14 @@ class Payment extends Model
     }
 
     /**
+     * @return HasOne<BookingSeatAllocation, $this>
+     */
+    public function seatAllocation(): HasOne
+    {
+        return $this->hasOne(BookingSeatAllocation::class);
+    }
+
+    /**
      * @return HasMany<PaymentRefund, $this>
      */
     public function refunds(): HasMany

@@ -17,10 +17,27 @@ use Throwable;
 
 class InitiateInstallmentPayment
 {
-    public function __construct(private PaymentGateway $paymentGateway) {}
+    public function __construct(
+        private PaymentGateway $paymentGateway,
+        private PrepareBookingSeatHold $prepareBookingSeatHold,
+        private ReserveBookingSeats $reserveBookingSeats,
+        private ReleaseBookingSeats $releaseBookingSeats,
+    ) {}
 
     public function execute(BookingInstallment $installment, int $customerId): Payment
     {
+        $installment = BookingInstallment::query()
+            ->whereKey($installment->id)
+            ->whereHas('paymentSchedule.booking', fn ($query) => $query->where('customer_id', $customerId))
+            ->with(['paymentSchedule.booking.customer', 'paymentSchedule.booking.event'])
+            ->firstOrFail();
+
+        $installment->paymentSchedule->booking->customer->ensureProfileIsComplete('payment');
+        $this->validatePayable($installment);
+        if ($installment->paymentSchedule->booking->familyMembers()->exists()) {
+            $this->prepareBookingSeatHold->execute($installment->paymentSchedule->booking_id);
+        }
+
         $payment = DB::transaction(function () use ($installment, $customerId): Payment {
             $installment = BookingInstallment::query()
                 ->whereKey($installment->id)
@@ -29,25 +46,7 @@ class InitiateInstallmentPayment
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $installment->paymentSchedule->booking->customer->ensureProfileIsComplete('payment');
-
-            if ($installment->state !== BookingInstallmentState::Pending) {
-                throw ValidationException::withMessages([
-                    'payment' => __('ui.messages.installment_not_payable'),
-                ]);
-            }
-
-            $firstPendingInstallmentId = $installment->paymentSchedule
-                ->installments()
-                ->where('state', BookingInstallmentState::Pending->value)
-                ->orderBy('sequence')
-                ->value('id');
-
-            if ($firstPendingInstallmentId !== $installment->id) {
-                throw ValidationException::withMessages([
-                    'payment' => __('ui.messages.pay_installments_in_order'),
-                ]);
-            }
+            $this->validatePayable($installment);
 
             if ($installment->amount_baisa === 0) {
                 return $this->settleFreeInstallment($installment);
@@ -63,11 +62,14 @@ class InitiateInstallmentPayment
                 ->where('state', PaymentState::Pending->value)
                 ->whereNotNull('provider_session_id')
                 ->whereNotNull('checkout_url')
-                ->where('created_at', '>=', now()->subHours(12))
                 ->latest()
                 ->first();
 
             if ($existingPayment instanceof Payment) {
+                $installment->paymentSchedule->booking->seatAllocation()->update([
+                    'payment_id' => $existingPayment->id,
+                ]);
+
                 return $existingPayment;
             }
 
@@ -83,6 +85,10 @@ class InitiateInstallmentPayment
                 'request_payload' => $payload,
             ])->save();
 
+            $installment->paymentSchedule->booking->seatAllocation()->update([
+                'payment_id' => $payment->id,
+            ]);
+
             return $payment;
         });
 
@@ -91,6 +97,8 @@ class InitiateInstallmentPayment
         }
 
         if ($payment->state === PaymentState::Paid && $payment->amount_baisa === 0) {
+            $this->reserveBookingSeats->execute($payment);
+
             return $payment->refresh();
         }
 
@@ -113,12 +121,35 @@ class InitiateInstallmentPayment
                 'response_payload' => $this->exceptionPayload($exception),
             ])->save();
 
+            $this->releaseBookingSeats->execute($payment);
+
             throw ValidationException::withMessages([
                 'payment' => __('ui.messages.payment_gateway_unavailable'),
             ]);
         }
 
         return $payment->refresh();
+    }
+
+    private function validatePayable(BookingInstallment $installment): void
+    {
+        if ($installment->state !== BookingInstallmentState::Pending) {
+            throw ValidationException::withMessages([
+                'payment' => __('ui.messages.installment_not_payable'),
+            ]);
+        }
+
+        $firstPendingInstallmentId = $installment->paymentSchedule
+            ->installments()
+            ->where('state', BookingInstallmentState::Pending->value)
+            ->orderBy('sequence')
+            ->value('id');
+
+        if ($firstPendingInstallmentId !== $installment->id) {
+            throw ValidationException::withMessages([
+                'payment' => __('ui.messages.pay_installments_in_order'),
+            ]);
+        }
     }
 
     private function settleFreeInstallment(BookingInstallment $installment): Payment

@@ -16,7 +16,6 @@ use App\States\Booking\Approved;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
 function fakeAffiliateAttribution(): void
@@ -334,7 +333,7 @@ test('booking price snapshot does not change when event price or discount change
         ->total_baisa->toBe(12000);
 });
 
-test('approval consumes seats and creates one contract per family member', function () {
+test('approval does not consume seats and creates one contract per family member', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create();
     $event = Event::factory()->create(['seat_capacity' => 2]);
@@ -348,11 +347,11 @@ test('approval consumes seats and creates one contract per family member', funct
     app(BookingApprovalService::class)->approve($booking, $staff);
 
     expect($booking->refresh()->state)->toBeInstanceOf(Approved::class)
-        ->and($event->remainingSeats())->toBe(0)
+        ->and($event->remainingSeats())->toBe(2)
         ->and(EventContract::count())->toBe(2);
 });
 
-test('approval fails when approved seats would exceed capacity', function () {
+test('approval may exceed capacity because seats are only reserved by payment', function () {
     $staff = User::factory()->create();
     $customer = Customer::factory()->create();
     $event = Event::factory()->create(['seat_capacity' => 1]);
@@ -364,4 +363,8 @@ test('approval fails when approved seats would exceed capacity', function () {
     }
 
     app(BookingApprovalService::class)->approve($booking, $staff);
-})->throws(ValidationException::class);
+
+    expect($booking->refresh()->state)->toBeInstanceOf(Approved::class)
+        ->and($event->remainingSeats())->toBe(1)
+        ->and(EventContract::count())->toBe(2);
+});

@@ -286,6 +286,14 @@ test('staff can save participant extra fields on an event', function () {
                     'help_text' => 'Used for group assignment.',
                 ],
             ],
+            'priceTiers' => [
+                [
+                    'name' => 'Launch tier',
+                    'seat_capacity' => 5,
+                    'price' => '8.000',
+                    'is_active' => true,
+                ],
+            ],
         ])
         ->call('create')
         ->assertHasNoFormErrors();
@@ -301,7 +309,9 @@ test('staff can save participant extra fields on an event', function () {
         ->and($event->landing_page_key)->toBe('life-after-school-v1')
         ->and($event->excerpt)->toBe('A concise public summary.')
         ->and($event->description_html)->toContain('Detailed public content')
-        ->and($event->contract_terms_html)->toContain('Participant contract terms');
+        ->and($event->contract_terms_html)->toContain('Participant contract terms')
+        ->and($event->priceTiers()->count())->toBe(1)
+        ->and($event->priceTiers()->firstOrFail()->price_baisa)->toBe(8000);
 });
 
 test('staff can edit all event wizard fields including price and participant fields', function () {
@@ -342,6 +352,14 @@ test('staff can edit all event wizard fields including price and participant fie
                     'help_text' => 'Used for kit preparation.',
                 ],
             ],
+            'priceTiers' => [
+                [
+                    'name' => 'Edited tier',
+                    'seat_capacity' => 4,
+                    'price' => '9.000',
+                    'is_active' => true,
+                ],
+            ],
         ])
         ->call('save')
         ->assertHasNoFormErrors();
@@ -354,7 +372,9 @@ test('staff can edit all event wizard fields including price and participant fie
         ->and($event->landing_page_key)->toBeNull()
         ->and($event->price_baisa)->toBe(10500)
         ->and($event->participant_extra_fields)->toHaveCount(1)
-        ->and($event->participant_extra_fields[0]['key'])->toBe('shirt_size');
+        ->and($event->participant_extra_fields[0]['key'])->toBe('shirt_size')
+        ->and($event->priceTiers()->count())->toBe(1)
+        ->and($event->priceTiers()->firstOrFail()->price_baisa)->toBe(9000);
 });
 
 test('event view page combines infolist and relation manager tabs', function () {

@@ -593,6 +593,20 @@ test('thawani cancel return cancels the payment attempt only', function () {
         'provider_session_id' => 'checkout_session_cancelled',
     ]);
 
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session/checkout_session_cancelled' => Http::response([
+            'success' => true,
+            'data' => [
+                'session_id' => 'checkout_session_cancelled',
+                'payment_status' => 'unpaid',
+                'total_amount' => 5000,
+            ],
+        ]),
+        'https://uatcheckout.thawani.om/api/v1/checkout/checkout_session_cancelled/cancel' => Http::response([
+            'success' => true,
+        ]),
+    ]);
+
     $this->actingAs($customer, 'customer')
         ->get(URL::signedRoute('payments.thawani.cancel', ['payment' => $payment]))
         ->assertRedirect(route('customer.bookings.show', $installment->paymentSchedule->booking));

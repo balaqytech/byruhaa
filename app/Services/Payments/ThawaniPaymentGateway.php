@@ -54,6 +54,20 @@ class ThawaniPaymentGateway implements PaymentGateway
         return $body;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function cancelSession(string $sessionId): array
+    {
+        $body = $this->request('post', "/checkout/{$sessionId}/cancel", failureMessage: 'Unable to cancel Thawani checkout session.');
+
+        if (! data_get($body, 'success')) {
+            throw $this->gatewayResponseException($body, 'Thawani checkout session cancellation response is invalid.');
+        }
+
+        return $body;
+    }
+
     public function checkoutUrl(string $sessionId): string
     {
         return rtrim($this->checkoutBaseUrl(), '/').'/'.$sessionId.'?key='.$this->publishableKey();

@@ -153,7 +153,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
             </div>
             <div class="rounded-xl bg-white/10 px-4 py-3">
                 <flux:text class="text-emerald-50">{{ __('ui.events.price_per_family_member') }}</flux:text>
-                <x-money :amount-baisa="$event->price_baisa" :currency="$event->currency" class="text-2xl font-semibold text-white" />
+                <x-money :amount-baisa="$priceSnapshot->unitPriceBaisa" :currency="$event->currency" class="text-2xl font-semibold text-white" />
             </div>
         </div>
     </div>

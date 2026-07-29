@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Casts\MoneyBaisaCast;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
+use App\Enums\SeatAllocationState;
 use App\States\Booking\Approved;
 use Brick\Money\Money;
 use Database\Factories\EventFactory;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @property int $id
@@ -49,6 +51,34 @@ class Event extends Model
         'currency' => 'OMR',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (Event $event): void {
+            if (! $event->exists) {
+                return;
+            }
+
+            if ($event->isDirty('seat_capacity')) {
+                $minimumCapacity = max(
+                    $event->unavailableSeatsCount(),
+                    (int) $event->priceTiers()->sum('seat_capacity'),
+                );
+
+                if ($event->seat_capacity < $minimumCapacity) {
+                    throw ValidationException::withMessages([
+                        'seat_capacity' => __('ui.messages.event_capacity_below_usage'),
+                    ]);
+                }
+            }
+
+            if ($event->isDirty('price_baisa') && (int) $event->priceTiers()->max('price_baisa') > $event->price_baisa) {
+                throw ValidationException::withMessages([
+                    'price' => __('ui.messages.event_price_below_tiers'),
+                ]);
+            }
+        });
+    }
+
     /**
      * @return HasMany<Booking, $this>
      */
@@ -81,6 +111,22 @@ class Event extends Model
         return $this->hasMany(EventPaymentPlan::class);
     }
 
+    /**
+     * @return HasMany<EventPriceTier, $this>
+     */
+    public function priceTiers(): HasMany
+    {
+        return $this->hasMany(EventPriceTier::class)->orderBy('position');
+    }
+
+    /**
+     * @return HasMany<BookingSeatAllocation, $this>
+     */
+    public function seatAllocations(): HasMany
+    {
+        return $this->hasMany(BookingSeatAllocation::class);
+    }
+
     public function approvedSeatsCount(): int
     {
         return BookingFamilyMember::query()
@@ -92,7 +138,28 @@ class Event extends Model
 
     public function remainingSeats(): int
     {
-        return max(0, $this->seat_capacity - $this->approvedSeatsCount());
+        return max(0, $this->seat_capacity - $this->unavailableSeatsCount());
+    }
+
+    public function reservedSeatsCount(): int
+    {
+        return (int) $this->seatAllocations()
+            ->where('state', SeatAllocationState::Reserved->value)
+            ->sum('seat_count');
+    }
+
+    public function heldSeatsCount(): int
+    {
+        return (int) $this->seatAllocations()
+            ->where('state', SeatAllocationState::Held->value)
+            ->sum('seat_count');
+    }
+
+    public function unavailableSeatsCount(): int
+    {
+        return (int) $this->seatAllocations()
+            ->whereIn('state', [SeatAllocationState::Held->value, SeatAllocationState::Reserved->value])
+            ->sum('seat_count');
     }
 
     public function isPublished(): bool

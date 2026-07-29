@@ -94,6 +94,7 @@ return [
         'refund' => 'Refund',
         'refund_payment' => 'Refund payment',
         'suspend' => 'Suspend',
+        'add_price_tier' => 'Add early-bird tier',
     ],
 
     'event_types' => [
@@ -105,6 +106,7 @@ return [
     'event_form' => [
         'default_landing_page' => 'Default event page',
         'landing_page_help' => 'Choose a reviewed custom design, or leave this empty to use the standard event page.',
+        'price_tiers_help' => 'Optional early-bird tiers are consumed in order when payment starts. The whole family must fit in one tier; otherwise the next tier or base price is used.',
         'steps' => [
             'basic_information' => 'Basic information',
             'capacity_pricing' => 'Capacity & pricing',
@@ -297,6 +299,9 @@ return [
         'featured_image' => 'Featured image',
         'global' => 'Global',
         'is_active' => 'Active',
+        'price_tiers' => 'Early-bird tiers',
+        'tier_price' => 'Price per participant',
+        'tier_seat_capacity' => 'Tier seats',
         'is_visible' => 'Visible',
         'installment_state' => 'Installment state',
         'installments' => 'Installments',

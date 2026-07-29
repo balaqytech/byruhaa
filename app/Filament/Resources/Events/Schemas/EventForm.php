@@ -9,6 +9,7 @@ use App\Support\EventLandingPageRegistry;
 use App\Support\Money\MoneyFactory;
 use App\Support\ParticipantExtraFields;
 use Brick\Money\Money;
+use Closure;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
@@ -105,6 +106,58 @@ class EventForm
                                 ->label(__('admin.fields.starts_at')),
                             DateTimePicker::make('ends_at')
                                 ->label(__('admin.fields.ends_at')),
+                            Repeater::make('priceTiers')
+                                ->relationship('priceTiers')
+                                ->orderColumn('position')
+                                ->label(__('admin.fields.price_tiers'))
+                                ->helperText(__('admin.event_form.price_tiers_help'))
+                                ->schema([
+                                    TextInput::make('name')
+                                        ->label(__('admin.fields.name'))
+                                        ->required()
+                                        ->maxLength(255),
+                                    TextInput::make('seat_capacity')
+                                        ->label(__('admin.fields.tier_seat_capacity'))
+                                        ->required()
+                                        ->numeric()
+                                        ->minValue(1),
+                                    TextInput::make('price')
+                                        ->label(__('admin.fields.tier_price'))
+                                        ->required()
+                                        ->rules([
+                                            'regex:/^\d+(\.\d{1,3})?$/',
+                                            fn (Get $get): Closure => function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                                                $basePrice = $get('../../price');
+
+                                                if (blank($basePrice) || blank($value)) {
+                                                    return;
+                                                }
+
+                                                $basePriceBaisa = $basePrice instanceof Money
+                                                    ? MoneyFactory::toMinor($basePrice)
+                                                    : MoneyFactory::decimalStringToMinorUnits((string) $basePrice, 'OMR');
+                                                $tierPriceBaisa = $value instanceof Money
+                                                    ? MoneyFactory::toMinor($value)
+                                                    : MoneyFactory::decimalStringToMinorUnits((string) $value, 'OMR');
+
+                                                if ($tierPriceBaisa > $basePriceBaisa) {
+                                                    $fail(__('ui.messages.price_tier_price_above_base'));
+                                                }
+                                            },
+                                        ])
+                                        ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                                        ->suffix('OMR'),
+                                    Toggle::make('is_active')
+                                        ->label(__('admin.fields.is_active'))
+                                        ->default(true),
+                                ])
+                                ->defaultItems(0)
+                                ->columns(2)
+                                ->collapsible()
+                                ->reorderable()
+                                ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                                ->addActionLabel(__('admin.actions.add_price_tier'))
+                                ->columnSpanFull(),
                         ]),
                     Step::make(__('admin.event_form.steps.contract_terms'))
                         ->schema([

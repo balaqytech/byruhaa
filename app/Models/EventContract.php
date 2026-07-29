@@ -26,8 +26,9 @@ use Spatie\ModelStates\HasStates;
  * @property string|null $signed_name
  * @property string|null $signed_ip
  * @property Carbon|null $signed_at
+ * @property Carbon|null $superseded_at
  */
-#[Fillable(['booking_family_member_id', 'state', 'contract_html', 'participant_extra_answers', 'participant_extra_completed_at', 'signature_path', 'signed_name', 'signed_ip', 'signed_at'])]
+#[Fillable(['booking_family_member_id', 'state', 'contract_html', 'participant_extra_answers', 'participant_extra_completed_at', 'signature_path', 'signed_name', 'signed_ip', 'signed_at', 'superseded_at'])]
 class EventContract extends Model
 {
     /** @use HasFactory<EventContractFactory> */
@@ -90,6 +91,7 @@ class EventContract extends Model
             'participant_extra_answers' => 'array',
             'participant_extra_completed_at' => 'datetime',
             'signed_at' => 'datetime',
+            'superseded_at' => 'datetime',
         ];
     }
 }

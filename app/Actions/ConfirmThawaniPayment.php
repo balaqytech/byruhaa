@@ -5,6 +5,9 @@ namespace App\Actions;
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
+use App\Models\Booking;
+use App\Models\BookingSeatAllocation;
+use App\Models\Event;
 use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Webhooks\ByruhaaWebhookSender;
@@ -18,15 +21,18 @@ class ConfirmThawaniPayment
         private PostPaymentLedgerTransaction $postPaymentLedgerTransaction,
         private PostAffiliateCommissionForPayment $postAffiliateCommissionForPayment,
         private ByruhaaWebhookSender $webhookSender,
+        private ReserveBookingSeats $reserveBookingSeats,
+        private ReleaseBookingSeats $releaseBookingSeats,
     ) {}
 
     public function confirm(Payment $payment): Payment
     {
         if ($payment->state === PaymentState::Paid) {
+            $this->reserveBookingSeats->execute($payment);
             $this->postPaymentLedgerTransaction->execute($payment);
             $this->postAffiliateCommissionForPayment->execute($payment);
 
-            return $payment;
+            return $payment->refresh();
         }
 
         if (! $payment->provider_session_id) {
@@ -46,16 +52,15 @@ class ConfirmThawaniPayment
         $providerAmount = data_get($session, 'total_amount');
         $providerReference = data_get($session, 'client_reference_id');
         $providerSessionId = data_get($session, 'session_id');
-
         $becamePaid = false;
         $paidVerificationError = null;
+        [$bookingId, $eventId] = $this->bookingAndEventIds($payment);
 
-        $payment = DB::transaction(function () use ($payment, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, $providerReference, $providerSessionId, &$becamePaid, &$paidVerificationError): Payment {
-            $payment = Payment::query()
-                ->whereKey($payment->id)
-                ->with('bookingInstallment')
-                ->lockForUpdate()
-                ->firstOrFail();
+        $payment = DB::transaction(function () use ($payment, $bookingId, $eventId, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, $providerReference, $providerSessionId, &$becamePaid, &$paidVerificationError): Payment {
+            Event::query()->whereKey($eventId)->lockForUpdate()->firstOrFail();
+            Booking::query()->whereKey($bookingId)->lockForUpdate()->firstOrFail();
+            BookingSeatAllocation::query()->where('booking_id', $bookingId)->lockForUpdate()->first();
+            $payment = Payment::query()->whereKey($payment->id)->with('bookingInstallment')->lockForUpdate()->firstOrFail();
 
             if ($payment->state === PaymentState::Paid) {
                 return $payment;
@@ -69,12 +74,7 @@ class ConfirmThawaniPayment
             };
 
             if ($state === PaymentState::Paid) {
-                $paidVerificationError = $this->paidVerificationError(
-                    $payment,
-                    $providerAmount,
-                    $providerReference,
-                    $providerSessionId,
-                );
+                $paidVerificationError = $this->paidVerificationError($payment, $providerAmount, $providerReference, $providerSessionId);
             }
 
             if ($paidVerificationError !== null) {
@@ -99,12 +99,17 @@ class ConfirmThawaniPayment
 
                 $this->postPaymentLedgerTransaction->execute($payment);
                 $this->postAffiliateCommissionForPayment->execute($payment);
-
                 $becamePaid = true;
             }
 
             return $payment->refresh();
         });
+
+        if ($payment->state === PaymentState::Paid) {
+            $this->reserveBookingSeats->execute($payment);
+        } elseif ($paidVerificationError === null && in_array($payment->state, [PaymentState::Cancelled, PaymentState::Failed], true)) {
+            $this->releaseBookingSeats->execute($payment, true);
+        }
 
         if ($becamePaid) {
             $this->webhookSender->sendPaymentPaid($payment);
@@ -119,11 +124,30 @@ class ConfirmThawaniPayment
 
     public function cancel(Payment $payment): Payment
     {
-        return DB::transaction(function () use ($payment): Payment {
-            $payment = Payment::query()
-                ->whereKey($payment->id)
-                ->lockForUpdate()
-                ->firstOrFail();
+        if ($payment->state === PaymentState::Paid) {
+            $this->reserveBookingSeats->execute($payment);
+
+            return $payment->refresh();
+        }
+
+        if ($payment->provider_session_id) {
+            $payment = $this->confirm($payment);
+
+            if ($payment->state === PaymentState::Paid) {
+                return $payment;
+            }
+
+            if ($payment->state === PaymentState::Pending) {
+                $this->gateway($payment)->cancelSession($payment->provider_session_id);
+            }
+        }
+
+        [$bookingId, $eventId] = $this->bookingAndEventIds($payment);
+
+        $payment = DB::transaction(function () use ($payment, $bookingId, $eventId): Payment {
+            Event::query()->whereKey($eventId)->lockForUpdate()->firstOrFail();
+            Booking::query()->whereKey($bookingId)->lockForUpdate()->firstOrFail();
+            $payment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
 
             if ($payment->state !== PaymentState::Paid) {
                 $payment->forceFill([
@@ -135,6 +159,10 @@ class ConfirmThawaniPayment
 
             return $payment->refresh();
         });
+
+        $this->releaseBookingSeats->execute($payment, true);
+
+        return $payment;
     }
 
     private function gateway(Payment $payment): PaymentGateway
@@ -148,12 +176,17 @@ class ConfirmThawaniPayment
         return $gateway;
     }
 
-    private function paidVerificationError(
-        Payment $payment,
-        mixed $providerAmount,
-        mixed $providerReference,
-        mixed $providerSessionId,
-    ): ?string {
+    /** @return array{int, int} */
+    private function bookingAndEventIds(Payment $payment): array
+    {
+        $payment->loadMissing('bookingInstallment.paymentSchedule.booking');
+        $booking = $payment->bookingInstallment->paymentSchedule->booking;
+
+        return [$booking->id, $booking->event_id];
+    }
+
+    private function paidVerificationError(Payment $payment, mixed $providerAmount, mixed $providerReference, mixed $providerSessionId): ?string
+    {
         if (! is_numeric($providerAmount)) {
             return 'Paid Thawani session is missing a valid total amount.';
         }

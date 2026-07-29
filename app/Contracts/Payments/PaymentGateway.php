@@ -17,6 +17,11 @@ interface PaymentGateway
      */
     public function retrieveSession(string $sessionId): array;
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function cancelSession(string $sessionId): array;
+
     public function checkoutUrl(string $sessionId): string;
 
     /**

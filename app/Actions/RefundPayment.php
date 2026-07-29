@@ -21,6 +21,7 @@ class RefundPayment
     public function __construct(
         private PaymentGatewayManager $paymentGateways,
         private PostRefundLedgerTransaction $postRefundLedgerTransaction,
+        private ReleaseBookingSeats $releaseBookingSeats,
     ) {}
 
     public function execute(Payment $payment, ?int $amountBaisa = null, string $reason = 'Customer refund'): PaymentRefund
@@ -94,7 +95,7 @@ class RefundPayment
         $refundId = (string) data_get($response, 'data.refund_id');
         $providerStatus = (string) data_get($response, 'data.status', 'succeeded');
 
-        return DB::transaction(function () use ($paymentRefund, $response, $refundId, $providerPaymentId, $providerStatus): PaymentRefund {
+        $paymentRefund = DB::transaction(function () use ($paymentRefund, $response, $refundId, $providerPaymentId, $providerStatus): PaymentRefund {
             $paymentRefund = PaymentRefund::query()
                 ->whereKey($paymentRefund->id)
                 ->with('payment.bookingInstallment')
@@ -127,6 +128,12 @@ class RefundPayment
 
             return $paymentRefund->refresh();
         });
+
+        if ($paymentRefund->payment->state === PaymentState::Refunded) {
+            $this->releaseBookingSeats->execute($paymentRefund->payment);
+        }
+
+        return $paymentRefund;
     }
 
     private function providerPaymentId(Payment $payment): string

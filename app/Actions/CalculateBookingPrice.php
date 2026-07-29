@@ -6,17 +6,21 @@ use App\Data\BookingPriceSnapshot;
 use App\Models\Coupon;
 use App\Models\Discount;
 use App\Models\Event;
+use App\Models\EventPriceTier;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Carbon\CarbonInterface;
 
 class CalculateBookingPrice
 {
+    public function __construct(private ResolveEventPriceTier $resolveEventPriceTier) {}
+
     public function execute(Event $event, int $familyMemberCount, ?CarbonInterface $bookedAt = null, ?string $couponCode = null): BookingPriceSnapshot
     {
         $bookedAt ??= now();
         $familyMemberCount = max(0, $familyMemberCount);
-        $unitPrice = $event->price;
+        $tier = $this->resolveEventPriceTier->execute($event, max(1, $familyMemberCount));
+        $unitPrice = $tier instanceof EventPriceTier ? $tier->price : $event->price;
 
         if ($unitPrice->isNegative()) {
             $unitPrice = MoneyFactory::zero($event->currency);

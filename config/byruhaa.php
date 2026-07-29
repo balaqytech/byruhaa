@@ -2,6 +2,7 @@
 
 return [
     'approval_mechanism' => env('BYRUHAA_APPROVAL_MECHANISM', 'manual'),
+    'seat_hold_minutes' => (int) env('BYRUHAA_SEAT_HOLD_MINUTES', 15),
 
     'webhooks' => [
         'customer_registered_url' => env('BYRUHAA_CUSTOMER_REGISTERED_WEBHOOK_URL'),

@@ -94,6 +94,7 @@ return [
         'reject' => 'رفض',
         'refund' => 'استرداد',
         'refund_payment' => 'استرداد الدفعة',
+        'add_price_tier' => 'إضافة باكورة',
     ],
 
     'event_types' => [
@@ -105,6 +106,7 @@ return [
     'event_form' => [
         'default_landing_page' => 'صفحة الفعالية الافتراضية',
         'landing_page_help' => 'اختر تصميماً مخصصاً تمت مراجعته، أو اترك الحقل فارغاً لاستخدام صفحة الفعالية القياسية.',
+        'price_tiers_help' => 'باكورات اختيارية تُستهلك بالترتيب عند بدء الدفع. يجب أن تتسع الباكورة للحجز العائلي كاملاً، وإلا ينتقل للسعر التالي أو السعر الأساسي.',
         'steps' => [
             'basic_information' => 'البيانات الأساسية',
             'capacity_pricing' => 'السعة والتسعير',
@@ -305,6 +307,9 @@ return [
         'featured_image' => 'الصورة البارزة',
         'global' => 'عام',
         'is_active' => 'نشط',
+        'price_tiers' => 'باكورات السعر',
+        'tier_price' => 'سعر المشارك',
+        'tier_seat_capacity' => 'مقاعد الباكورة',
         'is_visible' => 'ظاهر',
         'installment_state' => 'حالة القسط',
         'installments' => 'الأقساط',

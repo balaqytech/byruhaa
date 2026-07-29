@@ -33,12 +33,6 @@ class BookingApprovalService
                 ]);
             }
 
-            if ($booking->event->remainingSeats() < $requestedSeats) {
-                throw ValidationException::withMessages([
-                    'booking' => __('ui.messages.not_enough_seats'),
-                ]);
-            }
-
             $booking->forceFill([
                 'reviewed_by_user_id' => $reviewer?->id,
                 'reviewed_at' => now(),
