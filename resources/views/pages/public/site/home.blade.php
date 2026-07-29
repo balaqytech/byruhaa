@@ -1,121 +1,231 @@
 @extends('layouts.public', [
-    'title' => 'قريبًا فعاليات أكثر',
-    'metaDescription' => 'فعاليات وتجارب جديدة من منتجع بيرحاء قيد التجهيز، مع رحلات وورش ومخيمات سياحية قادمة قريبًا.',
+    'title' => $title,
+    'metaDescription' => $metaDescription,
 ])
+
+@php
+    $featuredImage = match ($featuredEvent?->landing_page_key) {
+        'umrah-2026-v1' => asset('images/umrah-2026-hero.png'),
+        'life-after-school-v1' => asset('images/after-twelfth-omani-graduate-hero.png'),
+        default => asset('images/after-twelfth-plan-workshop.png'),
+    };
+@endphp
 
 @section('content')
     <section class="relative isolate overflow-hidden">
-        <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-2/3 bg-[radial-gradient(circle_at_18%_22%,rgba(0,144,96,0.20),transparent_32%),radial-gradient(circle_at_82%_16%,rgba(24,152,176,0.16),transparent_34%),linear-gradient(135deg,rgba(223,246,239,0.96),rgba(255,255,255,0.72)_48%,rgba(248,232,196,0.48))] dark:bg-[radial-gradient(circle_at_18%_22%,rgba(0,144,96,0.18),transparent_32%),radial-gradient(circle_at_82%_16%,rgba(224,168,0,0.12),transparent_34%),linear-gradient(135deg,rgba(7,18,15,0.95),rgba(14,55,45,0.74)_54%,rgba(7,18,15,0.95))]"></div>
+        <div
+            class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,rgba(0,144,96,0.16),transparent_30%),radial-gradient(circle_at_88%_82%,rgba(42,128,105,0.10),transparent_34%)] dark:bg-[radial-gradient(circle_at_14%_18%,rgba(52,211,153,0.12),transparent_30%),radial-gradient(circle_at_88%_82%,rgba(42,128,105,0.12),transparent_34%)]">
+        </div>
 
-        <div class="mx-auto grid min-h-[calc(100dvh-5rem)] w-full max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.78fr)] lg:px-8 lg:py-20">
-            <div class="max-w-4xl">
-                <p class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-[#009060]/18 bg-white/72 px-3 py-2 text-sm font-bold text-[#009060] shadow-sm shadow-[#123329]/5 dark:border-[#e0a800]/24 dark:bg-white/8 dark:text-[#e0a800]">
-                    <x-hugeicon name="calendar-03" class="text-lg" />
-                    <span>رزنامة بيرحاء قيد التجهيز</span>
+        <div
+            class="mx-auto grid min-h-[calc(100dvh-5rem)] w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.88fr)_minmax(480px,1.12fr)] lg:px-8 lg:py-16">
+            <div class="public-hero-copy max-w-3xl">
+                <p
+                    class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-[#009060]/20 bg-white/72 px-3 py-2 text-sm font-bold text-[#007a52] shadow-sm shadow-[#123329]/5 dark:border-[#34d399]/20 dark:bg-white/6 dark:text-[#6ee7b7]">
+                    <x-hugeicon name="map-pin" class="text-lg" />
+                    بيرحاء إبراء
                 </p>
 
-                <h1 class="mt-6 max-w-4xl font-heading text-4xl font-bold leading-tight text-[#123329] sm:text-5xl lg:text-6xl dark:text-[#f7f1df]">
-                    قريبًا فعاليات أكثر في بيرحاء
+                <h1
+                    class="mt-5 max-w-3xl font-heading text-4xl font-bold leading-[1.2] text-[#123329] sm:text-5xl lg:text-6xl dark:text-[#f7f1df]">
+                    مساحةٌ ينضج فيها الفتى بالفعل
                 </h1>
 
-                <p class="mt-6 max-w-2xl text-lg leading-9 text-[#123329]/72 dark:text-[#f7f1df]/72">
-                    نجهز موسمًا جديدًا من الرحلات والورش والمخيمات الهادئة، بتجارب سياحية تمنح العائلة وقتًا أوسع لاكتشاف المكان والناس والطبيعة.
+                <p class="mt-6 max-w-[58ch] text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/80">
+                    برامج تربوية ورحلات ومخيمات تجمع العبادة والعلم والمسؤولية والصحبة الطيبة في تجربة واحدة.
                 </p>
 
                 <div class="mt-8 flex flex-wrap gap-3">
-                    @if (Route::has('events.index'))
-                        <a href="{{ route('events.index') }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#009060] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#009060]/18 transition hover:-translate-y-0.5 hover:bg-[#007a52] active:translate-y-0 dark:bg-[#e0a800] dark:text-[#07120f] dark:hover:bg-[#f0c63c]">
-                            <span>تصفح الفعاليات الحالية</span>
-                            <x-hugeicon name="arrow-left-02" class="text-lg" />
-                        </a>
-                    @endif
-
-                    @if (Route::has('register'))
-                        <a href="{{ route('register') }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#009060]/22 bg-white/64 px-6 py-3 text-sm font-bold text-[#009060] shadow-sm shadow-[#123329]/5 transition hover:-translate-y-0.5 hover:border-[#009060]/40 hover:bg-white active:translate-y-0 dark:border-[#e0a800]/26 dark:bg-white/8 dark:text-[#e0a800] dark:hover:bg-white/12">
-                            <span>أنشئ حسابك</span>
-                            <x-hugeicon name="user-circle" class="text-lg" />
-                        </a>
-                    @endif
+                    <a href="{{ route('events.index') }}"
+                        class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm bg-[#007a52] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#007a52]/16 transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                        <span>استكشف الفعاليات</span>
+                        <x-hugeicon name="arrow-left-02" class="text-lg" />
+                    </a>
+                    <a href="{{ route('about') }}"
+                        class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-[#123329]/18 bg-white/68 px-6 py-3 text-sm font-bold text-[#123329] transition hover:-translate-y-0.5 hover:border-[#007a52]/38 hover:text-[#007a52] active:translate-y-px dark:border-white/16 dark:bg-white/5 dark:text-[#f7f1df] dark:hover:border-[#6ee7b7]/36 dark:hover:text-[#6ee7b7] motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                        <span>تعرّف إلى بيرحاء</span>
+                        <x-hugeicon name="information-circle" class="text-lg" />
+                    </a>
                 </div>
             </div>
 
-            <aside class="relative overflow-hidden rounded-sm border border-[#2a8069]/14 bg-white/78 p-5 shadow-2xl shadow-[#123329]/10 dark:border-white/10 dark:bg-white/8 dark:shadow-black/30">
-                <div class="absolute inset-x-5 top-5 h-24 rounded-sm bg-[linear-gradient(90deg,rgba(0,144,96,0.18),rgba(24,152,176,0.14),rgba(224,168,0,0.14))] blur-2xl"></div>
-
-                <div class="relative grid gap-4">
-                    <div class="rounded-sm border border-[#009060]/14 bg-[#f6fbf8]/82 p-5 dark:border-white/10 dark:bg-[#07120f]/72">
-                        <div class="flex items-center justify-between gap-4">
-                            <span class="text-sm font-bold text-[#123329]/58 dark:text-[#f7f1df]/62">القادم في الرزنامة</span>
-                            <span class="inline-flex size-11 items-center justify-center rounded-sm bg-[#009060]/10 text-[#009060] dark:bg-[#e0a800]/12 dark:text-[#e0a800]">
-                                <x-hugeicon name="sparkles" class="text-2xl" />
-                            </span>
-                        </div>
-
-                        <div class="mt-8 grid gap-3">
-                            <div class="flex items-center gap-3 rounded-sm bg-white/76 p-3 ring-1 ring-[#2a8069]/10 dark:bg-white/8 dark:ring-white/10">
-                                <x-hugeicon name="map-pin" class="text-2xl text-[#009060] dark:text-[#e0a800]" />
-                                <div>
-                                    <p class="font-heading text-lg font-bold text-[#123329] dark:text-[#f7f1df]">رحلات في الطبيعة</p>
-                                    <p class="text-sm text-[#123329]/58 dark:text-[#f7f1df]/58">مسارات هادئة ومواقع مختارة بعناية</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-3 rounded-sm bg-white/76 p-3 ring-1 ring-[#2a8069]/10 dark:bg-white/8 dark:ring-white/10">
-                                <x-hugeicon name="book-open-text" class="text-2xl text-[#1898b0] dark:text-[#e0a800]" />
-                                <div>
-                                    <p class="font-heading text-lg font-bold text-[#123329] dark:text-[#f7f1df]">ورش وتجارب تعليمية</p>
-                                    <p class="text-sm text-[#123329]/58 dark:text-[#f7f1df]/58">تعلم عملي بروح سياحية مريحة</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-3 rounded-sm bg-white/76 p-3 ring-1 ring-[#2a8069]/10 dark:bg-white/8 dark:ring-white/10">
-                                <x-hugeicon name="user-group" class="text-2xl text-[#30b070] dark:text-[#e0a800]" />
-                                <div>
-                                    <p class="font-heading text-lg font-bold text-[#123329] dark:text-[#f7f1df]">مخيمات عائلية</p>
-                                    <p class="text-sm text-[#123329]/58 dark:text-[#f7f1df]/58">برامج مناسبة للأهل والأبناء</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="rounded-sm bg-[#009060]/10 p-4 text-center dark:bg-white/8">
-                            <p class="font-heading text-3xl font-bold text-[#123329] dark:text-[#f7f1df]">٣</p>
-                            <p class="mt-1 text-xs font-semibold text-[#123329]/58 dark:text-[#f7f1df]/58">مسارات</p>
-                        </div>
-                        <div class="rounded-sm bg-[#1898b0]/10 p-4 text-center dark:bg-white/8">
-                            <p class="font-heading text-3xl font-bold text-[#123329] dark:text-[#f7f1df]">٤</p>
-                            <p class="mt-1 text-xs font-semibold text-[#123329]/58 dark:text-[#f7f1df]/58">تجارب</p>
-                        </div>
-                        <div class="rounded-sm bg-[#e0a800]/14 p-4 text-center dark:bg-[#e0a800]/12">
-                            <p class="font-heading text-3xl font-bold text-[#123329] dark:text-[#f7f1df]">قريبًا</p>
-                            <p class="mt-1 text-xs font-semibold text-[#123329]/58 dark:text-[#f7f1df]/58">الحجز</p>
-                        </div>
-                    </div>
+            <div class="relative mx-auto w-full max-w-2xl lg:mx-0">
+                <div
+                    class="overflow-hidden rounded-sm border border-[#2a8069]/14 bg-white shadow-[0_32px_90px_rgba(18,51,41,0.16)] dark:border-white/10 dark:bg-white/5 dark:shadow-black/30">
+                    <img src="{{ asset('images/after-twelfth-plan-workshop.png') }}"
+                        alt="فتيان عُمانيون يعملون مع مرشد على خطة عملية" width="1536" height="1024"
+                        fetchpriority="high" class="aspect-[3/2] h-full w-full object-cover">
                 </div>
-            </aside>
+                <div
+                    class="mt-4 grid grid-cols-[0.72fr_1.28fr] items-end gap-4 sm:ms-12 lg:-mt-20 lg:ms-10 lg:me-[-2rem]">
+                    <div class="overflow-hidden rounded-sm border-4 border-[#f6fbf8] shadow-xl shadow-[#123329]/12 dark:border-[#07120f]">
+                        <img src="{{ asset('images/after-twelfth-mentor-circle.png') }}"
+                            alt="جلسة إرشاد تربوية تحفظ خصوصية المشاركين" width="864" height="1821" loading="eager"
+                            class="aspect-[4/5] h-full w-full object-cover">
+                    </div>
+                    <blockquote
+                        class="border-s-2 border-[#007a52] py-2 ps-5 text-lg font-semibold leading-8 text-[#123329] dark:border-[#6ee7b7] dark:text-[#f7f1df]">
+                        لا نكتفي بأن يعرف الفتى الصواب، بل نهيّئ له أن يعيشه ويختاره.
+                    </blockquote>
+                </div>
+            </div>
         </div>
     </section>
 
-    <section class="bg-white/58 py-14 dark:bg-white/5 lg:py-20">
-        <div class="mx-auto grid w-full max-w-7xl gap-5 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
-            <article class="rounded-sm border border-[#2a8069]/12 bg-white/72 p-6 shadow-sm shadow-[#123329]/5 dark:border-white/10 dark:bg-white/8 dark:shadow-black/20">
-                <x-hugeicon name="clock-01" class="text-3xl text-[#009060] dark:text-[#e0a800]" />
-                <h2 class="mt-5 font-heading text-2xl font-bold text-[#123329] dark:text-[#f7f1df]">إطلاق متدرج</h2>
-                <p class="mt-3 text-sm leading-7 text-[#123329]/66 dark:text-[#f7f1df]/66">سنضيف الفعاليات تباعًا حتى تكون التفاصيل والأسعار والمقاعد واضحة قبل فتح الحجز.</p>
-            </article>
+    <section class="border-y border-[#2a8069]/12 bg-white/62 dark:border-white/10 dark:bg-white/[0.03]">
+        <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-8 lg:py-20">
+            <div>
+                <h2 class="font-heading text-3xl font-bold leading-tight text-[#123329] lg:text-4xl dark:text-[#f7f1df]">
+                    يومٌ متوازن، وأثرٌ يمتد
+                </h2>
+                <p class="mt-4 max-w-[52ch] leading-8 text-[#315e52] dark:text-[#d2e7df]/76">
+                    نصمم التجربة حول الفتى كاملًا، فلا ينفصل ما يتعلمه عما يفعله، ولا تنتهي الصلة بانتهاء البرنامج.
+                </p>
+            </div>
 
-            <article class="rounded-sm border border-[#2a8069]/12 bg-white/72 p-6 shadow-sm shadow-[#123329]/5 dark:border-white/10 dark:bg-white/8 dark:shadow-black/20">
-                <x-hugeicon name="check-list" class="text-3xl text-[#1898b0] dark:text-[#e0a800]" />
-                <h2 class="mt-5 font-heading text-2xl font-bold text-[#123329] dark:text-[#f7f1df]">تفاصيل مكتملة</h2>
-                <p class="mt-3 text-sm leading-7 text-[#123329]/66 dark:text-[#f7f1df]/66">كل تجربة ستصل بصفحة واضحة للبرنامج، الفئة المناسبة، خيارات الدفع، وما يحتاجه المشارك قبل الوصول.</p>
-            </article>
+            <div class="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+                @foreach ([
+                    ['icon' => 'book-open-text', 'title' => 'عبادة وعلم', 'body' => 'معنى واضح، وممارسة هادئة، ومساحة آمنة للسؤال.'],
+                    ['icon' => 'checkmark-badge-01', 'title' => 'عمل ومسؤولية', 'body' => 'مهمات حقيقية يتعلم فيها الفتى أن يخدم ويقرر ويتحمل.'],
+                    ['icon' => 'user-group', 'title' => 'حركة وصحبة', 'body' => 'لعب وتحديات وصحبة صالحة تصنع الألفة من دون تكلف.'],
+                    ['icon' => 'clock-01', 'title' => 'متابعة بعدية', 'body' => 'ما يبدأ في المخيم يعود مع الفتى إلى بيته ومدرسته وحياته.'],
+                ] as $pillar)
+                    <article class="public-card border-t border-[#2a8069]/18 pt-5 dark:border-white/12">
+                        <div class="flex items-start gap-4">
+                            <span
+                                class="flex size-11 shrink-0 items-center justify-center rounded-sm bg-[#007a52]/10 text-[#007a52] dark:bg-[#6ee7b7]/10 dark:text-[#6ee7b7]">
+                                <x-hugeicon :name="$pillar['icon']" class="text-xl" />
+                            </span>
+                            <div>
+                                <h3 class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">
+                                    {{ $pillar['title'] }}</h3>
+                                <p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">{{ $pillar['body'] }}</p>
+                            </div>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </div>
+    </section>
 
-            <article class="rounded-sm border border-[#2a8069]/12 bg-white/72 p-6 shadow-sm shadow-[#123329]/5 dark:border-white/10 dark:bg-white/8 dark:shadow-black/20">
-                <x-hugeicon name="mail-01" class="text-3xl text-[#30b070] dark:text-[#e0a800]" />
-                <h2 class="mt-5 font-heading text-2xl font-bold text-[#123329] dark:text-[#f7f1df]">تابع التحديثات</h2>
-                <p class="mt-3 text-sm leading-7 text-[#123329]/66 dark:text-[#f7f1df]/66">احتفظ بحسابك جاهزًا، وتابع صفحة الفعاليات عند إعلان الدفعة القادمة من برامج بيرحاء.</p>
+    <section class="mx-auto w-full max-w-7xl px-4 py-18 sm:px-6 lg:px-8 lg:py-24">
+        @if ($featuredEvent)
+            <article
+                class="public-card overflow-hidden rounded-sm border border-[#2a8069]/14 bg-[#0d2b25] text-white shadow-[0_26px_80px_rgba(18,51,41,0.16)] dark:border-white/10">
+                <div class="grid lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
+                    <div class="relative min-h-80 overflow-hidden lg:min-h-[34rem]">
+                        <img src="{{ $featuredImage }}" alt="{{ $featuredEvent->name }}" width="1536" height="1024"
+                            loading="lazy" class="absolute inset-0 h-full w-full object-cover">
+                        <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(13,43,37,0.05),rgba(13,43,37,0.24))]"></div>
+                    </div>
+
+                    <div class="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
+                        <p class="text-sm font-bold text-[#87d9bd]">الفعالية الأقرب</p>
+                        <h2 class="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
+                            {{ $featuredEvent->name }}
+                        </h2>
+                        <p class="mt-5 max-w-xl text-base leading-8 text-white/76">
+                            {{ $featuredEvent->excerpt }}
+                        </p>
+
+                        <dl class="mt-8 grid gap-5 border-t border-white/14 pt-7 sm:grid-cols-3">
+                            <div>
+                                <dt class="text-sm text-white/58">الموعد</dt>
+                                <dd class="mt-1 font-bold">
+                                    {{ $featuredEvent->starts_at?->translatedFormat('j F Y') ?? 'يُعلن قريبًا' }}
+                                </dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm text-white/58">الفئة العمرية</dt>
+                                <dd class="mt-1 font-bold">{{ $featuredEvent->minimum_age }} إلى
+                                    {{ $featuredEvent->maximum_age }} سنة</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm text-white/58">السعر للفرد</dt>
+                                <dd class="mt-1 font-bold"><x-money :amount-baisa="$featuredEvent->price_baisa"
+                                        :currency="$featuredEvent->currency" /></dd>
+                            </div>
+                        </dl>
+
+                        <div class="mt-8 flex flex-wrap gap-3">
+                            <a href="{{ route('events.show', $featuredEvent) }}"
+                                class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm bg-white px-6 py-3 text-sm font-bold text-[#0d2b25] transition hover:-translate-y-0.5 hover:bg-[#e9f7f1] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                                <span>تفاصيل الفعالية</span>
+                                <x-hugeicon name="arrow-left-02" class="text-lg" />
+                            </a>
+                            <a href="{{ route('customer.events.show', $featuredEvent) }}"
+                                class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-white/24 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10 active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                                <span>احجز مقعدًا</span>
+                                <x-hugeicon name="check-list" class="text-lg" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </article>
+        @else
+            <div class="rounded-sm border border-dashed border-[#2a8069]/24 bg-white/54 p-10 text-center dark:border-white/14 dark:bg-white/[0.03]">
+                <h2 class="font-heading text-3xl font-bold text-[#123329] dark:text-[#f7f1df]">نعدّ الفعالية القادمة</h2>
+                <p class="mx-auto mt-3 max-w-xl leading-8 text-[#315e52] dark:text-[#d2e7df]/72">ستظهر هنا بمجرد اعتماد موعدها وفتحها للجمهور.</p>
+            </div>
+        @endif
+    </section>
+
+    @if ($upcomingEvents->isNotEmpty())
+        <section class="border-y border-[#2a8069]/12 bg-white/62 dark:border-white/10 dark:bg-white/[0.03]">
+            <div class="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+                <h2 class="font-heading text-3xl font-bold text-[#123329] lg:text-4xl dark:text-[#f7f1df]">فعاليات أخرى</h2>
+                <div class="mt-9 grid gap-5 md:grid-cols-2">
+                    @foreach ($upcomingEvents as $event)
+                        <article
+                            class="public-card grid gap-5 rounded-sm border border-[#2a8069]/14 bg-white/72 p-6 sm:grid-cols-[1fr_auto] sm:items-end dark:border-white/10 dark:bg-white/5">
+                            <div>
+                                <p class="text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]">{{ $event->type->getLabel() }}</p>
+                                <h3 class="mt-2 font-heading text-2xl font-bold text-[#123329] dark:text-[#f7f1df]">{{ $event->name }}</h3>
+                                <p class="mt-3 line-clamp-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">{{ $event->excerpt }}</p>
+                            </div>
+                            <a href="{{ route('events.show', $event) }}"
+                                class="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-[#007a52]/22 px-4 py-2 text-sm font-bold text-[#007a52] transition hover:bg-[#007a52] hover:text-white dark:border-[#6ee7b7]/24 dark:text-[#6ee7b7] dark:hover:bg-[#6ee7b7] dark:hover:text-[#07120f]">
+                                تفاصيل الفعالية
+                            </a>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
+    <section class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-18 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:px-8 lg:py-24">
+        <div class="overflow-hidden rounded-sm border border-[#2a8069]/14 bg-white dark:border-white/10 dark:bg-white/5">
+            <img src="{{ asset('images/after-twelfth-mentor-circle.png') }}"
+                alt="مرشد يستمع إلى فتيين في جلسة تربوية" width="864" height="1821" loading="lazy"
+                class="aspect-[4/5] h-full max-h-[38rem] w-full object-cover">
+        </div>
+        <div class="max-w-2xl">
+            <h2 class="font-heading text-3xl font-bold leading-tight text-[#123329] lg:text-5xl dark:text-[#f7f1df]">
+                التربية تبدأ بالصحبة، لا بالشعار
+            </h2>
+            <p class="mt-5 leading-8 text-[#315e52] dark:text-[#d2e7df]/76">
+                نصغي أولًا، ثم نعطي الفتى مساحة ليجرّب ويخطئ ويعيد المحاولة. المشرف هنا رفيق مسؤول، والبرنامج بيئة عملية لا محاضرة طويلة.
+            </p>
+            <a href="{{ route('contact') }}"
+                class="mt-7 inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-[#007a52]/24 px-6 py-3 text-sm font-bold text-[#007a52] transition hover:bg-[#007a52] hover:text-white dark:border-[#6ee7b7]/24 dark:text-[#6ee7b7] dark:hover:bg-[#6ee7b7] dark:hover:text-[#07120f]">
+                <span>تواصل معنا</span>
+                <x-hugeicon name="mail-01" class="text-lg" />
+            </a>
+        </div>
+    </section>
+
+    <section class="bg-[#0d2b25] text-white">
+        <div class="mx-auto flex w-full max-w-7xl flex-col gap-7 px-4 py-14 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-16">
+            <div>
+                <h2 class="font-heading text-3xl font-bold lg:text-4xl">اختر التجربة التي تناسب ابنك</h2>
+                <p class="mt-3 max-w-2xl leading-8 text-white/72">كل فعالية توضح عمر المشاركين وموعدها وسعرها قبل أن تبدأ الحجز.</p>
+            </div>
+            <a href="{{ route('events.index') }}"
+                class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm bg-white px-6 py-3 text-sm font-bold text-[#0d2b25] transition hover:-translate-y-0.5 hover:bg-[#e9f7f1] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                <span>استكشف الفعاليات</span>
+                <x-hugeicon name="arrow-left-02" class="text-lg" />
+            </a>
         </div>
     </section>
 @endsection

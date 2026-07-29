@@ -103,12 +103,19 @@ return [
     ],
 
     'event_form' => [
+        'default_landing_page' => 'Default event page',
+        'landing_page_help' => 'Choose a reviewed custom design, or leave this empty to use the standard event page.',
         'steps' => [
             'basic_information' => 'Basic information',
             'capacity_pricing' => 'Capacity & pricing',
             'contract_terms' => 'Contract terms',
             'participant_fields' => 'Participant fields',
         ],
+    ],
+
+    'event_landing_pages' => [
+        'life_after_school_v1' => 'Life after school, version 1',
+        'umrah_2026_v1' => 'Umrah 2026, version 1',
     ],
 
     'event_infolist' => [
@@ -294,6 +301,7 @@ return [
         'installment_state' => 'Installment state',
         'installments' => 'Installments',
         'location' => 'Location',
+        'landing_page' => 'Landing page',
         'maximum_age' => 'Maximum age',
         'maximum_family_members' => 'Maximum family members',
         'maximum_uses' => 'Maximum uses',

@@ -2,62 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RenderEventLandingPage;
 use App\Enums\EventStatus;
-use App\Models\Discount;
 use App\Models\Event;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
 
 class PublicSiteController extends Controller
 {
-    private const HomepageEventId = 2;
-
-    private const HomepageEventSlug = 'your-guide-to-life-after-school';
+    public function __construct(
+        private readonly RenderEventLandingPage $renderEventLandingPage,
+    ) {}
 
     public function home(): View
     {
-        return view('pages.public.site.home');
-    }
+        $events = Event::query()
+            ->where('status', EventStatus::Published)
+            ->orderByRaw('starts_at IS NULL')
+            ->orderBy('starts_at')
+            ->orderByDesc('id')
+            ->limit(4)
+            ->get();
 
-    public function newHome(): View
-    {
-        $event = $this->homepageEvent();
-
-        return view('pages.public.site.new-home', [
-            'event' => $event,
-            'remainingSeats' => $event?->remainingSeats(),
-            'title' => $event?->name ?? 'دليلك إلى الحياة بعد المدرسة',
-            'metaDescription' => $event?->excerpt ?: 'ثلاثة أيام في إبراء تساعد خريج الصف الثاني عشر على اكتشاف مساره، وبناء خطة تسعين يومًا للحياة بعد المدرسة.',
+        return view('pages.public.site.home', [
+            'featuredEvent' => $events->first(),
+            'upcomingEvents' => $events->skip(1),
+            'title' => 'بيرحاء، برامج تربوية تصنع أثرًا',
+            'metaDescription' => 'برامج ومخيمات ورحلات تربوية للفتيان تجمع العبادة والعلم والعمل والصحبة في تجارب عملية ممتدة الأثر.',
         ]);
-    }
-
-    private function homepageEvent(): ?Event
-    {
-        return $this->homepageEventQuery()
-            ->whereKey(self::HomepageEventId)
-            ->where('slug', self::HomepageEventSlug)
-            ->first()
-            ?? $this->homepageEventQuery()
-                ->where('slug', self::HomepageEventSlug)
-                ->first();
-    }
-
-    /**
-     * @return Builder<Event>
-     */
-    private function homepageEventQuery(): Builder
-    {
-        return Event::query()
-            ->with([
-                'discounts' => fn ($query) => $query
-                    ->where('is_active', true)
-                    ->orderByDesc('amount_baisa')
-                    ->orderBy('id'),
-                'paymentPlans' => fn ($query) => $query
-                    ->where('is_active', true)
-                    ->with('installments')
-                    ->orderBy('name'),
-            ]);
     }
 
     public function events(): View
@@ -76,23 +47,7 @@ class PublicSiteController extends Controller
     {
         abort_unless($event->status === EventStatus::Published, 404);
 
-        $event->load([
-            'paymentPlans' => fn ($query) => $query
-                ->where('is_active', true)
-                ->with('installments')
-                ->orderBy('name'),
-        ]);
-
-        return view('pages.public.site.events.show', [
-            'event' => $event,
-            'availableDiscounts' => Discount::query()
-                ->availableForEvent($event)
-                ->orderByDesc('amount_baisa')
-                ->orderBy('id')
-                ->get(),
-            'title' => $event->name,
-            'metaDescription' => $event->excerpt ?: 'Event details for '.$event->name,
-        ]);
+        return $this->renderEventLandingPage->handle($event);
     }
 
     public function about(): View

@@ -33,7 +33,7 @@
 
                 <div class="mt-8 flex flex-wrap gap-3">
                     @if (Route::has('customer.events.show'))
-                        <a href="{{ route('customer.events.show', $event) }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#009060] px-6 py-3 text-sm font-bold text-white shadow-sm shadow-[#123329]/10 transition hover:bg-[#007a52] dark:bg-[#e0a800] dark:text-[#07120f] dark:hover:bg-[#f0c63c]">
+                        <a href="{{ $bookingUrl }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#009060] px-6 py-3 text-sm font-bold text-white shadow-sm shadow-[#123329]/10 transition hover:bg-[#007a52] dark:bg-[#e0a800] dark:text-[#07120f] dark:hover:bg-[#f0c63c]">
                             <span>احجز الآن</span>
                             <x-hugeicon name="check-list" class="text-lg" />
                         </a>
@@ -69,7 +69,7 @@
                     <div class="grid gap-3 sm:grid-cols-2">
                         <div class="rounded-sm border border-[#009060]/12 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">
                             <dt class="text-xs font-semibold text-[#123329]/54 dark:text-[#f7f1df]/54">المقاعد المتبقية</dt>
-                            <dd class="mt-2 text-2xl font-bold text-[#009060] dark:text-[#e0a800]">{{ $event->remainingSeats() }}</dd>
+                            <dd class="mt-2 text-2xl font-bold text-[#009060] dark:text-[#e0a800]">{{ $remainingSeats }}</dd>
                         </div>
 
                         <div class="rounded-sm border border-[#009060]/12 bg-white/60 p-4 dark:border-white/10 dark:bg-white/5">

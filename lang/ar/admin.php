@@ -103,12 +103,19 @@ return [
     ],
 
     'event_form' => [
+        'default_landing_page' => 'صفحة الفعالية الافتراضية',
+        'landing_page_help' => 'اختر تصميماً مخصصاً تمت مراجعته، أو اترك الحقل فارغاً لاستخدام صفحة الفعالية القياسية.',
         'steps' => [
             'basic_information' => 'البيانات الأساسية',
             'capacity_pricing' => 'السعة والتسعير',
             'contract_terms' => 'شروط العقد',
             'participant_fields' => 'حقول المشاركين',
         ],
+    ],
+
+    'event_landing_pages' => [
+        'life_after_school_v1' => 'الحياة بعد المدرسة، الإصدار الأول',
+        'umrah_2026_v1' => 'رحلة العمرة ٢٠٢٦، الإصدار الأول',
     ],
 
     'event_infolist' => [
@@ -302,6 +309,7 @@ return [
         'installment_state' => 'حالة القسط',
         'installments' => 'الأقساط',
         'location' => 'الموقع',
+        'landing_page' => 'صفحة الهبوط',
         'maximum_age' => 'العمر الأقصى',
         'maximum_family_members' => 'الحد الأقصى لأفراد العائلة',
         'maximum_uses' => 'الحد الأقصى للاستخدامات',

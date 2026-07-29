@@ -263,6 +263,7 @@ test('staff can save participant extra fields on an event', function () {
             'slug' => 'participant-camp',
             'type' => 'camp',
             'status' => 'published',
+            'landing_page_key' => 'life-after-school-v1',
             'location' => 'Muscat',
             'seat_capacity' => 20,
             'price' => '12.000',
@@ -297,6 +298,7 @@ test('staff can save participant extra fields on an event', function () {
         ->and($event->participant_extra_fields[0]['required'])->toBeTrue()
         ->and($event->price_baisa)->toBe(12000)
         ->and($event->location)->toBe('Muscat')
+        ->and($event->landing_page_key)->toBe('life-after-school-v1')
         ->and($event->excerpt)->toBe('A concise public summary.')
         ->and($event->description_html)->toContain('Detailed public content')
         ->and($event->contract_terms_html)->toContain('Participant contract terms');
@@ -307,6 +309,7 @@ test('staff can edit all event wizard fields including price and participant fie
     $event = Event::factory()->create([
         'slug' => 'editable-event',
         'price_baisa' => 5000,
+        'landing_page_key' => 'life-after-school-v1',
     ]);
 
     $this->actingAs($staff, 'web');
@@ -317,6 +320,7 @@ test('staff can edit all event wizard fields including price and participant fie
             'slug' => 'edited-participant-camp',
             'type' => 'festival',
             'status' => 'draft',
+            'landing_page_key' => null,
             'location' => 'Salalah',
             'seat_capacity' => 25,
             'price' => '10.500',
@@ -347,6 +351,7 @@ test('staff can edit all event wizard fields including price and participant fie
     expect($event->name)->toBe('Edited Participant Camp')
         ->and($event->type->value)->toBe('festival')
         ->and($event->status->value)->toBe('draft')
+        ->and($event->landing_page_key)->toBeNull()
         ->and($event->price_baisa)->toBe(10500)
         ->and($event->participant_extra_fields)->toHaveCount(1)
         ->and($event->participant_extra_fields[0]['key'])->toBe('shirt_size');

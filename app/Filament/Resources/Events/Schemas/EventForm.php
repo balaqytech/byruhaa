@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Events\Schemas;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Support\ContractVariables;
+use App\Support\EventLandingPageRegistry;
 use App\Support\Money\MoneyFactory;
 use App\Support\ParticipantExtraFields;
 use Brick\Money\Money;
@@ -51,6 +52,11 @@ class EventForm
                                 ->required()
                                 ->options(EventStatus::class)
                                 ->default(EventStatus::Draft->value),
+                            Select::make('landing_page_key')
+                                ->label(__('admin.fields.landing_page'))
+                                ->options(fn (EventLandingPageRegistry $landingPages): array => $landingPages->options())
+                                ->placeholder(__('admin.event_form.default_landing_page'))
+                                ->helperText(__('admin.event_form.landing_page_help')),
                             TextInput::make('location')
                                 ->label(__('admin.fields.location'))
                                 ->maxLength(255)

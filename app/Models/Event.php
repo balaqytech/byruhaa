@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $slug
  * @property EventType $type
  * @property EventStatus $status
+ * @property string|null $landing_page_key
  * @property string|null $excerpt
  * @property string|null $description_html
  * @property string|null $contract_terms_html
@@ -34,7 +35,7 @@ use Illuminate\Support\Carbon;
  * @property string $currency
  * @property-read Money $price
  */
-#[Fillable(['name', 'slug', 'type', 'status', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
+#[Fillable(['name', 'slug', 'type', 'status', 'landing_page_key', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */

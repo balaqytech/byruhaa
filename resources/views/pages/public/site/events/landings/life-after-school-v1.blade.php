@@ -1,8 +1,5 @@
 @php
-    $eventSlug = 'your-guide-to-life-after-school';
-    $eventParam = $event instanceof \App\Models\Event ? $event : $eventSlug;
-    $eventUrl = route('events.show', $eventParam);
-    $customerEventUrl = route('customer.events.show', $eventParam);
+    $customerEventUrl = $bookingUrl;
     $contactUrl = Route::has('contact') ? route('contact') : $eventUrl;
     $heroImage = asset('images/after-twelfth-omani-graduate-hero.png');
     $planWorkshopImage = asset('images/station-written-plan-workshop.png');

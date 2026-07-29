@@ -8,17 +8,21 @@ use App\Models\Discount;
 use App\Models\Event;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
+use App\Support\EventLandingPageRegistry;
+use Illuminate\Support\Facades\Route;
 
 test('homepage loads', function () {
+    $umrah = Event::query()->where('slug', 'umrah-2026')->firstOrFail();
+
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSee('منتجع بيرحاء')
-        ->assertSee('قريبًا فعاليات أكثر في بيرحاء')
-        ->assertSee('رزنامة بيرحاء قيد التجهيز')
-        ->assertSee('تصفح الفعاليات الحالية')
-        ->assertSee('رحلات في الطبيعة')
-        ->assertSee('ورش وتجارب تعليمية')
-        ->assertSee('مخيمات عائلية')
+        ->assertSee('مساحةٌ ينضج فيها الفتى بالفعل')
+        ->assertSee('يومٌ متوازن، وأثرٌ يمتد')
+        ->assertSee('التربية تبدأ بالصحبة، لا بالشعار')
+        ->assertSee($umrah->name)
+        ->assertSee(route('events.show', $umrah), false)
+        ->assertSee(route('customer.events.show', $umrah), false)
         ->assertSee(route('events.index'), false)
         ->assertSee(route('register'), false)
         ->assertSee('حسابي')
@@ -31,43 +35,95 @@ test('homepage loads', function () {
         ->assertDontSee('hgi-stroke', false);
 });
 
-test('new home hero uses the Omani graduate reel image for mobile', function () {
-    $this->assertFileExists(public_path('images/after-twelfth-omani-graduate-hero.png'));
+test('umrah event is seeded with its canonical landing page data', function () {
+    $event = Event::query()->where('slug', 'umrah-2026')->firstOrFail();
 
-    $this->get(route('new-home'))
+    expect($event->name)->toBe('رحلة العمرة بصحبة أبي بلج')
+        ->and($event->status)->toBe(EventStatus::Published)
+        ->and($event->landing_page_key)->toBe('umrah-2026-v1')
+        ->and($event->minimum_age)->toBe(16)
+        ->and($event->maximum_age)->toBe(18)
+        ->and($event->seat_capacity)->toBe(30)
+        ->and($event->price_baisa)->toBe(460000)
+        ->and($event->starts_at?->toDateString())->toBe('2026-08-20')
+        ->and($event->ends_at?->toDateString())->toBe('2026-08-29');
+
+    $this->assertFileExists(public_path('images/umrah-2026-hero.png'));
+
+    $this->get(route('events.show', $event))
         ->assertSuccessful()
-        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
-        ->assertSee('aspect-[9/16]', false)
-        ->assertSee('width="941" height="1672"', false)
-        ->assertSee('order-1 overflow-hidden', false)
-        ->assertSee('order-2 max-w-4xl', false)
-        ->assertSee('lg:order-2', false)
-        ->assertSee('lg:order-1', false);
+        ->assertSee('images/umrah-2026-hero.png', false)
+        ->assertSee('رحلة العمرة بصحبة أبي بلج')
+        ->assertSee('٢٠ إلى ٢٩ أغسطس ٢٠٢٦')
+        ->assertSee('سعر واحد داخل النظام')
+        ->assertSee(route('events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee('BYRUHAA EVENT');
 });
 
-test('homepage keeps the coming soon page when the configured event exists', function () {
-    Event::factory()->create([
-        'id' => 1,
-        'name' => 'Older public event',
-        'slug' => 'older-public-event',
-        'status' => EventStatus::Published,
-    ]);
+test('the temporary new home route is removed', function () {
+    expect(Route::has('new-home'))->toBeFalse();
 
+    $this->get('/new-home')->assertNotFound();
+});
+
+test('published events can use a registered landing page at their canonical URL', function () {
     $event = Event::factory()->create([
-        'id' => 2,
-        'name' => 'Official life after school event',
-        'slug' => 'your-guide-to-life-after-school',
-        'status' => EventStatus::Published,
+        'landing_page_key' => 'life-after-school-v1',
         'seat_capacity' => 40,
     ]);
 
+    $this->get(route('events.show', $event))
+        ->assertSuccessful()
+        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
+        ->assertSee(route('events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee('BYRUHAA EVENT');
+});
+
+test('unknown landing page keys safely fall back to the standard event page', function () {
+    $event = Event::factory()->create([
+        'name' => 'Fallback landing event',
+        'landing_page_key' => 'not-registered',
+    ]);
+
+    $this->get(route('events.show', $event))
+        ->assertSuccessful()
+        ->assertSee('Fallback landing event')
+        ->assertSee('BYRUHAA EVENT');
+});
+
+test('landing page registry only exposes registered views that exist', function () {
+    config()->set('event-landings.pages.missing-view', [
+        'label' => 'Missing view',
+        'view' => 'event-landings.missing.show',
+    ]);
+
+    $landingPages = app(EventLandingPageRegistry::class);
+
+    expect($landingPages->options())
+        ->toHaveKey('life-after-school-v1')
+        ->toHaveKey('umrah-2026-v1')
+        ->not->toHaveKey('missing-view')
+        ->and($landingPages->resolve('missing-view'))
+        ->toBe('pages.public.site.events.show');
+});
+
+test('homepage features the nearest published event and hides drafts', function () {
+    $nearestEvent = Event::factory()->create([
+        'name' => 'Nearest published event',
+        'status' => EventStatus::Published,
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDays(2),
+    ]);
+    Event::factory()->draft()->create(['name' => 'Hidden draft event']);
+
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSee('قريبًا فعاليات أكثر في بيرحاء')
-        ->assertSee(route('events.index'), false)
-        ->assertDontSee(route('events.show', $event), false)
-        ->assertDontSee(route('customer.events.show', $event), false)
-        ->assertDontSee(route('events.show', 'older-public-event'), false);
+        ->assertSee('Nearest published event')
+        ->assertSee(route('events.show', $nearestEvent), false)
+        ->assertSee(route('customer.events.show', $nearestEvent), false)
+        ->assertDontSee('Hidden draft event');
 });
 
 test('events page loads', function () {
@@ -136,7 +192,10 @@ test('public event detail page shows event description discounts and payment pla
         'description_html' => '<p>Guided hikes, workshops, and quiet evenings.</p>',
         'price_baisa' => 12000,
     ]);
-    $draftEvent = Event::factory()->create(['status' => EventStatus::Draft]);
+    $draftEvent = Event::factory()->create([
+        'status' => EventStatus::Draft,
+        'landing_page_key' => 'life-after-school-v1',
+    ]);
     $discount = Discount::factory()->for($event)->create([
         'name' => 'Sibling saving',
         'amount_baisa' => 2000,
