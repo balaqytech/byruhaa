@@ -31,6 +31,16 @@ class PublicSiteController extends Controller
         ]);
     }
 
+    public function coffee(): View
+    {
+        return view('pages.public.site.coffee', [
+            'coffee' => config('coffee'),
+            'title' => 'قهوة بيرحاء',
+            'metaDescription' => 'قهوة مختصة ومخبوزات خفيفة في مخيم بيرحاء بولاية إبراء، مع قائمة واضحة والبيع من الموقع.',
+            'metaImage' => asset('images/coffee-byruha-hero.webp'),
+        ]);
+    }
+
     public function events(): View
     {
         return view('pages.public.site.events.index', [

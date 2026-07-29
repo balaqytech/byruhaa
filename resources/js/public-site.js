@@ -51,14 +51,18 @@ if (!prefersReducedMotion) {
         ease: 'power3.out',
     });
 
-    gsap.from('.public-hero-copy > *', {
-        y: 28,
-        autoAlpha: 0,
-        duration: 0.95,
-        stagger: 0.12,
-        ease: 'power3.out',
-        delay: 0.08,
-    });
+    const publicHeroItems = document.querySelectorAll('.public-hero-copy > *');
+
+    if (publicHeroItems.length > 0) {
+        gsap.from(publicHeroItems, {
+            y: 28,
+            autoAlpha: 0,
+            duration: 0.95,
+            stagger: 0.12,
+            ease: 'power3.out',
+            delay: 0.08,
+        });
+    }
 
     gsap.utils.toArray('.public-card').forEach((card) => {
         gsap.from(card, {

@@ -24,6 +24,8 @@ test('homepage loads', function () {
         ->assertSee(route('events.show', $umrah), false)
         ->assertSee(route('customer.events.show', $umrah), false)
         ->assertSee(route('events.index'), false)
+        ->assertSee(route('coffee'), false)
+        ->assertSee('قهوة بيرحاء، بابٌ يومي للمكان')
         ->assertSee(route('register'), false)
         ->assertSee('حسابي')
         ->assertSee('logo-dark.png', false)
@@ -33,6 +35,29 @@ test('homepage loads', function () {
         ->assertSee('data-icon="calendar-03"', false)
         ->assertDontSee('cdn.hugeicons.com', false)
         ->assertDontSee('hgi-stroke', false);
+});
+
+test('coffee page shows the launch menu without a parallel store', function () {
+    expect(config('coffee.groups'))->toHaveCount(4)
+        ->and(config('coffee.currency'))->toBe('OMR');
+
+    $this->assertFileExists(public_path('images/coffee-byruha-hero.webp'));
+    $this->assertFileExists(public_path('images/coffee-byruha-menu.webp'));
+
+    $this->get(route('coffee'))
+        ->assertSuccessful()
+        ->assertViewIs('pages.public.site.coffee')
+        ->assertSee('قهوة بيرحاء')
+        ->assertSee('القائمة الافتتاحية')
+        ->assertSee('V60 حبوب الموسم')
+        ->assertSee('كرواسون اللوز')
+        ->assertSee('2.200')
+        ->assertSee('البيع والاستلام من الموقع')
+        ->assertSee('images/coffee-byruha-hero.webp', false)
+        ->assertSee('images/coffee-byruha-menu.webp', false)
+        ->assertSee('https://wa.me/96874155123', false)
+        ->assertDontSee('أضف إلى السلة')
+        ->assertDontSee('الدفع الآن');
 });
 
 test('umrah event is seeded with its canonical landing page data', function () {

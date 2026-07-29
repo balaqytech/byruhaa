@@ -29,8 +29,12 @@
         $navigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
+            ['label' => 'قهوة بيرحاء', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
             ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
             ['label' => 'عن المنتجع', 'route' => 'about', 'active' => 'about', 'icon' => 'information-circle'],
+        ];
+        $footerNavigationLinks = [
+            ...$navigationLinks,
             ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
         ];
 
@@ -38,7 +42,7 @@
         $bottomNavigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
-            ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
+            ['label' => 'القهوة', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
             ['label' => 'حسابي', 'route' => $accountRoute, 'active' => 'customer.*', 'icon' => 'user-circle'],
         ];
 
@@ -187,7 +191,7 @@
             <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62"
                 aria-label="روابط التذييل">
                 <p class="font-heading text-base font-bold text-[#123329] dark:text-[#f7f1df]">الموقع</p>
-                @foreach ($navigationLinks as $link)
+                @foreach ($footerNavigationLinks as $link)
                     <a href="{{ route($link['route']) }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $link['label'] }}</a>
                 @endforeach

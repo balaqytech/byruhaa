@@ -109,6 +109,30 @@
     </section>
 
     <section class="mx-auto w-full max-w-7xl px-4 py-18 sm:px-6 lg:px-8 lg:py-24">
+        <div
+            class="grid overflow-hidden rounded-sm border border-[#2a8069]/14 bg-white/72 shadow-[0_24px_70px_rgba(18,51,41,0.10)] lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] dark:border-white/10 dark:bg-white/5 dark:shadow-black/24">
+            <div class="relative min-h-72 overflow-hidden lg:min-h-[28rem]">
+                <img src="{{ asset('images/coffee-byruha-menu.webp') }}"
+                    alt="مشروبات قهوة ومخبوزات من القائمة الافتتاحية لقهوة بيرحاء" width="1536" height="1024"
+                    loading="lazy" class="absolute inset-0 h-full w-full object-cover">
+            </div>
+            <div class="flex flex-col justify-center p-7 sm:p-10 lg:p-12">
+                <h2 class="font-heading text-3xl font-bold leading-tight text-[#123329] lg:text-5xl dark:text-[#f7f1df]">
+                    قهوة بيرحاء، بابٌ يومي للمكان
+                </h2>
+                <p class="mt-5 max-w-xl leading-8 text-[#315e52] dark:text-[#d2e7df]/76">
+                    قهوة مختصة ومخبوزات خفيفة للزائر والفتى وأسرته، بقائمة واضحة والبيع من مخيم بيرحاء في إبراء.
+                </p>
+                <a href="{{ route('coffee') }}"
+                    class="mt-7 inline-flex min-h-12 w-fit items-center justify-center gap-2 whitespace-nowrap rounded-sm bg-[#007a52] px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                    <span>استكشف قهوة بيرحاء</span>
+                    <x-hugeicon name="arrow-left-02" class="text-lg" />
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section class="mx-auto w-full max-w-7xl px-4 py-18 sm:px-6 lg:px-8 lg:py-24">
         @if ($featuredEvent)
             <article
                 class="public-card overflow-hidden rounded-sm border border-[#2a8069]/14 bg-[#0d2b25] text-white shadow-[0_26px_80px_rgba(18,51,41,0.16)] dark:border-white/10">
