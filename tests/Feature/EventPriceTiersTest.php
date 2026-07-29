@@ -378,21 +378,63 @@ test('tier capacity and deletion cannot invalidate held seats', function () {
         ]))->toThrow(ValidationException::class);
 });
 
-test('event REST response contract remains unchanged when tiers exist', function () {
+test('event REST endpoints expose active price tiers with their remaining seats', function () {
     $event = Event::factory()->create(['seat_capacity' => 5, 'price_baisa' => 10000]);
-    EventPriceTier::factory()->for($event)->create(['seat_capacity' => 2, 'price_baisa' => 5000]);
+    $firstTier = EventPriceTier::factory()->for($event)->create([
+        'name' => 'First tier',
+        'position' => 1,
+        'seat_capacity' => 1,
+        'price_baisa' => 5000,
+    ]);
+    EventPriceTier::factory()->for($event)->create([
+        'name' => 'Second tier',
+        'position' => 2,
+        'seat_capacity' => 2,
+        'price_baisa' => 7000,
+    ]);
+    EventPriceTier::factory()->for($event)->create([
+        'name' => 'Inactive tier',
+        'position' => 3,
+        'seat_capacity' => 1,
+        'price_baisa' => 8000,
+        'is_active' => false,
+    ]);
+    $booking = tierBooking($event);
+    BookingSeatAllocation::create([
+        'booking_id' => $booking->id,
+        'event_id' => $event->id,
+        'event_price_tier_id' => $firstTier->id,
+        'seat_count' => 1,
+        'state' => SeatAllocationState::Held,
+        'held_at' => now(),
+    ]);
 
-    $data = $this->getJson("/api/v1/events/{$event->slug}")
+    $response = $this->getJson("/api/v1/events/{$event->slug}")
         ->assertOk()
-        ->assertJsonMissingPath('data.price_tiers')
         ->assertJsonPath('data.price', '10.000')
-        ->json('data');
+        ->assertJsonPath('data.remaining_seats', 4)
+        ->assertJsonCount(2, 'data.price_tiers')
+        ->assertJsonPath('data.price_tiers.0.name', 'First tier')
+        ->assertJsonPath('data.price_tiers.0.position', 1)
+        ->assertJsonPath('data.price_tiers.0.seat_capacity', 1)
+        ->assertJsonPath('data.price_tiers.0.remaining_seats', 0)
+        ->assertJsonPath('data.price_tiers.0.price', '5.000')
+        ->assertJsonPath('data.price_tiers.0.currency', 'OMR')
+        ->assertJsonPath('data.price_tiers.1.name', 'Second tier')
+        ->assertJsonPath('data.price_tiers.1.remaining_seats', 2)
+        ->assertJsonMissing(['name' => 'Inactive tier']);
+    $data = $response->json('data');
 
     expect(array_keys($data))->toBe([
         'id', 'name', 'slug', 'type', 'status', 'excerpt', 'location', 'starts_at', 'ends_at',
         'minimum_age', 'maximum_age', 'seat_capacity', 'remaining_seats', 'price', 'currency',
-        'available_discounts', 'payment_plans', 'created_at', 'updated_at',
+        'price_tiers', 'available_discounts', 'payment_plans', 'created_at', 'updated_at',
     ]);
+
+    $this->getJson('/api/v1/events')
+        ->assertOk()
+        ->assertJsonCount(2, 'data.0.price_tiers')
+        ->assertJsonPath('data.0.price_tiers.0.remaining_seats', 0);
 });
 
 test('existing REST payment endpoint reserves seats without changing its response contract', function () {

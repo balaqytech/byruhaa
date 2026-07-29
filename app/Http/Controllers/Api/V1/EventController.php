@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\EventStatus;
+use App\Enums\SeatAllocationState;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\EventResource;
 use App\Models\Discount;
@@ -16,6 +17,23 @@ class EventController extends Controller
     {
         $events = Event::query()
             ->where('status', EventStatus::Published)
+            ->withSum([
+                'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                    SeatAllocationState::Held->value,
+                    SeatAllocationState::Reserved->value,
+                ]),
+            ], 'seat_count')
+            ->with([
+                'priceTiers' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->withSum([
+                        'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                            SeatAllocationState::Held->value,
+                            SeatAllocationState::Reserved->value,
+                        ]),
+                    ], 'seat_count')
+                    ->orderBy('position'),
+            ])
             ->orderBy('starts_at')
             ->paginate($this->perPage($request));
 
@@ -26,7 +44,23 @@ class EventController extends Controller
     {
         abort_unless($event->status === EventStatus::Published, 404);
 
+        $event->loadSum([
+            'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                SeatAllocationState::Held->value,
+                SeatAllocationState::Reserved->value,
+            ]),
+        ], 'seat_count');
+
         $event->load([
+            'priceTiers' => fn ($query) => $query
+                ->where('is_active', true)
+                ->withSum([
+                    'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                        SeatAllocationState::Held->value,
+                        SeatAllocationState::Reserved->value,
+                    ]),
+                ], 'seat_count')
+                ->orderBy('position'),
             'paymentPlans' => fn ($query) => $query
                 ->where('is_active', true)
                 ->with('installments')

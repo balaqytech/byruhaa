@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Enums\SeatAllocationState;
 use App\Models\Discount;
 use App\Models\Event;
 use App\Support\EventLandingPageRegistry;
@@ -17,7 +18,23 @@ final readonly class RenderEventLandingPage
 
     public function handle(Event $event): View
     {
+        $event->loadSum([
+            'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                SeatAllocationState::Held->value,
+                SeatAllocationState::Reserved->value,
+            ]),
+        ], 'seat_count');
+
         $event->load([
+            'priceTiers' => fn ($query) => $query
+                ->where('is_active', true)
+                ->withSum([
+                    'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                        SeatAllocationState::Held->value,
+                        SeatAllocationState::Reserved->value,
+                    ]),
+                ], 'seat_count')
+                ->orderBy('position'),
             'paymentPlans' => fn ($query) => $query
                 ->where('is_active', true)
                 ->with('installments')

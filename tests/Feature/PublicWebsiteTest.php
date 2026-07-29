@@ -2,8 +2,11 @@
 
 use App\Enums\BlogPostStatus;
 use App\Enums\EventStatus;
+use App\Enums\SeatAllocationState;
 use App\Models\BlogPost;
 use App\Models\BlogPostCategory;
+use App\Models\Booking;
+use App\Models\BookingSeatAllocation;
 use App\Models\Discount;
 use App\Models\Event;
 use App\Models\EventPaymentPlan;
@@ -62,6 +65,7 @@ test('coffee page shows the launch menu without a parallel store', function () {
 
 test('umrah event is seeded with its canonical landing page data', function () {
     $event = Event::query()->where('slug', 'umrah-2026')->firstOrFail();
+    $priceTiers = $event->priceTiers()->get();
 
     expect($event->name)->toBe('رحلة العمرة بصحبة أبي بلج')
         ->and($event->status)->toBe(EventStatus::Published)
@@ -71,19 +75,59 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->and($event->seat_capacity)->toBe(30)
         ->and($event->price_baisa)->toBe(460000)
         ->and($event->starts_at?->toDateString())->toBe('2026-08-20')
-        ->and($event->ends_at?->toDateString())->toBe('2026-08-29');
+        ->and($event->ends_at?->toDateString())->toBe('2026-08-29')
+        ->and($priceTiers->pluck('name')->all())->toBe(['الباكورة', 'المتقدمة', 'الختامية'])
+        ->and($priceTiers->pluck('seat_capacity')->all())->toBe([8, 12, 10])
+        ->and($priceTiers->pluck('price_baisa')->all())->toBe([380000, 420000, 460000])
+        ->and($priceTiers->sum('seat_capacity'))->toBe(30);
 
     $this->assertFileExists(public_path('images/umrah-2026-hero.png'));
+    $this->assertFileExists(public_path('images/umrah-2026-preparation-v2.webp'));
 
     $this->get(route('events.show', $event))
         ->assertSuccessful()
+        ->assertViewIs('pages.public.site.events.landings.umrah-2026')
         ->assertSee('images/umrah-2026-hero.png', false)
+        ->assertSee('images/umrah-2026-preparation-v2.webp', false)
         ->assertSee('رحلة العمرة بصحبة أبي بلج')
         ->assertSee('٢٠ إلى ٢٩ أغسطس ٢٠٢٦')
-        ->assertSee('سعر واحد داخل النظام')
+        ->assertSee('لماذا هذه الرحلة الآن؟')
+        ->assertSee('نفهم ما يدور في خاطرك قبل أن تسأل')
+        ->assertSee('خماسية السكينة في أيام المخيم')
+        ->assertSee('ما الذي يبقى بعد أن تُطوى الحقائب؟')
+        ->assertSee('ما يحمله القائد معه')
+        ->assertSee('طواف الوداع بعد صلاة العصر')
+        ->assertSee('خصوصية القُصّر')
+        ->assertSee('الباكورة')
+        ->assertSee('380.000')
+        ->assertSee('المتقدمة')
+        ->assertSee('420.000')
+        ->assertSee('الختامية')
+        ->assertSee('460.000')
         ->assertSee(route('events.show', $event), false)
         ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee('سعر واحد داخل النظام')
         ->assertDontSee('BYRUHAA EVENT');
+});
+
+test('umrah landing page derives the open price tier from held and reserved seats', function () {
+    $event = Event::query()->where('slug', 'umrah-2026')->firstOrFail();
+    $firstTier = $event->priceTiers()->firstOrFail();
+    $booking = Booking::factory()->for($event)->create();
+
+    BookingSeatAllocation::factory()->for($booking)->create([
+        'event_id' => $event->id,
+        'event_price_tier_id' => $firstTier->id,
+        'seat_count' => 8,
+        'state' => SeatAllocationState::Held,
+        'tier_name' => $firstTier->name,
+        'tier_unit_price_baisa' => $firstTier->price_baisa,
+    ]);
+
+    $this->get(route('events.show', $event))
+        ->assertSuccessful()
+        ->assertSeeInOrder(['الباكورة', 'نفدت', 'المتقدمة', 'مفتوحة الآن'])
+        ->assertSee('٢٢ من ٣٠ مقعدًا');
 });
 
 test('the temporary new home route is removed', function () {

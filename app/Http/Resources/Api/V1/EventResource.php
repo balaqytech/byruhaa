@@ -4,8 +4,10 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\FormatsApiMoney;
 use App\Models\Discount;
+use App\Models\Event;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
+use App\Models\EventPriceTier;
 use Brick\Money\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -38,8 +40,12 @@ class EventResource extends JsonResource
             'remaining_seats' => $this->remainingSeats(),
             'price' => $this->money($this->price),
             'currency' => $this->currency,
-            'available_discounts' => $this->whenLoaded('availableDiscounts', fn() => $this->availableDiscounts->map(
-                fn(Discount $discount): array => [
+            'price_tiers' => $this->whenLoaded(
+                'priceTiers',
+                fn (): array => $this->resource instanceof Event ? $this->priceTiersForApi($this->resource) : [],
+            ),
+            'available_discounts' => $this->whenLoaded('availableDiscounts', fn () => $this->availableDiscounts->map(
+                fn (Discount $discount): array => [
                     'id' => $discount->id,
                     'name' => $discount->name,
                     'type' => 'fixed_amount_per_family_member',
@@ -53,8 +59,8 @@ class EventResource extends JsonResource
                     ],
                 ],
             )->values()),
-            'payment_plans' => $this->whenLoaded('paymentPlans', fn() => $this->paymentPlans->map(
-                fn(EventPaymentPlan $paymentPlan): array => [
+            'payment_plans' => $this->whenLoaded('paymentPlans', fn () => $this->paymentPlans->map(
+                fn (EventPaymentPlan $paymentPlan): array => [
                     'id' => $paymentPlan->id,
                     'name' => $paymentPlan->name,
                     'installments_count' => $paymentPlan->relationLoaded('installments')
@@ -71,6 +77,26 @@ class EventResource extends JsonResource
     }
 
     /**
+     * @return array<int, array{id: int, name: string, position: int, seat_capacity: int, remaining_seats: int, price: string|null, currency: string}>
+     */
+    private function priceTiersForApi(Event $event): array
+    {
+        $priceTiers = $event->priceTiers
+            ->filter(fn (EventPriceTier $tier): bool => $tier->price_baisa <= $event->price_baisa)
+            ->values();
+
+        return $priceTiers->map(fn (EventPriceTier $tier): array => [
+            'id' => $tier->id,
+            'name' => $tier->name,
+            'position' => $tier->position,
+            'seat_capacity' => $tier->seat_capacity,
+            'remaining_seats' => max(0, $tier->seat_capacity - $tier->usedSeatsCount()),
+            'price' => $this->money($tier->price),
+            'currency' => $tier->currency,
+        ])->all();
+    }
+
+    /**
      * @return Collection<int, array<string, mixed>>
      */
     private function paymentPlanInstallments(EventPaymentPlan $paymentPlan): Collection
@@ -78,7 +104,7 @@ class EventResource extends JsonResource
         $amounts = $this->paymentPlanInstallmentAmounts($paymentPlan);
 
         return $paymentPlan->installments->values()->map(
-            fn(EventPaymentPlanInstallment $installment, int $index): array => [
+            fn (EventPaymentPlanInstallment $installment, int $index): array => [
                 'id' => $installment->id,
                 'name' => $installment->name,
                 'sequence' => $installment->sequence,

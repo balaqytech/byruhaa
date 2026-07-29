@@ -157,6 +157,10 @@ class Event extends Model
 
     public function unavailableSeatsCount(): int
     {
+        if (array_key_exists('unavailable_seats_count', $this->attributes)) {
+            return (int) $this->attributes['unavailable_seats_count'];
+        }
+
         return (int) $this->seatAllocations()
             ->whereIn('state', [SeatAllocationState::Held->value, SeatAllocationState::Reserved->value])
             ->sum('seat_count');
