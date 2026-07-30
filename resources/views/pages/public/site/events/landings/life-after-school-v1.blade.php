@@ -1,5 +1,4 @@
 @php
-    $customerEventUrl = $bookingUrl;
     $heroImage = asset('images/after-twelfth-omani-graduate-hero.png');
     $planWorkshopImage = asset('images/station-written-plan-workshop.png');
     $decisionPathImage = asset('images/station-decision-path.png');
@@ -557,16 +556,11 @@
                 </div>
             @endif
 
-            <p class="mt-4 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/62">المقاعد الكلية
-                {{ $toArabicNumber($totalCapacity) }} مقعدًا. الأسعار بالريال العُماني، وتشمل
+            <p class="mt-4 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/62"> الأسعار بالريال العُماني، وتشمل
                 الإقامة والإشراف ومواد البرنامج.</p>
 
             <div class="mt-8 flex flex-wrap gap-3">
-                <a href="{{ $customerEventUrl }}"
-                    class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0">
-                    <span>احجز الآن، الشريحة المفتوحة</span>
-                    <x-hugeicon name="check-list" class="text-lg" />
-                </a>
+                <x-public-event-interest-action :event="$event" button-class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0" />
             </div>
         </div>
     </section>
@@ -613,11 +607,7 @@
                         يعود. احجز
                         لابنك اليوم، وامنحه بداية يستحقها.</p>
                     <div class="mt-8 flex flex-wrap gap-3">
-                        <a href="{{ $customerEventUrl }}"
-                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0">
-                            <span>احجز مقعد ابنك الآن</span>
-                            <x-hugeicon name="check-list" class="text-lg" />
-                        </a>
+                        <x-public-event-interest-action :event="$event" button-class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0" />
                         <a href="{{ $eventUrl }}"
                             class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-white/28 bg-white/6 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/12 active:translate-y-0">
                             <span>راجع تفاصيل الفعالية</span>

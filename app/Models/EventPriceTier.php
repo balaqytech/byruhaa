@@ -30,6 +30,9 @@ class EventPriceTier extends Model
     /** @use HasFactory<EventPriceTierFactory> */
     use HasFactory, SoftDeletes;
 
+    /** @var list<string> */
+    protected $appends = ['price'];
+
     /** @var array<string, mixed> */
     protected $attributes = [
         'position' => 1,

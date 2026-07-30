@@ -198,11 +198,7 @@
                                 <span>تفاصيل الفعالية</span>
                                 <x-hugeicon name="arrow-left-02" class="text-lg" />
                             </a>
-                            <a href="{{ route('customer.events.show', $featuredEvent) }}"
-                                class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-white/24 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10 active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                                <span>{{ $featuredEvent->canBook() ? 'احجز مقعدًا' : ($featuredEvent->canExpressInterest() ? 'أبدِ اهتمامك' : 'عرض الحالة') }}</span>
-                                <x-hugeicon name="check-list" class="text-lg" />
-                            </a>
+                            <x-public-event-interest-action :event="$featuredEvent" button-class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-white/24 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10 active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0" />
                         </div>
                     </div>
                 </div>

@@ -44,6 +44,9 @@ class Event extends Model
     /** @use HasFactory<EventFactory> */
     use HasFactory;
 
+    /** @var list<string> */
+    protected $appends = ['price'];
+
     /**
      * @var array<string, mixed>
      */

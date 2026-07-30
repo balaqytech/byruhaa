@@ -36,6 +36,7 @@ use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
+use App\Models\EventPriceTier;
 use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
@@ -375,6 +376,34 @@ test('staff can edit all event wizard fields including price and participant fie
         ->and($event->participant_extra_fields[0]['key'])->toBe('shirt_size')
         ->and($event->priceTiers()->count())->toBe(1)
         ->and($event->priceTiers()->firstOrFail()->price_baisa)->toBe(9000);
+});
+
+test('event edit form hydrates stored base and tier prices without requiring re-entry', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create(['price_baisa' => 5000]);
+    EventPriceTier::factory()->for($event)->create([
+        'name' => 'Early tier',
+        'price_baisa' => 4000,
+        'seat_capacity' => 5,
+    ]);
+
+    $this->actingAs($staff, 'web');
+
+    $component = Livewire::test(EditEvent::class, ['record' => $event->getRouteKey()])
+        ->assertFormSet(['price' => '5.000']);
+
+    $tierStates = collect($component->get('data.priceTiers'));
+
+    expect($tierStates)->toHaveCount(1)
+        ->and($tierStates->first()['price'])->toBe('4.000');
+
+    $component
+        ->fillForm(['name' => 'Renamed event'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($event->refresh()->price_baisa)->toBe(5000)
+        ->and($event->priceTiers()->firstOrFail()->price_baisa)->toBe(4000);
 });
 
 test('event view page combines infolist and relation manager tabs', function () {

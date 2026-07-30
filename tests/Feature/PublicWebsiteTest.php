@@ -25,15 +25,13 @@ test('homepage loads', function () {
         ->assertSee('التربية تبدأ بالصحبة، لا بالشعار')
         ->assertSee($featuredEvent->name)
         ->assertSee(route('events.show', $featuredEvent), false)
-        ->assertSee(route('customer.events.show', $featuredEvent), false)
+        ->assertDontSee(route('customer.events.show', $featuredEvent), false)
         ->assertSee(route('events.index'), false)
         ->assertSee(route('coffee'), false)
         ->assertSee('قهوة بيرحاء، بابٌ يومي للمكان')
         ->assertSee(route('register'), false)
         ->assertSee('حسابي')
         ->assertSee('logo-dark.png', false)
-        ->assertSee(route('affiliate.login'), false)
-        ->assertSee(route('affiliate.register'), false)
         ->assertSee('data-icon="home-01"', false)
         ->assertSee('data-icon="calendar-03"', false)
         ->assertDontSee('cdn.hugeicons.com', false)
@@ -108,7 +106,7 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->assertSee('الختامية')
         ->assertSee('460.000')
         ->assertSee(route('events.show', $event), false)
-        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee(route('customer.events.show', $event), false)
         ->assertDontSee('سعر واحد داخل النظام')
         ->assertDontSee('BYRUHAA EVENT');
 });
@@ -173,14 +171,12 @@ test('after twelfth event is seeded with its landing page and price tiers', func
         ->assertSee('الباقة الثانية')
         ->assertSee('69.000')
         ->assertDontSee('الباقة الثالثة')
-        ->assertSee('احجز الآن قبل نفاد الكمية')
+        ->assertSee('أبدِ اهتمامك')
         ->assertDontSee('مقاعد الرحمة')
         ->assertDontSee('استفسر قبل الحجز')
-        ->assertSee('المقاعد الكلية')
         ->assertSee(route('events.show', $event), false)
-        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee(route('customer.events.show', $event), false)
         ->assertDontSee('٦-٨ أغسطس')
-        ->assertDontSee('٤٥')
         ->assertDontSee('خصم الإخوة')
         ->assertDontSee('شهادات حقيقية، قريبًا');
 });
@@ -226,7 +222,7 @@ test('published events can use a registered landing page at their canonical URL'
         ->assertSuccessful()
         ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
         ->assertSee(route('events.show', $event), false)
-        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee(route('customer.events.show', $event), false)
         ->assertDontSee('BYRUHAA EVENT');
 });
 
@@ -271,7 +267,7 @@ test('homepage features the nearest published event and hides drafts', function 
         ->assertSuccessful()
         ->assertSeeInOrder(['Nearest published event', 'مساحةٌ ينضج فيها الفتى بالفعل'])
         ->assertSee(route('events.show', $nearestEvent), false)
-        ->assertSee(route('customer.events.show', $nearestEvent), false)
+        ->assertDontSee(route('customer.events.show', $nearestEvent), false)
         ->assertDontSee('Hidden draft event');
 });
 
@@ -416,7 +412,7 @@ test('public event detail page shows event description discounts and payment pla
         ->assertSee('Deposit')
         ->assertSee('Final')
         ->assertSee('6.000')
-        ->assertSee(route('customer.events.show', $event), false);
+        ->assertDontSee(route('customer.events.show', $event), false);
 
     $this->get(route('events.show', $draftEvent))
         ->assertNotFound();

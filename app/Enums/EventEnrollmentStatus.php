@@ -30,7 +30,7 @@ enum EventEnrollmentStatus: string implements HasColor, HasLabel
 
     public function canExpressInterest(): bool
     {
-        return $this === self::InterestOpen;
+        return in_array($this, [self::InterestOpen, self::BookingOpen], true);
     }
 
     public function canBook(): bool

@@ -135,10 +135,7 @@
                     </p>
 
                     <div class="mt-8 flex flex-wrap gap-3">
-                        <a href="{{ $bookingUrl }}" class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#007a52]/18 transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                            <span>ثبّت مقعد ابنك</span>
-                            <x-hugeicon name="check-list" class="text-lg" />
-                        </a>
+                        <x-public-event-interest-action :event="$event" button-class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#007a52]/18 transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0" />
                         <a href="#program" class="inline-flex min-h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-[#007a52]/22 bg-white/72 px-6 py-3 text-sm font-bold text-[#0d2b25] transition hover:-translate-y-0.5 hover:bg-white active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-white/16 dark:bg-white/5 dark:text-white dark:hover:bg-white/10">
                             <span>البرنامج يومًا بيوم</span>
                             <x-hugeicon name="arrow-left-02" class="text-lg" />
@@ -385,14 +382,7 @@
                     <div class="rounded-2xl border border-[#e0a800]/24 bg-[#fff9e8] p-6 text-[#684d00] dark:border-[#e0a800]/18 dark:bg-[#e0a800]/8 dark:text-[#f3dda0]">
                         <p class="leading-8"><strong>طريقة التثبيت:</strong> يُعد المقعد محجوزًا عند دفع قسط أو المبلغ كاملًا. وتظهر خطة السداد المتاحة ومواعيدها داخل النظام قبل الدفع.</p>
                     </div>
-                    <a href="{{ $bookingUrl }}" class="inline-flex min-h-14 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-8 py-4 font-bold text-white shadow-lg shadow-[#007a52]/16 transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                        <span>ابدأ الحجز من {{ $priceTiers->isNotEmpty() ? '' : 'سعر ' }}</span>
-                        @if ($priceTiers->isNotEmpty())
-                            <x-money :amount-baisa="$startingPriceBaisa" :currency="$event->currency" />
-                        @else
-                            <x-hugeicon name="check-list" class="text-lg" />
-                        @endif
-                    </a>
+                    <x-public-event-interest-action :event="$event" button-class="inline-flex min-h-14 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-8 py-4 font-bold text-white shadow-lg shadow-[#007a52]/16 transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0" />
                 </div>
 
                 <div class="mt-16 grid gap-10 lg:grid-cols-2">
@@ -466,10 +456,7 @@
                         <h2 class="font-heading text-4xl font-bold leading-tight text-[#123329] lg:text-5xl dark:text-[#f7f1df]">مقاعد الباقة الأولى أرخصها وأقلها</h2>
                         <p class="mt-5 text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/76">بادر قبل أن تمتلئ. اختر الابن، راجع الباقة المفتوحة وخطة السداد، ثم ثبّت المقعد بالدفع من النظام نفسه.</p>
                     </div>
-                    <a href="{{ $bookingUrl }}" class="inline-flex min-h-14 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-8 py-4 font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                        <span>ثبّت المقعد الآن</span>
-                        <x-hugeicon name="check-list" class="text-lg" />
-                    </a>
+                    <x-public-event-interest-action :event="$event" button-class="inline-flex min-h-14 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-8 py-4 font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0" />
                 </div>
             </div>
         </section>

@@ -32,12 +32,7 @@
                 @endif
 
                 <div class="mt-8 flex flex-wrap gap-3">
-                    @if (Route::has('customer.events.show'))
-                        <a href="{{ $bookingUrl }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#009060] px-6 py-3 text-sm font-bold text-white shadow-sm shadow-[#123329]/10 transition hover:bg-[#007a52] dark:bg-[#e0a800] dark:text-[#07120f] dark:hover:bg-[#f0c63c]">
-                            <span>احجز الآن</span>
-                            <x-hugeicon name="check-list" class="text-lg" />
-                        </a>
-                    @endif
+                    <x-public-event-interest-action :event="$event" />
 
                     <a href="#event-details" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#009060]/18 px-6 py-3 text-sm font-bold text-[#009060] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-[#e0a800]/24 dark:text-[#e0a800] dark:hover:bg-[#e0a800]/10">
                         <span>استكشف التفاصيل</span>

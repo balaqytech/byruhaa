@@ -48,9 +48,9 @@ test('assistant receives a registration link when customer does not exist', func
     ])->assertStatus(409)->assertJsonPath('code', 'customer_account_required')->assertJsonStructure(['registration_url']);
 });
 
-test('interest is rejected unless the event is collecting interest and never changes seats', function () {
+test('interest is rejected when enrollment is closed and never changes seats', function () {
     $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
-    $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingOpen, 'seat_capacity' => 12]);
+    $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingClosed, 'seat_capacity' => 12]);
 
     $this->putJson('/api/v1/integrations/assistant/event-interests', [
         'phone_number' => $customer->phone_number, 'event_slug' => $event->slug, 'contact_consent' => true,
