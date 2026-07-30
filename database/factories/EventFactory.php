@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Models\Event;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -26,6 +27,7 @@ class EventFactory extends Factory
             'slug' => Str::slug($name).'-'.Str::lower(Str::random(5)),
             'type' => fake()->randomElement(['trip', 'camp', 'festival']),
             'status' => EventStatus::Published,
+            'enrollment_status' => EventEnrollmentStatus::BookingOpen,
             'excerpt' => fake()->sentence(),
             'description_html' => '<p>'.fake()->paragraph().'</p>',
             'contract_terms_html' => '<p>'.fake()->paragraph().'</p>',

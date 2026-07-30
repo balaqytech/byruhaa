@@ -38,7 +38,7 @@ new #[Title('الفعاليات')] class extends Component {
                         <div class="flex items-start justify-between gap-3">
                             <flux:badge class="bg-emerald-50 text-emerald-800 dark:bg-emerald-400/15 dark:text-emerald-100">{{ $event->type->getLabel() }}</flux:badge>
                             <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800 dark:bg-amber-300/15 dark:text-amber-100">
-                                {{ $event->remainingSeats() }} {{ __('ui.events.seats_left') }}
+                                {{ $event->canBook() ? $event->remainingSeats().' '.__('ui.events.seats_left') : $event->enrollment_status->getLabel() }}
                             </span>
                         </div>
                         <flux:heading class="mt-4">{{ $event->name }}</flux:heading>

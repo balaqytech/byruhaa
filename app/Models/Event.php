@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Enums\SeatAllocationState;
@@ -37,7 +38,7 @@ use Illuminate\Validation\ValidationException;
  * @property string $currency
  * @property-read Money $price
  */
-#[Fillable(['name', 'slug', 'type', 'status', 'landing_page_key', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
+#[Fillable(['name', 'slug', 'type', 'status', 'enrollment_status', 'landing_page_key', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -49,6 +50,7 @@ class Event extends Model
     protected $attributes = [
         'price_baisa' => 0,
         'currency' => 'OMR',
+        'enrollment_status' => EventEnrollmentStatus::BookingOpen->value,
     ];
 
     protected static function booted(): void
@@ -127,6 +129,21 @@ class Event extends Model
         return $this->hasMany(BookingSeatAllocation::class);
     }
 
+    public function eventInterests(): HasMany
+    {
+        return $this->hasMany(EventInterest::class);
+    }
+
+    public function canExpressInterest(): bool
+    {
+        return $this->enrollment_status->canExpressInterest();
+    }
+
+    public function canBook(): bool
+    {
+        return $this->enrollment_status->canBook();
+    }
+
     public function approvedSeatsCount(): int
     {
         return BookingFamilyMember::query()
@@ -183,6 +200,7 @@ class Event extends Model
     {
         return [
             'status' => EventStatus::class,
+            'enrollment_status' => EventEnrollmentStatus::class,
             'type' => EventType::class,
             'participant_extra_fields' => 'array',
             'starts_at' => 'datetime',

@@ -9,6 +9,7 @@ use App\Filament\Resources\Events\Pages\ViewEvent;
 use App\Filament\Resources\Events\RelationManagers\BookingsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\CouponsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\DiscountsRelationManager;
+use App\Filament\Resources\Events\RelationManagers\EventInterestsRelationManager;
 use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager;
 use App\Filament\Resources\Events\Schemas\EventForm;
 use App\Filament\Resources\Events\Schemas\EventInfolist;
@@ -63,6 +64,7 @@ class EventResource extends Resource
             CouponsRelationManager::class,
             PaymentPlansRelationManager::class,
             BookingsRelationManager::class,
+            EventInterestsRelationManager::class,
         ];
     }
 

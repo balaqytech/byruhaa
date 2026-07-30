@@ -32,6 +32,7 @@ class EventInfolist
                                         TextEntry::make('status')
                                             ->label(__('admin.fields.status'))
                                             ->badge(),
+                                        TextEntry::make('enrollment_status')->label('حالة التسجيل')->badge(),
                                         TextEntry::make('type')
                                             ->label(__('admin.fields.type'))
                                             ->badge(),

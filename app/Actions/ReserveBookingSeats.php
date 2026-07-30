@@ -2,10 +2,12 @@
 
 namespace App\Actions;
 
+use App\Enums\EventInterestStatus;
 use App\Enums\SeatAllocationState;
 use App\Models\Booking;
 use App\Models\BookingSeatAllocation;
 use App\Models\Event;
+use App\Models\EventInterest;
 use App\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -68,6 +70,19 @@ class ReserveBookingSeats
                 'reserved_at' => $allocation->reserved_at ?? $payment->paid_at ?? now(),
                 'released_at' => null,
             ])->save();
+
+            EventInterest::query()
+                ->where('customer_id', $booking->customer_id)
+                ->where('event_id', $event->id)
+                ->whereIn('status', [
+                    EventInterestStatus::Interested->value,
+                    EventInterestStatus::BookingStarted->value,
+                ])
+                ->update([
+                    'status' => EventInterestStatus::Converted->value,
+                    'booking_id' => $booking->id,
+                    'converted_at' => $payment->paid_at ?? now(),
+                ]);
 
             return $allocation->refresh();
         });

@@ -26,6 +26,9 @@
                             {{ __('ui.labels.events') }}
                         </span>
                     </flux:sidebar.item>
+                    <flux:sidebar.item :href="route('customer.interests.index')" :current="request()->routeIs('customer.interests.*')" wire:navigate>
+                        <span class="inline-flex items-center gap-2"><x-hugeicon name="notification-02" class="text-lg" />اهتماماتي</span>
+                    </flux:sidebar.item>
                     <flux:sidebar.item :href="route('customer.family-members.index')" :current="request()->routeIs('customer.family-members.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
                             <x-hugeicon name="user-group" class="text-lg" />

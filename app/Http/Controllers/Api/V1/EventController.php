@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\EventStatus;
 use App\Enums\SeatAllocationState;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\IndexEventsRequest;
 use App\Http\Resources\Api\V1\EventResource;
 use App\Models\Discount;
 use App\Models\Event;
@@ -13,10 +14,14 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class EventController extends Controller
 {
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(IndexEventsRequest $request): AnonymousResourceCollection
     {
         $events = Event::query()
             ->where('status', EventStatus::Published)
+            ->when(
+                $request->string('enrollment_status')->isNotEmpty(),
+                fn ($query) => $query->where('enrollment_status', $request->string('enrollment_status')->toString()),
+            )
             ->withSum([
                 'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
                     SeatAllocationState::Held->value,

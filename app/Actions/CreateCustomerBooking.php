@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\AffiliateStatus;
+use App\Enums\EventInterestStatus;
 use App\Enums\EventStatus;
 use App\Models\Affiliate;
 use App\Models\Booking;
@@ -43,6 +44,12 @@ class CreateCustomerBooking
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if (! $event->canBook()) {
+                throw ValidationException::withMessages([
+                    'event_id' => 'الحجز غير مفتوح لهذه الفعالية حاليًا.',
+                ]);
+            }
+
             $familyMemberIds = array_values(array_unique($data['family_member_ids']));
             $familyMembers = $this->familyMembers($customer, $familyMemberIds);
 
@@ -63,6 +70,14 @@ class CreateCustomerBooking
                 'event_id' => $event->id,
                 ...$priceSnapshot->toBookingAttributes(),
             ]);
+
+            $customer->eventInterests()
+                ->where('event_id', $event->id)
+                ->where('status', EventInterestStatus::Interested->value)
+                ->update([
+                    'status' => EventInterestStatus::BookingStarted->value,
+                    'booking_id' => $booking->id,
+                ]);
 
             if ($priceSnapshot->couponId !== null) {
                 $coupon = Coupon::query()->findOrFail($priceSnapshot->couponId);

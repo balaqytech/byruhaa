@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Events\Schemas;
 
+use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Support\ContractVariables;
@@ -53,6 +54,11 @@ class EventForm
                                 ->required()
                                 ->options(EventStatus::class)
                                 ->default(EventStatus::Draft->value),
+                            Select::make('enrollment_status')
+                                ->label('حالة التسجيل')
+                                ->required()
+                                ->options(EventEnrollmentStatus::class)
+                                ->default(EventEnrollmentStatus::BookingOpen->value),
                             Select::make('landing_page_key')
                                 ->label(__('admin.fields.landing_page'))
                                 ->options(fn (EventLandingPageRegistry $landingPages): array => $landingPages->options())

@@ -31,6 +31,7 @@ class EventsTable
                     ->label(__('admin.fields.status'))
                     ->badge()
                     ->sortable(),
+                TextColumn::make('enrollment_status')->label('حالة التسجيل')->badge()->sortable(),
                 TextColumn::make('seat_capacity')
                     ->label(__('admin.fields.seats'))
                     ->sortable(),

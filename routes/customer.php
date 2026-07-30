@@ -9,6 +9,7 @@ Route::middleware(['auth:customer'])
         Route::view('dashboard', 'pages.customer.dashboard')->name('dashboard');
         Route::livewire('events', 'pages::customer.events.index')->name('events.index');
         Route::livewire('events/{event:slug}', 'pages::customer.events.show')->name('events.show');
+        Route::livewire('interests', 'pages::customer.interests.index')->name('interests.index');
         Route::livewire('family-members', 'pages::customer.family-members.index')->name('family-members.index');
         Route::livewire('bookings', 'pages::customer.bookings.index')->name('bookings.index');
         Route::livewire('bookings/{booking}/contracts/{contract}', 'pages::customer.bookings.contract')->name('bookings.contracts.show');

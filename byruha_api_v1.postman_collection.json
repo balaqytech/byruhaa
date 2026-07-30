@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7e42a4fc-a492-4f4d-b59f-9c8313db1f2a",
     "name": "Byruha API v1",
-    "description": "Postman documentation for the Byruha mobile API. The collection is intended for the Flutter developer and covers every current v1 endpoint, request body, path/query parameters, and response examples. All endpoints are under /api/v1 and currently use no authentication middleware.",
+    "description": "Postman documentation for Byruha API v1. Event responses include enrollment capabilities and active price tiers with remaining seats. Event-interest endpoints are currently public and rate limited.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -52,6 +52,11 @@
     {
       "key": "coupon_code",
       "value": "API10",
+      "type": "string"
+    },
+    {
+      "key": "customer_phone",
+      "value": "+96891234567",
       "type": "string"
     }
   ],
@@ -1497,6 +1502,52 @@
               "body": "{\n  \"message\": \"Not Found\"\n}"
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Event Enrollment and Interests",
+      "description": "Event enrollment states are coming_soon, interest_open, booking_open, and booking_closed. Event responses add enrollment_status, enrollment_status_label, can_express_interest, can_book, primary_action, and price_tiers. Interest endpoints are public, rate limited, and idempotent.",
+      "item": [
+        {
+          "name": "List events collecting interest",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{base_url}}/api/v1/events?enrollment_status=interest_open", "host": ["{{base_url}}"], "path": ["api", "v1", "events"], "query": [{"key": "enrollment_status", "value": "interest_open"}]},
+            "description": "Returns published events currently collecting interest. Each event also returns price_tiers with id, name, position, seat_capacity, remaining_seats, price, and currency. Use can_book/can_express_interest instead of inferring availability from dates or prices."
+          },
+          "response": [{"name": "200 OK", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"data\": [{\n    \"id\": 1,\n    \"slug\": \"published-camp\",\n    \"enrollment_status\": \"interest_open\",\n    \"enrollment_status_label\": \"استقبال المهتمين\",\n    \"can_express_interest\": true,\n    \"can_book\": false,\n    \"primary_action\": {\"type\": \"express_interest\", \"label\": \"أبدِ اهتمامك\"},\n    \"price_tiers\": [{\"id\": 1, \"name\": \"الباكورة الأولى\", \"position\": 1, \"seat_capacity\": 10, \"remaining_seats\": 7, \"price\": \"59.000\", \"currency\": \"OMR\"}]\n  }]\n}"}]
+        },
+        {
+          "name": "Express or refresh interest",
+          "request": {
+            "method": "PUT",
+            "header": [{"key": "Accept", "value": "application/json"}, {"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"phone_number\": \"{{customer_phone}}\",\n  \"event_slug\": \"{{event_slug}}\",\n  \"contact_consent\": true,\n  \"preferred_contact_channel\": \"whatsapp\",\n  \"source_reference\": \"assistant-conversation-123\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": {"raw": "{{base_url}}/api/v1/integrations/assistant/event-interests", "host": ["{{base_url}}"], "path": ["api", "v1", "integrations", "assistant", "event-interests"]},
+            "description": "Creates the interest with 201 or refreshes the existing customer/event interest with 200. Returns 409 with customer_account_required and registration_url when no account matches."
+          },
+          "response": []
+        },
+        {
+          "name": "Get interest",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{base_url}}/api/v1/integrations/assistant/event-interests?phone_number={{customer_phone}}&event_slug={{event_slug}}", "host": ["{{base_url}}"], "path": ["api", "v1", "integrations", "assistant", "event-interests"], "query": [{"key": "phone_number", "value": "{{customer_phone}}"}, {"key": "event_slug", "value": "{{event_slug}}"}]}
+          },
+          "response": []
+        },
+        {
+          "name": "Withdraw interest",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {"raw": "{{base_url}}/api/v1/integrations/assistant/event-interests?phone_number={{customer_phone}}&event_slug={{event_slug}}", "host": ["{{base_url}}"], "path": ["api", "v1", "integrations", "assistant", "event-interests"], "query": [{"key": "phone_number", "value": "{{customer_phone}}"}, {"key": "event_slug", "value": "{{event_slug}}"}]},
+            "description": "Keeps the audit record and changes its status to withdrawn."
+          },
+          "response": []
         }
       ]
     }

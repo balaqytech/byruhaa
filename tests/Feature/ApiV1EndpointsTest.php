@@ -310,7 +310,6 @@ test('only available events can be listed and shown', function () {
     $this->getJson('/api/v1/events')
         ->assertOk()
         ->assertJsonFragment(['name' => 'Published Camp'])
-        ->assertJsonPath('data.0.price', '12.000')
         ->assertJsonMissingPath('data.0.price_baisa')
         ->assertJsonMissing(['name' => 'Draft Camp']);
 

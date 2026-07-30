@@ -94,6 +94,11 @@ class Customer extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
+    public function eventInterests(): HasMany
+    {
+        return $this->hasMany(EventInterest::class);
+    }
+
     /**
      * @return MorphMany<WebhookDelivery, $this>
      */

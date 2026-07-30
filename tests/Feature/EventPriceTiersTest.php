@@ -6,6 +6,7 @@ use App\Actions\PrepareBookingSeatHold;
 use App\Actions\ReleaseBookingSeats;
 use App\Actions\ReserveBookingSeats;
 use App\Enums\BookingInstallmentState;
+use App\Enums\EventInterestStatus;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Enums\SeatAllocationState;
@@ -18,6 +19,7 @@ use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Event;
 use App\Models\EventContract;
+use App\Models\EventInterest;
 use App\Models\EventPriceTier;
 use App\Models\FamilyMember;
 use App\Models\Payment;
@@ -144,6 +146,10 @@ test('starting payment holds seats and the first captured payment reserves them'
         'subtotal_baisa' => 10000,
         'total_baisa' => 10000,
     ]);
+    $interest = EventInterest::factory()->for($booking->customer)->for($event)->create([
+        'status' => EventInterestStatus::BookingStarted,
+        'booking_id' => $booking->id,
+    ]);
     $installment = tierPaymentSchedule($booking);
 
     $allocation = app(PrepareBookingSeatHold::class)->execute($booking->id);
@@ -162,6 +168,8 @@ test('starting payment holds seats and the first captured payment reserves them'
 
     expect($allocation->refresh()->state)->toBe(SeatAllocationState::Reserved)
         ->and($allocation->payment_id)->toBe($payment->id)
+        ->and($interest->refresh()->status)->toBe(EventInterestStatus::Converted)
+        ->and($interest->converted_at)->not->toBeNull()
         ->and($event->remainingSeats())->toBe(3);
 });
 
@@ -379,7 +387,12 @@ test('tier capacity and deletion cannot invalidate held seats', function () {
 });
 
 test('event REST endpoints expose active price tiers with their remaining seats', function () {
-    $event = Event::factory()->create(['seat_capacity' => 5, 'price_baisa' => 10000]);
+    $event = Event::factory()->create([
+        'starts_at' => now()->addDay(),
+        'ends_at' => now()->addDay()->addHours(6),
+        'seat_capacity' => 5,
+        'price_baisa' => 10000,
+    ]);
     $firstTier = EventPriceTier::factory()->for($event)->create([
         'name' => 'First tier',
         'position' => 1,
@@ -426,7 +439,8 @@ test('event REST endpoints expose active price tiers with their remaining seats'
     $data = $response->json('data');
 
     expect(array_keys($data))->toBe([
-        'id', 'name', 'slug', 'type', 'status', 'excerpt', 'location', 'starts_at', 'ends_at',
+        'id', 'name', 'slug', 'type', 'status', 'enrollment_status', 'enrollment_status_label',
+        'can_express_interest', 'can_book', 'primary_action', 'excerpt', 'location', 'starts_at', 'ends_at',
         'minimum_age', 'maximum_age', 'seat_capacity', 'remaining_seats', 'price', 'currency',
         'price_tiers', 'available_discounts', 'payment_plans', 'created_at', 'updated_at',
     ]);

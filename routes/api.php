@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AssistantEventInterestController;
 use App\Http\Controllers\Api\V1\CustomerBookingController;
 use App\Http\Controllers\Api\V1\CustomerBookingPaymentController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -27,4 +28,13 @@ Route::prefix('v1')
 
         Route::apiResource('customers.payments', CustomerPaymentController::class);
         Route::apiResource('events', EventController::class)->only(['index', 'show']);
+
+        Route::middleware('throttle:20,1')
+            ->prefix('integrations/assistant')
+            ->name('integrations.assistant.')
+            ->group(function (): void {
+                Route::get('event-interests', [AssistantEventInterestController::class, 'show'])->name('event-interests.show');
+                Route::put('event-interests', [AssistantEventInterestController::class, 'update'])->name('event-interests.update');
+                Route::delete('event-interests', [AssistantEventInterestController::class, 'destroy'])->name('event-interests.destroy');
+            });
     });
