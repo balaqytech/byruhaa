@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\BuildEventPriceTierOffer;
 use App\Actions\RenderEventLandingPage;
 use App\Enums\EventStatus;
+use App\Enums\SeatAllocationState;
 use App\Models\Event;
 use App\Settings\AboutPageSettings;
 use App\Settings\ContactPageSettings;
@@ -14,20 +16,47 @@ class PublicSiteController extends Controller
 {
     public function __construct(
         private readonly RenderEventLandingPage $renderEventLandingPage,
+        private readonly BuildEventPriceTierOffer $buildEventPriceTierOffer,
     ) {}
 
     public function home(): View
     {
         $events = Event::query()
             ->where('status', EventStatus::Published)
+            ->where(fn ($query) => $query
+                ->where('starts_at', '>=', now())
+                ->orWhere('ends_at', '>=', now())
+                ->orWhereNull('starts_at'))
+            ->withSum([
+                'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                    SeatAllocationState::Held->value,
+                    SeatAllocationState::Reserved->value,
+                ]),
+            ], 'seat_count')
+            ->with([
+                'priceTiers' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->withSum([
+                        'seatAllocations as unavailable_seats_count' => fn ($query) => $query->whereIn('state', [
+                            SeatAllocationState::Held->value,
+                            SeatAllocationState::Reserved->value,
+                        ]),
+                    ], 'seat_count')
+                    ->orderBy('position'),
+            ])
             ->orderByRaw('starts_at IS NULL')
             ->orderBy('starts_at')
             ->orderByDesc('id')
             ->limit(4)
             ->get();
 
+        $featuredEvent = $events->first();
+
         return view('pages.public.site.home', [
-            'featuredEvent' => $events->first(),
+            'featuredEvent' => $featuredEvent,
+            'featuredTierOffer' => $featuredEvent === null
+                ? null
+                : $this->buildEventPriceTierOffer->handle($featuredEvent),
             'upcomingEvents' => $events->skip(1),
             'title' => 'بيرحاء، برامج تربوية تصنع أثرًا',
             'metaDescription' => 'برامج ومخيمات ورحلات تربوية للفتيان تجمع العبادة والعلم والعمل والصحبة في تجارب عملية ممتدة الأثر.',

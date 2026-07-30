@@ -23,36 +23,18 @@
     $toArabicNumber = fn(int $number): string => strtr((string) $number, $arabicDigits);
     $formatPrice = fn(int $priceBaisa): string => number_format($priceBaisa / 1000, 3, '.', '');
 
-    $tiers = $event->priceTiers
-        ->map(fn($tier, int $index): array => [
-            'code' => 'B' . ($index + 1),
-            'name' => $tier->name,
-            'seats' => $tier->seat_capacity,
-            'remaining' => max(0, $tier->seat_capacity - $tier->usedSeatsCount()),
-            'price_baisa' => $tier->price_baisa,
-        ])
-        ->values();
-
-    if ($tiers->isEmpty()) {
-        $tiers = collect([[
-            'code' => 'B1',
-            'name' => 'السعر المعتمد',
-            'seats' => $totalCapacity,
-            'remaining' => $remainingSeats,
-            'price_baisa' => $event->price_baisa,
-        ]]);
-    }
-
-    $openTierIndex = $tiers->search(fn(array $tier): bool => $tier['remaining'] > 0);
-    $openTierIndex = $openTierIndex === false ? null : $openTierIndex;
-    $openTier = $openTierIndex === null ? $tiers->last() : $tiers->get($openTierIndex);
-    $tiers = $tiers->map(fn(array $tier, int $index): array => [
-        ...$tier,
-        'open' => $index === $openTierIndex,
-        'sold_out' => $tier['remaining'] === 0,
-    ]);
-    $currentPrice = $formatPrice($openTier['price_baisa']);
-    $openTierRemaining = $openTier['remaining'];
+    $openTier = $tierOffer['current'];
+    $nextTier = $tierOffer['next'];
+    $currentPrice = $openTier === null ? null : $formatPrice($openTier['price_baisa']);
+    $openTierRemaining = $openTier['remaining_seats'] ?? 0;
+    $tiers = collect([$openTier, $nextTier])
+        ->filter()
+        ->values()
+        ->map(fn(array $tier, int $index): array => [
+            ...$tier,
+            'code' => $index === 0 ? 'الآن' : 'تاليًا',
+            'open' => $index === 0,
+        ]);
 
     $facts = [
         ['icon' => 'calendar-03', 'label' => 'تبدأ ١٣ أغسطس ٢٠٢٦م'],
@@ -242,7 +224,7 @@
             </div>
 
             <aside
-                class="order-1 hidden overflow-hidden rounded-sm border border-white/12 bg-white/7 shadow-2xl shadow-black/24 lg:order-2 lg:block">
+                class="order-1 overflow-hidden rounded-sm border border-white/12 bg-white/7 shadow-2xl shadow-black/24 lg:order-2">
                 <div class="relative aspect-[9/16] overflow-hidden lg:aspect-[4/3]">
                     <img src="{{ $heroImage }}" alt="طالب ثانوية عامة خريج يرتدي الزي العماني" width="941"
                         height="1672" fetchpriority="high" class="h-full w-full object-cover">
@@ -256,27 +238,32 @@
 
                 <div class="p-5">
                     <div class="rounded-sm border border-[#dfb458]/24 bg-[#dfb458]/10 p-5">
-                        <p class="text-sm text-[#f4dfb2]">{{ $openTierIndex === null ? 'اكتملت المقاعد' : 'الباكورة المفتوحة الآن' }}</p>
-                        <p class="mt-2 font-heading text-4xl font-bold text-white">{{ $openTier['name'] }}</p>
+                        <p class="text-base font-bold text-[#f4dfb2]">{{ $tierOffer['is_sold_out'] ? 'اكتملت المقاعد' : 'الباكورة المفتوحة الآن' }}</p>
+                        <p class="mt-2 font-heading text-4xl font-bold text-white sm:text-5xl">{{ $openTier['name'] ?? 'اكتمل الحجز' }}</p>
                         <p class="mt-3 text-sm leading-7 text-[#cfe2e2]">المقاعد الأولى أرخص، وحين تنفد الشريحة لا يعود
                             سعرها.</p>
                     </div>
 
-                    <div class="mt-4 grid grid-cols-3 gap-3">
+                    @if ($openTier)
+                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
                         <div class="rounded-sm bg-white/8 p-4 text-center">
-                            <p class="text-xs text-[#9dc3c3]">المتبقي</p>
-                            <p class="mt-2 font-heading text-3xl font-bold text-[#17a3a1]">
-                                {{ $toArabicNumber($remainingSeats) }}</p>
+                            <p class="text-sm font-bold text-[#9dc3c3]">المتبقي في هذه الباكورة</p>
+                            <p class="mt-2 font-heading text-5xl font-bold text-[#17a3a1]">
+                                {{ $toArabicNumber($openTierRemaining) }} <span class="text-lg">مقاعد</span></p>
                         </div>
                         <div class="rounded-sm bg-white/8 p-4 text-center">
-                            <p class="text-xs text-[#9dc3c3]">السعر</p>
-                            <p class="mt-2 font-heading text-3xl font-bold text-[#dfb458]">{{ $currentPrice }}</p>
-                        </div>
-                        <div class="rounded-sm bg-white/8 p-4 text-center">
-                            <p class="text-xs text-[#9dc3c3]">السعة</p>
-                            <p class="mt-2 font-heading text-3xl font-bold">{{ $toArabicNumber($totalCapacity) }}</p>
+                            <p class="text-sm font-bold text-[#9dc3c3]">السعر الحالي</p>
+                            <p class="mt-2 font-heading text-5xl font-bold text-[#dfb458]">{{ $currentPrice }} <span class="text-lg">ر.ع</span></p>
                         </div>
                     </div>
+                    @if ($nextTier)
+                        <div class="mt-3 border-s-2 border-[#dfb458] bg-white/6 p-4">
+                            <p class="text-sm font-bold text-[#cfe2e2]">بعد نفاد الحالية تبدأ</p>
+                            <p class="mt-1 font-heading text-2xl font-bold text-white">{{ $nextTier['name'] }}</p>
+                            <p class="mt-1 font-heading text-3xl font-bold text-[#dfb458]">{{ $formatPrice($nextTier['price_baisa']) }} <span class="text-base">ر.ع</span></p>
+                        </div>
+                    @endif
+                    @endif
                 </div>
             </aside>
         </div>
@@ -505,6 +492,7 @@
                     السعر شريحة بعد شريحة. من سبق سبق، وحين تنفد الشريحة لا يعود سعرها.</p>
             </div>
 
+            @if ($openTier)
             <div
                 class="mt-10 rounded-sm bg-[linear-gradient(160deg,#0b1524,#0f1b2e)] p-5 text-[#eaf2f2] shadow-xl shadow-[#16263f]/16">
                 <div class="grid overflow-hidden rounded-sm border border-white/14 bg-white/10 md:grid-cols-3">
@@ -528,6 +516,12 @@
                     <span>عداد صادق مرتبط بمصدر التسجيل عند توفره، لا رقم جامد للتسويق.</span>
                 </p>
             </div>
+            @else
+                <div class="mt-10 rounded-sm bg-[#0b1524] p-8 text-center text-white">
+                    <p class="font-heading text-4xl font-bold">اكتملت جميع المقاعد</p>
+                    <p class="mt-3 text-[#cfe2e2]">يمكنك التواصل معنا لمعرفة البرامج القادمة.</p>
+                </div>
+            @endif
 
             <div class="mt-6 grid gap-4 md:grid-cols-2">
                 @foreach ($tiers as $tier)
@@ -537,20 +531,19 @@
                             <span
                                 class="absolute left-3 top-3 rounded-sm bg-[#0e7c7b] px-3 py-1 text-xs font-bold text-white">مفتوحة
                                 الآن</span>
-                        @elseif ($tier['sold_out'])
-                            <span
-                                class="absolute left-3 top-3 rounded-sm bg-[#16263f] px-3 py-1 text-xs font-bold text-white">نفدت</span>
+                        @else
+                            <span class="absolute left-3 top-3 rounded-sm bg-[#dfb458] px-3 py-1 text-xs font-bold text-[#16263f]">الباكورة التالية</span>
                         @endif
                         <div
                             class="flex min-h-24 flex-col items-center justify-center bg-[linear-gradient(160deg,#16263f,#0f1b2e)] text-white">
                             <span class="font-heading text-xl font-bold text-[#dfb458]">{{ $tier['code'] }}</span>
-                            <span class="mt-1 text-xs text-[#9dc3c3]">{{ $toArabicNumber($tier['seats']) }} مقاعد</span>
+                            <span class="mt-1 text-xs text-[#9dc3c3]">{{ $tier['open'] ? 'متاحة الآن' : 'تفتح لاحقًا' }}</span>
                         </div>
                         <div class="p-5">
                             <h3 class="font-heading text-xl font-bold text-[#16263f] dark:text-[#f7f1df]">
                                 {{ $tier['name'] }}</h3>
                             <p class="mt-2 text-sm text-[#566a72] dark:text-[#f7f1df]/62">
-                                {{ $toArabicNumber($tier['remaining']) }} من {{ $toArabicNumber($tier['seats']) }} مقاعد متاحة
+                                {{ $tier['open'] ? $toArabicNumber($tier['remaining_seats']).' مقاعد متبقية' : 'تبدأ بعد نفاد الباكورة الحالية' }}
                             </p>
                         </div>
                         <div class="flex items-center justify-start p-5 sm:justify-center">

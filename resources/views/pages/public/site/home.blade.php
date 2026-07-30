@@ -12,6 +12,7 @@
 @endphp
 
 @section('content')
+    @push('home-after-events')
     <section class="relative isolate overflow-hidden">
         <div
             class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_14%_18%,rgba(0,144,96,0.16),transparent_30%),radial-gradient(circle_at_88%_82%,rgba(42,128,105,0.10),transparent_34%)] dark:bg-[radial-gradient(circle_at_14%_18%,rgba(52,211,153,0.12),transparent_30%),radial-gradient(circle_at_88%_82%,rgba(42,128,105,0.12),transparent_34%)]">
@@ -131,19 +132,20 @@
             </div>
         </div>
     </section>
+    @endpush
 
     <section class="mx-auto w-full max-w-7xl px-4 py-18 sm:px-6 lg:px-8 lg:py-24">
         @if ($featuredEvent)
             <article
                 class="public-card overflow-hidden rounded-sm border border-[#2a8069]/14 bg-[#0d2b25] text-white shadow-[0_26px_80px_rgba(18,51,41,0.16)] dark:border-white/10">
                 <div class="grid lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)]">
-                    <div class="relative min-h-80 overflow-hidden lg:min-h-[34rem]">
+                    <div class="order-1 relative min-h-80 overflow-hidden lg:order-2 lg:min-h-[34rem]">
                         <img src="{{ $featuredImage }}" alt="{{ $featuredEvent->name }}" width="1536" height="1024"
                             loading="lazy" class="absolute inset-0 h-full w-full object-cover">
                         <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(13,43,37,0.05),rgba(13,43,37,0.24))]"></div>
                     </div>
 
-                    <div class="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
+                    <div class="order-2 flex flex-col justify-center p-7 sm:p-10 lg:order-1 lg:p-14">
                         <p class="text-sm font-bold text-[#87d9bd]">الفعالية الأقرب</p>
                         <h2 class="mt-3 font-heading text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl">
                             {{ $featuredEvent->name }}
@@ -152,7 +154,7 @@
                             {{ $featuredEvent->excerpt }}
                         </p>
 
-                        <dl class="mt-8 grid gap-5 border-t border-white/14 pt-7 sm:grid-cols-3">
+                        <dl class="mt-8 grid gap-5 border-t border-white/14 pt-7 sm:grid-cols-2">
                             <div>
                                 <dt class="text-sm text-white/58">الموعد</dt>
                                 <dd class="mt-1 font-bold">
@@ -164,12 +166,31 @@
                                 <dd class="mt-1 font-bold">{{ $featuredEvent->minimum_age }} إلى
                                     {{ $featuredEvent->maximum_age }} سنة</dd>
                             </div>
-                            <div>
-                                <dt class="text-sm text-white/58">السعر للفرد</dt>
-                                <dd class="mt-1 font-bold"><x-money :amount-baisa="$featuredEvent->price_baisa"
-                                        :currency="$featuredEvent->currency" /></dd>
-                            </div>
                         </dl>
+
+                        @if ($featuredTierOffer['current'])
+                            <div class="mt-7 grid gap-3 sm:grid-cols-[1.15fr_0.85fr]" data-featured-tier-offer>
+                                <div class="border-s-4 border-[#87d9bd] bg-white/10 p-5">
+                                    <p class="text-sm font-bold text-[#87d9bd]">الباكورة المتاحة الآن</p>
+                                    <p class="mt-2 font-heading text-3xl font-bold">{{ $featuredTierOffer['current']['name'] }}</p>
+                                    <div class="mt-4 flex flex-wrap items-end justify-between gap-3">
+                                        <p class="font-heading text-5xl font-bold text-white"><x-money :amount-baisa="$featuredTierOffer['current']['price_baisa']"
+                                                :currency="$featuredTierOffer['current']['currency']" /></p>
+                                        <p class="text-lg font-bold text-[#87d9bd]">بقي {{ $featuredTierOffer['current']['remaining_seats'] }} مقاعد</p>
+                                    </div>
+                                </div>
+                                @if ($featuredTierOffer['next'])
+                                    <div class="bg-white/6 p-5">
+                                        <p class="text-sm font-bold text-white/62">الباكورة التالية</p>
+                                        <p class="mt-2 font-heading text-2xl font-bold">{{ $featuredTierOffer['next']['name'] }}</p>
+                                        <p class="mt-4 font-heading text-3xl font-bold text-[#f4dfb2]"><x-money :amount-baisa="$featuredTierOffer['next']['price_baisa']"
+                                                :currency="$featuredTierOffer['next']['currency']" /></p>
+                                    </div>
+                                @endif
+                            </div>
+                        @elseif ($featuredTierOffer['is_sold_out'])
+                            <p class="mt-7 border-s-4 border-[#f4dfb2] bg-white/8 p-5 font-heading text-2xl font-bold">اكتملت المقاعد</p>
+                        @endif
 
                         <div class="mt-8 flex flex-wrap gap-3">
                             <a href="{{ route('events.show', $featuredEvent) }}"
@@ -217,6 +238,8 @@
             </div>
         </section>
     @endif
+
+    @stack('home-after-events')
 
     <section class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-18 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center lg:px-8 lg:py-24">
         <div class="overflow-hidden rounded-sm border border-[#2a8069]/14 bg-white dark:border-white/10 dark:bg-white/5">

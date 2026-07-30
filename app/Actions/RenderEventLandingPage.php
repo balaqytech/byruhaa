@@ -14,6 +14,7 @@ final readonly class RenderEventLandingPage
     public function __construct(
         private EventLandingPageRegistry $landingPages,
         private ViewFactory $views,
+        private BuildEventPriceTierOffer $buildEventPriceTierOffer,
     ) {}
 
     public function handle(Event $event): View
@@ -46,6 +47,7 @@ final readonly class RenderEventLandingPage
         return $this->views->make($this->landingPages->resolve($event->landing_page_key), [
             'event' => $event,
             'remainingSeats' => $remainingSeats,
+            'tierOffer' => $this->buildEventPriceTierOffer->handle($event),
             'availableDiscounts' => Discount::query()
                 ->availableForEvent($event)
                 ->orderByDesc('amount_baisa')

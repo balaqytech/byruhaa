@@ -167,8 +167,9 @@ test('after twelfth event is seeded with its landing page and price tiers', func
         ->assertSee('صحبة تبقى')
         ->assertSee('الباكورة الأولى')
         ->assertSee('59.000')
-        ->assertSee('الباكورة الخامسة')
-        ->assertSee('89.000')
+        ->assertSee('الباكورة الثانية')
+        ->assertSee('69.000')
+        ->assertDontSee('الباكورة الثالثة')
         ->assertSee('من أصل خمسين مقعدًا')
         ->assertSee(route('events.show', $event), false)
         ->assertSee(route('customer.events.show', $event), false)
@@ -194,11 +195,13 @@ test('after twelfth landing page advances to the next price tier when the first 
 
     $this->get(route('events.show', $event))
         ->assertSuccessful()
-        ->assertSee('الباكورة الأولى')
-        ->assertSee('نفدت')
-        ->assertSee('الباكورة الثانية')
-        ->assertSee('مفتوحة الآن')
-        ->assertSee('69.000');
+        ->assertSeeInOrder([
+            'الباكورة الثانية',
+            '69.000',
+            'الباكورة الثالثة',
+            '75.000',
+        ])
+        ->assertDontSee('الباكورة الرابعة');
 });
 
 test('the temporary new home route is removed', function () {
@@ -260,10 +263,36 @@ test('homepage features the nearest published event and hides drafts', function 
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSee('Nearest published event')
+        ->assertSeeInOrder(['Nearest published event', 'مساحةٌ ينضج فيها الفتى بالفعل'])
         ->assertSee(route('events.show', $nearestEvent), false)
         ->assertSee(route('customer.events.show', $nearestEvent), false)
         ->assertDontSee('Hidden draft event');
+});
+
+test('homepage shows the current price tier followed by the next tier', function () {
+    $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
+    $firstTier = $event->priceTiers()->firstOrFail();
+    $booking = Booking::factory()->for($event)->create();
+
+    BookingSeatAllocation::factory()->for($booking)->create([
+        'event_id' => $event->id,
+        'event_price_tier_id' => $firstTier->id,
+        'seat_count' => 3,
+        'state' => SeatAllocationState::Reserved,
+        'tier_name' => $firstTier->name,
+        'tier_unit_price_baisa' => $firstTier->price_baisa,
+    ]);
+
+    $this->get(route('home'))
+        ->assertSuccessful()
+        ->assertSeeInOrder([
+            'الباكورة المتاحة الآن',
+            'الباكورة الأولى',
+            'بقي 7 مقاعد',
+            'الباكورة التالية',
+            'الباكورة الثانية',
+            '69.000',
+        ]);
 });
 
 test('events page loads', function () {
