@@ -29,11 +29,13 @@
     $tiers = collect([$openTier, $nextTier])
         ->filter()
         ->values()
-        ->map(fn(array $tier, int $index): array => [
-            ...$tier,
-            'code' => $index === 0 ? 'الآن' : 'تاليًا',
-            'open' => $index === 0,
-        ]);
+        ->map(
+            fn(array $tier, int $index): array => [
+                ...$tier,
+                'code' => $index === 0 ? 'الآن' : 'تاليًا',
+                'open' => $index === 0,
+            ],
+        );
 
     $facts = [
         ['icon' => 'calendar-03', 'label' => 'تبدأ ١٣ أغسطس ٢٠٢٦م'],
@@ -141,7 +143,7 @@
         [
             'question' => 'هل الفعالية للفتيان فقط؟ وما الفئة العمرية؟',
             'answer' =>
-                'نعم، هذه الفعالية الإقامية مخصصة لخرّيجي الثاني عشر من الفتيان، ١٧-١٨ سنة، لطبيعة الإقامة الكاملة والإشراف.',
+                'نعم، هذه الفعالية الإقامية مخصصة لخرّيجي الثاني عشر من الفتيان،، لطبيعة الإقامة الكاملة والإشراف.',
         ],
     ];
 @endphp
@@ -184,7 +186,8 @@
                     النجاح أوسع من معدّل، والطريق أرحب من خيار واحد. ثلاثة أيام تعيد لابنك يقينه، وتفتح له الأبواب.
                 </p>
 
-                <div class="mt-4 flex max-w-2xl gap-3 rounded-sm border border-white/12 bg-white/6 p-4 sm:mt-7 sm:gap-4 sm:p-5">
+                <div
+                    class="mt-4 flex max-w-2xl gap-3 rounded-sm border border-white/12 bg-white/6 p-4 sm:mt-7 sm:gap-4 sm:p-5">
                     <x-hugeicon name="file-view" class="mt-1 text-2xl text-[#dfb458]" />
                     <p class="text-sm leading-7 text-[#cfe2e2] sm:text-base sm:leading-8">
                         <span class="font-bold text-white">الوعد الملموس:</span>
@@ -232,36 +235,43 @@
 
                 <div class="p-5">
                     <div class="rounded-sm border border-[#dfb458]/24 bg-[#dfb458]/10 p-5">
-                        <p class="text-base font-bold text-[#f4dfb2]">{{ $tierOffer['is_sold_out'] ? 'اكتملت المقاعد' : 'الباقة المفتوحة الآن' }}</p>
-                        <p class="mt-2 font-heading text-4xl font-bold text-white sm:text-5xl">{{ $openTier['name'] ?? 'اكتمل الحجز' }}</p>
+                        <p class="text-base font-bold text-[#f4dfb2]">
+                            {{ $tierOffer['is_sold_out'] ? 'اكتملت المقاعد' : 'الباقة المفتوحة الآن' }}</p>
+                        <p class="mt-2 font-heading text-4xl font-bold text-white sm:text-5xl">
+                            {{ $openTier['name'] ?? 'اكتمل الحجز' }}</p>
                         <p class="mt-3 text-sm leading-7 text-[#cfe2e2]">المقاعد الأولى أرخص، وحين تنفد الشريحة لا يعود
                             سعرها.</p>
                     </div>
 
                     @if ($openTier)
-                    <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-sm bg-white/8 p-4 text-center">
-                            <p class="text-sm font-bold text-[#9dc3c3]">المتبقي في هذه الباقة</p>
-                            <p class="mt-2 font-heading text-5xl font-bold text-[#17a3a1]">
-                                {{ $toArabicNumber($openTierRemaining) }} <span class="text-lg">مقاعد</span></p>
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                            <div class="rounded-sm bg-white/8 p-4 text-center">
+                                <p class="text-sm font-bold text-[#9dc3c3]">المتبقي في هذه الباقة</p>
+                                <p class="mt-2 font-heading text-5xl font-bold text-[#17a3a1]">
+                                    {{ $toArabicNumber($openTierRemaining) }} <span class="text-lg">مقاعد</span></p>
+                            </div>
+                            <div class="rounded-sm bg-white/8 p-4 text-center">
+                                <p class="text-sm font-bold text-[#9dc3c3]">السعر الحالي</p>
+                                <p class="mt-2 font-heading text-5xl font-bold text-[#dfb458]">{{ $currentPrice }} <span
+                                        class="text-lg">ر.ع</span></p>
+                            </div>
                         </div>
-                        <div class="rounded-sm bg-white/8 p-4 text-center">
-                            <p class="text-sm font-bold text-[#9dc3c3]">السعر الحالي</p>
-                            <p class="mt-2 font-heading text-5xl font-bold text-[#dfb458]">{{ $currentPrice }} <span class="text-lg">ر.ع</span></p>
+                        <div class="mt-3 border-s-4 border-[#ef5b5b] bg-[#ef5b5b]/12 p-4" data-current-package-alert>
+                            <p class="flex items-center gap-2 font-heading text-xl font-bold text-white">
+                                <x-hugeicon name="alert-02" class="shrink-0 text-2xl text-[#ff8d8d]" />
+                                <span>احجز الآن قبل نفاد الكمية</span>
+                            </p>
+                            <p class="mt-2 text-base font-bold text-[#f4dfb2]">بقي {{ $toArabicNumber($openTierRemaining) }}
+                                مقاعد فقط بالسعر الحالي.</p>
+                            @if ($nextTier)
+                                <p class="mt-2 text-sm leading-7 text-[#cfe2e2]">بعد نفادها تنتقل الحجوزات إلى
+                                    {{ $nextTier['name'] }} بسعر <strong
+                                        class="font-heading text-xl text-white">{{ $formatPrice($nextTier['price_baisa']) }}
+                                        ر.ع</strong></p>
+                            @else
+                                <p class="mt-2 text-sm leading-7 text-[#cfe2e2]">هذه آخر باقة متاحة للحجز.</p>
+                            @endif
                         </div>
-                    </div>
-                    <div class="mt-3 border-s-4 border-[#ef5b5b] bg-[#ef5b5b]/12 p-4" data-current-package-alert>
-                        <p class="flex items-center gap-2 font-heading text-xl font-bold text-white">
-                            <x-hugeicon name="alert-02" class="shrink-0 text-2xl text-[#ff8d8d]" />
-                            <span>احجز الآن قبل نفاد الكمية</span>
-                        </p>
-                        <p class="mt-2 text-base font-bold text-[#f4dfb2]">بقي {{ $toArabicNumber($openTierRemaining) }} مقاعد فقط بالسعر الحالي.</p>
-                        @if ($nextTier)
-                            <p class="mt-2 text-sm leading-7 text-[#cfe2e2]">بعد نفادها تنتقل الحجوزات إلى {{ $nextTier['name'] }} بسعر <strong class="font-heading text-xl text-white">{{ $formatPrice($nextTier['price_baisa']) }} ر.ع</strong></p>
-                        @else
-                            <p class="mt-2 text-sm leading-7 text-[#cfe2e2]">هذه آخر باقة متاحة للحجز.</p>
-                        @endif
-                    </div>
                     @endif
                 </div>
             </aside>
@@ -292,7 +302,8 @@
                             <div>
                                 <h3 class="font-heading text-xl font-bold text-[#16263f] dark:text-[#f7f1df]">
                                     {{ $worry['title'] }}</h3>
-                                <p class="mt-3 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/64">{{ $worry['body'] }}
+                                <p class="mt-3 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/64">
+                                    {{ $worry['body'] }}
                                 </p>
                             </div>
                         </div>
@@ -467,29 +478,30 @@
             </div>
 
             @if ($openTier)
-            <div
-                class="mt-10 rounded-sm bg-[linear-gradient(160deg,#0b1524,#0f1b2e)] p-5 text-[#eaf2f2] shadow-xl shadow-[#16263f]/16">
-                <div class="grid overflow-hidden rounded-sm border border-white/14 bg-white/10 md:grid-cols-3">
-                    <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
-                        <p class="text-xs text-[#9dc3c3]">تبقى في الباقة المفتوحة</p>
-                        <p class="mt-2 font-heading text-4xl font-bold text-[#17a3a1]">
-                            {{ $toArabicNumber($openTierRemaining) }} <span class="text-base text-[#cfe2e2]">مقاعد</span></p>
+                <div
+                    class="mt-10 rounded-sm bg-[linear-gradient(160deg,#0b1524,#0f1b2e)] p-5 text-[#eaf2f2] shadow-xl shadow-[#16263f]/16">
+                    <div class="grid overflow-hidden rounded-sm border border-white/14 bg-white/10 md:grid-cols-3">
+                        <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
+                            <p class="text-xs text-[#9dc3c3]">تبقى في الباقة المفتوحة</p>
+                            <p class="mt-2 font-heading text-4xl font-bold text-[#17a3a1]">
+                                {{ $toArabicNumber($openTierRemaining) }} <span
+                                    class="text-base text-[#cfe2e2]">مقاعد</span></p>
+                        </div>
+                        <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
+                            <p class="text-xs text-[#9dc3c3]">الشريحة المفتوحة الآن</p>
+                            <p class="mt-2 font-heading text-2xl font-bold text-white">{{ $openTier['name'] }}</p>
+                        </div>
+                        <div class="p-5">
+                            <p class="text-xs text-[#9dc3c3]">سعرها الحالي</p>
+                            <p class="mt-2 font-heading text-4xl font-bold text-[#dfb458]">{{ $currentPrice }} <span
+                                    class="text-base text-[#cfe2e2]">ر.ع</span></p>
+                        </div>
                     </div>
-                    <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
-                        <p class="text-xs text-[#9dc3c3]">الشريحة المفتوحة الآن</p>
-                        <p class="mt-2 font-heading text-2xl font-bold text-white">{{ $openTier['name'] }}</p>
-                    </div>
-                    <div class="p-5">
-                        <p class="text-xs text-[#9dc3c3]">سعرها الحالي</p>
-                        <p class="mt-2 font-heading text-4xl font-bold text-[#dfb458]">{{ $currentPrice }} <span
-                                class="text-base text-[#cfe2e2]">ر.ع</span></p>
-                    </div>
+                    <p class="mt-4 flex items-center gap-2 text-sm text-[#a9c7c7]">
+                        <x-hugeicon name="information-circle" class="text-base" />
+                        <span>عداد صادق مرتبط بمصدر التسجيل عند توفره، لا رقم جامد للتسويق.</span>
+                    </p>
                 </div>
-                <p class="mt-4 flex items-center gap-2 text-sm text-[#a9c7c7]">
-                    <x-hugeicon name="information-circle" class="text-base" />
-                    <span>عداد صادق مرتبط بمصدر التسجيل عند توفره، لا رقم جامد للتسويق.</span>
-                </p>
-            </div>
             @else
                 <div class="mt-10 rounded-sm bg-[#0b1524] p-8 text-center text-white">
                     <p class="font-heading text-4xl font-bold">اكتملت جميع المقاعد</p>
@@ -506,18 +518,21 @@
                                 class="absolute left-3 top-3 rounded-sm bg-[#0e7c7b] px-3 py-1 text-xs font-bold text-white">مفتوحة
                                 الآن</span>
                         @else
-                            <span class="absolute left-3 top-3 rounded-sm bg-[#dfb458] px-3 py-1 text-xs font-bold text-[#16263f]">الباقة التالية</span>
+                            <span
+                                class="absolute left-3 top-3 rounded-sm bg-[#dfb458] px-3 py-1 text-xs font-bold text-[#16263f]">الباقة
+                                التالية</span>
                         @endif
                         <div
                             class="flex min-h-24 flex-col items-center justify-center bg-[linear-gradient(160deg,#16263f,#0f1b2e)] text-white">
                             <span class="font-heading text-xl font-bold text-[#dfb458]">{{ $tier['code'] }}</span>
-                            <span class="mt-1 text-xs text-[#9dc3c3]">{{ $tier['open'] ? 'متاحة الآن' : 'تفتح لاحقًا' }}</span>
+                            <span
+                                class="mt-1 text-xs text-[#9dc3c3]">{{ $tier['open'] ? 'متاحة الآن' : 'تفتح لاحقًا' }}</span>
                         </div>
                         <div class="p-5">
                             <h3 class="font-heading text-xl font-bold text-[#16263f] dark:text-[#f7f1df]">
                                 {{ $tier['name'] }}</h3>
                             <p class="mt-2 text-sm text-[#566a72] dark:text-[#f7f1df]/62">
-                                {{ $tier['open'] ? $toArabicNumber($tier['remaining_seats']).' مقاعد متبقية' : 'تبدأ بعد نفاد الباقة الحالية' }}
+                                {{ $tier['open'] ? $toArabicNumber($tier['remaining_seats']) . ' مقاعد متبقية' : 'تبدأ بعد نفاد الباقة الحالية' }}
                             </p>
                         </div>
                         <div class="flex items-center justify-start p-5 sm:justify-center">
@@ -591,23 +606,25 @@
             class="overflow-hidden rounded-sm bg-[linear-gradient(165deg,#16263f,#0f1b2e)] text-white shadow-xl shadow-[#16263f]/16">
             <div class="grid items-stretch lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.36fr)]">
                 <div class="p-8 lg:p-10">
-            <h2 class="font-heading text-3xl font-bold leading-tight lg:text-5xl">الطريق يبدأ من هنا، فلنمش الخطوة الأولى
-                معًا</h2>
-            <p class="mt-5 max-w-2xl text-base leading-8 text-[#cfe2e2]">مقاعد الشريحة المفتوحة تنفد، وسعرها لا يعود. احجز
-                لابنك اليوم، وامنحه بداية يستحقها.</p>
-            <div class="mt-8 flex flex-wrap gap-3">
-                <a href="{{ $customerEventUrl }}"
-                    class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0">
-                    <span>احجز مقعد ابنك الآن</span>
-                    <x-hugeicon name="check-list" class="text-lg" />
-                </a>
-                <a href="{{ $eventUrl }}"
-                    class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-white/28 bg-white/6 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/12 active:translate-y-0">
-                    <span>راجع تفاصيل الفعالية</span>
-                    <x-hugeicon name="arrow-left-02" class="text-lg" />
-                </a>
-            </div>
-            <p class="mt-7 text-sm text-[#9dc3c3]">نُعِدّهم لحياة طيبة بإذن الله. حفظهم الله ورعاهم.</p>
+                    <h2 class="font-heading text-3xl font-bold leading-tight lg:text-5xl">الطريق يبدأ من هنا، فلنمش الخطوة
+                        الأولى
+                        معًا</h2>
+                    <p class="mt-5 max-w-2xl text-base leading-8 text-[#cfe2e2]">مقاعد الشريحة المفتوحة تنفد، وسعرها لا
+                        يعود. احجز
+                        لابنك اليوم، وامنحه بداية يستحقها.</p>
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="{{ $customerEventUrl }}"
+                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0">
+                            <span>احجز مقعد ابنك الآن</span>
+                            <x-hugeicon name="check-list" class="text-lg" />
+                        </a>
+                        <a href="{{ $eventUrl }}"
+                            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-white/28 bg-white/6 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/12 active:translate-y-0">
+                            <span>راجع تفاصيل الفعالية</span>
+                            <x-hugeicon name="arrow-left-02" class="text-lg" />
+                        </a>
+                    </div>
+                    <p class="mt-7 text-sm text-[#9dc3c3]">نُعِدّهم لحياة طيبة بإذن الله. حفظهم الله ورعاهم.</p>
                 </div>
                 <div class="aspect-[9/16] overflow-hidden bg-[#0f1b2e]">
                     <img src="{{ $finalCtaImage }}" alt="طالب عماني يبدأ الخطوة الأولى في طريقه" width="941"

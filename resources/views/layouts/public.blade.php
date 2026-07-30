@@ -52,7 +52,7 @@
             ['label' => 'النظام', 'theme' => 'system', 'icon' => 'computer'],
         ];
 
-        $whatsappUrl = 'https://wa.me/96874155123?text='.rawurlencode('أرغب بالتحدث مع المساعد الذكي');
+        $whatsappUrl = 'https://wa.me/96874155123?text=' . rawurlencode('أرغب بالتحدث مع المساعد الذكي');
     @endphp
 
     <div class="pointer-events-none fixed inset-0 -z-10 bg-[#f6fbf8] dark:bg-[#07120f]"></div>
@@ -140,7 +140,8 @@
         </nav>
     </header>
 
-    <div data-whatsapp-reveal-sentinel aria-hidden="true" class="pointer-events-none absolute start-0 top-40 size-px"></div>
+    <div data-whatsapp-reveal-sentinel aria-hidden="true" class="pointer-events-none absolute start-0 top-40 size-px">
+    </div>
 
     <main class="relative min-h-screen pb-24 pt-20 lg:pb-0">
         @yield('content')
@@ -210,14 +211,14 @@
                     <a href="{{ route('register') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.auth.create_account') }}</a>
                 @endif
-                @if (Route::has('affiliate.login'))
+                {{-- @if (Route::has('affiliate.login'))
                     <a href="{{ route('affiliate.login') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.login_title') }}</a>
                 @endif
                 @if (Route::has('affiliate.register'))
                     <a href="{{ route('affiliate.register') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
-                @endif
+                @endif --}}
             </nav>
         </div>
     </footer>
