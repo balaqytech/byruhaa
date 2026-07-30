@@ -15,7 +15,7 @@ use App\Support\EventLandingPageRegistry;
 use Illuminate\Support\Facades\Route;
 
 test('homepage loads', function () {
-    $umrah = Event::query()->where('slug', 'umrah-2026')->firstOrFail();
+    $featuredEvent = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
 
     $this->get(route('home'))
         ->assertSuccessful()
@@ -23,9 +23,9 @@ test('homepage loads', function () {
         ->assertSee('مساحةٌ ينضج فيها الفتى بالفعل')
         ->assertSee('يومٌ متوازن، وأثرٌ يمتد')
         ->assertSee('التربية تبدأ بالصحبة، لا بالشعار')
-        ->assertSee($umrah->name)
-        ->assertSee(route('events.show', $umrah), false)
-        ->assertSee(route('customer.events.show', $umrah), false)
+        ->assertSee($featuredEvent->name)
+        ->assertSee(route('events.show', $featuredEvent), false)
+        ->assertSee(route('customer.events.show', $featuredEvent), false)
         ->assertSee(route('events.index'), false)
         ->assertSee(route('coffee'), false)
         ->assertSee('قهوة بيرحاء، بابٌ يومي للمكان')
@@ -128,6 +128,77 @@ test('umrah landing page derives the open price tier from held and reserved seat
         ->assertSuccessful()
         ->assertSeeInOrder(['الباكورة', 'نفدت', 'المتقدمة', 'مفتوحة الآن'])
         ->assertSee('٢٢ من ٣٠ مقعدًا');
+});
+
+test('after twelfth event is seeded with its landing page and price tiers', function () {
+    $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
+    $priceTiers = $event->priceTiers()->get();
+
+    expect($event->name)->toBe('بعد الثاني عشر، الطريق يبدأ')
+        ->and($event->status)->toBe(EventStatus::Published)
+        ->and($event->landing_page_key)->toBe('life-after-school-v1')
+        ->and($event->minimum_age)->toBe(17)
+        ->and($event->maximum_age)->toBe(18)
+        ->and($event->seat_capacity)->toBe(50)
+        ->and($event->price_baisa)->toBe(89000)
+        ->and($event->starts_at?->toDateTimeString())->toBe('2026-08-13 12:00:00')
+        ->and($event->ends_at)->toBeNull()
+        ->and($priceTiers->pluck('name')->all())->toBe([
+            'الباكورة الأولى',
+            'الباكورة الثانية',
+            'الباكورة الثالثة',
+            'الباكورة الرابعة',
+            'الباكورة الخامسة',
+        ])
+        ->and($priceTiers->pluck('seat_capacity')->all())->toBe([10, 10, 10, 10, 10])
+        ->and($priceTiers->pluck('price_baisa')->all())->toBe([59000, 69000, 75000, 79000, 89000])
+        ->and($priceTiers->sum('seat_capacity'))->toBe(50);
+
+    $this->assertFileExists(public_path('images/after-twelfth-omani-graduate-hero.png'));
+    $this->assertFileExists(public_path('images/after-twelfth-mentor-circle.png'));
+
+    $this->get(route('events.show', $event))
+        ->assertSuccessful()
+        ->assertViewIs('pages.public.site.events.landings.life-after-school-v1')
+        ->assertSee('بعد الثاني عشر')
+        ->assertSee('تبدأ ١٣ أغسطس ٢٠٢٦م')
+        ->assertSee('خطة ٩٠ يومًا')
+        ->assertSee('ست محطات في ثلاثة أيام')
+        ->assertSee('صحبة تبقى')
+        ->assertSee('الباكورة الأولى')
+        ->assertSee('59.000')
+        ->assertSee('الباكورة الخامسة')
+        ->assertSee('89.000')
+        ->assertSee('من أصل خمسين مقعدًا')
+        ->assertSee(route('events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee('٦-٨ أغسطس')
+        ->assertDontSee('٤٥')
+        ->assertDontSee('خصم الإخوة')
+        ->assertDontSee('شهادات حقيقية، قريبًا');
+});
+
+test('after twelfth landing page advances to the next price tier when the first is full', function () {
+    $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
+    $firstTier = $event->priceTiers()->firstOrFail();
+    $booking = Booking::factory()->for($event)->create();
+
+    BookingSeatAllocation::factory()->for($booking)->create([
+        'event_id' => $event->id,
+        'event_price_tier_id' => $firstTier->id,
+        'seat_count' => 10,
+        'state' => SeatAllocationState::Held,
+        'tier_name' => $firstTier->name,
+        'tier_unit_price_baisa' => $firstTier->price_baisa,
+    ]);
+
+    $this->get(route('events.show', $event))
+        ->assertSuccessful()
+        ->assertSee('الباكورة الأولى')
+        ->assertSee('نفدت')
+        ->assertSee('الباكورة الثانية')
+        ->assertSee('مفتوحة الآن')
+        ->assertSee('69.000');
 });
 
 test('the temporary new home route is removed', function () {

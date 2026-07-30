@@ -6,8 +6,8 @@
     $decisionPathImage = asset('images/station-decision-path.png');
     $finalCtaImage = asset('images/final-cta-first-step.png');
     $founderImage = asset('images/founder.webp');
-    $totalCapacity = $event?->seat_capacity ?? 40;
-    $remainingSeats = (int) ($remainingSeats ?? 6);
+    $totalCapacity = $event->seat_capacity;
+    $remainingSeats = (int) $remainingSeats;
     $arabicDigits = [
         '0' => '٠',
         '1' => '١',
@@ -21,11 +21,43 @@
         '9' => '٩',
     ];
     $toArabicNumber = fn(int $number): string => strtr((string) $number, $arabicDigits);
+    $formatPrice = fn(int $priceBaisa): string => number_format($priceBaisa / 1000, 3, '.', '');
+
+    $tiers = $event->priceTiers
+        ->map(fn($tier, int $index): array => [
+            'code' => 'B' . ($index + 1),
+            'name' => $tier->name,
+            'seats' => $tier->seat_capacity,
+            'remaining' => max(0, $tier->seat_capacity - $tier->usedSeatsCount()),
+            'price_baisa' => $tier->price_baisa,
+        ])
+        ->values();
+
+    if ($tiers->isEmpty()) {
+        $tiers = collect([[
+            'code' => 'B1',
+            'name' => 'السعر المعتمد',
+            'seats' => $totalCapacity,
+            'remaining' => $remainingSeats,
+            'price_baisa' => $event->price_baisa,
+        ]]);
+    }
+
+    $openTierIndex = $tiers->search(fn(array $tier): bool => $tier['remaining'] > 0);
+    $openTierIndex = $openTierIndex === false ? null : $openTierIndex;
+    $openTier = $openTierIndex === null ? $tiers->last() : $tiers->get($openTierIndex);
+    $tiers = $tiers->map(fn(array $tier, int $index): array => [
+        ...$tier,
+        'open' => $index === $openTierIndex,
+        'sold_out' => $tier['remaining'] === 0,
+    ]);
+    $currentPrice = $formatPrice($openTier['price_baisa']);
+    $openTierRemaining = $openTier['remaining'];
 
     $facts = [
-        ['icon' => 'calendar-03', 'label' => '٦-٨ أغسطس ٢٠٢٦م'],
+        ['icon' => 'calendar-03', 'label' => 'تبدأ ١٣ أغسطس ٢٠٢٦م'],
         ['icon' => 'map-pin', 'label' => 'مخيم بيرحاء، إبراء، عُمان'],
-        ['icon' => 'clock-01', 'label' => '٣ أيام، وتمتد إلى ٥ عند الطلب'],
+        ['icon' => 'clock-01', 'label' => '٣ أيام مركزة'],
         ['icon' => 'student', 'label' => 'دورة خاصة لخريجي الصف الثاني عشر فقط'],
     ];
 
@@ -87,34 +119,19 @@
             'title' => 'خطة التسعين يومًا',
             'body' => 'يخرج كل خرّيج بخطة مكتوبة بخط يده: قرار عملي يبدأ به من الغد.',
         ],
-    ];
-
-    $tiers = [
-        ['code' => 'B1', 'name' => 'الباكورة', 'seats' => 10, 'price' => 45, 'note' => 'المبادر أولًا', 'open' => true],
         [
-            'code' => 'B2',
-            'name' => 'المتقدمة',
-            'seats' => 10,
-            'price' => 55,
-            'note' => 'قبل امتلاء المقاعد',
-            'open' => false,
+            'icon' => 'user-group',
+            'image' => asset('images/after-twelfth-mentor-circle.png'),
+            'title' => 'صحبة تبقى',
+            'body' => 'رفقة من الفتيان تشاركه المرحلة، ومرشدون يصغون قبل أن يجيبوا، وأثر يمتد بعد المغادرة.',
         ],
-        [
-            'code' => 'B3',
-            'name' => 'القياسية',
-            'seats' => 8,
-            'price' => 65,
-            'note' => 'الشريحة الوسطى',
-            'open' => false,
-        ],
-        ['code' => 'B4', 'name' => 'الختامية', 'seats' => 4, 'price' => 75, 'note' => 'آخر المقاعد', 'open' => false],
     ];
 
     $faqs = [
         [
             'question' => 'أين تُقام الفعالية ومتى؟',
             'answer' =>
-                'تُقام في مخيم بيرحاء بولاية إبراء، سلطنة عُمان، أيام ٦-٨ أغسطس ٢٠٢٦م. ثلاثة أيام إقامية مركزة، وتمتد إلى خمسة عند الطلب.',
+                'تُقام في مخيم بيرحاء بولاية إبراء، سلطنة عُمان. تبدأ يوم ١٣ أغسطس ٢٠٢٦م وتستمر ثلاثة أيام إقامية مركزة.',
         ],
         [
             'question' => 'كيف يُشرَف على الأبناء ليلًا ونهارًا؟',
@@ -168,9 +185,9 @@
         </div>
 
         <div
-            class="mx-auto grid min-h-[calc(100dvh-5rem)] w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.72fr)] lg:px-8 lg:py-18">
+            class="mx-auto grid min-h-[calc(100dvh-5rem)] w-full max-w-7xl items-center gap-10 px-4 py-8 sm:px-6 sm:py-12 lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.72fr)] lg:px-8 lg:py-8">
             <div class="order-2 max-w-4xl lg:order-1">
-                <div class="flex flex-wrap items-center gap-3 text-sm text-[#9dc3c3]">
+                <div class="hidden flex-wrap items-center gap-3 text-sm text-[#9dc3c3] sm:flex">
                     <span class="font-heading text-xl font-bold text-white">بِيرُحاء</span>
                     <span>للسياحة والتجارة</span>
                     <span class="h-1.5 w-1.5 rounded-full bg-[#dfb458]"></span>
@@ -178,46 +195,46 @@
                 </div>
 
                 <p
-                    class="mt-7 inline-flex min-h-10 items-center gap-2 rounded-sm border border-[#17a3a1]/34 bg-[#17a3a1]/14 px-4 py-2 text-sm font-bold text-[#bee9e8]">
+                    class="mt-2 inline-flex min-h-9 items-center gap-2 rounded-sm border border-[#17a3a1]/34 bg-[#17a3a1]/14 px-3 py-2 text-xs font-bold text-[#bee9e8] sm:mt-7 sm:min-h-10 sm:px-4 sm:text-sm">
                     <x-hugeicon name="student" class="text-lg" />
                     <span>فعالية إقامية لخرّيجي الثاني عشر، للفتيان</span>
                 </p>
 
-                <h1 class="mt-6 max-w-4xl font-heading text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+                <h1 class="mt-4 max-w-4xl font-heading text-3xl font-bold leading-tight sm:mt-6 sm:text-5xl lg:text-6xl">
                     بعد الثاني عشر، <span class="text-[#dfb458]">الطريق يبدأ من هنا</span>
                 </h1>
 
-                <p class="mt-6 max-w-2xl text-lg leading-9 text-[#cfe2e2]">
+                <p class="mt-4 max-w-2xl text-base leading-7 text-[#cfe2e2] sm:mt-6 sm:text-lg sm:leading-9">
                     النجاح أوسع من معدّل، والطريق أرحب من خيار واحد. ثلاثة أيام تعيد لابنك يقينه، وتفتح له الأبواب.
                 </p>
 
-                <div class="mt-7 flex max-w-2xl gap-4 rounded-sm border border-white/12 bg-white/6 p-5">
+                <div class="mt-4 flex max-w-2xl gap-3 rounded-sm border border-white/12 bg-white/6 p-4 sm:mt-7 sm:gap-4 sm:p-5">
                     <x-hugeicon name="file-view" class="mt-1 text-2xl text-[#dfb458]" />
-                    <p class="text-base leading-8 text-[#cfe2e2]">
+                    <p class="text-sm leading-7 text-[#cfe2e2] sm:text-base sm:leading-8">
                         <span class="font-bold text-white">الوعد الملموس:</span>
                         يغادر ابنك بخطة ٩٠ يومًا مكتوبة بيده، قرار عملي لا كلام عام، حفظه الله.
                     </p>
                 </div>
 
-                <div class="mt-7 flex flex-wrap gap-2">
+                <div class="mt-4 grid grid-cols-2 gap-2 sm:mt-7 sm:flex sm:flex-wrap">
                     @foreach ($facts as $fact)
                         <span
-                            class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-white/12 bg-white/6 px-3 py-2 text-sm text-[#dcebeb]">
+                            class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-white/12 bg-white/6 px-3 py-2 text-xs leading-5 text-[#dcebeb] sm:text-sm">
                             <x-hugeicon :name="$fact['icon']" class="text-base text-[#9dc3c3]" />
                             <span>{{ $fact['label'] }}</span>
                         </span>
                     @endforeach
                 </div>
 
-                <div class="mt-8 flex flex-wrap gap-3">
+                <div class="mt-5 flex flex-wrap gap-3 sm:mt-8">
                     <a href="#seats"
-                        class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/30 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0">
+                        class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/30 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0 sm:w-auto">
                         <span>احجز مقعد ابنك الآن</span>
                         <x-hugeicon name="arrow-left-02" class="text-lg" />
                     </a>
 
                     <a href="#program"
-                        class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-white/28 bg-white/6 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/12 active:translate-y-0">
+                        class="hidden min-h-12 items-center justify-center gap-2 rounded-sm border border-white/28 bg-white/6 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/12 active:translate-y-0 sm:inline-flex">
                         <span>ماذا يحدث في الأيام الثلاثة؟</span>
                         <x-hugeicon name="check-list" class="text-lg" />
                     </a>
@@ -225,8 +242,8 @@
             </div>
 
             <aside
-                class="order-1 overflow-hidden rounded-sm border border-white/12 bg-white/7 shadow-2xl shadow-black/24 lg:order-2">
-                <div class="relative aspect-[9/16] overflow-hidden">
+                class="order-1 hidden overflow-hidden rounded-sm border border-white/12 bg-white/7 shadow-2xl shadow-black/24 lg:order-2 lg:block">
+                <div class="relative aspect-[9/16] overflow-hidden lg:aspect-[4/3]">
                     <img src="{{ $heroImage }}" alt="طالب ثانوية عامة خريج يرتدي الزي العماني" width="941"
                         height="1672" fetchpriority="high" class="h-full w-full object-cover">
                     <div class="absolute inset-0 bg-gradient-to-t from-[#0b1524]/82 via-[#0b1524]/8 to-transparent"></div>
@@ -239,8 +256,8 @@
 
                 <div class="p-5">
                     <div class="rounded-sm border border-[#dfb458]/24 bg-[#dfb458]/10 p-5">
-                        <p class="text-sm text-[#f4dfb2]">الشريحة المفتوحة الآن</p>
-                        <p class="mt-2 font-heading text-4xl font-bold text-white">الباكورة</p>
+                        <p class="text-sm text-[#f4dfb2]">{{ $openTierIndex === null ? 'اكتملت المقاعد' : 'الباكورة المفتوحة الآن' }}</p>
+                        <p class="mt-2 font-heading text-4xl font-bold text-white">{{ $openTier['name'] }}</p>
                         <p class="mt-3 text-sm leading-7 text-[#cfe2e2]">المقاعد الأولى أرخص، وحين تنفد الشريحة لا يعود
                             سعرها.</p>
                     </div>
@@ -253,7 +270,7 @@
                         </div>
                         <div class="rounded-sm bg-white/8 p-4 text-center">
                             <p class="text-xs text-[#9dc3c3]">السعر</p>
-                            <p class="mt-2 font-heading text-3xl font-bold text-[#dfb458]">٤٥</p>
+                            <p class="mt-2 font-heading text-3xl font-bold text-[#dfb458]">{{ $currentPrice }}</p>
                         </div>
                         <div class="rounded-sm bg-white/8 p-4 text-center">
                             <p class="text-xs text-[#9dc3c3]">السعة</p>
@@ -352,16 +369,16 @@
                 <p class="font-heading text-sm font-bold text-[#0e7c7b] dark:text-[#e0a800]">محاور البرنامج</p>
                 <h2
                     class="mt-3 font-heading text-3xl font-bold leading-tight text-[#16263f] lg:text-5xl dark:text-[#f7f1df]">
-                    خمس محطات في ثلاثة أيام</h2>
+                    ست محطات في ثلاثة أيام</h2>
                 <p class="mt-5 text-base leading-8 text-[#566a72] dark:text-[#f7f1df]/66">كل محطة تنقله خطوة: من اكتشاف
                     ذاته، إلى قرار مكتوب يبدأ به.</p>
             </div>
 
-            <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="mt-10 grid gap-5 sm:grid-cols-2">
                 <article
                     class="overflow-hidden rounded-sm border border-[#d9e4e4] bg-white shadow-sm shadow-[#0f1b2e]/5 sm:col-span-2 dark:border-white/10 dark:bg-white/8 dark:shadow-black/20">
                     <div class="grid h-full sm:grid-cols-[minmax(180px,0.42fr)_minmax(0,1fr)]">
-                        <div class="aspect-[9/16] overflow-hidden bg-[#e6f1f1] dark:bg-white/8">
+                        <div class="aspect-[4/3] overflow-hidden bg-[#e6f1f1] sm:aspect-auto sm:min-h-80 dark:bg-white/8">
                             <img src="{{ $planWorkshopImage }}" alt="طالب عماني يكتب خطة عملية في ورشة تعليمية"
                                 width="941" height="1672" loading="lazy" class="h-full w-full object-cover">
                         </div>
@@ -378,7 +395,7 @@
                 @foreach ($stations as $station)
                     <article
                         class="overflow-hidden rounded-sm border border-[#d9e4e4] bg-white shadow-sm shadow-[#0f1b2e]/5 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#0f1b2e]/8 dark:border-white/10 dark:bg-white/8 dark:shadow-black/20">
-                        <div class="aspect-[9/16] overflow-hidden bg-[#e6f1f1] dark:bg-white/8">
+                        <div class="aspect-[4/3] overflow-hidden bg-[#e6f1f1] dark:bg-white/8">
                             <img src="{{ $station['image'] }}" alt="{{ $station['title'] }}" width="941"
                                 height="1672" loading="lazy" class="h-full w-full object-cover">
                         </div>
@@ -398,14 +415,17 @@
                 @endforeach
 
                 <article
-                    class="overflow-hidden rounded-sm bg-[linear-gradient(160deg,#16263f,#0f1b2e)] text-center text-[#eaf2f2] shadow-lg shadow-[#16263f]/16">
-                    <div class="aspect-[9/16] overflow-hidden bg-[#0f1b2e]">
-                        <img src="{{ $decisionPathImage }}" alt="طالب عماني يصل من المحطة الأولى إلى القرار"
-                            width="941" height="1672" loading="lazy" class="h-full w-full object-cover">
-                    </div>
-                    <div class="p-6">
-                        <p class="font-heading text-xl font-bold text-[#dfb458]">من المحطة الأولى إلى القرار</p>
-                        <p class="mt-3 leading-7 text-[#cfe2e2]">ثلاثة أيام مركزة، تمتد إلى خمس عند الطلب.</p>
+                    class="overflow-hidden rounded-sm bg-[linear-gradient(160deg,#16263f,#0f1b2e)] text-[#eaf2f2] shadow-lg shadow-[#16263f]/16 sm:col-span-2">
+                    <div class="grid sm:grid-cols-[minmax(220px,0.42fr)_minmax(0,1fr)]">
+                        <div class="aspect-[4/3] overflow-hidden bg-[#0f1b2e] sm:aspect-auto sm:min-h-72">
+                            <img src="{{ $decisionPathImage }}" alt="طالب عماني يصل من المحطة الأولى إلى القرار"
+                                width="941" height="1672" loading="lazy" class="h-full w-full object-cover">
+                        </div>
+                        <div class="flex flex-col justify-center p-6 text-start sm:p-8">
+                            <p class="font-heading text-2xl font-bold text-[#dfb458]">من المحطة الأولى إلى القرار</p>
+                            <p class="mt-3 max-w-2xl leading-8 text-[#cfe2e2]">ثلاثة أيام مركزة تنتهي بخطة واضحة قابلة
+                                للتنفيذ، ويعرف المشارك ما سيبدأه في اليوم التالي.</p>
+                        </div>
                     </div>
                 </article>
             </div>
@@ -459,7 +479,7 @@
                 </div>
                 <div>
                     <h2 class="font-heading text-3xl font-bold text-[#16263f] dark:text-[#f7f1df]">مقاعد الرحمة</h2>
-                    <p class="mt-4 leading-8 text-[#5a4a28] dark:text-[#f7f1df]/72">من كل أربعين مقعدًا، خصصنا ٨ مقاعد رحمة
+                    <p class="mt-4 leading-8 text-[#5a4a28] dark:text-[#f7f1df]/72">من أصل خمسين مقعدًا، خصصنا ٨ مقاعد رحمة
                         مدعومة لمن حالت ظروفه دون الرسوم.</p>
                     <p class="mt-3 leading-8 text-[#5a4a28] dark:text-[#f7f1df]/72">البرنامج صُمم ليحوّل من يحتاج التغيير،
                         لا ليصطفي من يقدر على الدفع. إن كان ابنك من أهلها، فكلّمنا، والأمر بيننا وبينكم.</p>
@@ -489,17 +509,17 @@
                 class="mt-10 rounded-sm bg-[linear-gradient(160deg,#0b1524,#0f1b2e)] p-5 text-[#eaf2f2] shadow-xl shadow-[#16263f]/16">
                 <div class="grid overflow-hidden rounded-sm border border-white/14 bg-white/10 md:grid-cols-3">
                     <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
-                        <p class="text-xs text-[#9dc3c3]">تبقى في الشريحة المفتوحة</p>
+                        <p class="text-xs text-[#9dc3c3]">تبقى في الباكورة المفتوحة</p>
                         <p class="mt-2 font-heading text-4xl font-bold text-[#17a3a1]">
-                            {{ $toArabicNumber($remainingSeats) }} <span class="text-base text-[#cfe2e2]">مقاعد</span></p>
+                            {{ $toArabicNumber($openTierRemaining) }} <span class="text-base text-[#cfe2e2]">مقاعد</span></p>
                     </div>
                     <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
                         <p class="text-xs text-[#9dc3c3]">الشريحة المفتوحة الآن</p>
-                        <p class="mt-2 font-heading text-2xl font-bold text-white">الباكورة</p>
+                        <p class="mt-2 font-heading text-2xl font-bold text-white">{{ $openTier['name'] }}</p>
                     </div>
                     <div class="p-5">
                         <p class="text-xs text-[#9dc3c3]">سعرها الحالي</p>
-                        <p class="mt-2 font-heading text-4xl font-bold text-[#dfb458]">٤٥ <span
+                        <p class="mt-2 font-heading text-4xl font-bold text-[#dfb458]">{{ $currentPrice }} <span
                                 class="text-base text-[#cfe2e2]">ر.ع</span></p>
                     </div>
                 </div>
@@ -517,6 +537,9 @@
                             <span
                                 class="absolute left-3 top-3 rounded-sm bg-[#0e7c7b] px-3 py-1 text-xs font-bold text-white">مفتوحة
                                 الآن</span>
+                        @elseif ($tier['sold_out'])
+                            <span
+                                class="absolute left-3 top-3 rounded-sm bg-[#16263f] px-3 py-1 text-xs font-bold text-white">نفدت</span>
                         @endif
                         <div
                             class="flex min-h-24 flex-col items-center justify-center bg-[linear-gradient(160deg,#16263f,#0f1b2e)] text-white">
@@ -526,25 +549,31 @@
                         <div class="p-5">
                             <h3 class="font-heading text-xl font-bold text-[#16263f] dark:text-[#f7f1df]">
                                 {{ $tier['name'] }}</h3>
-                            <p class="mt-2 text-sm text-[#566a72] dark:text-[#f7f1df]/62">{{ $tier['note'] }}</p>
+                            <p class="mt-2 text-sm text-[#566a72] dark:text-[#f7f1df]/62">
+                                {{ $toArabicNumber($tier['remaining']) }} من {{ $toArabicNumber($tier['seats']) }} مقاعد متاحة
+                            </p>
                         </div>
                         <div class="flex items-center justify-start p-5 sm:justify-center">
                             <p class="font-heading text-3xl font-bold text-[#16263f] dark:text-[#f7f1df]">
-                                {{ $toArabicNumber($tier['price']) }} <span
+                                {{ $formatPrice($tier['price_baisa']) }} <span
                                     class="text-sm text-[#566a72] dark:text-[#f7f1df]/58">ر.ع</span></p>
                         </div>
                     </article>
                 @endforeach
             </div>
 
-            <div class="mt-6 flex flex-wrap gap-3">
-                <span
-                    class="inline-flex items-center gap-2 rounded-sm border border-[#cfe6e5] bg-[#e6f1f1] px-4 py-3 text-sm text-[#0b5b5a] dark:border-white/10 dark:bg-white/8 dark:text-[#f7f1df]/72"><span
-                        class="font-bold text-[#0e7c7b] dark:text-[#e0a800]">-٥٪</span> خصم الإخوة</span>
-                <span
-                    class="inline-flex items-center gap-2 rounded-sm border border-[#cfe6e5] bg-[#e6f1f1] px-4 py-3 text-sm text-[#0b5b5a] dark:border-white/10 dark:bg-white/8 dark:text-[#f7f1df]/72"><span
-                        class="font-bold text-[#0e7c7b] dark:text-[#e0a800]">-٨٪</span> خصم المجموعة، ٣ فأكثر</span>
-            </div>
+            @if ($availableDiscounts->isNotEmpty())
+                <div class="mt-6 flex flex-wrap gap-3">
+                    @foreach ($availableDiscounts as $discount)
+                        <span
+                            class="inline-flex items-center gap-2 rounded-sm border border-[#cfe6e5] bg-[#e6f1f1] px-4 py-3 text-sm text-[#0b5b5a] dark:border-white/10 dark:bg-white/8 dark:text-[#f7f1df]/72">
+                            <x-money :amount-baisa="$discount->amount_baisa" :currency="$discount->currency"
+                                class="font-bold text-[#0e7c7b] dark:text-[#e0a800]" />
+                            {{ $discount->name }}
+                        </span>
+                    @endforeach
+                </div>
+            @endif
 
             <p class="mt-4 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/62">المقاعد الكلية
                 {{ $toArabicNumber($totalCapacity) }} مقعدًا، منها ٨ مقاعد رحمة مدعومة. الأسعار بالريال العُماني، وتشمل
@@ -562,23 +591,6 @@
                     <x-hugeicon name="mail-01" class="text-lg" />
                 </a>
             </div>
-        </div>
-    </section>
-
-    <section id="proof" class="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-        <div class="max-w-3xl">
-            <p class="font-heading text-sm font-bold text-[#0e7c7b] dark:text-[#e0a800]">أصوات الأهل</p>
-            <h2 class="mt-3 font-heading text-3xl font-bold leading-tight text-[#16263f] lg:text-5xl dark:text-[#f7f1df]">
-                شهادات حقيقية، قريبًا</h2>
-            <p class="mt-5 text-base leading-8 text-[#566a72] dark:text-[#f7f1df]/66">لا نضع كلامًا لم يُقَل. حين تنطق
-                تجارب الأهل، نضعها هنا كما هي.</p>
-        </div>
-        <div
-            class="mt-10 rounded-sm border-2 border-dashed border-[#d9e4e4] bg-white p-8 text-center text-[#566a72] dark:border-white/10 dark:bg-white/8 dark:text-[#f7f1df]/66">
-            <p class="text-[#dfb458]">★ ★ ★ ★ ★</p>
-            <p class="mt-4 font-bold text-[#16263f] dark:text-[#f7f1df]">موضع معد لشهادات أولياء الأمور والتقييم النجمي.
-            </p>
-            <p class="mt-2">البنية جاهزة للتفعيل فور توفر التقييمات الحقيقية.</p>
         </div>
     </section>
 
