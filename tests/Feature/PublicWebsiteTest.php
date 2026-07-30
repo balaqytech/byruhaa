@@ -281,13 +281,24 @@ test('blog page loads', function () {
 test('about page loads', function () {
     $this->get(route('about'))
         ->assertSuccessful()
-        ->assertSee('صفحة عن المنتجع قيد التجهيز');
+        ->assertSee('مخيم بيرحاء إبراء')
+        ->assertSee('+10,000')
+        ->assertSee('قاعة متعددة الاستخدام')
+        ->assertSee('مطعم أباريق')
+        ->assertSee('إحدى عشرة غرفة إقامة')
+        ->assertSee('ما الذي يميّز بيرحاء؟')
+        ->assertDontSee('قيد التجهيز');
 });
 
 test('contact page loads', function () {
     $this->get(route('contact'))
         ->assertSuccessful()
-        ->assertSee('صفحة التواصل قيد التجهيز');
+        ->assertSee('نحن قريبون منك')
+        ->assertSee('ابدأ مع مساعد بيرحاء الذكي')
+        ->assertSee('+968 7415 5123')
+        ->assertSee('الزيارة بموعد مسبق')
+        ->assertSee('noopener noreferrer', false)
+        ->assertDontSee('قيد التجهيز');
 });
 
 test('public error pages use the public website style', function () {

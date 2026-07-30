@@ -3,9 +3,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const appearanceStorageKey = 'byruha.public.appearance';
+const legacyAppearanceStorageKey = 'byruha.public.appearance';
+const appearanceStorageKey = 'flux.appearance';
 const root = document.documentElement;
 const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+if (!localStorage.getItem(appearanceStorageKey) && localStorage.getItem(legacyAppearanceStorageKey)) {
+    localStorage.setItem(appearanceStorageKey, localStorage.getItem(legacyAppearanceStorageKey));
+}
 
 const selectedAppearance = () => localStorage.getItem(appearanceStorageKey) || 'system';
 
@@ -38,6 +43,11 @@ document.addEventListener('click', (event) => {
     }
 
     localStorage.setItem(appearanceStorageKey, toggle.dataset.theme);
+
+    if (window.Flux) {
+        window.Flux.appearance = toggle.dataset.theme;
+    }
+
     applyAppearance(toggle.dataset.theme);
 });
 

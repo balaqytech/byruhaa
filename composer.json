@@ -11,6 +11,7 @@
         "carlos-meneses/laravel-mpdf": "~2.1",
         "elegantly/laravel-money": "^2.4",
         "filament/filament": "~5.0",
+        "filament/spatie-laravel-settings-plugin": "^5.6.7",
         "jkbroot/thawani": "^1.1",
         "laravel/chisel": "^0.1.0",
         "laravel/fortify": "^1.37.2",
