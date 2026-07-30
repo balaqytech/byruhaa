@@ -147,10 +147,15 @@ class Event extends Model
         return $this->enrollment_status->canBook();
     }
 
+    public function isComingSoon(): bool
+    {
+        return $this->enrollment_status === EventEnrollmentStatus::ComingSoon;
+    }
+
     public function approvedSeatsCount(): int
     {
         return BookingFamilyMember::query()
-            ->whereHas('booking', fn ($query) => $query
+            ->whereHas('booking', fn($query) => $query
                 ->where('event_id', $this->id)
                 ->where('state', Approved::$name))
             ->count();

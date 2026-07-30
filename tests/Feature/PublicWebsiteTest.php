@@ -414,6 +414,30 @@ test('public event detail page shows event description discounts and payment pla
         ->assertSee('6.000')
         ->assertDontSee(route('customer.events.show', $event), false);
 
+    $comingSoonEvent = Event::factory()->create([
+        'name' => 'Coming Soon Camp',
+        'status' => EventStatus::Published,
+        'enrollment_status' => App\Enums\EventEnrollmentStatus::ComingSoon,
+        'excerpt' => 'Details will be published soon.',
+        'location' => 'إبراء، مخيم بيرحاء',
+        'starts_at' => now()->addDays(30),
+        'price_baisa' => 25000,
+    ]);
+
+    $this->get(route('events.show', $comingSoonEvent))
+        ->assertSuccessful()
+        ->assertSee('Coming Soon Camp')
+        ->assertSee('Details will be published soon.')
+        ->assertSee('إبراء، مخيم بيرحاء')
+        ->assertSee($comingSoonEvent->starts_at->format('Y-m-d'))
+        ->assertDontSee('السعر لكل فرد')
+        ->assertDontSee('المقاعد المتبقية')
+        ->assertDontSee('السعة')
+        ->assertDontSee(__('ui.payments.full_payment'))
+        ->assertDontSee('Two payments')
+        ->assertDontSee('BYRUHAA EVENT')
+        ->assertDontSee(route('customer.events.show', $comingSoonEvent), false);
+
     $this->get(route('events.show', $draftEvent))
         ->assertNotFound();
 });
