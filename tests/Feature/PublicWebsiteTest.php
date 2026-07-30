@@ -37,7 +37,10 @@ test('homepage loads', function () {
         ->assertSee('data-icon="home-01"', false)
         ->assertSee('data-icon="calendar-03"', false)
         ->assertDontSee('cdn.hugeicons.com', false)
-        ->assertDontSee('hgi-stroke', false);
+        ->assertDontSee('hgi-stroke', false)
+        ->assertSee('data-whatsapp-floating-button', false)
+        ->assertSee('pointer-events-none invisible', false)
+        ->assertSee('data-whatsapp-reveal-sentinel', false);
 });
 
 test('coffee page shows the launch menu without a parallel store', function () {
@@ -76,7 +79,7 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->and($event->price_baisa)->toBe(460000)
         ->and($event->starts_at?->toDateString())->toBe('2026-08-20')
         ->and($event->ends_at?->toDateString())->toBe('2026-08-29')
-        ->and($priceTiers->pluck('name')->all())->toBe(['الباكورة', 'المتقدمة', 'الختامية'])
+        ->and($priceTiers->pluck('name')->all())->toBe(['الباقة الأولى', 'المتقدمة', 'الختامية'])
         ->and($priceTiers->pluck('seat_capacity')->all())->toBe([8, 12, 10])
         ->and($priceTiers->pluck('price_baisa')->all())->toBe([380000, 420000, 460000])
         ->and($priceTiers->sum('seat_capacity'))->toBe(30);
@@ -98,7 +101,7 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->assertSee('ما يحمله القائد معه')
         ->assertSee('طواف الوداع بعد صلاة العصر')
         ->assertSee('خصوصية القُصّر')
-        ->assertSee('الباكورة')
+        ->assertSee('الباقة الأولى')
         ->assertSee('380.000')
         ->assertSee('المتقدمة')
         ->assertSee('420.000')
@@ -126,7 +129,7 @@ test('umrah landing page derives the open price tier from held and reserved seat
 
     $this->get(route('events.show', $event))
         ->assertSuccessful()
-        ->assertSeeInOrder(['الباكورة', 'نفدت', 'المتقدمة', 'مفتوحة الآن'])
+        ->assertSeeInOrder(['الباقة الأولى', 'نفدت', 'المتقدمة', 'مفتوحة الآن'])
         ->assertSee('٢٢ من ٣٠ مقعدًا');
 });
 
@@ -144,11 +147,11 @@ test('after twelfth event is seeded with its landing page and price tiers', func
         ->and($event->starts_at?->toDateTimeString())->toBe('2026-08-13 12:00:00')
         ->and($event->ends_at)->toBeNull()
         ->and($priceTiers->pluck('name')->all())->toBe([
-            'الباكورة الأولى',
-            'الباكورة الثانية',
-            'الباكورة الثالثة',
-            'الباكورة الرابعة',
-            'الباكورة الخامسة',
+            'الباقة الأولى',
+            'الباقة الثانية',
+            'الباقة الثالثة',
+            'الباقة الرابعة',
+            'الباقة الخامسة',
         ])
         ->and($priceTiers->pluck('seat_capacity')->all())->toBe([10, 10, 10, 10, 10])
         ->and($priceTiers->pluck('price_baisa')->all())->toBe([59000, 69000, 75000, 79000, 89000])
@@ -165,12 +168,15 @@ test('after twelfth event is seeded with its landing page and price tiers', func
         ->assertSee('خطة ٩٠ يومًا')
         ->assertSee('ست محطات في ثلاثة أيام')
         ->assertSee('صحبة تبقى')
-        ->assertSee('الباكورة الأولى')
+        ->assertSee('الباقة الأولى')
         ->assertSee('59.000')
-        ->assertSee('الباكورة الثانية')
+        ->assertSee('الباقة الثانية')
         ->assertSee('69.000')
-        ->assertDontSee('الباكورة الثالثة')
-        ->assertSee('من أصل خمسين مقعدًا')
+        ->assertDontSee('الباقة الثالثة')
+        ->assertSee('احجز الآن قبل نفاد الكمية')
+        ->assertDontSee('مقاعد الرحمة')
+        ->assertDontSee('استفسر قبل الحجز')
+        ->assertSee('المقاعد الكلية')
         ->assertSee(route('events.show', $event), false)
         ->assertSee(route('customer.events.show', $event), false)
         ->assertDontSee('٦-٨ أغسطس')
@@ -196,12 +202,12 @@ test('after twelfth landing page advances to the next price tier when the first 
     $this->get(route('events.show', $event))
         ->assertSuccessful()
         ->assertSeeInOrder([
-            'الباكورة الثانية',
+            'الباقة الثانية',
             '69.000',
-            'الباكورة الثالثة',
+            'الباقة الثالثة',
             '75.000',
         ])
-        ->assertDontSee('الباكورة الرابعة');
+        ->assertDontSee('الباقة الرابعة');
 });
 
 test('the temporary new home route is removed', function () {
@@ -286,11 +292,11 @@ test('homepage shows the current price tier followed by the next tier', function
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSeeInOrder([
-            'الباكورة المتاحة الآن',
-            'الباكورة الأولى',
+            'الباقة المتاحة الآن',
+            'الباقة الأولى',
             'بقي 7 مقاعد',
-            'الباكورة التالية',
-            'الباكورة الثانية',
+            'الباقة التالية',
+            'الباقة الثانية',
             '69.000',
         ]);
 });

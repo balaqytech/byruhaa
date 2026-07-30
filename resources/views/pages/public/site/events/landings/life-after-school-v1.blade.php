@@ -1,6 +1,5 @@
 @php
     $customerEventUrl = $bookingUrl;
-    $contactUrl = Route::has('contact') ? route('contact') : $eventUrl;
     $heroImage = asset('images/after-twelfth-omani-graduate-hero.png');
     $planWorkshopImage = asset('images/station-written-plan-workshop.png');
     $decisionPathImage = asset('images/station-decision-path.png');
@@ -140,11 +139,6 @@
                 'نطرح المقاعد على شرائح تصعد كلما اقترب الموعد ونفدت المقاعد. من بادر نال أرخصها، وحين تنفد الشريحة لا يعود سعرها.',
         ],
         [
-            'question' => 'ما مقاعد الرحمة؟ ومن يستحقها؟',
-            'answer' =>
-                'مقاعد مدعومة لمن حالت ظروفه المادية دون الرسوم. إن كان ابنك من أهلها فكلّمنا، والأمر بيننا وبينكم.',
-        ],
-        [
             'question' => 'هل الفعالية للفتيان فقط؟ وما الفئة العمرية؟',
             'answer' =>
                 'نعم، هذه الفعالية الإقامية مخصصة لخرّيجي الثاني عشر من الفتيان، ١٧-١٨ سنة، لطبيعة الإقامة الكاملة والإشراف.',
@@ -238,7 +232,7 @@
 
                 <div class="p-5">
                     <div class="rounded-sm border border-[#dfb458]/24 bg-[#dfb458]/10 p-5">
-                        <p class="text-base font-bold text-[#f4dfb2]">{{ $tierOffer['is_sold_out'] ? 'اكتملت المقاعد' : 'الباكورة المفتوحة الآن' }}</p>
+                        <p class="text-base font-bold text-[#f4dfb2]">{{ $tierOffer['is_sold_out'] ? 'اكتملت المقاعد' : 'الباقة المفتوحة الآن' }}</p>
                         <p class="mt-2 font-heading text-4xl font-bold text-white sm:text-5xl">{{ $openTier['name'] ?? 'اكتمل الحجز' }}</p>
                         <p class="mt-3 text-sm leading-7 text-[#cfe2e2]">المقاعد الأولى أرخص، وحين تنفد الشريحة لا يعود
                             سعرها.</p>
@@ -247,7 +241,7 @@
                     @if ($openTier)
                     <div class="mt-4 grid gap-3 sm:grid-cols-2">
                         <div class="rounded-sm bg-white/8 p-4 text-center">
-                            <p class="text-sm font-bold text-[#9dc3c3]">المتبقي في هذه الباكورة</p>
+                            <p class="text-sm font-bold text-[#9dc3c3]">المتبقي في هذه الباقة</p>
                             <p class="mt-2 font-heading text-5xl font-bold text-[#17a3a1]">
                                 {{ $toArabicNumber($openTierRemaining) }} <span class="text-lg">مقاعد</span></p>
                         </div>
@@ -256,13 +250,18 @@
                             <p class="mt-2 font-heading text-5xl font-bold text-[#dfb458]">{{ $currentPrice }} <span class="text-lg">ر.ع</span></p>
                         </div>
                     </div>
-                    @if ($nextTier)
-                        <div class="mt-3 border-s-2 border-[#dfb458] bg-white/6 p-4">
-                            <p class="text-sm font-bold text-[#cfe2e2]">بعد نفاد الحالية تبدأ</p>
-                            <p class="mt-1 font-heading text-2xl font-bold text-white">{{ $nextTier['name'] }}</p>
-                            <p class="mt-1 font-heading text-3xl font-bold text-[#dfb458]">{{ $formatPrice($nextTier['price_baisa']) }} <span class="text-base">ر.ع</span></p>
-                        </div>
-                    @endif
+                    <div class="mt-3 border-s-4 border-[#ef5b5b] bg-[#ef5b5b]/12 p-4" data-current-package-alert>
+                        <p class="flex items-center gap-2 font-heading text-xl font-bold text-white">
+                            <x-hugeicon name="alert-02" class="shrink-0 text-2xl text-[#ff8d8d]" />
+                            <span>احجز الآن قبل نفاد الكمية</span>
+                        </p>
+                        <p class="mt-2 text-base font-bold text-[#f4dfb2]">بقي {{ $toArabicNumber($openTierRemaining) }} مقاعد فقط بالسعر الحالي.</p>
+                        @if ($nextTier)
+                            <p class="mt-2 text-sm leading-7 text-[#cfe2e2]">بعد نفادها تنتقل الحجوزات إلى {{ $nextTier['name'] }} بسعر <strong class="font-heading text-xl text-white">{{ $formatPrice($nextTier['price_baisa']) }} ر.ع</strong></p>
+                        @else
+                            <p class="mt-2 text-sm leading-7 text-[#cfe2e2]">هذه آخر باقة متاحة للحجز.</p>
+                        @endif
+                    </div>
                     @endif
                 </div>
             </aside>
@@ -455,31 +454,6 @@
         </div>
     </section>
 
-    <section id="mercy"
-        class="bg-[linear-gradient(180deg,#f3f8f8,#ffffff)] py-16 lg:py-24 dark:bg-[linear-gradient(180deg,rgba(7,18,15,0.08),rgba(255,255,255,0.04))]">
-        <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div
-                class="grid items-center gap-6 rounded-sm border border-[#ead9ae] bg-[linear-gradient(165deg,#f7efdc,#ffffff)] p-7 shadow-sm shadow-[#0f1b2e]/5 md:grid-cols-[96px_minmax(0,1fr)] dark:border-[#e0a800]/20 dark:bg-[linear-gradient(165deg,rgba(224,168,0,0.12),rgba(255,255,255,0.06))]">
-                <div
-                    class="mx-auto flex size-24 items-center justify-center rounded-sm bg-[linear-gradient(160deg,#dfb458,#b7892b)] text-white">
-                    <x-hugeicon name="checkmark-circle-01" class="text-4xl" />
-                </div>
-                <div>
-                    <h2 class="font-heading text-3xl font-bold text-[#16263f] dark:text-[#f7f1df]">مقاعد الرحمة</h2>
-                    <p class="mt-4 leading-8 text-[#5a4a28] dark:text-[#f7f1df]/72">من أصل خمسين مقعدًا، خصصنا ٨ مقاعد رحمة
-                        مدعومة لمن حالت ظروفه دون الرسوم.</p>
-                    <p class="mt-3 leading-8 text-[#5a4a28] dark:text-[#f7f1df]/72">البرنامج صُمم ليحوّل من يحتاج التغيير،
-                        لا ليصطفي من يقدر على الدفع. إن كان ابنك من أهلها، فكلّمنا، والأمر بيننا وبينكم.</p>
-                    <a href="{{ $contactUrl }}"
-                        class="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-sm bg-[#0e7c7b] px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#0b6968] active:translate-y-0 dark:bg-[#e0a800] dark:text-[#07120f]">
-                        <span>استفسر عن مقعد الرحمة</span>
-                        <x-hugeicon name="mail-01" class="text-lg" />
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <section id="seats"
         class="bg-[linear-gradient(180deg,#f3f8f8,#ffffff)] py-16 lg:py-24 dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(7,18,15,0.08))]">
         <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -497,7 +471,7 @@
                 class="mt-10 rounded-sm bg-[linear-gradient(160deg,#0b1524,#0f1b2e)] p-5 text-[#eaf2f2] shadow-xl shadow-[#16263f]/16">
                 <div class="grid overflow-hidden rounded-sm border border-white/14 bg-white/10 md:grid-cols-3">
                     <div class="border-b border-white/10 p-5 md:border-b-0 md:border-e">
-                        <p class="text-xs text-[#9dc3c3]">تبقى في الباكورة المفتوحة</p>
+                        <p class="text-xs text-[#9dc3c3]">تبقى في الباقة المفتوحة</p>
                         <p class="mt-2 font-heading text-4xl font-bold text-[#17a3a1]">
                             {{ $toArabicNumber($openTierRemaining) }} <span class="text-base text-[#cfe2e2]">مقاعد</span></p>
                     </div>
@@ -532,7 +506,7 @@
                                 class="absolute left-3 top-3 rounded-sm bg-[#0e7c7b] px-3 py-1 text-xs font-bold text-white">مفتوحة
                                 الآن</span>
                         @else
-                            <span class="absolute left-3 top-3 rounded-sm bg-[#dfb458] px-3 py-1 text-xs font-bold text-[#16263f]">الباكورة التالية</span>
+                            <span class="absolute left-3 top-3 rounded-sm bg-[#dfb458] px-3 py-1 text-xs font-bold text-[#16263f]">الباقة التالية</span>
                         @endif
                         <div
                             class="flex min-h-24 flex-col items-center justify-center bg-[linear-gradient(160deg,#16263f,#0f1b2e)] text-white">
@@ -543,7 +517,7 @@
                             <h3 class="font-heading text-xl font-bold text-[#16263f] dark:text-[#f7f1df]">
                                 {{ $tier['name'] }}</h3>
                             <p class="mt-2 text-sm text-[#566a72] dark:text-[#f7f1df]/62">
-                                {{ $tier['open'] ? $toArabicNumber($tier['remaining_seats']).' مقاعد متبقية' : 'تبدأ بعد نفاد الباكورة الحالية' }}
+                                {{ $tier['open'] ? $toArabicNumber($tier['remaining_seats']).' مقاعد متبقية' : 'تبدأ بعد نفاد الباقة الحالية' }}
                             </p>
                         </div>
                         <div class="flex items-center justify-start p-5 sm:justify-center">
@@ -569,7 +543,7 @@
             @endif
 
             <p class="mt-4 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/62">المقاعد الكلية
-                {{ $toArabicNumber($totalCapacity) }} مقعدًا، منها ٨ مقاعد رحمة مدعومة. الأسعار بالريال العُماني، وتشمل
+                {{ $toArabicNumber($totalCapacity) }} مقعدًا. الأسعار بالريال العُماني، وتشمل
                 الإقامة والإشراف ومواد البرنامج.</p>
 
             <div class="mt-8 flex flex-wrap gap-3">
@@ -577,11 +551,6 @@
                     class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#dfb458] px-6 py-3 text-sm font-bold text-[#231703] shadow-lg shadow-[#b7892b]/20 transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-0">
                     <span>احجز الآن، الشريحة المفتوحة</span>
                     <x-hugeicon name="check-list" class="text-lg" />
-                </a>
-                <a href="{{ $contactUrl }}"
-                    class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#1fa855] px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#1a8f48] active:translate-y-0">
-                    <span>استفسر قبل الحجز</span>
-                    <x-hugeicon name="mail-01" class="text-lg" />
                 </a>
             </div>
         </div>

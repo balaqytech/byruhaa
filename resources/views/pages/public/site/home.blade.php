@@ -171,7 +171,7 @@
                         @if ($featuredTierOffer['current'])
                             <div class="mt-7 grid gap-3 sm:grid-cols-[1.15fr_0.85fr]" data-featured-tier-offer>
                                 <div class="border-s-4 border-[#87d9bd] bg-white/10 p-5">
-                                    <p class="text-sm font-bold text-[#87d9bd]">الباكورة المتاحة الآن</p>
+                                    <p class="text-sm font-bold text-[#87d9bd]">الباقة المتاحة الآن</p>
                                     <p class="mt-2 font-heading text-3xl font-bold">{{ $featuredTierOffer['current']['name'] }}</p>
                                     <div class="mt-4 flex flex-wrap items-end justify-between gap-3">
                                         <p class="font-heading text-5xl font-bold text-white"><x-money :amount-baisa="$featuredTierOffer['current']['price_baisa']"
@@ -181,7 +181,7 @@
                                 </div>
                                 @if ($featuredTierOffer['next'])
                                     <div class="bg-white/6 p-5">
-                                        <p class="text-sm font-bold text-white/62">الباكورة التالية</p>
+                                        <p class="text-sm font-bold text-white/62">الباقة التالية</p>
                                         <p class="mt-2 font-heading text-2xl font-bold">{{ $featuredTierOffer['next']['name'] }}</p>
                                         <p class="mt-4 font-heading text-3xl font-bold text-[#f4dfb2]"><x-money :amount-baisa="$featuredTierOffer['next']['price_baisa']"
                                                 :currency="$featuredTierOffer['next']['currency']" /></p>

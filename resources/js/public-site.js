@@ -53,6 +53,24 @@ document.addEventListener('click', (event) => {
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const whatsappButton = document.querySelector('[data-whatsapp-floating-button]');
+const whatsappRevealSentinel = document.querySelector('[data-whatsapp-reveal-sentinel]');
+
+if (whatsappButton && whatsappRevealSentinel) {
+    const toggleWhatsappButton = (isVisible) => {
+        whatsappButton.classList.toggle('pointer-events-none', !isVisible);
+        whatsappButton.classList.toggle('invisible', !isVisible);
+        whatsappButton.classList.toggle('translate-y-3', !isVisible);
+        whatsappButton.classList.toggle('opacity-0', !isVisible);
+    };
+
+    const whatsappObserver = new IntersectionObserver(([entry]) => {
+        toggleWhatsappButton(!entry.isIntersecting && entry.boundingClientRect.bottom < 0);
+    });
+
+    whatsappObserver.observe(whatsappRevealSentinel);
+}
+
 if (!prefersReducedMotion) {
     gsap.from('[data-public-header]', {
         y: -24,

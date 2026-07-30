@@ -336,9 +336,9 @@
                 <div class="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-end">
                     <div>
                         <p class="text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]">المقاعد والرسوم</p>
-                        <h2 class="mt-3 font-heading text-4xl font-bold leading-tight text-[#123329] lg:text-6xl dark:text-[#f7f1df]">الباكورات: الأرخص أولًا</h2>
+                        <h2 class="mt-3 font-heading text-4xl font-bold leading-tight text-[#123329] lg:text-6xl dark:text-[#f7f1df]">الباقات: الأرخص أولًا</h2>
                     </div>
-                    <p class="max-w-2xl text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/76">تبدأ المقاعد بأقل سعر، وعند نفاد باكورة ينتقل الحجز تلقائيًا إلى التالية. كل رقم هنا يأتي من النظام نفسه.</p>
+                    <p class="max-w-2xl text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/76">تبدأ المقاعد بأقل سعر، وعند نفاد باقة ينتقل الحجز تلقائيًا إلى التالية. كل رقم هنا يأتي من النظام نفسه.</p>
                 </div>
 
                 @if ($priceTiers->isNotEmpty())
@@ -350,7 +350,7 @@
                                 $tierStatus = $tierRemainingSeats === 0 ? 'نفدت' : ($isCurrentTier ? 'مفتوحة الآن' : 'تُفتح لاحقًا');
                                 $tierNote = match ((int) $tier->position) {
                                     1 => 'للحجز المبكر جدًا',
-                                    2 => 'تُفتح عند نفاد الباكورة',
+                                    2 => 'تُفتح عند نفاد الباقة',
                                     default => 'آخر ما يُطرح',
                                 };
                             @endphp
@@ -463,8 +463,8 @@
                 <div class="pointer-events-none absolute -end-24 -top-24 size-72 rounded-full bg-[#e0a800]/12 blur-3xl"></div>
                 <div class="relative flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                     <div class="max-w-3xl">
-                        <h2 class="font-heading text-4xl font-bold leading-tight text-[#123329] lg:text-5xl dark:text-[#f7f1df]">مقاعد الباكورة أرخصها وأقلها</h2>
-                        <p class="mt-5 text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/76">بادر قبل أن تمتلئ. اختر الابن، راجع الباكورة المفتوحة وخطة السداد، ثم ثبّت المقعد بالدفع من النظام نفسه.</p>
+                        <h2 class="font-heading text-4xl font-bold leading-tight text-[#123329] lg:text-5xl dark:text-[#f7f1df]">مقاعد الباقة الأولى أرخصها وأقلها</h2>
+                        <p class="mt-5 text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/76">بادر قبل أن تمتلئ. اختر الابن، راجع الباقة المفتوحة وخطة السداد، ثم ثبّت المقعد بالدفع من النظام نفسه.</p>
                     </div>
                     <a href="{{ $bookingUrl }}" class="inline-flex min-h-14 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#007a52] px-8 py-4 font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px motion-reduce:transition-none motion-reduce:hover:translate-y-0">
                         <span>ثبّت المقعد الآن</span>
