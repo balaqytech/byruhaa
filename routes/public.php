@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Middleware\CaptureAffiliateReferral;
 use Illuminate\Support\Facades\Route;
+
+Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::middleware(CaptureAffiliateReferral::class)->group(function (): void {
     Route::get('/', [PublicSiteController::class, 'home'])->name('home');
