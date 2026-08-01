@@ -109,6 +109,48 @@
         ],
     ];
 
+    $includedFees = [
+        [
+            'title' => 'التدريب ومخرجاته',
+            'icon' => 'book-open-text',
+            'items' => [
+                ['title' => 'المقعد التدريبي كاملًا، ست محطات', 'body' => 'خريطة الذات والميول، وخرائط المسارات الأربعة: الجامعي والتقني المهني والريادي والتعلّم الذاتي، ومهارات المستقبل، والدعم النفسي وإعادة تعريف الفشل، وخطة التسعين يومًا، وصحبة تبقى.'],
+                ['title' => 'قيادة مباشرة من أبي بلج', 'body' => 'عبدالله بن عامر العيسري، خبرة تربوية تتجاوز عشرين سنة، يقود المحطات بنفسه لا بالوكالة.'],
+                ['title' => 'الكرّاسات السبع مطبوعة باسم المشارك', 'body' => 'يملؤها بخط يده ويعود بها في يده: خريطة الذات، وخرائط المسارات، ودليل مهارات المستقبل، وكرّاسة الدعم النفسي، وكرّاسة التسعين يومًا، وميثاق الصحبة، وحزمة ولي الأمر.'],
+                ['title' => 'المخرج الموعود: خطة تسعين يومًا مكتوبة بخط يده', 'body' => 'هدف واحد محدد مقيس بموعد، وخماسية السكينة: العبادة والعلم والعمل واللعب والنوم والصحة، وعقد موقّع وشاهد عليه.'],
+                ['title' => 'شهادة إتمام على المخرجات لا على الحضور', 'body' => 'تحمل اسمه واسم هدفه المكتوب. لا نصدر شهادة حضور لأن الفرق بين «حضرت» و«صنعت» هو أصل المنهج.'],
+            ],
+        ],
+        [
+            'title' => 'الإقامة والضيافة',
+            'icon' => 'home-01',
+            'items' => [
+                ['title' => 'الإقامة داخل مخيم بيرحاء طوال الأيام الثلاثة', 'body' => 'مبيت مجهز داخل المخيم، والفعالية تمتد إلى خمسة أيام عند الطلب.'],
+                ['title' => 'إفطار يومي، مائدة مفتوحة', 'body' => 'وجبة إفطار مشمولة كل صباح من أيام الفعالية، بلا حصة محدودة.'],
+                ['title' => 'مشروب مجاني واحد كل يوم من مقهى المخيم', 'body' => 'يختاره القائد الملتحق بالدورة بنفسه، ساخنًا أو باردًا، قهوة أو شايًا أو غيرهما مما يقدمه المقهى. مشروب واحد لكل مشارك في كل يوم من أيام الدورة.'],
+                ['title' => 'إشراف كامل ليلًا ونهارًا', 'body' => 'مشرف مؤهل لكل ثمانية فتيان كحد أقصى، التزام سلامة لا يساوم عليه.'],
+            ],
+        ],
+        [
+            'title' => 'الزيارات الميدانية',
+            'icon' => 'map-pin',
+            'items' => [
+                ['title' => 'زيارة حديقة الحيوان «عالم سفاري»', 'body' => 'أكبر حديقة حيوان في سلطنة عمان، زيارة مشمولة بالرسوم ضمن برنامج الأيام.'],
+                ['title' => 'جولة في أكبر مجمّع للقصور الأثرية في شبه الجزيرة العربية', 'body' => 'جولة ميدانية يقرأ فيها الفتى عمارة أجداده على الطبيعة لا في الكتاب.'],
+                ['title' => 'زيارة قرية السباخ الأثرية', 'body' => 'قرية تراثية شاهدة على عمارة المنطقة وحياة أهلها.'],
+                ['title' => 'التنقل إلى الزيارات الميدانية ذهابًا وإيابًا', 'body' => 'نقل منظم من المخيم وإليه بصحبة المشرفين، دون حاجة إلى ترتيب مواصلات لهذه الزيارات.'],
+            ],
+        ],
+        [
+            'title' => 'الاطمئنان أثناء الأيام الثلاثة',
+            'icon' => 'user-group',
+            'items' => [
+                ['title' => 'تقرير يومي لولي الأمر', 'body' => 'يصلك مساء كل يوم عبر قناة مخصصة: ما أُنجز، وحال المجموعة، وسطر عن ابنك خاصة، وبرنامج الغد.'],
+                ['title' => 'تقرير ختامي فردي عن ابنك', 'body' => 'يسلّم في اليوم الثالث: ميوله الغالبة، ومساره المختار، وهدفه، وقوته، وما يحتاج إسنادًا فيه، وتوصياتنا للأسرة.'],
+            ],
+        ],
+    ];
+
     $faqs = [
         [
             'question' => 'أين تُقام الفعالية ومتى؟',
@@ -461,6 +503,50 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="included-fees"
+        class="bg-[linear-gradient(180deg,#f3f8f8,#ffffff)] py-16 lg:py-24 dark:bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(7,18,15,0.08))]">
+        <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl">
+                <p class="font-heading text-sm font-bold text-[#0e7c7b] dark:text-[#e0a800]">تفاصيل الرسوم</p>
+                <h2 class="mt-3 font-heading text-3xl font-bold leading-tight text-[#16263f] lg:text-5xl dark:text-[#f7f1df]">
+                    ما تشمله رسوم المقعد</h2>
+                <p class="mt-5 text-base leading-8 text-[#566a72] dark:text-[#f7f1df]/66">خمسة عشر بندًا داخل الرسوم، مشمولة في رسم المقعد الواحد، لا يطلب عليها مبلغ إضافي في الموقع أو عند الوصول.</p>
+            </div>
+
+            <div class="mt-10 grid gap-x-10 gap-y-12 lg:grid-cols-2">
+                @php($itemNumber = 0)
+                @foreach ($includedFees as $group)
+                    <div>
+                        <div class="flex items-center gap-3">
+                            <span class="flex size-11 items-center justify-center rounded-sm bg-[#0e7c7b]/10 text-[#0e7c7b] dark:bg-[#e0a800]/12 dark:text-[#e0a800]">
+                                <x-hugeicon :name="$group['icon']" class="text-xl" />
+                            </span>
+                            <h3 class="font-heading text-2xl font-bold text-[#16263f] dark:text-[#f7f1df]">{{ $group['title'] }}</h3>
+                        </div>
+
+                        <ol class="mt-5 border-t border-[#cfe2e2] dark:border-white/10" start="{{ $itemNumber + 1 }}">
+                            @foreach ($group['items'] as $item)
+                                @php($itemNumber++)
+                                <li class="grid grid-cols-[2.5rem_minmax(0,1fr)] gap-4 border-b border-[#cfe2e2] py-5 dark:border-white/10">
+                                    <span class="flex size-9 items-center justify-center rounded-sm bg-[#16263f] font-heading text-sm font-bold text-[#dfb458] dark:bg-white/10">{{ $toArabicNumber($itemNumber) }}</span>
+                                    <div>
+                                        <h4 class="font-heading text-lg font-bold text-[#16263f] dark:text-[#f7f1df]">{{ $item['title'] }}</h4>
+                                        <p class="mt-2 text-sm leading-7 text-[#566a72] dark:text-[#f7f1df]/66">{{ $item['body'] }}</p>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ol>
+                    </div>
+                @endforeach
+            </div>
+
+            <aside class="mt-12 border-s-4 border-[#dfb458] bg-[#dfb458]/10 p-6 dark:bg-[#e0a800]/10">
+                <h3 class="font-heading text-2xl font-bold text-[#16263f] dark:text-[#f7f1df]">قاعدة الوضوح</h3>
+                <p class="mt-3 max-w-3xl leading-8 text-[#566a72] dark:text-[#f7f1df]/72">الخمسة عشر بندًا أعلاه مشمولة بالكامل في رسم المقعد. وما لم يذكر فيها فليس مشمولًا.</p>
+            </aside>
         </div>
     </section>
 
