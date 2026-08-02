@@ -15,6 +15,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -40,6 +41,9 @@ class EventForm
                                 ->maxLength(255)
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))),
+                            TextInput::make('subtitle')
+                                ->label('العنوان الفرعي للبطاقة')
+                                ->maxLength(255),
                             TextInput::make('slug')
                                 ->label(__('admin.fields.slug'))
                                 ->required()
@@ -72,6 +76,17 @@ class EventForm
                                 ->label(__('admin.fields.excerpt'))
                                 ->columnSpanFull()
                                 ->maxLength(500),
+                            TagsInput::make('card_topics')
+                                ->label('وسوم البطاقة')
+                                ->helperText('تظهر أعلى البطاقة، وبحد أقصى ثلاثة وسوم.')
+                                ->rules(['array', 'max:3'])
+                                ->nestedRecursiveRules(['string', 'max:50'])
+                                ->columnSpanFull(),
+                            TextInput::make('schedule_text')
+                                ->label('نص الموعد والمدة للبطاقة')
+                                ->helperText('نص تسويقي مستقل يظهر في البطاقة، مثل: من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة.')
+                                ->maxLength(255)
+                                ->columnSpanFull(),
                             RichEditor::make('description_html')
                                 ->label(__('admin.fields.description'))
                                 ->columnSpanFull(),

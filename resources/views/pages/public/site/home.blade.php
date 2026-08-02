@@ -223,42 +223,9 @@
             <div class="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
                 <h2 class="font-heading text-3xl font-bold text-[#123329] lg:text-4xl dark:text-[#f7f1df]">فعاليات أخرى
                 </h2>
-                <div class="mt-9 grid gap-5 md:grid-cols-2">
+                <div class="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($upcomingEvents as $event)
-                        <article
-                            class="public-card grid gap-5 rounded-sm border border-[#2a8069]/14 bg-white/72 p-6 sm:grid-cols-[1fr_auto] sm:items-end dark:border-white/10 dark:bg-white/5">
-                            <div>
-                                @unless ($event->isComingSoon())
-                                    <p class="text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]">
-                                        {{ $event->type->getLabel() }}</p>
-                                @endunless
-
-                                <h3 class="mt-2 font-heading text-2xl font-bold text-[#123329] dark:text-[#f7f1df]">
-                                    {{ $event->name }}</h3>
-
-                                @if ($event->starts_at)
-                                    <p class="mt-2 text-sm font-semibold text-[#007a52] dark:text-[#6ee7b7]">
-                                        {{ $event->starts_at->translatedFormat('j F Y') }}</p>
-                                @else
-                                    <p class="mt-2 text-sm font-semibold text-[#007a52] dark:text-[#6ee7b7]">
-                                        يُعلن قريبًا</p>
-                                @endif
-
-                                @if ($event->location)
-                                    <p class="mt-2 text-sm text-[#315e52] dark:text-[#d2e7df]/72">{{ $event->location }}
-                                    </p>
-                                @endif
-
-                                @if ($event->excerpt)
-                                    <p class="mt-3 line-clamp-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">
-                                        {{ $event->excerpt }}</p>
-                                @endif
-                            </div>
-                            <a href="{{ route('events.show', $event) }}"
-                                class="inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-sm border border-[#007a52]/22 px-4 py-2 text-sm font-bold text-[#007a52] transition hover:bg-[#007a52] hover:text-white dark:border-[#6ee7b7]/24 dark:text-[#6ee7b7] dark:hover:bg-[#6ee7b7] dark:hover:text-[#07120f]">
-                                تفاصيل الفعالية
-                            </a>
-                        </article>
+                        <x-public-event-card :event="$event" :number="$loop->iteration + 1" />
                     @endforeach
                 </div>
             </div>

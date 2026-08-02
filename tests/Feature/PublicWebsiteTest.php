@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\BlogPostStatus;
+use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\SeatAllocationState;
 use App\Models\BlogPost;
@@ -39,6 +40,34 @@ test('homepage loads', function () {
         ->assertSee('data-whatsapp-floating-button', false)
         ->assertSee('pointer-events-none invisible', false)
         ->assertSee('data-whatsapp-reveal-sentinel', false);
+});
+
+test('public event cards show their editorial card content', function () {
+    $event = Event::factory()->create([
+        'name' => 'ماذا أقول؟ وماذا أؤثر؟',
+        'subtitle' => 'مهارات الكلام والتعامل مع الناس',
+        'card_topics' => ['العبادة', 'قول الحسن'],
+        'excerpt' => 'يتعلم الفتى كيف يتكلم ويصغي ويختار كلماته في المواقف اليومية.',
+        'schedule_text' => 'من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة',
+    ]);
+
+    $this->get(route('events.index'))
+        ->assertSuccessful()
+        ->assertSee('ماذا أقول؟ وماذا أؤثر؟')
+        ->assertSee('مهارات الكلام والتعامل مع الناس')
+        ->assertSee('العبادة')
+        ->assertSee('قول الحسن')
+        ->assertSee('من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة')
+        ->assertSee('data-event-card', false)
+        ->assertSee('has-[details[open]]:z-50', false)
+        ->assertSee(route('events.show', $event), false)
+        ->assertSee('احجز الآن')
+        ->assertDontSee($event->starts_at->format('Y-m-d'));
+
+    $this->get(route('home'))
+        ->assertSuccessful()
+        ->assertSee('مهارات الكلام والتعامل مع الناس')
+        ->assertSee('من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة');
 });
 
 test('coffee page shows the launch menu without a parallel store', function () {
@@ -429,7 +458,7 @@ test('public event detail page shows event description discounts and payment pla
     $comingSoonEvent = Event::factory()->create([
         'name' => 'Coming Soon Camp',
         'status' => EventStatus::Published,
-        'enrollment_status' => App\Enums\EventEnrollmentStatus::ComingSoon,
+        'enrollment_status' => EventEnrollmentStatus::ComingSoon,
         'excerpt' => 'Details will be published soon.',
         'location' => 'إبراء، مخيم بيرحاء',
         'starts_at' => now()->addDays(30),

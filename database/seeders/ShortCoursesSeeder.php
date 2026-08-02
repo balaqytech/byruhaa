@@ -193,17 +193,23 @@ class ShortCoursesSeeder extends Seeder
 JSON, true, flags: JSON_THROW_ON_ERROR);
 
         foreach ($courses as $course) {
-            Event::query()->firstOrCreate(
-                ['slug' => $course['slug']],
-                [
+            $event = Event::query()->firstOrNew(['slug' => $course['slug']]);
+            $isNewEvent = ! $event->exists;
+            $hasLegacyExcerpt = $event->exists && $event->excerpt === $course['excerpt'];
+
+            if ($isNewEvent) {
+                $event->fill([
                     'name' => $course['name'],
+                    'subtitle' => $course['excerpt'],
                     'type' => EventType::Camp,
                     'status' => EventStatus::Published,
                     'enrollment_status' => EventEnrollmentStatus::InterestOpen,
-                    'excerpt' => $course['excerpt'],
+                    'excerpt' => $course['description'],
+                    'card_topics' => [$course['category']],
                     'description_html' => '<p><strong>'.e($course['category']).'</strong></p><p>'.e($course['description']).'</p>',
                     'participant_extra_fields' => [],
                     'location' => 'مخيم بيرحاء، إبراء، سلطنة عُمان',
+                    'schedule_text' => 'من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة',
                     'starts_at' => null,
                     'ends_at' => null,
                     'minimum_age' => 13,
@@ -211,8 +217,26 @@ JSON, true, flags: JSON_THROW_ON_ERROR);
                     'seat_capacity' => 0,
                     'price_baisa' => 0,
                     'currency' => 'OMR',
-                ],
-            );
+                ]);
+            } else {
+                if (blank($event->subtitle)) {
+                    $event->subtitle = $course['excerpt'];
+                }
+
+                if ($hasLegacyExcerpt || blank($event->excerpt)) {
+                    $event->excerpt = $course['description'];
+                }
+
+                if (blank($event->card_topics)) {
+                    $event->card_topics = [$course['category']];
+                }
+
+                if (blank($event->schedule_text)) {
+                    $event->schedule_text = 'من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة';
+                }
+            }
+
+            $event->save();
         }
     }
 }

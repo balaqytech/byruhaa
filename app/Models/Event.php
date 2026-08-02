@@ -24,11 +24,14 @@ use Illuminate\Validation\ValidationException;
  * @property EventType $type
  * @property EventStatus $status
  * @property string|null $landing_page_key
+ * @property string|null $subtitle
  * @property string|null $excerpt
+ * @property array<int, string>|null $card_topics
  * @property string|null $description_html
  * @property string|null $contract_terms_html
  * @property array<int, array<string, mixed>>|null $participant_extra_fields
  * @property string|null $location
+ * @property string|null $schedule_text
  * @property Carbon|null $starts_at
  * @property Carbon|null $ends_at
  * @property int $minimum_age
@@ -38,7 +41,7 @@ use Illuminate\Validation\ValidationException;
  * @property string $currency
  * @property-read Money $price
  */
-#[Fillable(['name', 'slug', 'type', 'status', 'enrollment_status', 'landing_page_key', 'excerpt', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
+#[Fillable(['name', 'slug', 'type', 'status', 'enrollment_status', 'landing_page_key', 'subtitle', 'excerpt', 'card_topics', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'schedule_text', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
 class Event extends Model
 {
     /** @use HasFactory<EventFactory> */
@@ -155,7 +158,7 @@ class Event extends Model
     public function approvedSeatsCount(): int
     {
         return BookingFamilyMember::query()
-            ->whereHas('booking', fn($query) => $query
+            ->whereHas('booking', fn ($query) => $query
                 ->where('event_id', $this->id)
                 ->where('state', Approved::$name))
             ->count();
@@ -211,6 +214,7 @@ class Event extends Model
             'enrollment_status' => EventEnrollmentStatus::class,
             'type' => EventType::class,
             'participant_extra_fields' => 'array',
+            'card_topics' => 'array',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'minimum_age' => 'integer',

@@ -77,6 +77,18 @@ class EventInfolist
                             ->schema([
                                 Section::make(__('admin.event_infolist.sections.public_content'))
                                     ->schema([
+                                        TextEntry::make('subtitle')
+                                            ->label('العنوان الفرعي للبطاقة')
+                                            ->placeholder('-'),
+                                        TextEntry::make('card_topics')
+                                            ->label('وسوم البطاقة')
+                                            ->listWithLineBreaks()
+                                            ->bulleted()
+                                            ->placeholder('-'),
+                                        TextEntry::make('schedule_text')
+                                            ->label('نص الموعد والمدة للبطاقة')
+                                            ->placeholder('-')
+                                            ->columnSpanFull(),
                                         TextEntry::make('excerpt')
                                             ->label(__('admin.fields.excerpt'))
                                             ->placeholder('-')
