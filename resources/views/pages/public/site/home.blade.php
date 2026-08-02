@@ -219,10 +219,18 @@
     </section>
 
     @if ($upcomingEvents->isNotEmpty())
-        <section class="border-y border-[#2a8069]/12 bg-white/62 dark:border-white/10 dark:bg-white/[0.03]">
+        <section id="upcoming-events" class="border-y border-[#2a8069]/12 bg-white/62 dark:border-white/10 dark:bg-white/[0.03]">
             <div class="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-                <h2 class="font-heading text-3xl font-bold text-[#123329] lg:text-4xl dark:text-[#f7f1df]">فعاليات أخرى
-                </h2>
+                <div class="flex flex-wrap items-end justify-between gap-5">
+                    <h2 class="font-heading text-3xl font-bold text-[#123329] lg:text-4xl dark:text-[#f7f1df]">فعاليات أخرى
+                    </h2>
+                    <a href="{{ route('events.index') }}"
+                        data-home-events-link
+                        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-[#007a52]/22 px-4 py-2 text-sm font-bold text-[#007a52] transition hover:bg-[#007a52] hover:text-white sm:w-auto dark:border-[#6ee7b7]/24 dark:text-[#6ee7b7] dark:hover:bg-[#6ee7b7] dark:hover:text-[#07120f]">
+                        <span>عرض كل الفعاليات</span>
+                        <x-hugeicon name="arrow-left-02" class="text-lg" />
+                    </a>
+                </div>
                 <div class="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($upcomingEvents as $event)
                         <x-public-event-card :event="$event" :number="$loop->iteration + 1" />

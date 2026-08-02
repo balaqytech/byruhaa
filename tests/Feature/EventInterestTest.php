@@ -48,6 +48,27 @@ test('assistant receives a registration link when customer does not exist', func
     ])->assertStatus(409)->assertJsonPath('code', 'customer_account_required')->assertJsonStructure(['registration_url']);
 });
 
+test('assistant cannot access interests for draft events', function () {
+    $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $event = Event::factory()->draft()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
+    $interest = EventInterest::factory()->for($customer)->for($event)->create();
+    $payload = [
+        'phone_number' => '91234567',
+        'event_slug' => $event->slug,
+        'contact_consent' => true,
+    ];
+    $query = http_build_query([
+        'phone_number' => '91234567',
+        'event_slug' => $event->slug,
+    ]);
+
+    $this->putJson('/api/v1/integrations/assistant/event-interests', $payload)->assertNotFound();
+    $this->getJson('/api/v1/integrations/assistant/event-interests?'.$query)->assertNotFound();
+    $this->deleteJson('/api/v1/integrations/assistant/event-interests?'.$query)->assertNotFound();
+
+    expect($interest->refresh()->status)->toBe(EventInterestStatus::Interested);
+});
+
 test('interest is rejected when enrollment is closed and never changes seats', function () {
     $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
     $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingClosed, 'seat_capacity' => 12]);

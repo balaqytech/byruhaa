@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\ExpressEventInterest;
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
+use App\Enums\EventStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LookupAssistantEventInterestRequest;
 use App\Http\Requests\Api\V1\UpsertAssistantEventInterestRequest;
@@ -55,6 +56,12 @@ class AssistantEventInterestController extends Controller
             abort(response()->json(['code' => 'customer_account_required', 'message' => 'يلزم إنشاء حساب أولًا.', 'registration_url' => route('register')], 409));
         }
 
-        return [$customer, Event::query()->where('slug', $slug)->firstOrFail()];
+        return [
+            $customer,
+            Event::query()
+                ->where('slug', $slug)
+                ->where('status', EventStatus::Published)
+                ->firstOrFail(),
+        ];
     }
 }

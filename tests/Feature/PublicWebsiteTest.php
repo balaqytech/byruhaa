@@ -39,7 +39,8 @@ test('homepage loads', function () {
         ->assertDontSee('hgi-stroke', false)
         ->assertSee('data-whatsapp-floating-button', false)
         ->assertSee('pointer-events-none invisible', false)
-        ->assertSee('data-whatsapp-reveal-sentinel', false);
+        ->assertSee('data-whatsapp-reveal-sentinel', false)
+        ->assertSee('data-home-events-link', false);
 });
 
 test('public event cards show their editorial card content', function () {
@@ -89,6 +90,8 @@ test('coffee page shows the launch menu without a parallel store', function () {
         ->assertSee('images/coffee-byruha-hero.webp', false)
         ->assertSee('images/coffee-byruha-menu.webp', false)
         ->assertSee('https://wa.me/96874155123', false)
+        ->assertSee('relative z-10 mt-4 max-w-md', false)
+        ->assertDontSee('-mt-6', false)
         ->assertDontSee('أضف إلى السلة')
         ->assertDontSee('الدفع الآن');
 });
@@ -342,6 +345,41 @@ test('events page loads', function () {
     $this->get(route('events.index'))
         ->assertSuccessful()
         ->assertSee('الفعاليات');
+});
+
+test('events page groups published events by enrollment status', function () {
+    $bookingOpenEvent = Event::factory()->create([
+        'name' => 'Booking open event',
+        'enrollment_status' => EventEnrollmentStatus::BookingOpen,
+        'starts_at' => now()->addDays(1),
+    ]);
+    $interestOpenEvent = Event::factory()->create([
+        'name' => 'Interest open event',
+        'enrollment_status' => EventEnrollmentStatus::InterestOpen,
+        'starts_at' => now()->addDays(2),
+    ]);
+    $comingSoonEvent = Event::factory()->create([
+        'name' => 'Coming soon event',
+        'enrollment_status' => EventEnrollmentStatus::ComingSoon,
+        'starts_at' => now()->addDays(3),
+    ]);
+    $closedEvent = Event::factory()->create([
+        'name' => 'Closed event',
+        'enrollment_status' => EventEnrollmentStatus::BookingClosed,
+        'starts_at' => now()->addDays(4),
+    ]);
+
+    $this->get(route('events.index'))
+        ->assertSuccessful()
+        ->assertSeeInOrder([
+            'فعاليات مفتوحة للحجز',
+            $bookingOpenEvent->name,
+            'فعاليات نستقبل المهتمين بها',
+            $interestOpenEvent->name,
+            'فعاليات قادمة',
+            $comingSoonEvent->name,
+        ])
+        ->assertDontSee($closedEvent->name);
 });
 
 test('blog page loads', function () {

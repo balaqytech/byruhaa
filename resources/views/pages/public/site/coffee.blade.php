@@ -69,7 +69,7 @@
                         fetchpriority="high" class="aspect-[3/2] h-full w-full object-cover">
                 </div>
                 <p
-                    class="me-5 -mt-6 max-w-md rounded-sm border border-[#2a8069]/14 bg-[#f6fbf8] px-5 py-4 text-sm font-semibold leading-7 text-[#123329] shadow-xl shadow-[#123329]/10 dark:border-white/10 dark:bg-[#0c1e19] dark:text-[#f7f1df] sm:me-auto sm:-mt-9">
+                    class="relative z-10 mt-4 max-w-md rounded-sm border border-[#2a8069]/14 bg-[#f6fbf8] px-5 py-4 text-sm font-semibold leading-7 text-[#123329] shadow-xl shadow-[#123329]/10 dark:border-white/10 dark:bg-[#0c1e19] dark:text-[#f7f1df] sm:ms-auto">
                     القائمة قصيرة عن قصد، حتى يبقى التحضير جيدًا والخيار واضحًا.
                 </p>
             </div>

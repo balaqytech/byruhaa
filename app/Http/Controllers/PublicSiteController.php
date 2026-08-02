@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\BuildEventPriceTierOffer;
 use App\Actions\RenderEventLandingPage;
+use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\SeatAllocationState;
 use App\Models\Event;
@@ -75,11 +76,22 @@ class PublicSiteController extends Controller
 
     public function events(): View
     {
+        $events = Event::query()
+            ->where('status', EventStatus::Published)
+            ->orderByRaw('starts_at IS NULL')
+            ->orderBy('starts_at')
+            ->get();
+
         return view('pages.public.site.events.index', [
-            'events' => Event::query()
-                ->where('status', EventStatus::Published)
-                ->orderBy('starts_at')
-                ->get(),
+            'bookingOpenEvents' => $events->filter(
+                fn (Event $event): bool => $event->enrollment_status === EventEnrollmentStatus::BookingOpen,
+            )->values(),
+            'interestOpenEvents' => $events->filter(
+                fn (Event $event): bool => $event->enrollment_status === EventEnrollmentStatus::InterestOpen,
+            )->values(),
+            'comingSoonEvents' => $events->filter(
+                fn (Event $event): bool => $event->enrollment_status === EventEnrollmentStatus::ComingSoon,
+            )->values(),
             'title' => 'الفعاليات',
             'metaDescription' => 'فعاليات وتجارب منتجع بيرحاء السياحية والتعليمية.',
         ]);
