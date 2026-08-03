@@ -12,7 +12,7 @@ use App\Filament\Resources\Affiliates\RelationManagers\ReferralsRelationManager;
 use App\Filament\Resources\Affiliates\Schemas\AffiliateForm;
 use App\Filament\Resources\Affiliates\Schemas\AffiliateInfolist;
 use App\Filament\Resources\Affiliates\Tables\AffiliatesTable;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

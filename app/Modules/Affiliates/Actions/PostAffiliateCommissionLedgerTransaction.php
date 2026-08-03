@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Affiliates\Actions;
 
 use App\Enums\LedgerAccountType;
-use App\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Modules\Finance\Models\LedgerAccount;
 use App\Modules\Finance\Models\LedgerTransaction;
 use Illuminate\Support\Facades\DB;

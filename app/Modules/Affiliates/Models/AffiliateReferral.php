@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Affiliates\Models;
 
 use App\Modules\Events\Models\Booking;
 use Database\Factories\AffiliateReferralFactory;
@@ -26,6 +26,11 @@ class AffiliateReferral extends Model
 {
     /** @use HasFactory<AffiliateReferralFactory> */
     use HasFactory;
+
+    protected static function newFactory(): AffiliateReferralFactory
+    {
+        return AffiliateReferralFactory::new();
+    }
 
     /**
      * @return BelongsTo<Affiliate, $this>

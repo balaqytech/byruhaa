@@ -4,7 +4,7 @@ namespace App\Filament\Resources\AffiliatePayoutRequests\Schemas;
 
 use App\Filament\Resources\Affiliates\AffiliateResource;
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
-use App\Models\AffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;

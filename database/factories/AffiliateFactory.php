@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\AffiliateStatus;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
  */
 class AffiliateFactory extends Factory
 {
+    protected $model = Affiliate::class;
+
     /**
      * Define the model's default state.
      *

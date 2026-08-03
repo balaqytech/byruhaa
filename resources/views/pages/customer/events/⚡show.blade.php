@@ -10,7 +10,7 @@ use App\Modules\Events\Models\Discount;
 use App\Modules\Events\Models\Event;
 use App\Modules\Events\Models\EventPaymentPlan;
 use App\Modules\Events\Models\EventPaymentPlanInstallment;
-use App\Services\AffiliateAttribution;
+use App\Modules\Affiliates\Services\AffiliateAttribution;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\Auth;

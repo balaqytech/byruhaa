@@ -5,7 +5,7 @@ namespace App\Modules\Events\Actions;
 use App\Enums\AffiliateStatus;
 use App\Enums\EventInterestStatus;
 use App\Enums\EventStatus;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\Coupon;
 use App\Modules\Events\Models\Event;

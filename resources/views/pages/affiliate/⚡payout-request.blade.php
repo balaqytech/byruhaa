@@ -1,7 +1,7 @@
 <?php
 
-use App\Actions\CreateAffiliatePayoutRequest;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Actions\CreateAffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Support\Money\MoneyFactory;
 use Brick\Math\Exception\MathException;
 use Flux\Flux;

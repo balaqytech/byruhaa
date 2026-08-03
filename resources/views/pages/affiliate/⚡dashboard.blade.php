@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;

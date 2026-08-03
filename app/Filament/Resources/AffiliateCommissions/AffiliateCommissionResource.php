@@ -6,7 +6,7 @@ use App\Filament\Resources\AffiliateCommissions\Pages\ListAffiliateCommissions;
 use App\Filament\Resources\AffiliateCommissions\Pages\ViewAffiliateCommission;
 use App\Filament\Resources\AffiliateCommissions\Schemas\AffiliateCommissionInfolist;
 use App\Filament\Resources\AffiliateCommissions\Tables\AffiliateCommissionsTable;
-use App\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

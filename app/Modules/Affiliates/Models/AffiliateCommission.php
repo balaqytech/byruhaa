@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Affiliates\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Modules\Events\Models\Booking;
@@ -35,6 +35,11 @@ class AffiliateCommission extends Model
 {
     /** @use HasFactory<AffiliateCommissionFactory> */
     use HasFactory;
+
+    protected static function newFactory(): AffiliateCommissionFactory
+    {
+        return AffiliateCommissionFactory::new();
+    }
 
     /**
      * @return BelongsTo<Affiliate, $this>

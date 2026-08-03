@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Affiliates\Models;
 
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Enums\AffiliateStatus;
@@ -34,6 +34,11 @@ class Affiliate extends Authenticatable
 {
     /** @use HasFactory<AffiliateFactory> */
     use HasFactory, Notifiable;
+
+    protected static function newFactory(): AffiliateFactory
+    {
+        return AffiliateFactory::new();
+    }
 
     protected static function booted(): void
     {

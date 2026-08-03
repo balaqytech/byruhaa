@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\User;
 

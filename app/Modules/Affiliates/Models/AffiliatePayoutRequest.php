@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Affiliates\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\AffiliatePayoutRequestStatus;
@@ -39,6 +39,11 @@ class AffiliatePayoutRequest extends Model
 {
     /** @use HasFactory<AffiliatePayoutRequestFactory> */
     use HasFactory;
+
+    protected static function newFactory(): AffiliatePayoutRequestFactory
+    {
+        return AffiliatePayoutRequestFactory::new();
+    }
 
     /**
      * @var array<string, mixed>

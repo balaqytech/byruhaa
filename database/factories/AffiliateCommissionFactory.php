@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Affiliate;
-use App\Models\AffiliateCommission;
-use App\Models\AffiliateReferral;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateReferral;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class AffiliateCommissionFactory extends Factory
 {
+    protected $model = AffiliateCommission::class;
+
     /**
      * Define the model's default state.
      *

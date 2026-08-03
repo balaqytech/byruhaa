@@ -7,7 +7,7 @@ use App\Filament\Resources\BlogPostCategories\Pages\EditBlogPostCategory;
 use App\Filament\Resources\BlogPostCategories\Pages\ListBlogPostCategories;
 use App\Filament\Resources\BlogPostCategories\Schemas\BlogPostCategoryForm;
 use App\Filament\Resources\BlogPostCategories\Tables\BlogPostCategoriesTable;
-use App\Models\BlogPostCategory;
+use App\Modules\Content\Models\BlogPostCategory;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Affiliates\Tables;
 
 use App\Enums\AffiliateStatus;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;

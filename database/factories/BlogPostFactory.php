@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\BlogPostStatus;
-use App\Models\BlogPost;
-use App\Models\BlogPostCategory;
+use App\Modules\Content\Models\BlogPost;
+use App\Modules\Content\Models\BlogPostCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class BlogPostFactory extends Factory
 {
+    protected $model = BlogPost::class;
+
     /**
      * Define the model's default state.
      *

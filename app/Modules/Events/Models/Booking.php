@@ -3,8 +3,8 @@
 namespace App\Modules\Events\Models;
 
 use App\Casts\MoneyBaisaCast;
-use App\Models\AffiliateReferral;
 use App\Models\WebhookDelivery;
+use App\Modules\Affiliates\Models\AffiliateReferral;
 use App\Modules\Events\Actions\ReleaseBookingSeats;
 use App\Modules\Events\Services\CouponUsageService;
 use App\Modules\Events\States\Booking\BookingState;

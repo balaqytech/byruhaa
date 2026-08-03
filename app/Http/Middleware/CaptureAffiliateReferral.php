@@ -3,8 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Enums\AffiliateStatus;
-use App\Models\Affiliate;
-use App\Services\AffiliateAttribution;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Services\AffiliateAttribution;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

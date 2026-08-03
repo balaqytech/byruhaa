@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Content\Models;
 
 use Database\Factories\BlogPostCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -14,6 +14,11 @@ class BlogPostCategory extends Model
 {
     /** @use HasFactory<BlogPostCategoryFactory> */
     use HasFactory;
+
+    protected static function newFactory(): BlogPostCategoryFactory
+    {
+        return BlogPostCategoryFactory::new();
+    }
 
     /**
      * @var array<string, mixed>

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Affiliates\Services;
 
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cookie;

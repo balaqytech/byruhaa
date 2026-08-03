@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Affiliate;
-use App\Models\AffiliateReferral;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\AffiliateReferral;
 use App\Modules\Events\Models\Booking;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class AffiliateReferralFactory extends Factory
 {
+    protected $model = AffiliateReferral::class;
+
     /**
      * Define the model's default state.
      *

@@ -7,7 +7,7 @@ use App\Filament\Resources\AffiliatePayoutRequests\Pages\ViewAffiliatePayoutRequ
 use App\Filament\Resources\AffiliatePayoutRequests\Schemas\AffiliatePayoutRequestForm;
 use App\Filament\Resources\AffiliatePayoutRequests\Schemas\AffiliatePayoutRequestInfolist;
 use App\Filament\Resources\AffiliatePayoutRequests\Tables\AffiliatePayoutRequestsTable;
-use App\Models\AffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

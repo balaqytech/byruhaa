@@ -5,7 +5,7 @@ namespace App\Filament\Resources\AffiliateCommissions\Tables;
 use App\Filament\Resources\Affiliates\AffiliateResource;
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Filament\Resources\Payments\PaymentResource;
-use App\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;

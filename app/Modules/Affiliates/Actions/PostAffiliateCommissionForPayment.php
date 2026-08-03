@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Affiliates\Actions;
 
 use App\Enums\AffiliateStatus;
 use App\Enums\PaymentState;
-use App\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;

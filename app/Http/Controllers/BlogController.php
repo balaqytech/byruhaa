@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BlogPost;
-use App\Models\BlogPostCategory;
+use App\Modules\Content\Models\BlogPost;
+use App\Modules\Content\Models\BlogPostCategory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;

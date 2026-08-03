@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Affiliates\Schemas;
 
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;

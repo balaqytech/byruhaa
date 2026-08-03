@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Affiliates\RelationManagers;
 
 use App\Filament\Resources\AffiliateCommissions\AffiliateCommissionResource;
 use App\Filament\Resources\Bookings\BookingResource;
-use App\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;

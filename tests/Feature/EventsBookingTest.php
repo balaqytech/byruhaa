@@ -12,7 +12,7 @@ use App\Modules\Events\States\Booking\Approved;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\User;
-use App\Services\AffiliateAttribution;
+use App\Modules\Affiliates\Services\AffiliateAttribution;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Illuminate\Http\Request;

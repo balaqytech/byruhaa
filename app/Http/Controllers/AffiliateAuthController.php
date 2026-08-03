@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Concerns\PasswordValidationRules;
 use App\Enums\AffiliateStatus;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Content\Models;
 
 use App\Enums\BlogPostStatus;
 use Database\Factories\BlogPostFactory;
@@ -35,6 +35,11 @@ class BlogPost extends Model implements HasRichContent
 {
     /** @use HasFactory<BlogPostFactory> */
     use HasFactory;
+
+    protected static function newFactory(): BlogPostFactory
+    {
+        return BlogPostFactory::new();
+    }
 
     use InteractsWithRichContent;
 

@@ -6,7 +6,7 @@ use App\Filament\Resources\Affiliates\AffiliateResource;
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
 use App\Filament\Resources\Payments\PaymentResource;
-use App\Models\AffiliateCommission;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;

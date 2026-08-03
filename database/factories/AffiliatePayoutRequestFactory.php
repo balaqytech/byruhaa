@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\AffiliatePayoutRequestStatus;
-use App\Models\Affiliate;
-use App\Models\AffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class AffiliatePayoutRequestFactory extends Factory
 {
+    protected $model = AffiliatePayoutRequest::class;
+
     /**
      * Define the model's default state.
      *

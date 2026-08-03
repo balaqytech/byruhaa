@@ -74,3 +74,11 @@ Customer webhook records historically stored `App\\Models\\Customer` in the poly
 The Events context now owns event, booking, seat allocation, pricing, discount, coupon, payment-plan, contract, and event-interest models; booking actions; event services; and booking/contract states under `App\\Modules\\Events`. Existing HTTP controllers, API resources, Filament resources, Livewire views, commands, seeders, and tests remain in their established locations as compatibility entry points and import the new classes directly.
 
 No route, REST API payload, database table, or booking/payment rule changed in this move. `EventsServiceProvider` maps the former `App\\Models\\Booking` morph type to the moved model so existing webhook and polymorphic records continue to resolve. Event factories explicitly bind to their moved models for the same reason as Identity and Finance factories.
+
+## Affiliates migration checkpoint
+
+The Affiliates context now owns affiliate accounts, referrals, commissions, payout requests, attribution, and affiliate ledger actions under `App\\Modules\\Affiliates`. Authentication guards, affiliate routes, Filament resources, middleware, booking attribution, and payment confirmation remain compatibility entry points but use the module classes directly. The provider maps the former commission and payout-request model names for existing ledger polymorphic records, while the database tables and affiliate URLs remain unchanged.
+
+## Content migration checkpoint
+
+The Content context now owns blog posts and categories under `App\\Modules\\Content`. The existing blog controller, sitemap, public views, Filament resources, and factories use the moved models without changing slugs, routes, visibility rules, or database tables. Content remains a read/presentation context and has no dependency on booking, payment, or affiliate workflows.

@@ -3,7 +3,7 @@
 use App\Enums\AffiliateStatus;
 use App\Http\Controllers\AffiliateAuthController;
 use App\Http\Middleware\EnsureAffiliateIsApproved;
-use App\Models\Affiliate;
+use App\Modules\Affiliates\Models\Affiliate;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('affiliate')

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Affiliates\Actions;
 
 use App\Enums\AffiliateStatus;
-use App\Models\Affiliate;
-use App\Models\AffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\Affiliate;
+use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

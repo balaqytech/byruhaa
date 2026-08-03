@@ -5,7 +5,7 @@ namespace App\Filament\Resources\Affiliates\RelationManagers;
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Filament\Resources\AffiliatePayoutRequests\AffiliatePayoutRequestResource;
 use App\Filament\Resources\AffiliatePayoutRequests\Tables\AffiliatePayoutRequestsTable;
-use App\Models\AffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;

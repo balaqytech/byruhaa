@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\EventStatus;
-use App\Models\BlogPost;
+use App\Modules\Content\Models\BlogPost;
 use App\Modules\Events\Models\Event;
 use Illuminate\Http\Response;
 

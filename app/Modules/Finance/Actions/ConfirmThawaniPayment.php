@@ -2,10 +2,10 @@
 
 namespace App\Modules\Finance\Actions;
 
-use App\Actions\PostAffiliateCommissionForPayment;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventStatus;
 use App\Enums\PaymentState;
+use App\Modules\Affiliates\Actions\PostAffiliateCommissionForPayment;
 use App\Modules\Events\Actions\ReleaseBookingSeats;
 use App\Modules\Events\Actions\ReserveBookingSeats;
 use App\Modules\Events\Models\Booking;

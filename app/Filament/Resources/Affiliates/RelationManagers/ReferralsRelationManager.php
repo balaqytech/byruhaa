@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Affiliates\RelationManagers;
 
 use App\Filament\Resources\Bookings\BookingResource;
-use App\Models\AffiliateReferral;
+use App\Modules\Affiliates\Models\AffiliateReferral;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\RelationManagers\RelationManager;

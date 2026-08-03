@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\BlogPostStatus;
-use App\Models\BlogPost;
-use App\Models\BlogPostCategory;
+use App\Modules\Content\Models\BlogPost;
+use App\Modules\Content\Models\BlogPostCategory;
 use Illuminate\Database\QueryException;
 
 test('blog post can belong to a category', function () {

@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\BlogPostCategory;
+use App\Modules\Content\Models\BlogPostCategory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
  */
 class BlogPostCategoryFactory extends Factory
 {
+    protected $model = BlogPostCategory::class;
+
     /**
      * Define the model's default state.
      *

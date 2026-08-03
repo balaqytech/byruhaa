@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Affiliates\Actions;
 
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Enums\LedgerAccountType;
-use App\Models\AffiliatePayoutRequest;
+use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use App\Modules\Finance\Models\LedgerAccount;
 use App\Modules\Finance\Models\LedgerTransaction;
 use Illuminate\Support\Facades\DB;
