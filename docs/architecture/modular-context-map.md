@@ -82,3 +82,7 @@ The Affiliates context now owns affiliate accounts, referrals, commissions, payo
 ## Content migration checkpoint
 
 The Content context now owns blog posts and categories under `App\\Modules\\Content`. The existing blog controller, sitemap, public views, Filament resources, and factories use the moved models without changing slugs, routes, visibility rules, or database tables. Content remains a read/presentation context and has no dependency on booking, payment, or affiliate workflows.
+
+## Verification checkpoint
+
+The modular checkpoint keeps 91 registered application routes and the existing API contract tests pass. The architecture test at `tests/Feature/ModularArchitectureTest.php` guards module ownership, removal of migrated root model files, polymorphic compatibility aliases, and stale imports. The full suite currently reports 267 passing tests, 6 pre-existing failures, and 1 skipped test; the six failures match the documented baseline UI failures. PHPStan reports 127 existing errors (down from the 128-error baseline); no new suppression or baseline entry was added for the refactor.
