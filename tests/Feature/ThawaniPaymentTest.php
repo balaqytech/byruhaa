@@ -1,7 +1,6 @@
 <?php
 
 use App\Actions\InitiateInstallmentPayment;
-use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
@@ -22,6 +21,7 @@ use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\ThawaniWebhookEvent;
 use App\Models\WebhookDelivery;
+use App\Modules\Finance\Contracts\PaymentGateway;
 use App\States\Booking\Approved;
 use App\States\Contract\Signed;
 use Illuminate\Http\Client\Request;

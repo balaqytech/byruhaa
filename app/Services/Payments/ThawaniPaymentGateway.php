@@ -2,8 +2,8 @@
 
 namespace App\Services\Payments;
 
-use App\Contracts\Payments\PaymentGateway;
 use App\Exceptions\PaymentGatewayException;
+use App\Modules\Finance\Contracts\PaymentGateway;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Jkbroot\Thawani\Helpers\ValidationHelper;

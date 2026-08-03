@@ -2,12 +2,12 @@
 
 namespace App\Actions;
 
-use App\Contracts\Payments\PaymentGateway;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Modules\Finance\Contracts\PaymentGateway;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;

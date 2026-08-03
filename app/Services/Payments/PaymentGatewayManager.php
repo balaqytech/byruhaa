@@ -2,7 +2,7 @@
 
 namespace App\Services\Payments;
 
-use App\Contracts\Payments\PaymentGateway;
+use App\Modules\Finance\Contracts\PaymentGateway;
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
 

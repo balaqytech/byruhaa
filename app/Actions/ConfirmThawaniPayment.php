@@ -2,7 +2,6 @@
 
 namespace App\Actions;
 
-use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventStatus;
 use App\Enums\PaymentState;
@@ -10,6 +9,7 @@ use App\Models\Booking;
 use App\Models\BookingSeatAllocation;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Modules\Finance\Contracts\PaymentGateway;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Cancelled;
