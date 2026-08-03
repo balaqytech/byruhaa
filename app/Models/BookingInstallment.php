@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\BookingInstallmentState;
+use App\Modules\Finance\Models\Payment;
 use Brick\Money\Money;
 use Database\Factories\BookingInstallmentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

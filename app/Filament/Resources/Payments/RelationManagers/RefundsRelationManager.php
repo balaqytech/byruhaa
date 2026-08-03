@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Payments\RelationManagers;
 
 use App\Filament\Resources\PaymentRefunds\PaymentRefundResource;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;

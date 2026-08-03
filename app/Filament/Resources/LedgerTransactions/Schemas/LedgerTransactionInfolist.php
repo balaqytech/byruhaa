@@ -4,9 +4,9 @@ namespace App\Filament\Resources\LedgerTransactions\Schemas;
 
 use App\Filament\Resources\PaymentRefunds\PaymentRefundResource;
 use App\Filament\Resources\Payments\PaymentResource;
-use App\Models\LedgerTransaction;
-use App\Models\Payment;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\LedgerTransaction;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;

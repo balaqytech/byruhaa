@@ -5,7 +5,7 @@ namespace App\Actions;
 use App\Enums\PaymentRefundState;
 use App\Jobs\ProcessEventCancellation;
 use App\Models\EventCancellation;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\PaymentRefund;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

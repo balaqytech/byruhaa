@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\SeatAllocationState;
+use App\Modules\Finance\Models\Payment;
 use Brick\Money\Money;
 use Database\Factories\BookingSeatAllocationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

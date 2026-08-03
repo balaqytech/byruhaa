@@ -7,7 +7,7 @@ use App\Enums\SeatAllocationState;
 use App\Models\Booking;
 use App\Models\BookingSeatAllocation;
 use App\Models\Event;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use App\States\Booking\Cancelled;
 use App\States\Booking\Rejected;
 use Illuminate\Support\Facades\DB;

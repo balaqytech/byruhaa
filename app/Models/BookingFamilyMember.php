@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Identity\Models\FamilyMember;
 use Database\Factories\BookingFamilyMemberFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

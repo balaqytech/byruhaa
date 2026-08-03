@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Finance\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\PaymentRefundState;
@@ -43,6 +43,11 @@ class PaymentRefund extends Model
 {
     /** @use HasFactory<PaymentRefundFactory> */
     use HasFactory;
+
+    protected static function newFactory(): PaymentRefundFactory
+    {
+        return PaymentRefundFactory::new();
+    }
 
     /**
      * @var array<string, mixed>

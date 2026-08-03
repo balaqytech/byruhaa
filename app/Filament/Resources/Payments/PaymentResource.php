@@ -7,7 +7,7 @@ use App\Filament\Resources\Payments\Pages\ViewPayment;
 use App\Filament\Resources\Payments\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Payments\Schemas\PaymentInfolist;
 use App\Filament\Resources\Payments\Tables\PaymentsTable;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

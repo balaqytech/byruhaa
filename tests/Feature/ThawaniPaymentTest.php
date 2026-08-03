@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\InitiateInstallmentPayment;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
@@ -16,10 +15,11 @@ use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
-use App\Models\Payment;
-use App\Models\ThawaniWebhookEvent;
 use App\Models\WebhookDelivery;
+use App\Modules\Finance\Actions\InitiateInstallmentPayment;
 use App\Modules\Finance\Contracts\PaymentGateway;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\ThawaniWebhookEvent;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\States\Booking\Approved;

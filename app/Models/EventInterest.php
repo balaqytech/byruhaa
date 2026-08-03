@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
+use App\Modules\Identity\Models\Customer;
 use Database\Factories\EventInterestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

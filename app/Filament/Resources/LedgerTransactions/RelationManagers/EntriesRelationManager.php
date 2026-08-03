@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\LedgerTransactions\RelationManagers;
 
 use App\Filament\Resources\LedgerAccounts\LedgerAccountResource;
-use App\Models\LedgerEntry;
+use App\Modules\Finance\Models\LedgerEntry;
 use App\Support\MoneyFormatter;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;

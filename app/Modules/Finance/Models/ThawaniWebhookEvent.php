@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Finance\Models;
 
 use App\Enums\ThawaniWebhookEventStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

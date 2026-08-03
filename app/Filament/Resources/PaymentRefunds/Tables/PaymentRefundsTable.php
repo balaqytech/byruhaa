@@ -5,7 +5,7 @@ namespace App\Filament\Resources\PaymentRefunds\Tables;
 use App\Actions\ConfirmManualPaymentRefund;
 use App\Enums\PaymentRefundState;
 use App\Filament\Resources\Payments\PaymentResource;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Models\User;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;

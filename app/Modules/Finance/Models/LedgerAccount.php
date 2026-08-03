@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Finance\Models;
 
 use App\Enums\LedgerAccountType;
 use Database\Factories\LedgerAccountFactory;
@@ -32,6 +32,11 @@ class LedgerAccount extends Model
 
     /** @use HasFactory<LedgerAccountFactory> */
     use HasFactory;
+
+    protected static function newFactory(): LedgerAccountFactory
+    {
+        return LedgerAccountFactory::new();
+    }
 
     /**
      * @var array<string, mixed>

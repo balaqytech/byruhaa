@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\PaymentRefundState;
-use App\Models\Payment;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\PaymentRefund;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class PaymentRefundFactory extends Factory
 {
+    protected $model = PaymentRefund::class;
+
     /**
      * Define the model's default state.
      *

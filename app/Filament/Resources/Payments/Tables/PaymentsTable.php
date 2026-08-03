@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\Payments\Tables;
 
-use App\Actions\RefundPayment;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Filament\Resources\Bookings\BookingResource;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\RefundPayment;
+use App\Modules\Finance\Models\Payment;
 use App\Support\Money\MoneyFactory;
 use App\Support\MoneyFormatter;
 use Brick\Math\Exception\MathException;

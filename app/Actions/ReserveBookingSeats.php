@@ -8,7 +8,7 @@ use App\Models\Booking;
 use App\Models\BookingSeatAllocation;
 use App\Models\Event;
 use App\Models\EventInterest;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 

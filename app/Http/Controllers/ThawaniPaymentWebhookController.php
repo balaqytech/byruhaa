@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\HandleThawaniWebhook;
+use App\Modules\Finance\Actions\HandleThawaniWebhook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

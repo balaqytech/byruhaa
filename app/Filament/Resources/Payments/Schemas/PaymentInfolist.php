@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Payments\Schemas;
 
 use App\Filament\Resources\Bookings\BookingResource;
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;

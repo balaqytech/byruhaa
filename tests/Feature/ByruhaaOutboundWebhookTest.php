@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\ConfirmThawaniPayment;
 use App\Actions\CreateCustomerBooking;
 use App\Actions\ExpressEventInterest;
 use App\Enums\BookingInstallmentState;
@@ -15,9 +14,10 @@ use App\Models\BookingPaymentSchedule;
 use App\Models\Event;
 use App\Models\EventCancellation;
 use App\Models\EventInterest;
-use App\Models\Payment;
-use App\Models\PaymentRefund;
 use App\Models\WebhookDelivery;
+use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\User;

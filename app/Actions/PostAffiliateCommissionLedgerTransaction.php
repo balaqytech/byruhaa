@@ -4,8 +4,8 @@ namespace App\Actions;
 
 use App\Enums\LedgerAccountType;
 use App\Models\AffiliateCommission;
-use App\Models\LedgerAccount;
-use App\Models\LedgerTransaction;
+use App\Modules\Finance\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerTransaction;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use RuntimeException;

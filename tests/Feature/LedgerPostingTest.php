@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\PostPaymentLedgerTransaction;
 use App\Enums\BookingInstallmentState;
 use App\Enums\LedgerAccountType;
 use App\Enums\PaymentState;
@@ -8,12 +7,21 @@ use App\Models\Booking;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\Event;
-use App\Models\LedgerAccount;
-use App\Models\LedgerEntry;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\PostPaymentLedgerTransaction;
+use App\Modules\Finance\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerEntry;
+use App\Modules\Finance\Models\LedgerTransaction;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
+
+test('legacy finance morph types remain mapped after the module move', function () {
+    expect((new Payment)->getMorphClass())->toBe('App\\Models\\Payment')
+        ->and((new PaymentRefund)->getMorphClass())->toBe('App\\Models\\PaymentRefund')
+        ->and((new LedgerTransaction)->getMorphClass())->toBe('App\\Models\\LedgerTransaction');
+});
 
 test('paid payment posts a balanced double entry ledger transaction', function () {
     $payment = paidPaymentFixture(amountBaisa: 9001);

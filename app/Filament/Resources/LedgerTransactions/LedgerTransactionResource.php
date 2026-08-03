@@ -7,7 +7,7 @@ use App\Filament\Resources\LedgerTransactions\Pages\ViewLedgerTransaction;
 use App\Filament\Resources\LedgerTransactions\RelationManagers\EntriesRelationManager;
 use App\Filament\Resources\LedgerTransactions\Schemas\LedgerTransactionInfolist;
 use App\Filament\Resources\LedgerTransactions\Tables\LedgerTransactionsTable;
-use App\Models\LedgerTransaction;
+use App\Modules\Finance\Models\LedgerTransaction;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

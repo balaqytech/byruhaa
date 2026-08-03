@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Finance\Actions;
 
 use App\Enums\PaymentProvider;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Database\Eloquent\Builder;
 
 class ResolveThawaniWebhookPayment

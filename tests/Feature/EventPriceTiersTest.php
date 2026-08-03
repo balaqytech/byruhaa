@@ -1,7 +1,6 @@
 <?php
 
 use App\Actions\CalculateBookingPrice;
-use App\Actions\InitiateInstallmentPayment;
 use App\Actions\PrepareBookingSeatHold;
 use App\Actions\ReleaseBookingSeats;
 use App\Actions\ReserveBookingSeats;
@@ -20,7 +19,8 @@ use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\EventInterest;
 use App\Models\EventPriceTier;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\InitiateInstallmentPayment;
+use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\States\Booking\Approved;

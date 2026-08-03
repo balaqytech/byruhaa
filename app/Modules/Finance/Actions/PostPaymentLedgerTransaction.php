@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Finance\Actions;
 
 use App\Enums\LedgerAccountType;
 use App\Enums\PaymentState;
-use App\Models\LedgerAccount;
-use App\Models\LedgerTransaction;
-use App\Models\Payment;
+use App\Modules\Finance\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerTransaction;
+use App\Modules\Finance\Models\Payment;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;

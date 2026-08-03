@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\AffiliatePayoutRequestStatus;
+use App\Modules\Finance\Models\LedgerTransaction;
+use App\Modules\Identity\Models\User;
 use Brick\Money\Money;
 use Database\Factories\AffiliatePayoutRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

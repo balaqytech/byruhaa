@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Actions\ReleaseBookingSeats;
 use App\Casts\MoneyBaisaCast;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\User;
 use App\Services\CouponUsageService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\BookingState;

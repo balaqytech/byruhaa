@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Payments;
+namespace App\Modules\Finance\Services\Payments;
 
 use App\Exceptions\PaymentGatewayException;
 use App\Modules\Finance\Contracts\PaymentGateway;

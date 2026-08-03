@@ -7,7 +7,7 @@ use App\Filament\Resources\LedgerAccounts\Pages\ViewLedgerAccount;
 use App\Filament\Resources\LedgerAccounts\RelationManagers\EntriesRelationManager;
 use App\Filament\Resources\LedgerAccounts\Schemas\LedgerAccountInfolist;
 use App\Filament\Resources\LedgerAccounts\Tables\LedgerAccountsTable;
-use App\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerAccount;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

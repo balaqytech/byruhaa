@@ -2,12 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\ConfirmThawaniPayment;
 use App\Actions\ReleaseBookingSeats;
 use App\Enums\PaymentState;
 use App\Enums\SeatAllocationState;
 use App\Models\BookingSeatAllocation;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Models\Payment;
 use App\States\Booking\Cancelled;
 use App\States\Booking\Rejected;
 use Illuminate\Console\Attributes\Description;

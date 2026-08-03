@@ -2,10 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\ConfirmThawaniPayment;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

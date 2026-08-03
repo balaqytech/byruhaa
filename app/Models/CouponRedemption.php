@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Identity\Models\Customer;
 use Database\Factories\CouponRedemptionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

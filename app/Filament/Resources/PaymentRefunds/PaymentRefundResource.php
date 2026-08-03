@@ -6,7 +6,7 @@ use App\Filament\Resources\PaymentRefunds\Pages\ListPaymentRefunds;
 use App\Filament\Resources\PaymentRefunds\Pages\ViewPaymentRefund;
 use App\Filament\Resources\PaymentRefunds\Schemas\PaymentRefundInfolist;
 use App\Filament\Resources\PaymentRefunds\Tables\PaymentRefundsTable;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\PaymentRefund;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

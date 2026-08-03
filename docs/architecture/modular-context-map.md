@@ -61,6 +61,8 @@ App\\Modules\\Finance\\Contracts\\PaymentGateway
 
 Its behavior and method signatures are unchanged. This is the first example of moving a boundary without changing the REST API, database schema, or payment behavior.
 
+The Finance checkpoint now also owns payment/refund, ledger, and Thawani webhook models; gateway adapters; and payment, refund, webhook, and ledger actions under `App\\Modules\\Finance`. Root controllers, commands, Filament resources, request classes, event booking code, and affiliate workflows remain compatibility entry points and import the new Finance classes directly until their own context migrations. Existing polymorphic rows keep resolving because the Finance provider maps the former `App\\Models` type names to the moved classes.
+
 ## Identity migration checkpoint
 
 The Identity context now owns the `User`, `Customer`, and `FamilyMember` models, Fortify actions and provider, and phone normalization service. Existing controllers, requests, factories, Filament screens, Livewire views, seeders, and tests use the new namespaces while public routes, guards, table names, and API payloads remain unchanged.

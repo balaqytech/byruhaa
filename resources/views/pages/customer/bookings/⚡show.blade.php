@@ -1,7 +1,7 @@
 <?php
 
 use App\Actions\CreateFullPaymentSchedule;
-use App\Actions\InitiateInstallmentPayment;
+use App\Modules\Finance\Actions\InitiateInstallmentPayment;
 use App\Actions\SelectBookingPaymentPlan;
 use App\Enums\BookingInstallmentState;
 use App\Models\Booking;

@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\LedgerTransactions\Tables;
 
-use App\Models\LedgerTransaction;
-use App\Models\Payment;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\LedgerTransaction;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;

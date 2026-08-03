@@ -1,11 +1,15 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Finance\Models;
 
 use App\Casts\MoneyBaisaCast;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
+use App\Models\AffiliateCommission;
+use App\Models\BookingInstallment;
+use App\Models\BookingSeatAllocation;
+use App\Models\WebhookDelivery;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Database\Factories\PaymentFactory;
@@ -45,6 +49,11 @@ class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */
     use HasFactory;
+
+    protected static function newFactory(): PaymentFactory
+    {
+        return PaymentFactory::new();
+    }
 
     /**
      * @var array<string, mixed>

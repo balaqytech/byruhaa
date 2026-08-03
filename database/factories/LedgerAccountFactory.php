@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\LedgerAccountType;
-use App\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerAccount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
  */
 class LedgerAccountFactory extends Factory
 {
+    protected $model = LedgerAccount::class;
+
     /**
      * Define the model's default state.
      *

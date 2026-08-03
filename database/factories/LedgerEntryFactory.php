@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\LedgerAccount;
-use App\Models\LedgerEntry;
-use App\Models\LedgerTransaction;
+use App\Modules\Finance\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerEntry;
+use App\Modules\Finance\Models\LedgerTransaction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class LedgerEntryFactory extends Factory
 {
+    protected $model = LedgerEntry::class;
+
     /**
      * Define the model's default state.
      *

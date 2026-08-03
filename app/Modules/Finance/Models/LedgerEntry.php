@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Finance\Models;
 
 use App\Casts\MoneyBaisaCast;
 use Brick\Money\Money;
@@ -26,6 +26,11 @@ class LedgerEntry extends Model
 {
     /** @use HasFactory<LedgerEntryFactory> */
     use HasFactory;
+
+    protected static function newFactory(): LedgerEntryFactory
+    {
+        return LedgerEntryFactory::new();
+    }
 
     /**
      * @var array<string, mixed>

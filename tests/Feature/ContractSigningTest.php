@@ -8,7 +8,7 @@ use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\User;

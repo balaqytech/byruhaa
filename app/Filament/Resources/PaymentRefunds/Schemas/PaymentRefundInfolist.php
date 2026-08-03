@@ -4,7 +4,7 @@ namespace App\Filament\Resources\PaymentRefunds\Schemas;
 
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
 use App\Filament\Resources\Payments\PaymentResource;
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;

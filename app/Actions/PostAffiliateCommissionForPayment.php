@@ -5,7 +5,7 @@ namespace App\Actions;
 use App\Enums\AffiliateStatus;
 use App\Enums\PaymentState;
 use App\Models\AffiliateCommission;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 

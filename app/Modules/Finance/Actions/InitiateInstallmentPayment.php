@@ -1,17 +1,20 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Finance\Actions;
 
+use App\Actions\PrepareBookingSeatHold;
+use App\Actions\ReleaseBookingSeats;
+use App\Actions\ReserveBookingSeats;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventStatus;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\BookingInstallment;
-use App\Models\Payment;
 use App\Modules\Finance\Contracts\PaymentGateway;
 use App\States\Booking\Cancelled;
 use App\States\Booking\Rejected;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;

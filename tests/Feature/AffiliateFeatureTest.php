@@ -1,6 +1,5 @@
 <?php
 
-use App\Actions\ConfirmThawaniPayment;
 use App\Actions\CreateAffiliatePayoutRequest;
 use App\Actions\CreateCustomerBooking;
 use App\Actions\PostAffiliateCommissionForPayment;
@@ -20,9 +19,10 @@ use App\Models\Booking;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\Event;
-use App\Models\LedgerAccount;
-use App\Models\LedgerEntry;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Models\LedgerAccount;
+use App\Modules\Finance\Models\LedgerEntry;
+use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\User;

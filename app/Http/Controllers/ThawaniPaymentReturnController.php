@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\ConfirmThawaniPayment;
 use App\Enums\PaymentState;
-use App\Models\Payment;
+use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Http\RedirectResponse;
 use Throwable;
 

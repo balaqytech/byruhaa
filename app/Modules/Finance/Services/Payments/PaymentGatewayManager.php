@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Payments;
+namespace App\Modules\Finance\Services\Payments;
 
 use App\Modules\Finance\Contracts\PaymentGateway;
 use Illuminate\Support\Manager;

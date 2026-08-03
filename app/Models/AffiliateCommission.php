@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Modules\Finance\Models\LedgerTransaction;
+use App\Modules\Finance\Models\Payment;
 use Brick\Money\Money;
 use Database\Factories\AffiliateCommissionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

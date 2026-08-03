@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\CreateFullPaymentSchedule;
-use App\Actions\InitiateInstallmentPayment;
 use App\Actions\SelectBookingPaymentPlan;
 use App\Enums\BookingInstallmentState;
 use App\Http\Controllers\Controller;
@@ -13,6 +12,7 @@ use App\Models\Booking;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\EventPaymentPlan;
+use App\Modules\Finance\Actions\InitiateInstallmentPayment;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;

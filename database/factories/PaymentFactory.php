@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\PaymentState;
 use App\Models\BookingInstallment;
-use App\Models\Payment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class PaymentFactory extends Factory
 {
+    protected $model = Payment::class;
+
     /**
      * Define the model's default state.
      *

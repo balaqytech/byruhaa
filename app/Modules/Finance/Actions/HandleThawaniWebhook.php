@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Actions;
+namespace App\Modules\Finance\Actions;
 
 use App\Enums\ThawaniWebhookEventStatus;
 use App\Exceptions\PaymentGatewayException;
-use App\Models\Payment;
-use App\Models\ThawaniWebhookEvent;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\ThawaniWebhookEvent;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
