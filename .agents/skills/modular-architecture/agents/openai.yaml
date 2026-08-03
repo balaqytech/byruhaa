@@ -1,0 +1,4 @@
+interface:
+  display_name: "Modular Architecture"
+  short_description: "Safe Laravel modular-monolith refactors"
+  default_prompt: "Use $modular-architecture for safe incremental Laravel module refactors."

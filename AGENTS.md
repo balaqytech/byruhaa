@@ -45,6 +45,19 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
 
+### Approved modular-refactor conventions
+
+- For the approved modular refactor, use `app/Modules/<Context>` with simple feature-slice folders. Do not create additional top-level architecture folders or Composer packages.
+- Keep one Laravel application, one database, and one deployment. Do not introduce microservices or Event Sourcing for this refactor.
+- The active contexts are `Identity`, `Events`, `Finance`, `Affiliates`, and `Content`. Store and LMS are future contexts and must not be implemented during the current refactor.
+- Keep root route files as compatibility entry points. Preserve existing route names, URIs, middleware, API Resources, request formats, response shapes, and status codes.
+- Register module providers explicitly in `bootstrap/providers.php`; avoid automatic module discovery when explicit registration is sufficient.
+- New code must not import another context's internal Models, Controllers, Filament Resources, or Services. Use Contracts, query services, DTOs, or after-commit domain events for cross-context communication.
+- Prefer constructor dependency injection and single-purpose Actions. Existing legacy `App\\` imports and `app()` calls may remain until their owning context is migrated; do not expand those patterns in new code.
+- Do not rename existing database tables or rewrite migrations that may have run. Inspect polymorphic types and serialized queued classes before changing namespaces.
+- Keep `App\\Support` and `App\\Contracts` small and genuinely cross-cutting; do not turn them into a shared business-model layer.
+- Record and compare baseline test, route, Pint, and Larastan results before attributing failures to a refactor.
+
 ## Frontend Bundling
 
 - If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.

@@ -150,6 +150,8 @@ Check sibling files, related controllers, models, or tests for established patte
 - Default to `ORDER BY id DESC` or `created_at DESC`; `mb_*` for UTF-8 safety
 - `defer()` for post-response work; `Context` for request-scoped data; `Concurrency::run()` for parallel execution
 
+For modular-monolith boundaries, module ownership, cross-context contracts, and safe namespace moves, also activate the project skill at `.agents/skills/modular-architecture/SKILL.md`.
+
 ### 16. Migrations → `rules/migrations.md`
 
 - Generate migrations with `php artisan make:migration`
