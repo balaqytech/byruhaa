@@ -1,7 +1,7 @@
 # Modular Refactor Baseline
 
 Date: 2026-08-04  
-Branch: `refactor/modular-phase-0`  
+Branch: `refactor/modular`
 Base commit: `96e0d19` (`Restrict events to published status and migrate course slugs`)
 
 This document records the repository state before any modular-refactor code changes. It is the comparison point for later phases; the failures listed here were observed before Phase 0 changed application code.
@@ -174,4 +174,3 @@ php artisan test --compact
 vendor/bin/pint --test --format agent
 vendor/bin/phpstan analyse --no-progress
 ```
-

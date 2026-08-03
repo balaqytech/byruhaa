@@ -16,7 +16,7 @@ Apply this skill when changing the application structure, not when adding ordina
 - Keep migrations in `database/migrations` unless a later approved decision changes this.
 - Do not add a module-management package or create Composer packages until a boundary has proved stable.
 
-The current target contexts are `Identity`, `Events`, `Finance`, `Affiliates`, and `Content`. `Store` and `LMS` are future contexts; do not implement them during the current refactor.
+The current target contexts are `Identity`, `Events`, `Finance`, `Affiliates`, and `Content`. This refactor only prepares boundaries for future `Store` and `LMS` work; implement those contexts only in their dedicated future feature work.
 
 ## Required workflow
 

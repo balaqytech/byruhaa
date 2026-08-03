@@ -49,7 +49,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - For the approved modular refactor, use `app/Modules/<Context>` with simple feature-slice folders. Do not create additional top-level architecture folders or Composer packages.
 - Keep one Laravel application, one database, and one deployment. Do not introduce microservices or Event Sourcing for this refactor.
-- The active contexts are `Identity`, `Events`, `Finance`, `Affiliates`, and `Content`. Store and LMS are future contexts and must not be implemented during the current refactor.
+- The active contexts are `Identity`, `Events`, `Finance`, `Affiliates`, and `Content`. This refactor only prepares boundaries for future Store and LMS work; implement those contexts only in their dedicated future feature work.
 - Keep root route files as compatibility entry points. Preserve existing route names, URIs, middleware, API Resources, request formats, response shapes, and status codes.
 - Register module providers explicitly in `bootstrap/providers.php`; avoid automatic module discovery when explicit registration is sufficient.
 - New code must not import another context's internal Models, Controllers, Filament Resources, or Services. Use Contracts, query services, DTOs, or after-commit domain events for cross-context communication.
