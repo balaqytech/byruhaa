@@ -2,20 +2,20 @@
 
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
-use App\Models\Booking;
-use App\Models\BookingFamilyMember;
-use App\Models\BookingInstallment;
-use App\Models\BookingPaymentSchedule;
-use App\Models\Discount;
-use App\Models\Event;
-use App\Models\EventContract;
-use App\Models\EventPaymentPlan;
-use App\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\Discount;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventContract;
+use App\Modules\Events\Models\EventPaymentPlan;
+use App\Modules\Events\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\States\Booking\Approved;
+use App\Modules\Events\States\Contract\Signed;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
-use App\States\Booking\Approved;
-use App\States\Contract\Signed;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 

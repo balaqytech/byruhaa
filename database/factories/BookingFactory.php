@@ -2,10 +2,10 @@
 
 namespace Database\Factories;
 
-use App\Models\Booking;
-use App\Models\Event;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\States\Booking\PendingReview;
 use App\Modules\Identity\Models\Customer;
-use App\States\Booking\PendingReview;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class BookingFactory extends Factory
 {
+    protected $model = Booking::class;
+
     /**
      * Define the model's default state.
      *

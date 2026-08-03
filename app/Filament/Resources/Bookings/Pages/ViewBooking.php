@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Bookings\Pages;
 
 use App\Filament\Resources\Bookings\BookingResource;
-use App\Models\Booking;
+use App\Modules\Events\Models\Booking;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 

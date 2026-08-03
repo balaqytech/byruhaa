@@ -3,7 +3,7 @@
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
-use App\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\BookingPaymentSchedule;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;

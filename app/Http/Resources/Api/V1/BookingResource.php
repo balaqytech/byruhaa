@@ -3,9 +3,9 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\FormatsApiMoney;
-use App\Models\Booking;
-use App\Models\BookingFamilyMember;
-use App\Models\BookingInstallment;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\BookingInstallment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 

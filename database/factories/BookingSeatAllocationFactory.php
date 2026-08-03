@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\SeatAllocationState;
-use App\Models\Booking;
-use App\Models\BookingSeatAllocation;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingSeatAllocation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class BookingSeatAllocationFactory extends Factory
 {
+    protected $model = BookingSeatAllocation::class;
+
     /**
      * Define the model's default state.
      *

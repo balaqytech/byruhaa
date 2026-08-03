@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Discounts\Tables;
 
-use App\Models\Discount;
+use App\Modules\Events\Models\Discount;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;

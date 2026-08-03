@@ -2,8 +2,8 @@
 
 namespace App\Support;
 
-use App\Models\BookingFamilyMember;
-use App\Models\EventContract;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\EventContract;
 use Carbon\CarbonInterface;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Support\HtmlString;

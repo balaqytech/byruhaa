@@ -7,7 +7,7 @@ use App\Filament\Resources\Coupons\Pages\EditCoupon;
 use App\Filament\Resources\Coupons\Pages\ListCoupons;
 use App\Filament\Resources\Coupons\Schemas\CouponForm;
 use App\Filament\Resources\Coupons\Tables\CouponsTable;
-use App\Models\Coupon;
+use App\Modules\Events\Models\Coupon;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

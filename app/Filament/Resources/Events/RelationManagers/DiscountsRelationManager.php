@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Events\RelationManagers;
 
-use App\Models\Discount;
+use App\Modules\Events\Models\Discount;
 use App\Support\Money\MoneyFactory;
 use App\Support\MoneyFormatter;
 use Brick\Money\Money;

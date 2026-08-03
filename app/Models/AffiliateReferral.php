@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Events\Models\Booking;
 use Database\Factories\AffiliateReferralFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

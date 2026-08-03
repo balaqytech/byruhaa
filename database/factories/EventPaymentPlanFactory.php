@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Event;
-use App\Models\EventPaymentPlan;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventPaymentPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class EventPaymentPlanFactory extends Factory
 {
+    protected $model = EventPaymentPlan::class;
+
     /**
      * Define the model's default state.
      *

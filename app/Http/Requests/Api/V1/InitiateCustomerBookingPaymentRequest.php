@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Models\BookingInstallment;
-use App\Models\EventPaymentPlan;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\EventPaymentPlan;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

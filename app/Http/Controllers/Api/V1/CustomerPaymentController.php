@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\PrepareBookingSeatHold;
-use App\Actions\ReleaseBookingSeats;
-use App\Actions\ReserveBookingSeats;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentState;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCustomerPaymentRequest;
 use App\Http\Requests\Api\V1\UpdateCustomerPaymentRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
-use App\Models\BookingInstallment;
+use App\Modules\Events\Actions\PrepareBookingSeatHold;
+use App\Modules\Events\Actions\ReleaseBookingSeats;
+use App\Modules\Events\Actions\ReserveBookingSeats;
+use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Database\Eloquent\Builder;

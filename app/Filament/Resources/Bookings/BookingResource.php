@@ -10,7 +10,7 @@ use App\Filament\Resources\Bookings\RelationManagers\FamilyMembersRelationManage
 use App\Filament\Resources\Bookings\RelationManagers\InstallmentsRelationManager;
 use App\Filament\Resources\Bookings\Schemas\BookingForm;
 use App\Filament\Resources\Bookings\Tables\BookingsTable;
-use App\Models\Booking;
+use App\Modules\Events\Models\Booking;
 use App\Support\MoneyFormatter;
 use BackedEnum;
 use Filament\Infolists\Components\TextEntry;

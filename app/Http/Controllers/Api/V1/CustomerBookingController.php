@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\CreateCustomerBooking;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCustomerBookingRequest;
 use App\Http\Resources\Api\V1\BookingResource;
-use App\Models\Booking;
+use App\Modules\Events\Actions\CreateCustomerBooking;
+use App\Modules\Events\Models\Booking;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

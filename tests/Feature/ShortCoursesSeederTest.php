@@ -2,7 +2,7 @@
 
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use Database\Seeders\ShortCoursesSeeder;
 
 test('short courses seeder creates all interest events without dates and is idempotent', function () {

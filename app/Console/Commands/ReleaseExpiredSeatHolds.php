@@ -2,14 +2,14 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\ReleaseBookingSeats;
 use App\Enums\PaymentState;
 use App\Enums\SeatAllocationState;
-use App\Models\BookingSeatAllocation;
+use App\Modules\Events\Actions\ReleaseBookingSeats;
+use App\Modules\Events\Models\BookingSeatAllocation;
+use App\Modules\Events\States\Booking\Cancelled;
+use App\Modules\Events\States\Booking\Rejected;
 use App\Modules\Finance\Actions\ConfirmThawaniPayment;
 use App\Modules\Finance\Models\Payment;
-use App\States\Booking\Cancelled;
-use App\States\Booking\Rejected;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

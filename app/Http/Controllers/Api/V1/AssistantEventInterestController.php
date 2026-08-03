@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\ExpressEventInterest;
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
 use App\Enums\EventStatus;
@@ -10,8 +9,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LookupAssistantEventInterestRequest;
 use App\Http\Requests\Api\V1\UpsertAssistantEventInterestRequest;
 use App\Http\Resources\Api\V1\EventInterestResource;
-use App\Models\Event;
-use App\Models\EventInterest;
+use App\Modules\Events\Actions\ExpressEventInterest;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventInterest;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Http\JsonResponse;

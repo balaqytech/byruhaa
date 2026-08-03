@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\EventStatus;
 use App\Models\BlogPost;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller

@@ -7,7 +7,7 @@ use App\Filament\Resources\EventPaymentPlans\Pages\EditEventPaymentPlan;
 use App\Filament\Resources\EventPaymentPlans\Pages\ListEventPaymentPlans;
 use App\Filament\Resources\EventPaymentPlans\Schemas\EventPaymentPlanForm;
 use App\Filament\Resources\EventPaymentPlans\Tables\EventPaymentPlansTable;
-use App\Models\EventPaymentPlan;
+use App\Modules\Events\Models\EventPaymentPlan;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

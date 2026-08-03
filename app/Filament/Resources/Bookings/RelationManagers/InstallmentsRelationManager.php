@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Bookings\RelationManagers;
 
-use App\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingInstallment;
 use App\Support\MoneyFormatter;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;

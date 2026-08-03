@@ -1,15 +1,15 @@
 <?php
 
-use App\Actions\CalculateBookingPrice;
-use App\Actions\CreateCustomerBooking;
-use App\Actions\ExpressEventInterest;
+use App\Modules\Events\Actions\CalculateBookingPrice;
+use App\Modules\Events\Actions\CreateCustomerBooking;
+use App\Modules\Events\Actions\ExpressEventInterest;
 use App\Data\BookingPriceSnapshot;
 use App\Enums\EventStatus;
 use App\Enums\EventInterestSource;
-use App\Models\Discount;
-use App\Models\Event;
-use App\Models\EventPaymentPlan;
-use App\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\Models\Discount;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventPaymentPlan;
+use App\Modules\Events\Models\EventPaymentPlanInstallment;
 use App\Services\AffiliateAttribution;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;

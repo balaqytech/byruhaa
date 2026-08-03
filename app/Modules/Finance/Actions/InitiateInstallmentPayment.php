@@ -2,15 +2,15 @@
 
 namespace App\Modules\Finance\Actions;
 
-use App\Actions\PrepareBookingSeatHold;
-use App\Actions\ReleaseBookingSeats;
-use App\Actions\ReserveBookingSeats;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventStatus;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
-use App\Models\BookingInstallment;
+use App\Modules\Events\Actions\PrepareBookingSeatHold;
+use App\Modules\Events\Actions\ReleaseBookingSeats;
+use App\Modules\Events\Actions\ReserveBookingSeats;
+use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Finance\Contracts\PaymentGateway;
 use App\States\Booking\Cancelled;
 use App\States\Booking\Rejected;

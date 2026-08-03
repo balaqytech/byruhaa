@@ -6,12 +6,12 @@ use App\Enums\EventStatus;
 use App\Enums\SeatAllocationState;
 use App\Models\BlogPost;
 use App\Models\BlogPostCategory;
-use App\Models\Booking;
-use App\Models\BookingSeatAllocation;
-use App\Models\Discount;
-use App\Models\Event;
-use App\Models\EventPaymentPlan;
-use App\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingSeatAllocation;
+use App\Modules\Events\Models\Discount;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventPaymentPlan;
+use App\Modules\Events\Models\EventPaymentPlanInstallment;
 use App\Support\EventLandingPageRegistry;
 use Illuminate\Support\Facades\Route;
 

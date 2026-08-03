@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Actions\ImportMigrantsEventBookings as ImportMigrantsEventBookingsAction;
+use App\Modules\Events\Actions\ImportMigrantsEventBookings as ImportMigrantsEventBookingsAction;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

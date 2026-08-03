@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\EventContract;
-use App\Services\ContractRenderer;
+use App\Modules\Events\Models\EventContract;
+use App\Modules\Events\Services\ContractRenderer;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;

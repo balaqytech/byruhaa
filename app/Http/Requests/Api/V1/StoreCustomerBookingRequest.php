@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Enums\EventStatus;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Foundation\Http\FormRequest;

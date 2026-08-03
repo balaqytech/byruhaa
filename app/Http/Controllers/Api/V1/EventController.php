@@ -7,8 +7,8 @@ use App\Enums\SeatAllocationState;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\IndexEventsRequest;
 use App\Http\Resources\Api\V1\EventResource;
-use App\Models\Discount;
-use App\Models\Event;
+use App\Modules\Events\Models\Discount;
+use App\Modules\Events\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 

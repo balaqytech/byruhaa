@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use Illuminate\Database\Seeder;
 use LogicException;
 

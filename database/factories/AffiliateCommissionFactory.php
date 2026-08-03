@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\Affiliate;
 use App\Models\AffiliateCommission;
 use App\Models\AffiliateReferral;
-use App\Models\Booking;
+use App\Modules\Events\Models\Booking;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

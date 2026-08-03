@@ -4,12 +4,12 @@ namespace App\Services\Webhooks;
 
 use App\Enums\BookingInstallmentState;
 use App\Enums\WebhookDeliveryStatus;
-use App\Models\Booking;
-use App\Models\BookingFamilyMember;
-use App\Models\BookingInstallment;
 use App\Models\EventCancellation;
-use App\Models\EventInterest;
 use App\Models\WebhookDelivery;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\EventInterest;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;

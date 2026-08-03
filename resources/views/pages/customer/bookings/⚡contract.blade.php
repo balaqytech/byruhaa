@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Booking;
-use App\Models\EventContract;
-use App\Services\ContractRenderer;
-use App\States\Contract\AwaitingSignature;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\EventContract;
+use App\Modules\Events\Services\ContractRenderer;
+use App\Modules\Events\States\Contract\AwaitingSignature;
 use App\Support\ParticipantExtraFields;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;

@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\PaymentState;
-use App\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;

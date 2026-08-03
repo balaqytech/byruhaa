@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\EventInterestStatus;
-use App\Models\EventInterest;
+use App\Modules\Events\Models\EventInterest;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;

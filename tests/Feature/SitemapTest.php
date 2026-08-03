@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\BlogPost;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 
 test('sitemap contains public pages published events and visible blog posts', function () {
     $event = Event::factory()->create();

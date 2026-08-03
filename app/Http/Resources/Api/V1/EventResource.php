@@ -3,11 +3,11 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\FormatsApiMoney;
-use App\Models\Discount;
-use App\Models\Event;
-use App\Models\EventPaymentPlan;
-use App\Models\EventPaymentPlanInstallment;
-use App\Models\EventPriceTier;
+use App\Modules\Events\Models\Discount;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventPaymentPlan;
+use App\Modules\Events\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\Models\EventPriceTier;
 use Brick\Money\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

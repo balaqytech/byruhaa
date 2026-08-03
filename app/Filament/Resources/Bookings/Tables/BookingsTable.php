@@ -2,12 +2,12 @@
 
 namespace App\Filament\Resources\Bookings\Tables;
 
-use App\Models\Booking;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Services\BookingApprovalService;
+use App\Modules\Events\States\Booking\Cancelled;
+use App\Modules\Events\States\Booking\PendingReview;
+use App\Modules\Events\States\Booking\Rejected;
 use App\Modules\Identity\Models\User;
-use App\Services\BookingApprovalService;
-use App\States\Booking\Cancelled;
-use App\States\Booking\PendingReview;
-use App\States\Booking\Rejected;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;

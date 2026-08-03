@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Events\Schemas;
 
-use App\Models\Event;
 use App\Models\EventCancellation;
+use App\Modules\Events\Models\Event;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;

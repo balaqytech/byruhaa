@@ -3,7 +3,7 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Enums\PaymentState;
-use App\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

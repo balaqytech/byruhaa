@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Coupons\Schemas;
 
 use App\Enums\CouponType;
-use App\Models\Coupon;
+use App\Modules\Events\Models\Coupon;
 use App\Support\Money\MoneyFactory;
 use Brick\Math\BigDecimal;
 use Brick\Math\RoundingMode;

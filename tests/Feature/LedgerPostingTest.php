@@ -3,10 +3,10 @@
 use App\Enums\BookingInstallmentState;
 use App\Enums\LedgerAccountType;
 use App\Enums\PaymentState;
-use App\Models\Booking;
-use App\Models\BookingInstallment;
-use App\Models\BookingPaymentSchedule;
-use App\Models\Event;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\Event;
 use App\Modules\Finance\Actions\PostPaymentLedgerTransaction;
 use App\Modules\Finance\Models\LedgerAccount;
 use App\Modules\Finance\Models\LedgerEntry;

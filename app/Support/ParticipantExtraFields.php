@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\EventContract;
+use App\Modules\Events\Models\EventContract;
 use Illuminate\Validation\Rule;
 
 class ParticipantExtraFields

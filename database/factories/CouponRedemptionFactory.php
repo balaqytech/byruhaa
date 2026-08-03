@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Booking;
-use App\Models\Coupon;
-use App\Models\CouponRedemption;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\Coupon;
+use App\Modules\Events\Models\CouponRedemption;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class CouponRedemptionFactory extends Factory
 {
+    protected $model = CouponRedemption::class;
+
     /**
      * Define the model's default state.
      *

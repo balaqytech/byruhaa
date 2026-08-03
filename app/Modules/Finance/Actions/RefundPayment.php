@@ -6,6 +6,7 @@ use App\Actions\CompletePaymentRefund;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
+use App\Modules\Events\Actions\ReleaseBookingSeats;
 use App\Modules\Finance\Contracts\PaymentGateway;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;

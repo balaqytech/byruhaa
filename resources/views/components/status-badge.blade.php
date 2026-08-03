@@ -7,13 +7,13 @@
     use App\Enums\BookingInstallmentState;
     use App\Enums\PaymentRefundState;
     use App\Enums\PaymentState;
-    use App\States\Booking\Approved;
-    use App\States\Booking\Cancelled;
-    use App\States\Booking\PendingReview;
-    use App\States\Booking\Rejected;
-    use App\States\Contract\AwaitingSignature;
-    use App\States\Contract\Signed;
-    use App\States\Contract\Voided;
+    use App\Modules\Events\States\Booking\Approved;
+    use App\Modules\Events\States\Booking\Cancelled;
+    use App\Modules\Events\States\Booking\PendingReview;
+    use App\Modules\Events\States\Booking\Rejected;
+    use App\Modules\Events\States\Contract\AwaitingSignature;
+    use App\Modules\Events\States\Contract\Signed;
+    use App\Modules\Events\States\Contract\Voided;
 
     $badgeColor = $color ?? match (true) {
         $state instanceof Approved,

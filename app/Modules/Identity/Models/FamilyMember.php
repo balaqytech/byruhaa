@@ -2,7 +2,7 @@
 
 namespace App\Modules\Identity\Models;
 
-use App\Models\BookingFamilyMember;
+use App\Modules\Events\Models\BookingFamilyMember;
 use Carbon\CarbonInterface;
 use Database\Factories\FamilyMemberFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

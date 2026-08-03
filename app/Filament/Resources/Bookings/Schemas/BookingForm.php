@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Bookings\Schemas;
 
-use App\States\Booking\BookingState;
+use App\Modules\Events\States\Booking\BookingState;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;

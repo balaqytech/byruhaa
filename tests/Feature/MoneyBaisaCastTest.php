@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use App\Modules\Finance\Models\Payment;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;

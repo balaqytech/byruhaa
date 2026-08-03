@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\BookingFamilyMember;
-use App\Models\EventContract;
-use App\States\Contract\AwaitingSignature;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\EventContract;
+use App\Modules\Events\States\Contract\AwaitingSignature;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class EventContractFactory extends Factory
 {
+    protected $model = EventContract::class;
+
     /**
      * Define the model's default state.
      *

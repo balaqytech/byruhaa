@@ -4,8 +4,8 @@ namespace Database\Factories;
 
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
-use App\Models\Event;
-use App\Models\EventInterest;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventInterest;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class EventInterestFactory extends Factory
 {
+    protected $model = EventInterest::class;
+
     /**
      * Define the model's default state.
      *

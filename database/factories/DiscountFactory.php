@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Discount;
+use App\Modules\Events\Models\Discount;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class DiscountFactory extends Factory
 {
+    protected $model = Discount::class;
+
     /**
      * Define the model's default state.
      *

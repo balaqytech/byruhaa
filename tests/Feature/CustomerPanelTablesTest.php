@@ -3,17 +3,17 @@
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
-use App\Models\Booking;
-use App\Models\BookingFamilyMember;
-use App\Models\BookingInstallment;
-use App\Models\BookingPaymentSchedule;
-use App\Models\Event;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Services\BookingApprovalService;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\User;
-use App\Services\BookingApprovalService;
 use App\Support\MoneyFormatter;
 use Livewire\Livewire;
 

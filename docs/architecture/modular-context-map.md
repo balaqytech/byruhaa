@@ -68,3 +68,9 @@ The Finance checkpoint now also owns payment/refund, ledger, and Thawani webhook
 The Identity context now owns the `User`, `Customer`, and `FamilyMember` models, Fortify actions and provider, and phone normalization service. Existing controllers, requests, factories, Filament screens, Livewire views, seeders, and tests use the new namespaces while public routes, guards, table names, and API payloads remain unchanged.
 
 Customer webhook records historically stored `App\\Models\\Customer` in the polymorphic type column. `IdentityServiceProvider` keeps that value as a morph-map alias for the new model, so existing records continue to resolve and newly-created records preserve the same database value. Identity factories explicitly bind to their moved models because Laravel's convention-based factory lookup cannot infer models outside `App\\Models`.
+
+## Events migration checkpoint
+
+The Events context now owns event, booking, seat allocation, pricing, discount, coupon, payment-plan, contract, and event-interest models; booking actions; event services; and booking/contract states under `App\\Modules\\Events`. Existing HTTP controllers, API resources, Filament resources, Livewire views, commands, seeders, and tests remain in their established locations as compatibility entry points and import the new classes directly.
+
+No route, REST API payload, database table, or booking/payment rule changed in this move. `EventsServiceProvider` maps the former `App\\Models\\Booking` morph type to the moved model so existing webhook and polymorphic records continue to resolve. Event factories explicitly bind to their moved models for the same reason as Identity and Finance factories.

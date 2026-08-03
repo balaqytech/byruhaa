@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\BuildEventPriceTierOffer;
-use App\Actions\RenderEventLandingPage;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\SeatAllocationState;
-use App\Models\Event;
+use App\Modules\Events\Actions\BuildEventPriceTierOffer;
+use App\Modules\Events\Actions\RenderEventLandingPage;
+use App\Modules\Events\Models\Event;
 use App\Settings\AboutPageSettings;
 use App\Settings\ContactPageSettings;
 use Illuminate\Contracts\View\View;

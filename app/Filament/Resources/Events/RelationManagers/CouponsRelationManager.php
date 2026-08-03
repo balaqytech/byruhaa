@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Events\RelationManagers;
 
 use App\Enums\CouponType;
-use App\Models\Coupon;
+use App\Modules\Events\Models\Coupon;
 use App\Support\Money\MoneyFactory;
 use App\Support\MoneyFormatter;
 use Brick\Math\BigDecimal;

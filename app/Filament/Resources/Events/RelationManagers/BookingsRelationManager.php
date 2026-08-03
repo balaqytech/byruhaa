@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Events\RelationManagers;
 
 use App\Filament\Resources\Bookings\BookingResource;
-use App\Models\Booking;
+use App\Modules\Events\Models\Booking;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Resources\RelationManagers\RelationManager;

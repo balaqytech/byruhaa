@@ -2,8 +2,8 @@
 
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventInterestSource;
-use App\Models\Event;
-use App\Models\EventInterest;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventInterest;
 use App\Modules\Identity\Models\Customer;
 
 test('guest sees a booking link on public event page when booking is open', function () {

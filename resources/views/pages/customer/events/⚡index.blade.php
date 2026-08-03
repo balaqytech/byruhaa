@@ -1,7 +1,7 @@
 <?php
 
 use App\Enums\EventStatus;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 

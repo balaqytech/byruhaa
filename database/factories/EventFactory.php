@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class EventFactory extends Factory
 {
+    protected $model = Event::class;
+
     /**
      * Define the model's default state.
      *

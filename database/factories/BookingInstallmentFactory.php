@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\BookingInstallmentState;
-use App\Models\BookingInstallment;
-use App\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingPaymentSchedule;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class BookingInstallmentFactory extends Factory
 {
+    protected $model = BookingInstallment::class;
+
     /**
      * Define the model's default state.
      *

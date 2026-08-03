@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\CouponType;
-use App\Models\Coupon;
-use App\Models\Event;
+use App\Modules\Events\Models\Coupon;
+use App\Modules\Events\Models\Event;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
  */
 class CouponFactory extends Factory
 {
+    protected $model = Coupon::class;
+
     /**
      * Define the model's default state.
      *

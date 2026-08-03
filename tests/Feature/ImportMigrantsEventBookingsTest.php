@@ -1,7 +1,7 @@
 <?php
 
-use App\Actions\ImportMigrantsEventBookings;
 use App\Models\WebhookDelivery;
+use App\Modules\Events\Actions\ImportMigrantsEventBookings;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\Common\Creator\WriterFactory;
 

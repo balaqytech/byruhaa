@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Coupons\Tables;
 
 use App\Enums\CouponType;
-use App\Models\Coupon;
+use App\Modules\Events\Models\Coupon;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;

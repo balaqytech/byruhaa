@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Event;
-use App\Models\EventPriceTier;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventPriceTier;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class EventPriceTierFactory extends Factory
 {
+    protected $model = EventPriceTier::class;
+
     /**
      * Define the model's default state.
      *

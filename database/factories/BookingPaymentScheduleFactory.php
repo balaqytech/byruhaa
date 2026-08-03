@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\Booking;
-use App\Models\BookingPaymentSchedule;
-use App\Models\EventPaymentPlan;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\EventPaymentPlan;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class BookingPaymentScheduleFactory extends Factory
 {
+    protected $model = BookingPaymentSchedule::class;
+
     /**
      * Define the model's default state.
      *

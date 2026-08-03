@@ -2,9 +2,9 @@
 
 namespace App\Modules\Identity\Models;
 
-use App\Models\Booking;
-use App\Models\EventInterest;
 use App\Models\WebhookDelivery;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\EventInterest;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;

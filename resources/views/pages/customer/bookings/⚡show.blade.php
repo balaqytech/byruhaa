@@ -1,16 +1,16 @@
 <?php
 
-use App\Actions\CreateFullPaymentSchedule;
+use App\Modules\Events\Actions\CreateFullPaymentSchedule;
 use App\Modules\Finance\Actions\InitiateInstallmentPayment;
-use App\Actions\SelectBookingPaymentPlan;
+use App\Modules\Events\Actions\SelectBookingPaymentPlan;
 use App\Enums\BookingInstallmentState;
-use App\Models\Booking;
-use App\Models\BookingInstallment;
-use App\Models\EventContract;
-use App\Models\EventPaymentPlan;
-use App\Services\ContractRenderer;
-use App\States\Booking\Approved;
-use App\States\Contract\AwaitingSignature;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\EventContract;
+use App\Modules\Events\Models\EventPaymentPlan;
+use App\Modules\Events\Services\ContractRenderer;
+use App\Modules\Events\States\Booking\Approved;
+use App\Modules\Events\States\Contract\AwaitingSignature;
 use Flux\Flux;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;

@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\CreateFullPaymentSchedule;
-use App\Actions\SelectBookingPaymentPlan;
 use App\Enums\BookingInstallmentState;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\InitiateCustomerBookingPaymentRequest;
 use App\Http\Resources\Api\V1\PaymentResource;
-use App\Models\Booking;
-use App\Models\BookingInstallment;
-use App\Models\BookingPaymentSchedule;
-use App\Models\EventPaymentPlan;
+use App\Modules\Events\Actions\CreateFullPaymentSchedule;
+use App\Modules\Events\Actions\SelectBookingPaymentPlan;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\EventPaymentPlan;
 use App\Modules\Finance\Actions\InitiateInstallmentPayment;
 use App\Modules\Identity\Models\Customer;
 use Illuminate\Http\JsonResponse;

@@ -3,14 +3,14 @@
 namespace App\Modules\Finance\Actions;
 
 use App\Actions\PostAffiliateCommissionForPayment;
-use App\Actions\ReleaseBookingSeats;
-use App\Actions\ReserveBookingSeats;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventStatus;
 use App\Enums\PaymentState;
-use App\Models\Booking;
-use App\Models\BookingSeatAllocation;
-use App\Models\Event;
+use App\Modules\Events\Actions\ReleaseBookingSeats;
+use App\Modules\Events\Actions\ReserveBookingSeats;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingSeatAllocation;
+use App\Modules\Events\Models\Event;
 use App\Modules\Finance\Contracts\PaymentGateway;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Services\Payments\PaymentGatewayManager;

@@ -7,7 +7,7 @@ use App\Filament\Resources\Discounts\Pages\EditDiscount;
 use App\Filament\Resources\Discounts\Pages\ListDiscounts;
 use App\Filament\Resources\Discounts\Schemas\DiscountForm;
 use App\Filament\Resources\Discounts\Tables\DiscountsTable;
-use App\Models\Discount;
+use App\Modules\Events\Models\Discount;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

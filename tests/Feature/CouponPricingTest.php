@@ -1,16 +1,16 @@
 <?php
 
-use App\Actions\CreateCustomerBooking;
 use App\Enums\CouponType;
-use App\Models\Booking;
-use App\Models\Coupon;
-use App\Models\Discount;
-use App\Models\Event;
+use App\Modules\Events\Actions\CreateCustomerBooking;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\Coupon;
+use App\Modules\Events\Models\Discount;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\States\Booking\Cancelled;
+use App\Modules\Events\States\Booking\Rejected;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Services\AffiliateAttribution;
-use App\States\Booking\Cancelled;
-use App\States\Booking\Rejected;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Request;
 use Livewire\Livewire;

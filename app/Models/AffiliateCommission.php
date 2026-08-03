@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Modules\Events\Models\Booking;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
 use Brick\Money\Money;

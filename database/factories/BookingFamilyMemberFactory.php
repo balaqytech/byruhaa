@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Booking;
-use App\Models\BookingFamilyMember;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingFamilyMember;
 use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class BookingFamilyMemberFactory extends Factory
 {
+    protected $model = BookingFamilyMember::class;
+
     /**
      * Define the model's default state.
      *

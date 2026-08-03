@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Events\Tables;
 
 use App\Enums\EventStatus;
 use App\Filament\Resources\Events\Actions\CancelEventAction;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;

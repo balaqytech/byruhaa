@@ -1,11 +1,11 @@
 <?php
 
-use App\Actions\CreateCustomerBooking;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventInterestStatus;
-use App\Models\Booking;
-use App\Models\Event;
-use App\Models\EventInterest;
+use App\Modules\Events\Actions\CreateCustomerBooking;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventInterest;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use Livewire\Livewire;

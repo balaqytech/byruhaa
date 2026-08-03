@@ -1,21 +1,21 @@
 <?php
 
-use App\Models\Booking;
-use App\Models\BookingFamilyMember;
-use App\Models\BookingInstallment;
-use App\Models\BookingPaymentSchedule;
-use App\Models\Event;
-use App\Models\EventContract;
-use App\Models\EventPaymentPlan;
-use App\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\Models\BookingFamilyMember;
+use App\Modules\Events\Models\BookingInstallment;
+use App\Modules\Events\Models\BookingPaymentSchedule;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventContract;
+use App\Modules\Events\Models\EventPaymentPlan;
+use App\Modules\Events\Models\EventPaymentPlanInstallment;
+use App\Modules\Events\Services\BookingApprovalService;
+use App\Modules\Events\Services\ContractRenderer;
+use App\Modules\Events\States\Booking\Approved;
+use App\Modules\Events\States\Contract\Signed;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\User;
-use App\Services\BookingApprovalService;
-use App\Services\ContractRenderer;
-use App\States\Booking\Approved;
-use App\States\Contract\Signed;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
