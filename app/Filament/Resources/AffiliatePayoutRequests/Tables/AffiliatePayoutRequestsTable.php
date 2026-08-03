@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\AffiliatePayoutRequests\Tables;
 
-use App\Modules\Affiliates\Actions\PostAffiliatePayoutLedgerTransaction;
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Filament\Resources\Affiliates\AffiliateResource;
+use App\Modules\Affiliates\Actions\PostAffiliatePayoutLedgerTransaction;
 use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CouponType;
+use App\Modules\Affiliates\Services\AffiliateAttribution;
 use App\Modules\Events\Actions\CreateCustomerBooking;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\Coupon;
@@ -10,7 +11,6 @@ use App\Modules\Events\States\Booking\Cancelled;
 use App\Modules\Events\States\Booking\Rejected;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
-use App\Modules\Affiliates\Services\AffiliateAttribution;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Request;
 use Livewire\Livewire;

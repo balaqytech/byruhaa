@@ -1,8 +1,5 @@
 <?php
 
-use App\Modules\Affiliates\Actions\CreateAffiliatePayoutRequest;
-use App\Modules\Affiliates\Actions\PostAffiliateCommissionForPayment;
-use App\Modules\Affiliates\Actions\PostAffiliatePayoutLedgerTransaction;
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Enums\AffiliateStatus;
 use App\Enums\BookingInstallmentState;
@@ -10,6 +7,9 @@ use App\Enums\LedgerAccountType;
 use App\Enums\PaymentState;
 use App\Filament\Resources\AffiliatePayoutRequests\Pages\ListAffiliatePayoutRequests;
 use App\Filament\Resources\Affiliates\Pages\ListAffiliates;
+use App\Modules\Affiliates\Actions\CreateAffiliatePayoutRequest;
+use App\Modules\Affiliates\Actions\PostAffiliateCommissionForPayment;
+use App\Modules\Affiliates\Actions\PostAffiliatePayoutLedgerTransaction;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
