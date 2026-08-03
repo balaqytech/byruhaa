@@ -60,3 +60,9 @@ App\\Modules\\Finance\\Contracts\\PaymentGateway
 ```
 
 Its behavior and method signatures are unchanged. This is the first example of moving a boundary without changing the REST API, database schema, or payment behavior.
+
+## Identity migration checkpoint
+
+The Identity context now owns the `User`, `Customer`, and `FamilyMember` models, Fortify actions and provider, and phone normalization service. Existing controllers, requests, factories, Filament screens, Livewire views, seeders, and tests use the new namespaces while public routes, guards, table names, and API payloads remain unchanged.
+
+Customer webhook records historically stored `App\\Models\\Customer` in the polymorphic type column. `IdentityServiceProvider` keeps that value as a morph-map alias for the new model, so existing records continue to resolve and newly-created records preserve the same database value. Identity factories explicitly bind to their moved models because Laravel's convention-based factory lookup cannot infer models outside `App\\Models`.

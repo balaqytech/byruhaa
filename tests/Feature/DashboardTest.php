@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Customer;
+use App\Modules\Identity\Models\Customer;
 
 test('guests are redirected to the login page', function () {
     $response = $this->get(route('customer.dashboard'));

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Actions\Fortify;
+namespace App\Modules\Identity\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
-use App\Models\Customer;
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;

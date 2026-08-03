@@ -4,10 +4,10 @@ use App\Actions\CreateCustomerBooking;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventInterestStatus;
 use App\Models\Booking;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
-use App\Models\FamilyMember;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
 use Livewire\Livewire;
 
 test('event api exposes enrollment capabilities and filters by enrollment status', function () {

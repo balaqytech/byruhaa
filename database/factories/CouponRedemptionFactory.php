@@ -5,7 +5,7 @@ namespace Database\Factories;
 use App\Models\Booking;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
-use App\Models\Customer;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

@@ -2,9 +2,9 @@
 
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventInterestSource;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
+use App\Modules\Identity\Models\Customer;
 
 test('guest sees a booking link on public event page when booking is open', function () {
     $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingOpen]);

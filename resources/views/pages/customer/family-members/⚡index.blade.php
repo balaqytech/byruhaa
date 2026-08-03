@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\FamilyMember;
+use App\Modules\Identity\Models\FamilyMember;
 use Flux\Flux;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;

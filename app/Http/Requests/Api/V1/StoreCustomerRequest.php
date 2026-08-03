@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Models\Customer;
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;

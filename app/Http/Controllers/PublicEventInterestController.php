@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Actions\ExpressEventInterest;
 use App\Enums\EventInterestSource;
-use App\Models\Customer;
 use App\Models\Event;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 

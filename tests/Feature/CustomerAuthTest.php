@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Customer;
-use App\Models\User;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\User;
 
 test('customers can register with email', function () {
     $response = $this->post(route('register.store'), [

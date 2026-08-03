@@ -9,7 +9,7 @@ use App\Filament\Resources\Customers\RelationManagers\BookingsRelationManager;
 use App\Filament\Resources\Customers\RelationManagers\FamilyMembersRelationManager;
 use App\Filament\Resources\Customers\Schemas\CustomerForm;
 use App\Filament\Resources\Customers\Tables\CustomersTable;
-use App\Models\Customer;
+use App\Modules\Identity\Models\Customer;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;

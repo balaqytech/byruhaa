@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Affiliates\Schemas;
 
 use App\Enums\AffiliateStatus;
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;

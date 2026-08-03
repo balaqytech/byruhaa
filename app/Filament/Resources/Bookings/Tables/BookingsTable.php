@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Bookings\Tables;
 
 use App\Models\Booking;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use App\Services\BookingApprovalService;
 use App\States\Booking\Cancelled;
 use App\States\Booking\PendingReview;

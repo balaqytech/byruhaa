@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCustomerBookingRequest;
 use App\Http\Resources\Api\V1\BookingResource;
 use App\Models\Booking;
-use App\Models\Customer;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;

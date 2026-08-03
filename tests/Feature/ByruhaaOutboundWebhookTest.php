@@ -12,15 +12,15 @@ use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventCancellation;
 use App\Models\EventInterest;
-use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
-use App\Models\User;
 use App\Models\WebhookDelivery;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
+use App\Modules\Identity\Models\User;
 use App\Services\BookingApprovalService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
@@ -194,6 +194,18 @@ test('new interest does not queue a webhook when its url is empty', function () 
 
     Queue::assertNotPushed(CallWebhookJob::class);
     expect($interest->webhookDeliveries()->count())->toBe(0);
+});
+
+test('legacy customer webhook morph types resolve after identity model move', function () {
+    $customer = Customer::factory()->create();
+
+    $delivery = WebhookDelivery::factory()->create([
+        'webhookable_type' => 'App\\Models\\Customer',
+        'webhookable_id' => $customer->getKey(),
+    ]);
+
+    expect($customer->getMorphClass())->toBe('App\\Models\\Customer')
+        ->and($delivery->webhookable)->toBeInstanceOf(Customer::class);
 });
 
 test('customer registration through the api queues a webhook with safe customer payload', function () {

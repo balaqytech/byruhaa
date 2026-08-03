@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
-use App\Models\FamilyMember;
+use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

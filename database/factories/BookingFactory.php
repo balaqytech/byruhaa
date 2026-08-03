@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Booking;
-use App\Models\Customer;
 use App\Models\Event;
+use App\Modules\Identity\Models\Customer;
 use App\States\Booking\PendingReview;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

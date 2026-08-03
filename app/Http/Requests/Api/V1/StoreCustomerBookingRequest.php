@@ -3,9 +3,9 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Enums\EventStatus;
-use App\Models\Customer;
 use App\Models\Event;
-use App\Models\FamilyMember;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

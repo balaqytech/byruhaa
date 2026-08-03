@@ -10,10 +10,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LookupAssistantEventInterestRequest;
 use App\Http\Requests\Api\V1\UpsertAssistantEventInterestRequest;
 use App\Http\Resources\Api\V1\EventInterestResource;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

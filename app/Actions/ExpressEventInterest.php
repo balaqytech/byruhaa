@@ -4,10 +4,10 @@ namespace App\Actions;
 
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
 use App\Services\Webhooks\ByruhaaWebhookSender;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Validation\ValidationException;
 
 final class ExpressEventInterest

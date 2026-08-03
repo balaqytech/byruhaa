@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Affiliate;
-use App\Models\Customer;
-use App\Models\User;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\User;
 
 return [
 

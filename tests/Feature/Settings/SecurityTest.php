@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Customer;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 

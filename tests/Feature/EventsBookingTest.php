@@ -2,14 +2,14 @@
 
 use App\Models\Booking;
 use App\Models\BookingFamilyMember;
-use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Event;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
-use App\Models\FamilyMember;
-use App\Models\User;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
+use App\Modules\Identity\Models\User;
 use App\Services\AffiliateAttribution;
 use App\Services\BookingApprovalService;
 use App\States\Booking\Approved;

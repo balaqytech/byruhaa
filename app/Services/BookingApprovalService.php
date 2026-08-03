@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
 use Illuminate\Support\Facades\DB;

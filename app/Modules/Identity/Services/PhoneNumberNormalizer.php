@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Modules\Identity\Services;
 
 use Propaganistas\LaravelPhone\PhoneNumber;
 use Throwable;

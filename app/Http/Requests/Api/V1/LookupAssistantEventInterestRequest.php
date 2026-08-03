@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LookupAssistantEventInterestRequest extends FormRequest

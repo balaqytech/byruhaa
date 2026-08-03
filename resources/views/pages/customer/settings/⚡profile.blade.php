@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Customer;
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;

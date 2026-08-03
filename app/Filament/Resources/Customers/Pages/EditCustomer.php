@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Customers\Pages;
 
 use App\Filament\Resources\Customers\CustomerResource;
-use App\Services\PhoneNumberNormalizer;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 

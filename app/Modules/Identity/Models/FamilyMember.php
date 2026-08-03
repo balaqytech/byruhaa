@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Identity\Models;
 
+use App\Models\BookingFamilyMember;
 use Carbon\CarbonInterface;
 use Database\Factories\FamilyMemberFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,6 +27,11 @@ class FamilyMember extends Model
 {
     /** @use HasFactory<FamilyMemberFactory> */
     use HasFactory;
+
+    protected static function newFactory(): FamilyMemberFactory
+    {
+        return FamilyMemberFactory::new();
+    }
 
     /**
      * @return BelongsTo<Customer, $this>

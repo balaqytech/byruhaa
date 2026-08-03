@@ -3,7 +3,7 @@
 use App\Filament\Pages\ManageAboutPage;
 use App\Filament\Pages\ManageContactPage;
 use App\Filament\Pages\ManageGeneralSettings;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use App\Settings\AboutPageSettings;
 use App\Settings\ContactPageSettings;
 use App\Settings\GeneralSettings;

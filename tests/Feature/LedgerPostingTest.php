@@ -7,11 +7,11 @@ use App\Enums\PaymentState;
 use App\Models\Booking;
 use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\LedgerAccount;
 use App\Models\LedgerEntry;
 use App\Models\Payment;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 

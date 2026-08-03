@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\Fortify;
+namespace App\Modules\Identity\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use Illuminate\Contracts\Auth\CanResetPassword;

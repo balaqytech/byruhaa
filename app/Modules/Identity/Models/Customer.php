@@ -1,7 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\Modules\Identity\Models;
 
+use App\Models\Booking;
+use App\Models\EventInterest;
+use App\Models\WebhookDelivery;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -35,6 +38,11 @@ class Customer extends Authenticatable
 {
     /** @use HasFactory<CustomerFactory> */
     use HasFactory, Notifiable;
+
+    protected static function newFactory(): CustomerFactory
+    {
+        return CustomerFactory::new();
+    }
 
     /**
      * @return array<int, string>
@@ -94,6 +102,9 @@ class Customer extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
+    /**
+     * @return HasMany<EventInterest, $this>
+     */
     public function eventInterests(): HasMany
     {
         return $this->hasMany(EventInterest::class);

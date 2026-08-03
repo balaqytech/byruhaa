@@ -4,9 +4,9 @@ namespace Database\Factories;
 
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
-use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

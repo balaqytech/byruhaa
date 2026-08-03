@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Customer;
+use App\Modules\Identity\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -12,6 +12,8 @@ use Illuminate\Support\Str;
  */
 class CustomerFactory extends Factory
 {
+    protected $model = Customer::class;
+
     /**
      * Define the model's default state.
      *

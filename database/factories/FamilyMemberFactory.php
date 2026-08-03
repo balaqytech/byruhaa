@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\Customer;
-use App\Models\FamilyMember;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class FamilyMemberFactory extends Factory
 {
+    protected $model = FamilyMember::class;
+
     /**
      * Define the model's default state.
      *
