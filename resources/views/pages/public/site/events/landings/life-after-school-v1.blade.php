@@ -1,5 +1,6 @@
 @php
     $heroVideoUrl = 'https://player.vimeo.com/video/1215490802?badge=0&autopause=0&player_id=0&app_id=58479';
+    $heroVideoPoster = asset('images/after-twelfth-omani-graduate-hero.png');
     $planWorkshopImage = asset('images/station-written-plan-workshop.png');
     $decisionPathImage = asset('images/station-decision-path.png');
     $finalCtaImage = asset('images/final-cta-first-step.png');
@@ -263,10 +264,14 @@
 
             <aside
                 class="order-1 overflow-hidden rounded-sm border border-white/12 bg-white/7 shadow-2xl shadow-black/24 lg:order-2">
-                <div class="relative aspect-[9/16] overflow-hidden lg:aspect-[4/3]">
+                <div class="relative aspect-[9/16] overflow-hidden lg:aspect-[4/3]" x-data="{ videoReady: false }">
                     <iframe src="{{ $heroVideoUrl }}" class="absolute inset-0 size-full" title="مقطع دورة الثاني عشر"
                         allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        referrerpolicy="strict-origin-when-cross-origin" x-on:load="setTimeout(() => videoReady = true, 250)"
+                        allowfullscreen></iframe>
+                    <img src="{{ $heroVideoPoster }}" alt="" aria-hidden="true"
+                        class="absolute inset-0 z-10 size-full object-cover transition-opacity duration-300" x-show="!videoReady"
+                        x-transition.opacity>
                 </div>
 
                 <div class="p-5">

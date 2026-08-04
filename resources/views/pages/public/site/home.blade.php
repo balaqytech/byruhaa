@@ -5,6 +5,7 @@
 
 @php
     $afterTwelfthVideoUrl = 'https://player.vimeo.com/video/1215490802?autoplay=1&muted=1&badge=0&autopause=0&player_id=0&app_id=58479';
+    $afterTwelfthVideoPoster = asset('images/after-twelfth-omani-graduate-hero.png');
     $featuredImage = match ($featuredEvent?->landing_page_key) {
         'umrah-2026-v1' => asset('images/umrah-2026-hero.png'),
         default => asset('images/after-twelfth-plan-workshop.png'),
@@ -134,11 +135,16 @@
             <article
                 class="public-card overflow-visible rounded-sm border border-[#2a8069]/14 bg-[#0d2b25] text-white shadow-[0_26px_80px_rgba(18,51,41,0.16)] dark:border-white/10">
                 <div class="grid lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] overflow-visible">
-                    <div class="order-1 relative min-h-80 overflow-hidden lg:order-2 lg:min-h-[34rem]">
+                    <div class="order-1 relative min-h-[28rem] overflow-hidden sm:min-h-[32rem] lg:order-2 lg:min-h-[34rem]"
+                        x-data="{ videoReady: false }">
                         @if ($featuredEvent->landing_page_key === 'life-after-school-v1')
                             <iframe src="{{ $afterTwelfthVideoUrl }}" class="absolute inset-0 size-full"
                                 title="مقطع دورة الثاني عشر" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                                referrerpolicy="strict-origin-when-cross-origin" x-on:load="setTimeout(() => videoReady = true, 250)"
+                                allowfullscreen></iframe>
+                            <img src="{{ $afterTwelfthVideoPoster }}" alt="" aria-hidden="true"
+                                class="absolute inset-0 z-10 size-full object-cover transition-opacity duration-300"
+                                x-show="!videoReady" x-transition.opacity>
                         @else
                             <img src="{{ $featuredImage }}" alt="{{ $featuredEvent->name }}" width="1536" height="1024"
                                 loading="lazy" class="absolute inset-0 h-full w-full object-cover">

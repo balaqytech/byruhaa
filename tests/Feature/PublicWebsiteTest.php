@@ -42,7 +42,9 @@ test('homepage loads', function () {
         ->assertSee('data-whatsapp-reveal-sentinel', false)
         ->assertSee('data-home-events-link', false)
         ->assertSee('player.vimeo.com/video/1215490802', false)
-        ->assertDontSee('images/after-twelfth-omani-graduate-hero.png', false);
+        ->assertSee('autoplay=1&amp;muted=1', false)
+        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
+        ->assertSee('x-on:load', false);
 });
 
 test('public event cards show their editorial card content', function () {
@@ -196,7 +198,8 @@ test('after twelfth event is seeded with its landing page and price tiers', func
         ->assertSuccessful()
         ->assertViewIs('pages.public.site.events.landings.life-after-school-v1')
         ->assertSee('player.vimeo.com/video/1215490802', false)
-        ->assertDontSee('images/after-twelfth-omani-graduate-hero.png', false)
+        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
+        ->assertSee('x-on:load', false)
         ->assertSee('بعد الثاني عشر')
         ->assertSee('تبدأ ١٣ أغسطس ٢٠٢٦م')
         ->assertSee('خطة ٩٠ يومًا')
