@@ -421,6 +421,38 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                     <flux:text class="mt-2">لا تتوفر إجراءات تسجيل لهذه الفعالية حاليًا.</flux:text>
                 </section>
             @endif
+
+            <flux:modal name="event-family-member-form" class="w-full max-w-2xl">
+                <form wire:submit.prevent="saveFamilyMember" class="space-y-5">
+                    <div>
+                        <flux:heading>{{ __('ui.family.add_family_member') }}</flux:heading>
+                        <flux:error name="profile" />
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <flux:input wire:model="familyMemberName" :label="__('ui.fields.name')" required />
+                        <flux:input wire:model="familyMemberBirthDate" :label="__('ui.family.birth_date')" type="date" required />
+                        <flux:input wire:model="familyMemberRelationship" :label="__('ui.family.relationship_to_customer')" />
+                        <flux:input wire:model="familyMemberSchoolName" :label="__('ui.family.school')" />
+                        <flux:input wire:model="familyMemberGrade" :label="__('ui.family.grade')" />
+                    </div>
+
+                    <flux:textarea wire:model="familyMemberMedicalNotes" :label="__('ui.family.medical_notes')" />
+
+                    <div class="flex justify-end gap-3">
+                        <flux:modal.close>
+                            <flux:button type="button" variant="ghost">
+                                {{ __('ui.actions.cancel') }}
+                            </flux:button>
+                        </flux:modal.close>
+
+                        <flux:button variant="primary" type="submit">
+                            <x-hugeicon name="add-01" class="text-lg" />
+                            {{ __('ui.actions.add') }}
+                        </flux:button>
+                    </div>
+                </form>
+            </flux:modal>
         </div>
     </div>
 </section>

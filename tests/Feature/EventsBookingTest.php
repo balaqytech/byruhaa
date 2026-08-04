@@ -274,6 +274,23 @@ test('booking form rejects family members outside the event age range', function
     expect(Booking::query()->count())->toBe(0);
 });
 
+test('customer can add a family member from the event booking form', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.events.show', ['event' => $event])
+        ->call('openAddFamilyMemberModal')
+        ->set('familyMemberName', 'New Participant')
+        ->set('familyMemberBirthDate', '2010-01-15')
+        ->set('familyMemberRelationship', 'Son')
+        ->call('saveFamilyMember')
+        ->assertHasNoErrors();
+
+    expect($customer->familyMembers()->where('name', 'New Participant')->exists())->toBeTrue();
+});
+
 test('booking submission applies the largest eligible discount per family member', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([
