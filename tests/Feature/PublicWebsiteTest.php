@@ -142,7 +142,7 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->assertSee('الختامية')
         ->assertSee('460.000')
         ->assertSee(route('events.show', $event), false)
-        ->assertDontSee(route('customer.events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
         ->assertDontSee('سعر واحد داخل النظام')
         ->assertDontSee('BYRUHAA EVENT');
 });
@@ -222,11 +222,11 @@ test('after twelfth event is seeded with its landing page and price tiers', func
         ->assertSee('الباقة الثانية')
         ->assertSee('69.000')
         ->assertDontSee('الباقة الثالثة')
-        ->assertSee('أبدِ اهتمامك')
+        ->assertSee('احجز الآن')
         ->assertDontSee('مقاعد الرحمة')
         ->assertDontSee('استفسر قبل الحجز')
         ->assertSee(route('events.show', $event), false)
-        ->assertDontSee(route('customer.events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
         ->assertDontSee('٦-٨ أغسطس')
         ->assertDontSee('خصم الإخوة')
         ->assertDontSee('شهادات حقيقية، قريبًا');
@@ -273,7 +273,7 @@ test('published events can use a registered landing page at their canonical URL'
         ->assertSuccessful()
         ->assertSee('player.vimeo.com/video/1215490802', false)
         ->assertSee(route('events.show', $event), false)
-        ->assertDontSee(route('customer.events.show', $event), false)
+        ->assertSee(route('customer.events.show', $event), false)
         ->assertDontSee('BYRUHAA EVENT');
 });
 
@@ -498,7 +498,7 @@ test('public event detail page shows event description discounts and payment pla
         ->assertSee('Deposit')
         ->assertSee('Final')
         ->assertSee('6.000')
-        ->assertDontSee(route('customer.events.show', $event), false);
+        ->assertSee(route('customer.events.show', $event), false);
 
     $comingSoonEvent = Event::factory()->create([
         'name' => 'Coming Soon Camp',

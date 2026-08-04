@@ -243,16 +243,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                     </div>
                 </div>
             @endif
-            @if ($event->canExpressInterest())
-                <section class="rounded-2xl border border-amber-300 bg-amber-50 p-6 dark:border-amber-300/20 dark:bg-amber-300/10">
-                    <flux:heading size="lg">الحجز لم يفتح بعد</flux:heading>
-                    <flux:text class="mt-2">سجّل اهتمامك وسنتواصل معك عند فتح الحجز أو تحديث موعد الفعالية.</flux:text>
-                    <flux:button class="mt-5" variant="primary" wire:click="expressInterest">
-                        <x-hugeicon name="notification-02" class="text-lg" />
-                        أبدِ اهتمامك
-                    </flux:button>
-                </section>
-            @elseif ($event->canBook())
+            @if ($event->canBook())
             <form wire:submit="book" class="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
                 <div class="border-b border-emerald-900/10 bg-emerald-950 p-5 text-white dark:border-white/10">
                     <div class="flex items-start justify-between gap-4">
@@ -395,6 +386,15 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                     </div>
                 </div>
             </form>
+            @elseif ($event->canExpressInterest())
+                <section class="rounded-2xl border border-amber-300 bg-amber-50 p-6 dark:border-amber-300/20 dark:bg-amber-300/10">
+                    <flux:heading size="lg">الحجز لم يفتح بعد</flux:heading>
+                    <flux:text class="mt-2">سجّل اهتمامك وسنتواصل معك عند فتح الحجز أو تحديث موعد الفعالية.</flux:text>
+                    <flux:button class="mt-5" variant="primary" wire:click="expressInterest">
+                        <x-hugeicon name="notification-02" class="text-lg" />
+                        أبدِ اهتمامك
+                    </flux:button>
+                </section>
             @else
                 <section class="rounded-2xl border border-emerald-900/10 bg-white p-6 dark:border-white/10 dark:bg-white/5">
                     <flux:heading size="lg">{{ $event->enrollment_status->getLabel() }}</flux:heading>

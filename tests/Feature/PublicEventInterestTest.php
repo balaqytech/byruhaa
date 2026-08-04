@@ -6,16 +6,14 @@ use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
 
-test('guest sees account guidance instead of a customer booking link on public event page', function () {
+test('guest sees a booking link on public event page when booking is open', function () {
     $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingOpen]);
 
     $this->get(route('events.show', $event))
         ->assertOk()
-        ->assertSee('أبدِ اهتمامك')
-        ->assertSee('يلزمك حساب في بيرحاء')
-        ->assertSee(route('register'), false)
-        ->assertSee(route('login'), false)
-        ->assertDontSee(route('customer.events.show', $event), false);
+        ->assertSee('احجز الآن')
+        ->assertSee(route('customer.events.show', $event), false)
+        ->assertDontSee('أبدِ اهتمامك');
 });
 
 test('logged in customer expresses interest directly from public event page', function () {

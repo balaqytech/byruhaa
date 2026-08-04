@@ -39,7 +39,9 @@ test('customer can submit a booking request for multiple family members', functi
 
     $this->actingAs($customer, 'customer')
         ->get(route('customer.events.show', $event))
-        ->assertOk();
+        ->assertOk()
+        ->assertSee(__('ui.events.checkout_title'))
+        ->assertDontSee('أبدِ اهتمامك');
 
     $booking = Booking::create([
         'customer_id' => $customer->id,
