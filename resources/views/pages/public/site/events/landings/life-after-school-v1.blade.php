@@ -1,5 +1,5 @@
 @php
-    $heroImage = asset('images/after-twelfth-omani-graduate-hero.png');
+    $heroVideoUrl = 'https://player.vimeo.com/video/1215490802?badge=0&autopause=0&player_id=0&app_id=58479';
     $planWorkshopImage = asset('images/station-written-plan-workshop.png');
     $decisionPathImage = asset('images/station-decision-path.png');
     $finalCtaImage = asset('images/final-cta-first-step.png');
@@ -264,14 +264,9 @@
             <aside
                 class="order-1 overflow-hidden rounded-sm border border-white/12 bg-white/7 shadow-2xl shadow-black/24 lg:order-2">
                 <div class="relative aspect-[9/16] overflow-hidden lg:aspect-[4/3]">
-                    <img src="{{ $heroImage }}" alt="طالب ثانوية عامة خريج يرتدي الزي العماني" width="941"
-                        height="1672" fetchpriority="high" class="h-full w-full object-cover">
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#0b1524]/82 via-[#0b1524]/8 to-transparent"></div>
-                    <div
-                        class="absolute inset-x-5 bottom-5 rounded-sm border border-white/12 bg-[#0b1524]/58 p-4 text-white backdrop-blur-md">
-                        <p class="text-sm text-[#cfe2e2]">تجربة إقامية داخل عُمان</p>
-                        <p class="mt-1 font-heading text-2xl font-bold">مخيم بيرحاء، إبراء</p>
-                    </div>
+                    <iframe src="{{ $heroVideoUrl }}" class="absolute inset-0 size-full" title="مقطع دورة الثاني عشر"
+                        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
 
                 <div class="p-5">

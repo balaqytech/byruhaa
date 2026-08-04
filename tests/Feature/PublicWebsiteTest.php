@@ -40,7 +40,9 @@ test('homepage loads', function () {
         ->assertSee('data-whatsapp-floating-button', false)
         ->assertSee('pointer-events-none invisible', false)
         ->assertSee('data-whatsapp-reveal-sentinel', false)
-        ->assertSee('data-home-events-link', false);
+        ->assertSee('data-home-events-link', false)
+        ->assertSee('player.vimeo.com/video/1215490802', false)
+        ->assertDontSee('images/after-twelfth-omani-graduate-hero.png', false);
 });
 
 test('public event cards show their editorial card content', function () {
@@ -193,6 +195,8 @@ test('after twelfth event is seeded with its landing page and price tiers', func
     $this->get(route('events.show', $event))
         ->assertSuccessful()
         ->assertViewIs('pages.public.site.events.landings.life-after-school-v1')
+        ->assertSee('player.vimeo.com/video/1215490802', false)
+        ->assertDontSee('images/after-twelfth-omani-graduate-hero.png', false)
         ->assertSee('بعد الثاني عشر')
         ->assertSee('تبدأ ١٣ أغسطس ٢٠٢٦م')
         ->assertSee('خطة ٩٠ يومًا')
@@ -264,7 +268,7 @@ test('published events can use a registered landing page at their canonical URL'
 
     $this->get(route('events.show', $event))
         ->assertSuccessful()
-        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
+        ->assertSee('player.vimeo.com/video/1215490802', false)
         ->assertSee(route('events.show', $event), false)
         ->assertDontSee(route('customer.events.show', $event), false)
         ->assertDontSee('BYRUHAA EVENT');

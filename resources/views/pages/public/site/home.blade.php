@@ -4,9 +4,9 @@
 ])
 
 @php
+    $afterTwelfthVideoUrl = 'https://player.vimeo.com/video/1215490802?autoplay=1&muted=1&badge=0&autopause=0&player_id=0&app_id=58479';
     $featuredImage = match ($featuredEvent?->landing_page_key) {
         'umrah-2026-v1' => asset('images/umrah-2026-hero.png'),
-        'life-after-school-v1' => asset('images/after-twelfth-omani-graduate-hero.png'),
         default => asset('images/after-twelfth-plan-workshop.png'),
     };
 @endphp
@@ -135,10 +135,16 @@
                 class="public-card overflow-visible rounded-sm border border-[#2a8069]/14 bg-[#0d2b25] text-white shadow-[0_26px_80px_rgba(18,51,41,0.16)] dark:border-white/10">
                 <div class="grid lg:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] overflow-visible">
                     <div class="order-1 relative min-h-80 overflow-hidden lg:order-2 lg:min-h-[34rem]">
-                        <img src="{{ $featuredImage }}" alt="{{ $featuredEvent->name }}" width="1536" height="1024"
-                            loading="lazy" class="absolute inset-0 h-full w-full object-cover">
-                        <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(13,43,37,0.05),rgba(13,43,37,0.24))]">
-                        </div>
+                        @if ($featuredEvent->landing_page_key === 'life-after-school-v1')
+                            <iframe src="{{ $afterTwelfthVideoUrl }}" class="absolute inset-0 size-full"
+                                title="مقطع دورة الثاني عشر" allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                        @else
+                            <img src="{{ $featuredImage }}" alt="{{ $featuredEvent->name }}" width="1536" height="1024"
+                                loading="lazy" class="absolute inset-0 h-full w-full object-cover">
+                            <div class="absolute inset-0 bg-[linear-gradient(90deg,rgba(13,43,37,0.05),rgba(13,43,37,0.24))]">
+                            </div>
+                        @endif
                     </div>
 
                     <div class="order-2 flex flex-col justify-center p-7 sm:p-10 lg:order-1 lg:p-14 overflow-visible">
