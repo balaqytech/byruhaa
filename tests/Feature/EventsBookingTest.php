@@ -251,6 +251,29 @@ test('booking form reports missing family members instead of disabling submissio
     expect(Booking::query()->count())->toBe(0);
 });
 
+test('booking form rejects family members outside the event age range', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'minimum_age' => 17,
+        'maximum_age' => 18,
+    ]);
+    $familyMember = FamilyMember::factory()->for($customer)->create([
+        'birth_date' => now()->subYears(16)->addMonth(),
+    ]);
+
+    $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
+
+    Livewire::test('pages::customer.events.show', ['event' => $event])
+        ->assertSee(__('ui.events.eligible_age_range', ['min' => 17, 'max' => 18]))
+        ->assertSee(__('ui.events.outside_age_range'))
+        ->set('familyMemberIds', [$familyMember->id])
+        ->call('book')
+        ->assertHasErrors(['family_member_ids']);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
 test('booking submission applies the largest eligible discount per family member', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([

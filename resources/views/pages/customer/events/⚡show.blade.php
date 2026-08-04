@@ -260,18 +260,33 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                 <div class="space-y-5 p-5">
                     <div class="rounded-xl border border-emerald-900/10 bg-emerald-50/60 p-4 dark:border-white/10 dark:bg-white/5">
                         <flux:checkbox.group wire:model.live="familyMemberIds" :label="__('ui.events.family_members')">
+                            <flux:text class="mb-3 text-sm">
+                                {{ __('ui.events.eligible_age_range', ['min' => $event->minimum_age, 'max' => $event->maximum_age]) }}
+                            </flux:text>
+
                             @forelse ($familyMembers as $familyMember)
+                                @php($familyMemberAge = $familyMember->ageAt($event->starts_at ?? now()))
+                                @php($isFamilyMemberEligible = $familyMemberAge >= $event->minimum_age && $familyMemberAge <= $event->maximum_age)
+
                                 <flux:checkbox
                                     wire:key="event-family-member-{{ $familyMember->id }}"
                                     value="{{ $familyMember->id }}"
-                                    :label="$familyMember->name.' · '.__('ui.family.age').' '.$familyMember->ageAt($event->starts_at ?? now())"
+                                    :label="$familyMember->name.' · '.__('ui.family.age').' '.$familyMemberAge"
+                                    :disabled="! $isFamilyMemberEligible"
                                 />
+
+                                @if (! $isFamilyMemberEligible)
+                                    <flux:text class="text-xs text-amber-700 dark:text-amber-200">
+                                        {{ __('ui.events.outside_age_range') }}
+                                    </flux:text>
+                                @endif
                             @empty
                                 <flux:text>{{ __('ui.events.add_family_before_booking') }}</flux:text>
                             @endforelse
                         </flux:checkbox.group>
 
                         <flux:error name="familyMemberIds" />
+                        <flux:error name="family_member_ids" />
                     </div>
 
                     <flux:field>
