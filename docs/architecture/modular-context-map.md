@@ -11,7 +11,7 @@ This map is the ownership and dependency reference for the incremental modular r
 | Finance | payment contracts, payment gateways, refunds, ledger accounts, ledger entries and payment posting | `App\\Modules\\Finance`, `App\\Services\\Payments`, `App\\Models`, `App\\Actions` |
 | Affiliates | affiliates, referrals, commissions and payouts | `App\\Models`, `App\\Actions`, middleware and Filament resources |
 | Content | blog, public content, landing pages and public-site presentation | `App\\Models`, `App\\Http\\Controllers`, `App\\Support` and Filament resources |
-| Store | future products, inventory, carts and orders | Not implemented in this refactor |
+| Store | future products, inventory, carts and orders | `App\\Modules\\Store` foundation only; commerce features remain deferred |
 | LMS | future courses, enrolments and progress | Not implemented in this refactor |
 
 ## Dependency direction
@@ -86,3 +86,7 @@ The Content context now owns blog posts and categories under `App\\Modules\\Cont
 ## Verification checkpoint
 
 The modular checkpoint keeps 91 registered application routes and the existing API contract tests pass. The architecture test at `tests/Feature/ModularArchitectureTest.php` guards module ownership, removal of migrated root model files, polymorphic compatibility aliases, and stale imports. The full suite currently reports 267 passing tests, 6 pre-existing failures, and 1 skipped test; the six failures match the documented baseline UI failures. PHPStan reports 127 existing errors (down from the 128-error baseline); no new suppression or baseline entry was added for the refactor.
+
+## Store foundation checkpoint
+
+The Store context now has an explicit `StoreServiceProvider` registration under `App\\Modules\\Store`. This establishes the ownership boundary without adding products, orders, inventory, carts, routes, migrations, or API endpoints. Those features remain a separate implementation phase and do not affect existing contracts.

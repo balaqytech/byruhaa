@@ -10,6 +10,7 @@ use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\Event;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Store\Providers\StoreServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 test('domain models live under their owning module namespaces', function (): void {
@@ -74,4 +75,11 @@ test('moved modules do not import their former root namespaces', function (): vo
             expect($contents)->not->toContain("use {$pattern}");
         }
     }
+});
+
+test('future commerce module is registered as an explicit application provider', function (): void {
+    $providers = require base_path('bootstrap/providers.php');
+
+    expect($providers)
+        ->toContain(StoreServiceProvider::class);
 });
