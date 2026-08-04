@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EventEnrollmentStatus;
 use App\Modules\Affiliates\Services\AffiliateAttribution;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\BookingFamilyMember;
@@ -171,6 +172,19 @@ test('customer event checkout updates totals and payment plan previews after sel
 
     expect(mb_strpos($html, __('ui.payments.full_payment')))
         ->toBeLessThan(mb_strpos($html, 'Two payments'));
+});
+
+test('booking open customer event shows booking checkout instead of interest action', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create([
+        'enrollment_status' => EventEnrollmentStatus::BookingOpen,
+    ]);
+
+    $this->actingAs($customer, 'customer');
+
+    Livewire::test('pages::customer.events.show', ['event' => $event])
+        ->assertSee(__('ui.events.checkout_title'))
+        ->assertDontSee('أبدِ اهتمامك');
 });
 
 test('booking submission stores a price snapshot', function () {
