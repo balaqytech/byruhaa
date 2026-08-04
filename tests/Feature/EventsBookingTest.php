@@ -237,6 +237,20 @@ test('customer with incomplete profile cannot submit a booking request', functio
     expect(Booking::query()->count())->toBe(0);
 });
 
+test('booking form reports missing family members instead of disabling submission', function () {
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($customer, 'customer');
+    fakeAffiliateAttribution();
+
+    Livewire::test('pages::customer.events.show', ['event' => $event])
+        ->call('book')
+        ->assertHasErrors(['familyMemberIds']);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
 test('booking submission applies the largest eligible discount per family member', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([

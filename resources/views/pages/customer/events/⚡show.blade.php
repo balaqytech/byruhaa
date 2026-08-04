@@ -244,7 +244,7 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                 </div>
             @endif
             @if ($event->canBook())
-            <form wire:submit="book" class="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
+            <form wire:submit.prevent="book" class="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
                 <div class="border-b border-emerald-900/10 bg-emerald-950 p-5 text-white dark:border-white/10">
                     <div class="flex items-start justify-between gap-4">
                         <div>
@@ -376,7 +376,12 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
                     @endif
 
                     <div class="flex flex-wrap gap-3">
-                        <flux:button type="submit" variant="primary" :disabled="$familyMembers->isEmpty()">
+                        <flux:button
+                            type="submit"
+                            variant="primary"
+                            wire:loading.attr="disabled"
+                            wire:target="book"
+                        >
                             <x-hugeicon name="check-list" class="text-lg" />
                             {{ __('ui.actions.submit_request') }}
                         </flux:button>
