@@ -7,10 +7,13 @@ use App\Enums\EventInterestStatus;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\EventInterest;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Validation\ValidationException;
 
 final class ExpressEventInterest
 {
+    public function __construct(private ByruhaaWebhookSender $webhookSender) {}
+
     /** @param array{preferred_contact_channel?: string|null, source_reference?: string|null, contact_consent?: bool} $data */
     public function execute(Customer $customer, Event $event, array $data, EventInterestSource $source): EventInterest
     {
@@ -18,7 +21,7 @@ final class ExpressEventInterest
             throw ValidationException::withMessages(['event' => 'هذه الفعالية لا تستقبل إبداء الاهتمام حاليًا.']);
         }
 
-        return EventInterest::query()->updateOrCreate(
+        $interest = EventInterest::query()->updateOrCreate(
             ['customer_id' => $customer->id, 'event_id' => $event->id],
             [
                 'status' => EventInterestStatus::Interested,
@@ -30,5 +33,11 @@ final class ExpressEventInterest
                 'withdrawn_at' => null,
             ],
         )->load(['customer', 'event']);
+
+        if ($interest->wasRecentlyCreated) {
+            $this->webhookSender->sendInterestCreated($interest);
+        }
+
+        return $interest;
     }
 }

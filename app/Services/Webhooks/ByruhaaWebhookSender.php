@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\Customer;
+use App\Models\EventInterest;
 use App\Models\Payment;
 use App\Models\WebhookDelivery;
 use App\Support\Money\MoneyFactory;
@@ -36,6 +37,30 @@ class ByruhaaWebhookSender
                 event: 'customer.registered',
                 webhookable: $freshCustomer,
                 payload: $this->customerPayload('customer.registered', $freshCustomer, now()),
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    public function sendInterestCreated(EventInterest $interest): void
+    {
+        $url = $this->webhookUrl('interest_created_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        try {
+            $freshInterest = EventInterest::query()
+                ->with(['customer', 'event'])
+                ->findOrFail($interest->getKey());
+
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'interest.created',
+                webhookable: $freshInterest,
+                payload: $this->interestPayload($freshInterest, now()),
             );
         } catch (Throwable $exception) {
             report($exception);
@@ -172,6 +197,43 @@ class ByruhaaWebhookSender
                     'missing_required_profile_fields' => $customer->missingRequiredProfileFields(),
                     'customer_panel_url' => route('customer.dashboard'),
                     'created_at' => $customer->created_at?->toJSON(),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function interestPayload(EventInterest $interest, CarbonInterface $occurredAt): array
+    {
+        return [
+            'event' => 'interest.created',
+            'customer_phone' => $interest->customer->phone_number,
+            'occurred_at' => $occurredAt->toJSON(),
+            'data' => [
+                'interest' => [
+                    'id' => $interest->id,
+                    'status' => $interest->status->value,
+                    'source' => $interest->source->value,
+                    'preferred_contact_channel' => $interest->preferred_contact_channel,
+                    'source_reference' => $interest->source_reference,
+                    'contact_consent_at' => $interest->contact_consent_at?->toJSON(),
+                    'last_expressed_at' => $interest->last_expressed_at?->toJSON(),
+                    'created_at' => $interest->created_at?->toJSON(),
+                    'customer_panel_url' => route('customer.interests.index'),
+                ],
+                'event' => [
+                    'id' => $interest->event->id,
+                    'name' => $interest->event->name,
+                    'slug' => $interest->event->slug,
+                    'public_url' => route('events.show', $interest->event),
+                ],
+                'customer' => [
+                    'id' => $interest->customer->id,
+                    'name' => $interest->customer->name,
+                    'phone' => $interest->customer->phone_number,
+                    'email' => $interest->customer->email,
                 ],
             ],
         ];

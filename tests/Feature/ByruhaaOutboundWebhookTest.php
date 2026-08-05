@@ -2,7 +2,10 @@
 
 use App\Actions\ConfirmThawaniPayment;
 use App\Actions\CreateCustomerBooking;
+use App\Actions\ExpressEventInterest;
 use App\Enums\BookingInstallmentState;
+use App\Enums\EventEnrollmentStatus;
+use App\Enums\EventInterestSource;
 use App\Enums\PaymentState;
 use App\Enums\WebhookDeliveryStatus;
 use App\Models\Booking;
@@ -11,6 +14,7 @@ use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Event;
+use App\Models\EventInterest;
 use App\Models\FamilyMember;
 use App\Models\Payment;
 use App\Models\User;
@@ -33,6 +37,7 @@ beforeEach(function (): void {
     config([
         'app.url' => 'https://byruhaa.test',
         'byruhaa.webhooks.customer_registered_url' => null,
+        'byruhaa.webhooks.interest_created_url' => null,
         'byruhaa.webhooks.booking_created_url' => null,
         'byruhaa.webhooks.booking_approved_url' => null,
         'byruhaa.webhooks.booking_contracts_signed_url' => null,
@@ -53,6 +58,7 @@ test('byruhaa webhook config values exist', function () {
     expect(config('byruhaa.webhooks'))
         ->toHaveKeys([
             'customer_registered_url',
+            'interest_created_url',
             'booking_created_url',
             'booking_approved_url',
             'booking_contracts_signed_url',
@@ -63,6 +69,90 @@ test('byruhaa webhook config values exist', function () {
         ])
         ->and(config('byruhaa.webhooks.timeout'))->toBe(10)
         ->and(config('byruhaa.webhooks.queue'))->toBe('default');
+});
+
+test('new interest queues a webhook with interest event and customer payload', function () {
+    config([
+        'byruhaa.webhooks.interest_created_url' => 'https://partner.test/webhooks/interest-created',
+        'byruhaa.webhooks.queue' => 'webhooks',
+    ]);
+
+    Queue::fake();
+
+    $customer = Customer::factory()->create([
+        'name' => 'Interested Customer',
+        'phone_number' => '+96891234567',
+        'email' => 'interested@example.com',
+    ]);
+    $event = Event::factory()->create([
+        'name' => 'Interest Camp',
+        'slug' => 'interest-camp',
+        'enrollment_status' => EventEnrollmentStatus::InterestOpen,
+    ]);
+
+    $interest = app(ExpressEventInterest::class)->execute($customer, $event, [
+        'preferred_contact_channel' => 'whatsapp',
+        'source_reference' => 'assistant-conversation-42',
+        'contact_consent' => true,
+    ], EventInterestSource::Assistant);
+
+    $job = byruhaaQueuedWebhook('https://partner.test/webhooks/interest-created');
+    $payload = $job->payload;
+    $delivery = byruhaaWebhookDelivery('interest.created', $interest, 'https://partner.test/webhooks/interest-created');
+
+    expect($delivery->status)->toBe(WebhookDeliveryStatus::Queued)
+        ->and($delivery->queued_at)->not->toBeNull()
+        ->and($job->queue)->toBe('webhooks')
+        ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
+        ->and($payload['event'])->toBe('interest.created')
+        ->and($payload['customer_phone'])->toBe('+96891234567')
+        ->and($payload['data']['interest']['id'])->toBe($interest->id)
+        ->and($payload['data']['interest']['status'])->toBe('interested')
+        ->and($payload['data']['interest']['source'])->toBe('assistant')
+        ->and($payload['data']['interest']['preferred_contact_channel'])->toBe('whatsapp')
+        ->and($payload['data']['interest']['source_reference'])->toBe('assistant-conversation-42')
+        ->and($payload['data']['interest']['contact_consent_at'])->not->toBeNull()
+        ->and($payload['data']['interest']['customer_panel_url'])->toBe(route('customer.interests.index'))
+        ->and($payload['data']['event']['id'])->toBe($event->id)
+        ->and($payload['data']['event']['name'])->toBe('Interest Camp')
+        ->and($payload['data']['event']['slug'])->toBe('interest-camp')
+        ->and($payload['data']['event']['public_url'])->toBe(route('events.show', $event))
+        ->and($payload['data']['customer']['id'])->toBe($customer->id)
+        ->and($payload['data']['customer']['phone'])->toBe('+96891234567')
+        ->and($payload['data']['customer']['email'])->toBe('interested@example.com');
+});
+
+test('repeated interest expression queues only the newly created interest webhook', function () {
+    config([
+        'byruhaa.webhooks.interest_created_url' => 'https://partner.test/webhooks/interest-created',
+    ]);
+
+    Queue::fake();
+
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
+    $expressInterest = app(ExpressEventInterest::class);
+
+    $interest = $expressInterest->execute($customer, $event, [], EventInterestSource::Website);
+    $expressInterest->execute($customer, $event, [], EventInterestSource::Assistant);
+    app(ByruhaaWebhookSender::class)->sendInterestCreated($interest->refresh());
+
+    Queue::assertPushed(CallWebhookJob::class, 1);
+    expect(WebhookDelivery::query()
+        ->whereMorphedTo('webhookable', $interest)
+        ->where('event', 'interest.created')
+        ->count())->toBe(1);
+});
+
+test('new interest does not queue a webhook when its url is empty', function () {
+    Queue::fake();
+
+    $customer = Customer::factory()->create();
+    $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
+    $interest = app(ExpressEventInterest::class)->execute($customer, $event, [], EventInterestSource::Website);
+
+    Queue::assertNotPushed(CallWebhookJob::class);
+    expect($interest->webhookDeliveries()->count())->toBe(0);
 });
 
 test('customer registration through the api queues a webhook with safe customer payload', function () {
@@ -688,7 +778,7 @@ function byruhaaSignatureDataUrl(): string
     return 'data:image/png;base64,'.base64_encode('fake-png');
 }
 
-function byruhaaWebhookDelivery(string $event, Booking|Customer|Payment $webhookable, string $url): WebhookDelivery
+function byruhaaWebhookDelivery(string $event, Booking|Customer|EventInterest|Payment $webhookable, string $url): WebhookDelivery
 {
     $delivery = WebhookDelivery::query()
         ->where('event', $event)

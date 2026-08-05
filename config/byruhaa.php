@@ -6,6 +6,7 @@ return [
 
     'webhooks' => [
         'customer_registered_url' => env('BYRUHAA_CUSTOMER_REGISTERED_WEBHOOK_URL'),
+        'interest_created_url' => env('BYRUHAA_INTEREST_CREATED_WEBHOOK_URL'),
         'booking_created_url' => env('BYRUHAA_BOOKING_CREATED_WEBHOOK_URL'),
         'booking_approved_url' => env('BYRUHAA_BOOKING_APPROVED_WEBHOOK_URL'),
         'booking_contracts_signed_url' => env('BYRUHAA_BOOKING_CONTRACTS_SIGNED_WEBHOOK_URL'),
