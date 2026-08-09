@@ -148,7 +148,7 @@
     "src": "_ibm-plex-sans-arabic-600-normal-KrqB56Mw.woff2"
   },
   "resources/css/app.css": {
-    "file": "assets/app-BngTLQff.css",
+    "file": "assets/app-Cly1yrbg.css",
     "name": "app",
     "names": [
       "app.css"
@@ -172,7 +172,7 @@
     "isEntry": true
   },
   "resources/js/public-site.js": {
-    "file": "assets/public-site-Z6J0RV-F.js",
+    "file": "assets/public-site-QnwP86IE.js",
     "name": "public-site",
     "src": "resources/js/public-site.js",
     "isEntry": true

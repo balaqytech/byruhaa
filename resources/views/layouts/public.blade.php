@@ -172,7 +172,8 @@
         </div>
     </nav>
 
-    <footer class="border-t border-[#2a8069]/12 bg-white/68 pb-28 dark:border-white/10 dark:bg-white/5 lg:pb-0">
+    <footer data-public-footer
+        class="border-t border-[#2a8069]/12 bg-white/68 pb-28 dark:border-white/10 dark:bg-white/5 lg:pb-0">
         <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_.8fr_.8fr] lg:px-8">
             <div class="max-w-xl">
                 <div class="flex items-center gap-3">
@@ -220,6 +221,17 @@
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
                 @endif --}}
             </nav>
+        </div>
+
+        <div class="border-t border-[#2a8069]/12 dark:border-white/10">
+            <div class="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-center text-sm text-[#123329]/58 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:text-start lg:px-8 dark:text-[#f7f1df]/62">
+                <p>© {{ now()->year }} منتجع بيرحاء. جميع الحقوق محفوظة.</p>
+                <p>
+                    تطوير
+                    <a href="https://red1ai.com/" target="_blank" rel="noopener noreferrer"
+                        class="font-bold text-[#007a52] transition hover:text-[#005c3e] dark:text-[#e0a800] dark:hover:text-[#f0c96a]">ردء</a>
+                </p>
+            </div>
         </div>
     </footer>
 

@@ -40,11 +40,16 @@ test('homepage loads', function () {
         ->assertSee('data-whatsapp-floating-button', false)
         ->assertSee('pointer-events-none invisible', false)
         ->assertSee('data-whatsapp-reveal-sentinel', false)
+        ->assertSee('data-public-footer', false)
         ->assertSee('data-home-events-link', false)
         ->assertSee('player.vimeo.com/video/1215490802', false)
         ->assertSee('autoplay=1&amp;muted=1', false)
         ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
-        ->assertSee('x-on:load', false);
+        ->assertSee('x-on:load', false)
+        ->assertSee('جميع الحقوق محفوظة.')
+        ->assertSee('تطوير')
+        ->assertSee('ردء')
+        ->assertSee('https://red1ai.com/', false);
 });
 
 test('public event cards show their editorial card content', function () {

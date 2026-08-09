@@ -55,8 +55,12 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
 const whatsappButton = document.querySelector('[data-whatsapp-floating-button]');
 const whatsappRevealSentinel = document.querySelector('[data-whatsapp-reveal-sentinel]');
+const publicFooter = document.querySelector('[data-public-footer]');
 
 if (whatsappButton && whatsappRevealSentinel) {
+    let hasPassedWhatsappRevealSentinel = false;
+    let isFooterVisible = false;
+
     const toggleWhatsappButton = (isVisible) => {
         whatsappButton.classList.toggle('pointer-events-none', !isVisible);
         whatsappButton.classList.toggle('invisible', !isVisible);
@@ -64,11 +68,25 @@ if (whatsappButton && whatsappRevealSentinel) {
         whatsappButton.classList.toggle('opacity-0', !isVisible);
     };
 
+    const updateWhatsappButtonVisibility = () => {
+        toggleWhatsappButton(hasPassedWhatsappRevealSentinel && !isFooterVisible);
+    };
+
     const whatsappObserver = new IntersectionObserver(([entry]) => {
-        toggleWhatsappButton(!entry.isIntersecting && entry.boundingClientRect.bottom < 0);
+        hasPassedWhatsappRevealSentinel = !entry.isIntersecting && entry.boundingClientRect.bottom < 0;
+        updateWhatsappButtonVisibility();
     });
 
     whatsappObserver.observe(whatsappRevealSentinel);
+
+    if (publicFooter) {
+        const footerObserver = new IntersectionObserver(([entry]) => {
+            isFooterVisible = entry.isIntersecting;
+            updateWhatsappButtonVisibility();
+        });
+
+        footerObserver.observe(publicFooter);
+    }
 }
 
 if (!prefersReducedMotion) {
