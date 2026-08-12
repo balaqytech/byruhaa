@@ -2,9 +2,11 @@
 
 use App\Filament\Pages\ManageAboutPage;
 use App\Filament\Pages\ManageContactPage;
+use App\Filament\Pages\ManageGeneralSettings;
 use App\Models\User;
 use App\Settings\AboutPageSettings;
 use App\Settings\ContactPageSettings;
+use App\Settings\GeneralSettings;
 use Livewire\Livewire;
 
 test('staff can update the about and contact pages from filament', function () {
@@ -45,6 +47,20 @@ test('staff can update the about and contact pages from filament', function () {
         ->assertSee('+968 9000 0000')
         ->assertSee('إنستغرام')
         ->assertSee('https://instagram.com/byruhaa', false);
+});
+
+test('staff can toggle coming soon mode from general settings', function () {
+    $this->actingAs(User::factory()->create(), 'web');
+
+    Livewire::test(ManageGeneralSettings::class)
+        ->assertFormSet(['coming_soon_enabled' => false])
+        ->fillForm(['coming_soon_enabled' => true])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(app(GeneralSettings::class)->refresh()->coming_soon_enabled)->toBeTrue();
+
+    $this->get(ManageGeneralSettings::getUrl(panel: 'admin'))->assertSuccessful();
 });
 
 test('about page content cannot exceed five hundred words', function () {
@@ -92,5 +108,8 @@ test('guests are redirected from the site settings pages', function () {
         ->assertRedirect('/admin/login');
 
     $this->get(ManageContactPage::getUrl(panel: 'admin'))
+        ->assertRedirect('/admin/login');
+
+    $this->get(ManageGeneralSettings::getUrl(panel: 'admin'))
         ->assertRedirect('/admin/login');
 });
