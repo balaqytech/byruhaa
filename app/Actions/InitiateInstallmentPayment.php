@@ -4,11 +4,14 @@ namespace App\Actions;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
+use App\Enums\EventStatus;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\BookingInstallment;
 use App\Models\Payment;
+use App\States\Booking\Cancelled;
+use App\States\Booking\Rejected;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
@@ -133,6 +136,16 @@ class InitiateInstallmentPayment
 
     private function validatePayable(BookingInstallment $installment): void
     {
+        $booking = $installment->paymentSchedule->booking;
+
+        if ($booking->state instanceof Cancelled
+            || $booking->state instanceof Rejected
+            || $booking->event->status === EventStatus::Cancelled) {
+            throw ValidationException::withMessages([
+                'payment' => __('ui.messages.installment_not_payable'),
+            ]);
+        }
+
         if ($installment->state !== BookingInstallmentState::Pending) {
             throw ValidationException::withMessages([
                 'payment' => __('ui.messages.installment_not_payable'),

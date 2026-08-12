@@ -121,6 +121,26 @@ class EventInfolist
                                             ->columnSpanFull(),
                                     ]),
                             ]),
+                        Tab::make('الإلغاء والاسترداد')
+                            ->visible(fn (Event $record): bool => $record->cancellation()->exists())
+                            ->schema([
+                                Section::make('حالة معالجة الإلغاء')
+                                    ->columns(3)
+                                    ->schema([
+                                        TextEntry::make('cancellation.status')->label('الحالة')->badge(),
+                                        TextEntry::make('cancellation.reason')->label('السبب')->columnSpanFull(),
+                                        TextEntry::make('cancellation.bookings_count')->label('الحجوزات'),
+                                        TextEntry::make('cancellation.payments_count')->label('المدفوعات'),
+                                        TextEntry::make('cancellation.refundable_amount_baisa')
+                                            ->label('المبلغ المطلوب رده')
+                                            ->state(fn (Event $record): string => MoneyFormatter::baisa($record->cancellation->refundable_amount_baisa, $record->cancellation->currency)),
+                                        TextEntry::make('cancellation.refunded_payments_count')->label('المدفوعات المستردة'),
+                                        TextEntry::make('cancellation.refunded_amount_baisa')
+                                            ->label('المبلغ المسترد')
+                                            ->state(fn (Event $record): string => MoneyFormatter::baisa($record->cancellation->refunded_amount_baisa, $record->cancellation->currency)),
+                                        TextEntry::make('cancellation.errors')->label('أخطاء تحتاج متابعة')->json()->columnSpanFull()->placeholder('-'),
+                                    ]),
+                            ]),
                     ]),
             ]);
     }

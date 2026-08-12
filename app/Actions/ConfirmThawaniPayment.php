@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Contracts\Payments\PaymentGateway;
 use App\Enums\BookingInstallmentState;
+use App\Enums\EventStatus;
 use App\Enums\PaymentState;
 use App\Models\Booking;
 use App\Models\BookingSeatAllocation;
@@ -11,6 +12,7 @@ use App\Models\Event;
 use App\Models\Payment;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Webhooks\ByruhaaWebhookSender;
+use App\States\Booking\Cancelled;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -23,11 +25,18 @@ class ConfirmThawaniPayment
         private ByruhaaWebhookSender $webhookSender,
         private ReserveBookingSeats $reserveBookingSeats,
         private ReleaseBookingSeats $releaseBookingSeats,
+        private RefundPayment $refundPayment,
     ) {}
 
     public function confirm(Payment $payment): Payment
     {
         if ($payment->state === PaymentState::Paid) {
+            if ($this->belongsToCancelledBookingOrEvent($payment)) {
+                $this->refundLatePayment($payment);
+
+                return $payment->refresh();
+            }
+
             $this->reserveBookingSeats->execute($payment);
             $this->postPaymentLedgerTransaction->execute($payment);
             $this->postAffiliateCommissionForPayment->execute($payment);
@@ -53,12 +62,13 @@ class ConfirmThawaniPayment
         $providerReference = data_get($session, 'client_reference_id');
         $providerSessionId = data_get($session, 'session_id');
         $becamePaid = false;
+        $requiresRefund = false;
         $paidVerificationError = null;
         [$bookingId, $eventId] = $this->bookingAndEventIds($payment);
 
-        $payment = DB::transaction(function () use ($payment, $bookingId, $eventId, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, $providerReference, $providerSessionId, &$becamePaid, &$paidVerificationError): Payment {
-            Event::query()->whereKey($eventId)->lockForUpdate()->firstOrFail();
-            Booking::query()->whereKey($bookingId)->lockForUpdate()->firstOrFail();
+        $payment = DB::transaction(function () use ($payment, $bookingId, $eventId, $response, $providerPaymentStatus, $providerPaymentId, $providerInvoice, $providerAmount, $providerReference, $providerSessionId, &$becamePaid, &$requiresRefund, &$paidVerificationError): Payment {
+            $event = Event::query()->whereKey($eventId)->lockForUpdate()->firstOrFail();
+            $booking = Booking::query()->whereKey($bookingId)->lockForUpdate()->firstOrFail();
             BookingSeatAllocation::query()->where('booking_id', $bookingId)->lockForUpdate()->first();
             $payment = Payment::query()->whereKey($payment->id)->with('bookingInstallment')->lockForUpdate()->firstOrFail();
 
@@ -98,7 +108,11 @@ class ConfirmThawaniPayment
                 ])->save();
 
                 $this->postPaymentLedgerTransaction->execute($payment);
-                $this->postAffiliateCommissionForPayment->execute($payment);
+                $requiresRefund = $event->status === EventStatus::Cancelled || $booking->state instanceof Cancelled;
+
+                if (! $requiresRefund) {
+                    $this->postAffiliateCommissionForPayment->execute($payment);
+                }
                 $becamePaid = true;
             }
 
@@ -106,7 +120,11 @@ class ConfirmThawaniPayment
         });
 
         if ($payment->state === PaymentState::Paid) {
-            $this->reserveBookingSeats->execute($payment);
+            if ($requiresRefund || $this->belongsToCancelledBookingOrEvent($payment)) {
+                $this->refundLatePayment($payment);
+            } else {
+                $this->reserveBookingSeats->execute($payment);
+            }
         } elseif ($paidVerificationError === null && in_array($payment->state, [PaymentState::Cancelled, PaymentState::Failed], true)) {
             $this->releaseBookingSeats->execute($payment, true);
         }
@@ -125,7 +143,11 @@ class ConfirmThawaniPayment
     public function cancel(Payment $payment): Payment
     {
         if ($payment->state === PaymentState::Paid) {
-            $this->reserveBookingSeats->execute($payment);
+            if ($this->belongsToCancelledBookingOrEvent($payment)) {
+                $this->refundLatePayment($payment);
+            } else {
+                $this->reserveBookingSeats->execute($payment);
+            }
 
             return $payment->refresh();
         }
@@ -204,5 +226,23 @@ class ConfirmThawaniPayment
         }
 
         return null;
+    }
+
+    private function belongsToCancelledBookingOrEvent(Payment $payment): bool
+    {
+        $payment->loadMissing('bookingInstallment.paymentSchedule.booking.event');
+        $booking = $payment->bookingInstallment->paymentSchedule->booking;
+
+        return $booking->state instanceof Cancelled || $booking->event->status === EventStatus::Cancelled;
+    }
+
+    private function refundLatePayment(Payment $payment): void
+    {
+        $payment->load('refunds');
+        $amountBaisa = $payment->refundableAmountBaisa();
+
+        if ($amountBaisa > 0) {
+            $this->refundPayment->execute($payment, $amountBaisa, 'رد تلقائي بعد إلغاء الفعالية');
+        }
     }
 }

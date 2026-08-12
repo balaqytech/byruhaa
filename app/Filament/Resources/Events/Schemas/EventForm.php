@@ -56,11 +56,16 @@ class EventForm
                             Select::make('status')
                                 ->label(__('admin.fields.status'))
                                 ->required()
-                                ->options(EventStatus::class)
+                                ->options(collect(EventStatus::cases())
+                                    ->reject(fn (EventStatus $status): bool => $status === EventStatus::Cancelled)
+                                    ->mapWithKeys(fn (EventStatus $status): array => [$status->value => $status->getLabel()])
+                                    ->all())
+                                ->disabled(fn (?Event $record): bool => $record?->status === EventStatus::Cancelled)
                                 ->default(EventStatus::Draft->value),
                             Select::make('enrollment_status')
                                 ->label('حالة التسجيل')
                                 ->required()
+                                ->disabled(fn (?Event $record): bool => $record?->status === EventStatus::Cancelled)
                                 ->options(EventEnrollmentStatus::class)
                                 ->default(EventEnrollmentStatus::BookingOpen->value),
                             Select::make('landing_page_key')

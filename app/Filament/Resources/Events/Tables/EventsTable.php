@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Events\Tables;
 
 use App\Enums\EventStatus;
+use App\Filament\Resources\Events\Actions\CancelEventAction;
 use App\Models\Event;
 use App\Support\MoneyFormatter;
 use Filament\Actions\BulkActionGroup;
@@ -52,6 +53,7 @@ class EventsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                CancelEventAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

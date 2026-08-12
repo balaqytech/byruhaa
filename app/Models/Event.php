@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
@@ -140,14 +141,19 @@ class Event extends Model
         return $this->hasMany(EventInterest::class);
     }
 
+    public function cancellation(): HasOne
+    {
+        return $this->hasOne(EventCancellation::class);
+    }
+
     public function canExpressInterest(): bool
     {
-        return $this->enrollment_status->canExpressInterest();
+        return $this->isPublished() && $this->enrollment_status->canExpressInterest();
     }
 
     public function canBook(): bool
     {
-        return $this->enrollment_status->canBook();
+        return $this->isPublished() && $this->enrollment_status->canBook();
     }
 
     public function isComingSoon(): bool

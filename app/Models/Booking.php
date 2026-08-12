@@ -81,7 +81,6 @@ class Booking extends Model
                 app(CouponUsageService::class)->releaseForBooking($booking);
                 DB::afterCommit(fn () => app(ReleaseBookingSeats::class)->execute(
                     $booking,
-                    releaseCapturedBooking: true,
                 ));
             }
         });
