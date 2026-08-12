@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Actions\ReleaseBookingSeats;
 use App\Casts\MoneyBaisaCast;
 use App\Services\CouponUsageService;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\BookingState;
 use App\States\Booking\Cancelled;
 use App\States\Booking\Rejected;
@@ -79,9 +80,13 @@ class Booking extends Model
 
             if ($booking->state instanceof Cancelled || $booking->state instanceof Rejected) {
                 app(CouponUsageService::class)->releaseForBooking($booking);
-                DB::afterCommit(fn () => app(ReleaseBookingSeats::class)->execute(
-                    $booking,
-                ));
+                DB::afterCommit(function () use ($booking): void {
+                    app(ReleaseBookingSeats::class)->execute($booking);
+
+                    if ($booking->state instanceof Cancelled) {
+                        app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking);
+                    }
+                });
             }
         });
     }

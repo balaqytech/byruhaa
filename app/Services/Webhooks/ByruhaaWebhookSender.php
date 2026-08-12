@@ -117,6 +117,30 @@ class ByruhaaWebhookSender
         }
     }
 
+    public function sendBookingCancelled(Booking $booking): void
+    {
+        $url = $this->webhookUrl('booking_cancelled_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        try {
+            $freshBooking = Booking::query()
+                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+                ->findOrFail($booking->getKey());
+
+            $this->dispatchWebhook(
+                url: $url,
+                event: 'booking.cancelled',
+                webhookable: $freshBooking,
+                payload: $this->bookingPayload('booking.cancelled', $freshBooking, now()),
+            );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
     public function sendBookingContractsSigned(Booking $booking): void
     {
         $url = $this->webhookUrl('booking_contracts_signed_url');

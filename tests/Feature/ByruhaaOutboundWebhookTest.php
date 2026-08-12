@@ -24,6 +24,7 @@ use App\Models\WebhookDelivery;
 use App\Services\BookingApprovalService;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\States\Booking\Approved;
+use App\States\Booking\Cancelled;
 use GuzzleHttp\Psr7\Response;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\Sequence;
@@ -42,6 +43,7 @@ beforeEach(function (): void {
         'byruhaa.webhooks.interest_created_url' => null,
         'byruhaa.webhooks.booking_created_url' => null,
         'byruhaa.webhooks.booking_approved_url' => null,
+        'byruhaa.webhooks.booking_cancelled_url' => null,
         'byruhaa.webhooks.booking_contracts_signed_url' => null,
         'byruhaa.webhooks.payment_paid_url' => null,
         'byruhaa.webhooks.event_cancelled_url' => null,
@@ -65,6 +67,7 @@ test('byruhaa webhook config values exist', function () {
             'interest_created_url',
             'booking_created_url',
             'booking_approved_url',
+            'booking_cancelled_url',
             'booking_contracts_signed_url',
             'payment_paid_url',
             'event_cancelled_url',
@@ -75,6 +78,35 @@ test('byruhaa webhook config values exist', function () {
         ])
         ->and(config('byruhaa.webhooks.timeout'))->toBe(10)
         ->and(config('byruhaa.webhooks.queue'))->toBe('default');
+});
+
+test('cancelled booking queues one webhook with booking customer and event payload', function () {
+    config(['byruhaa.webhooks.booking_cancelled_url' => 'https://partner.test/webhooks/booking-cancelled']);
+    Queue::fake();
+    $customer = Customer::factory()->create([
+        'name' => 'Cancelled Customer',
+        'phone_number' => '+96891234567',
+        'email' => 'cancelled@example.com',
+    ]);
+    $event = Event::factory()->create(['name' => 'Cancelled Camp']);
+    $booking = Booking::factory()->for($customer)->for($event)->create();
+
+    $booking->state->transitionTo(Cancelled::class);
+    $job = byruhaaQueuedWebhook('https://partner.test/webhooks/booking-cancelled');
+
+    expect($job->payload)
+        ->event->toBe('booking.cancelled')
+        ->customer_phone->toBe('+96891234567')
+        ->data->booking->id->toBe($booking->id)
+        ->data->booking->status->toBe('cancelled')
+        ->data->event->name->toBe('Cancelled Camp')
+        ->data->customer->email->toBe('cancelled@example.com');
+
+    app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking->refresh());
+
+    Queue::assertPushed(CallWebhookJob::class, 1);
+    expect(byruhaaWebhookDelivery('booking.cancelled', $booking, 'https://partner.test/webhooks/booking-cancelled')->status)
+        ->toBe(WebhookDeliveryStatus::Queued);
 });
 
 test('new interest queues a webhook with interest event and customer payload', function () {

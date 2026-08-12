@@ -9,6 +9,7 @@ return [
         'interest_created_url' => env('BYRUHAA_INTEREST_CREATED_WEBHOOK_URL'),
         'booking_created_url' => env('BYRUHAA_BOOKING_CREATED_WEBHOOK_URL'),
         'booking_approved_url' => env('BYRUHAA_BOOKING_APPROVED_WEBHOOK_URL'),
+        'booking_cancelled_url' => env('BYRUHAA_BOOKING_CANCELLED_WEBHOOK_URL'),
         'booking_contracts_signed_url' => env('BYRUHAA_BOOKING_CONTRACTS_SIGNED_WEBHOOK_URL'),
         'payment_paid_url' => env('BYRUHAA_PAYMENT_PAID_WEBHOOK_URL'),
         'event_cancelled_url' => env('BYRUHAA_EVENT_CANCELLED_WEBHOOK_URL'),
