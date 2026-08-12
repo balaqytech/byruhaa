@@ -9,7 +9,9 @@ use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Notifications\PaymentRefundedNotification;
 use App\Services\Payments\PaymentGatewayManager;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,6 +24,7 @@ class RefundPayment
         private PaymentGatewayManager $paymentGateways,
         private PostRefundLedgerTransaction $postRefundLedgerTransaction,
         private ReleaseBookingSeats $releaseBookingSeats,
+        private ByruhaaWebhookSender $webhookSender,
     ) {}
 
     public function execute(Payment $payment, ?int $amountBaisa = null, string $reason = 'Customer refund'): PaymentRefund
@@ -132,6 +135,11 @@ class RefundPayment
         if ($paymentRefund->payment->state === PaymentState::Refunded) {
             $this->releaseBookingSeats->execute($paymentRefund->payment);
         }
+
+        $paymentRefund->loadMissing('payment.bookingInstallment.paymentSchedule.booking.customer');
+        $paymentRefund->payment->bookingInstallment->paymentSchedule->booking->customer
+            ->notify(new PaymentRefundedNotification($paymentRefund->id));
+        $this->webhookSender->sendPaymentRefunded($paymentRefund);
 
         return $paymentRefund;
     }

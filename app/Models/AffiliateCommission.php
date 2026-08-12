@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 
@@ -70,6 +71,11 @@ class AffiliateCommission extends Model
     public function ledgerTransaction(): MorphOne
     {
         return $this->morphOne(LedgerTransaction::class, 'source');
+    }
+
+    public function reversal(): HasOne
+    {
+        return $this->hasOne(AffiliateCommissionReversal::class);
     }
 
     /**

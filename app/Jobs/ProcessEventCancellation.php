@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Actions\ConfirmThawaniPayment;
 use App\Actions\RefundPayment;
 use App\Actions\ReleaseBookingSeats;
+use App\Actions\ReverseAffiliateCommission;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventCancellationStatus;
 use App\Enums\PaymentRefundState;
@@ -16,12 +17,13 @@ use App\Models\Payment;
 use App\States\Booking\Approved;
 use App\States\Booking\Cancelled;
 use App\States\Booking\PendingReview;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
 
-class ProcessEventCancellation implements ShouldQueue
+class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Queueable;
 
@@ -39,6 +41,7 @@ class ProcessEventCancellation implements ShouldQueue
         ConfirmThawaniPayment $confirmPayment,
         RefundPayment $refundPayment,
         ReleaseBookingSeats $releaseBookingSeats,
+        ReverseAffiliateCommission $reverseAffiliateCommission,
     ): void {
         $cancellation = EventCancellation::query()->with('event')->findOrFail($this->eventCancellationId);
         $cancellation->forceFill([
@@ -59,6 +62,20 @@ class ProcessEventCancellation implements ShouldQueue
             }
         }
 
+        $commissions = AffiliateCommission::query()
+            ->whereHas('booking', fn ($query) => $query->where('event_id', $cancellation->event_id))
+            ->whereHas('payment', fn ($query) => $query->where('state', PaymentState::Refunded->value))
+            ->get();
+
+        foreach ($commissions as $commission) {
+            try {
+                $reverseAffiliateCommission->execute($commission, $cancellation);
+            } catch (Throwable $exception) {
+                report($exception);
+                $errors[] = ['affiliate_commission_id' => $commission->id, 'message' => $exception->getMessage()];
+            }
+        }
+
         $payments = $this->capturedPayments($cancellation)->get();
         $remainingRefundBaisa = $payments->sum(fn (Payment $payment): int => $payment->refundableAmountBaisa());
         $succeededRefunds = $this->eventPayments($cancellation)
@@ -70,13 +87,14 @@ class ProcessEventCancellation implements ShouldQueue
             $errors[] = ['message' => 'توجد مبالغ مدفوعة لم يكتمل استردادها.'];
         }
 
-        $affiliateCommissionsCount = AffiliateCommission::query()
+        $unreversedCommissionsCount = AffiliateCommission::query()
             ->whereHas('booking', fn ($query) => $query->where('event_id', $cancellation->event_id))
+            ->whereDoesntHave('reversal')
             ->count();
 
-        if ($affiliateCommissionsCount > 0) {
+        if ($unreversedCommissionsCount > 0) {
             $errors[] = [
-                'message' => "توجد {$affiliateCommissionsCount} عمولات تسويق مرتبطة بالحجوزات الملغاة وتحتاج إلى تسوية محاسبية يدوية.",
+                'message' => "توجد {$unreversedCommissionsCount} عمولات تسويق لم تكتمل تسويتها.",
             ];
         }
 
@@ -87,6 +105,19 @@ class ProcessEventCancellation implements ShouldQueue
             'errors' => $errors === [] ? null : $errors,
             'completed_at' => $errors === [] ? now() : null,
         ])->save();
+    }
+
+    public function uniqueId(): string
+    {
+        return (string) $this->eventCancellationId;
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        EventCancellation::query()->whereKey($this->eventCancellationId)->update([
+            'status' => EventCancellationStatus::NeedsAttention->value,
+            'errors' => [['message' => $exception->getMessage()]],
+        ]);
     }
 
     private function processBooking(Booking $booking, EventCancellation $cancellation, ConfirmThawaniPayment $confirmPayment, RefundPayment $refundPayment, ReleaseBookingSeats $releaseBookingSeats): void

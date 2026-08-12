@@ -62,7 +62,12 @@ class Affiliate extends Authenticatable
 
     public function earnedCommissionBaisa(): int
     {
-        return (int) $this->commissions()->sum('commission_amount_baisa');
+        $earned = (int) $this->commissions()->sum('commission_amount_baisa');
+        $reversed = (int) AffiliateCommissionReversal::query()
+            ->whereHas('commission', fn ($query) => $query->where('affiliate_id', $this->id))
+            ->sum('amount_baisa');
+
+        return $earned - $reversed;
     }
 
     public function requestedPayoutBaisa(): int
@@ -79,6 +84,11 @@ class Affiliate extends Authenticatable
     public function availableBalanceBaisa(): int
     {
         return max(0, $this->earnedCommissionBaisa() - $this->requestedPayoutBaisa());
+    }
+
+    public function outstandingAdjustmentBaisa(): int
+    {
+        return max(0, $this->requestedPayoutBaisa() - $this->earnedCommissionBaisa());
     }
 
     public function pendingReferredBookingsCount(): int

@@ -12,10 +12,14 @@ use App\Models\Event;
 use App\Models\LedgerAccount;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Notifications\PaymentRefundedNotification;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
+use Spatie\WebhookServer\CallWebhookJob;
 
 beforeEach(function () {
     config([
@@ -62,6 +66,28 @@ test('paid payment can be fully refunded through thawani and posts reversal ledg
             && $request['amount'] === 9001
             && $request['reason'] === 'Family cancelled';
     });
+});
+
+test('successful refund notifies the customer and queues a refund webhook once', function () {
+    config(['byruhaa.webhooks.payment_refunded_url' => 'https://partner.test/payment-refunded']);
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/refunds' => Http::response([
+            'success' => true,
+            'data' => ['refund_id' => 'refund_notified', 'status' => 'succeeded'],
+        ]),
+    ]);
+    Notification::fake();
+    Queue::fake();
+    $payment = refundablePaymentFixture(amountBaisa: 7000);
+    $customer = $payment->bookingInstallment->paymentSchedule->booking->customer;
+
+    $refund = app(RefundPayment::class)->execute($payment);
+
+    Notification::assertSentToTimes($customer, PaymentRefundedNotification::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->webhookUrl === 'https://partner.test/payment-refunded'
+        && $job->payload['event'] === 'payment.refunded'
+        && $job->payload['data']['refund']['id'] === $refund->id);
 });
 
 test('paid payment can be partially refunded and remains partially refunded', function () {

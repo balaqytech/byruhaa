@@ -8,8 +8,10 @@ use App\Models\Booking;
 use App\Models\BookingFamilyMember;
 use App\Models\BookingInstallment;
 use App\Models\Customer;
+use App\Models\EventCancellation;
 use App\Models\EventInterest;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Models\WebhookDelivery;
 use App\Support\Money\MoneyFactory;
 use Carbon\CarbonInterface;
@@ -169,6 +171,65 @@ class ByruhaaWebhookSender
                 webhookable: $freshPayment,
                 payload: $this->paymentPaidPayload($freshPayment, now()),
             );
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    public function sendEventCancelled(EventCancellation $cancellation): void
+    {
+        $url = $this->webhookUrl('event_cancelled_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        try {
+            $cancellation = EventCancellation::query()->with('event')->findOrFail($cancellation->id);
+            $this->dispatchWebhook($url, 'event.cancelled', $cancellation, [
+                'event' => 'event.cancelled',
+                'customer_phone' => null,
+                'occurred_at' => now()->toJSON(),
+                'data' => [
+                    'cancellation' => [
+                        'id' => $cancellation->id,
+                        'status' => $cancellation->status->value,
+                        'reason' => $cancellation->reason,
+                        'bookings_count' => $cancellation->bookings_count,
+                        'refundable_amount' => $this->money($cancellation->refundable_amount_baisa, $cancellation->currency),
+                        'currency' => $cancellation->currency,
+                        'requested_at' => $cancellation->requested_at->toJSON(),
+                    ],
+                    'event' => ['id' => $cancellation->event->id, 'name' => $cancellation->event->name, 'slug' => $cancellation->event->slug],
+                ],
+            ]);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    public function sendPaymentRefunded(PaymentRefund $refund): void
+    {
+        $url = $this->webhookUrl('payment_refunded_url');
+
+        if ($url === '') {
+            return;
+        }
+
+        try {
+            $refund = PaymentRefund::query()->with('payment.bookingInstallment.paymentSchedule.booking.customer')->findOrFail($refund->id);
+            $booking = $refund->payment->bookingInstallment->paymentSchedule->booking;
+            $this->dispatchWebhook($url, 'payment.refunded', $refund, [
+                'event' => 'payment.refunded',
+                'customer_phone' => $booking->customer->phone_number,
+                'occurred_at' => $refund->processed_at?->toJSON() ?? now()->toJSON(),
+                'data' => [
+                    'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'amount' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason],
+                    'payment' => ['id' => $refund->payment_id, 'reference' => $refund->payment->reference],
+                    'booking' => ['id' => $booking->id, 'reference' => $booking->reference],
+                    'customer' => ['id' => $booking->customer->id, 'name' => $booking->customer->name, 'phone' => $booking->customer->phone_number, 'email' => $booking->customer->email],
+                ],
+            ]);
         } catch (Throwable $exception) {
             report($exception);
         }

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
@@ -65,6 +66,11 @@ class PaymentRefund extends Model
     public function ledgerTransaction(): MorphOne
     {
         return $this->morphOne(LedgerTransaction::class, 'source');
+    }
+
+    public function webhookDeliveries(): MorphMany
+    {
+        return $this->morphMany(WebhookDelivery::class, 'webhookable');
     }
 
     /**

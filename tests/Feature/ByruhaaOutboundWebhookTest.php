@@ -14,9 +14,11 @@ use App\Models\BookingInstallment;
 use App\Models\BookingPaymentSchedule;
 use App\Models\Customer;
 use App\Models\Event;
+use App\Models\EventCancellation;
 use App\Models\EventInterest;
 use App\Models\FamilyMember;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Models\User;
 use App\Models\WebhookDelivery;
 use App\Services\BookingApprovalService;
@@ -42,6 +44,8 @@ beforeEach(function (): void {
         'byruhaa.webhooks.booking_approved_url' => null,
         'byruhaa.webhooks.booking_contracts_signed_url' => null,
         'byruhaa.webhooks.payment_paid_url' => null,
+        'byruhaa.webhooks.event_cancelled_url' => null,
+        'byruhaa.webhooks.payment_refunded_url' => null,
         'byruhaa.webhooks.signing_secret' => null,
         'byruhaa.webhooks.timeout' => 10,
         'byruhaa.webhooks.queue' => 'default',
@@ -63,6 +67,8 @@ test('byruhaa webhook config values exist', function () {
             'booking_approved_url',
             'booking_contracts_signed_url',
             'payment_paid_url',
+            'event_cancelled_url',
+            'payment_refunded_url',
             'signing_secret',
             'timeout',
             'queue',
@@ -778,7 +784,7 @@ function byruhaaSignatureDataUrl(): string
     return 'data:image/png;base64,'.base64_encode('fake-png');
 }
 
-function byruhaaWebhookDelivery(string $event, Booking|Customer|EventInterest|Payment $webhookable, string $url): WebhookDelivery
+function byruhaaWebhookDelivery(string $event, Booking|Customer|EventCancellation|EventInterest|Payment|PaymentRefund $webhookable, string $url): WebhookDelivery
 {
     $delivery = WebhookDelivery::query()
         ->where('event', $event)
