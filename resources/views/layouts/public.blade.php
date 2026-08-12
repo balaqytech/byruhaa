@@ -212,14 +212,14 @@
                     <a href="{{ route('register') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.auth.create_account') }}</a>
                 @endif
-                {{-- @if (Route::has('affiliate.login'))
+                @if (Route::has('affiliate.login'))
                     <a href="{{ route('affiliate.login') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.login_title') }}</a>
                 @endif
                 @if (Route::has('affiliate.register'))
                     <a href="{{ route('affiliate.register') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
-                @endif --}}
+                @endif
             </nav>
         </div>
 

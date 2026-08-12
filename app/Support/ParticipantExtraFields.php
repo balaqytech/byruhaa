@@ -83,11 +83,11 @@ class ParticipantExtraFields
                 'checkbox' => $field['required'] ? ['accepted'] : ['nullable', 'boolean'],
                 'date' => [$field['required'] ? 'required' : 'nullable', 'date'],
                 'number' => [$field['required'] ? 'required' : 'nullable', 'numeric'],
-                'select', 'radio' => array_values(array_filter([
+                'select', 'radio' => array_filter([
                     $field['required'] ? 'required' : 'nullable',
                     'string',
                     $field['options'] !== [] ? Rule::in($field['options']) : null,
-                ])),
+                ]),
                 'textarea' => [$field['required'] ? 'required' : 'nullable', 'string', 'max:5000'],
                 default => [$field['required'] ? 'required' : 'nullable', 'string', 'max:255'],
             };
@@ -161,6 +161,7 @@ class ParticipantExtraFields
         return $formatted;
     }
 
+    /** @param  array<string, mixed>  $field */
     private static function formatAnswerValue(array $field, mixed $value): string
     {
         if ($field['type'] === 'checkbox') {

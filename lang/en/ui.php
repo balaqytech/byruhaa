@@ -274,6 +274,8 @@ return [
         'price_tier_in_use' => 'A used early-bird tier cannot be deleted; deactivate it instead.',
         'price_tier_price_above_base' => 'An early-bird tier price cannot exceed the event base price.',
         'price_tier_prices_must_increase' => 'Early-bird tier prices must stay in ascending order.',
+        'store_default_option_cannot_be_deleted' => 'The default product option cannot be deleted. Archive or deactivate it instead.',
+        'store_default_option_required' => 'Each product must have exactly one default option.',
         'pay_installments_in_order' => 'Please pay the installments in order.',
         'password_updated' => 'Password updated.',
         'payment_cancelled' => 'Payment was cancelled.',

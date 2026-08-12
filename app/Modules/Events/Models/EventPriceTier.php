@@ -35,9 +35,6 @@ class EventPriceTier extends Model
         return EventPriceTierFactory::new();
     }
 
-    /** @var list<string> */
-    protected $appends = ['price'];
-
     /** @var array<string, mixed> */
     protected $attributes = [
         'position' => 1,

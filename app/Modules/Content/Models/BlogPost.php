@@ -106,7 +106,7 @@ class BlogPost extends Model implements HasRichContent
             ->where(function (Builder $query): void {
                 $query
                     ->whereNull('blog_post_category_id')
-                    ->orWhereHas('category', fn (Builder $query): Builder => $query->visible());
+                    ->orWhereHas('category', fn (Builder $query): Builder => $query->where('is_visible', true));
             });
     }
 

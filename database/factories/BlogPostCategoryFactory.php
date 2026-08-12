@@ -21,6 +21,7 @@ class BlogPostCategoryFactory extends Factory
     public function definition(): array
     {
         $name = fake()->unique()->words(2, true);
+        $name = is_array($name) ? implode(' ', $name) : $name;
 
         return [
             'name' => $name,

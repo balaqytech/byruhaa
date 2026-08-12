@@ -16,18 +16,22 @@ class AboutPageSettings extends Settings
 
     public string $intro_body;
 
+    /** @phpstan-var array<int, array<string, string>> */
     public array $highlights;
 
     public string $facilities_heading;
 
+    /** @phpstan-var array<int, array<string, string>> */
     public array $facilities;
 
     public string $advantages_heading;
 
+    /** @phpstan-var array<int, array<string, string>> */
     public array $advantages;
 
     public ?string $hero_image_id;
 
+    /** @phpstan-var array<int, string> */
     public array $gallery_image_ids;
 
     public string $gallery_heading;

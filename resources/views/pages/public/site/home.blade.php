@@ -190,8 +190,7 @@
                                         <div class="mt-4 flex flex-wrap items-end justify-between gap-3">
                                             <p class="font-heading text-5xl font-bold text-white"><x-money :amount-baisa="$featuredTierOffer['current']['price_baisa']"
                                                     :currency="$featuredTierOffer['current']['currency']" /></p>
-                                            <p class="text-lg font-bold text-[#87d9bd]">بقي
-                                                {{ $featuredTierOffer['current']['remaining_seats'] }} مقاعد</p>
+                                            <p class="text-lg font-bold text-[#87d9bd]">بقي {{ $featuredTierOffer['current']['remaining_seats'] }} مقاعد</p>
                                         </div>
                                     </div>
                                     @if ($featuredTierOffer['next'])

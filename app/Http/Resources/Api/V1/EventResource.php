@@ -11,8 +11,8 @@ use App\Modules\Events\Models\EventPriceTier;
 use Brick\Money\Money;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Collection;
 
+/** @mixin Event */
 class EventResource extends JsonResource
 {
     use FormatsApiMoney;
@@ -67,7 +67,7 @@ class EventResource extends JsonResource
                         'maximum_family_members' => $discount->maximum_family_members,
                     ],
                 ],
-            )->values()),
+            )->values()->all()),
             'payment_plans' => $this->whenLoaded('paymentPlans', fn () => $this->paymentPlans->map(
                 fn (EventPaymentPlan $paymentPlan): array => [
                     'id' => $paymentPlan->id,
@@ -79,7 +79,7 @@ class EventResource extends JsonResource
                         ? $this->paymentPlanInstallments($paymentPlan)
                         : [],
                 ],
-            )->values()),
+            )->values()->all()),
             'created_at' => $this->created_at?->toJSON(),
             'updated_at' => $this->updated_at?->toJSON(),
         ];
@@ -106,9 +106,9 @@ class EventResource extends JsonResource
     }
 
     /**
-     * @return Collection<int, array<string, mixed>>
+     * @return array<int, array{id: int, name: string|null, sequence: int, percentage: int, due_date: string, amount: string|null, currency: string}>
      */
-    private function paymentPlanInstallments(EventPaymentPlan $paymentPlan): Collection
+    private function paymentPlanInstallments(EventPaymentPlan $paymentPlan): array
     {
         $amounts = $this->paymentPlanInstallmentAmounts($paymentPlan);
 
@@ -118,11 +118,11 @@ class EventResource extends JsonResource
                 'name' => $installment->name,
                 'sequence' => $installment->sequence,
                 'percentage' => $installment->percentage,
-                'due_date' => $installment->due_date?->toDateString(),
+                'due_date' => $installment->due_date->toDateString(),
                 'amount' => $this->money($amounts[$index] ?? null),
                 'currency' => $this->currency,
             ],
-        );
+        )->all();
     }
 
     /**

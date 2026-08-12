@@ -268,6 +268,11 @@ return [
         'paid_by' => 'دفع بواسطة',
         'paid_payouts' => 'طلبات السحب المدفوعة',
         'payment' => 'الدفعة',
+        'product' => 'المنتج',
+        'sku' => 'رمز المنتج',
+        'image' => 'الصورة',
+        'is_available' => 'متاح',
+        'is_default' => 'الخيار الافتراضي',
         'payment_details' => 'تفاصيل الدفع',
         'pending_payouts' => 'طلبات السحب المعلقة',
         'referrals' => 'الإحالات',
@@ -402,6 +407,22 @@ return [
         'succeeded' => 'ناجح',
         'voided' => 'لاغٍ',
         'suspended' => 'موقوف',
+        'default' => 'افتراضي',
+        'no' => 'لا',
+    ],
+
+    'store' => [
+        'default_option_help' => 'يجب أن يحتفظ كل منتج بخيار افتراضي واحد فقط. حفظ خيار افتراضي جديد يستبدل الخيار الحالي.',
+        'sections' => [
+            'identity' => 'الهوية',
+            'content' => 'المحتوى',
+            'media' => 'الوسائط',
+        ],
+        'product_statuses' => [
+            'draft' => 'مسودة',
+            'active' => 'نشط',
+            'archived' => 'مؤرشف',
+        ],
     ],
 
     'ledger_account_types' => [

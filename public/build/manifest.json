@@ -1,55 +1,7 @@
 {
-  "_aref-ruqaa-400-normal-AKnCEuAE.woff2": {
-    "file": "assets/aref-ruqaa-400-normal-AKnCEuAE.woff2",
-    "src": "_aref-ruqaa-400-normal-AKnCEuAE.woff2"
-  },
-  "_aref-ruqaa-400-normal-BaTgTcXa.woff2": {
-    "file": "assets/aref-ruqaa-400-normal-BaTgTcXa.woff2",
-    "src": "_aref-ruqaa-400-normal-BaTgTcXa.woff2"
-  },
-  "_aref-ruqaa-400-normal-CD776mpm.woff": {
-    "file": "assets/aref-ruqaa-400-normal-CD776mpm.woff",
-    "src": "_aref-ruqaa-400-normal-CD776mpm.woff"
-  },
-  "_aref-ruqaa-400-normal-DTcVTQXE.woff": {
-    "file": "assets/aref-ruqaa-400-normal-DTcVTQXE.woff",
-    "src": "_aref-ruqaa-400-normal-DTcVTQXE.woff"
-  },
-  "_aref-ruqaa-400-normal-DemsUkpi.woff": {
-    "file": "assets/aref-ruqaa-400-normal-DemsUkpi.woff",
-    "src": "_aref-ruqaa-400-normal-DemsUkpi.woff"
-  },
-  "_aref-ruqaa-400-normal-FVqC-QZJ.woff2": {
-    "file": "assets/aref-ruqaa-400-normal-FVqC-QZJ.woff2",
-    "src": "_aref-ruqaa-400-normal-FVqC-QZJ.woff2"
-  },
-  "_aref-ruqaa-700-normal-CBkzp2t9.woff": {
-    "file": "assets/aref-ruqaa-700-normal-CBkzp2t9.woff",
-    "src": "_aref-ruqaa-700-normal-CBkzp2t9.woff"
-  },
-  "_aref-ruqaa-700-normal-CYtV2beA.woff": {
-    "file": "assets/aref-ruqaa-700-normal-CYtV2beA.woff",
-    "src": "_aref-ruqaa-700-normal-CYtV2beA.woff"
-  },
-  "_aref-ruqaa-700-normal-D30apH1C.woff2": {
-    "file": "assets/aref-ruqaa-700-normal-D30apH1C.woff2",
-    "src": "_aref-ruqaa-700-normal-D30apH1C.woff2"
-  },
-  "_aref-ruqaa-700-normal-DLleZ2O-.woff": {
-    "file": "assets/aref-ruqaa-700-normal-DLleZ2O-.woff",
-    "src": "_aref-ruqaa-700-normal-DLleZ2O-.woff"
-  },
-  "_aref-ruqaa-700-normal-DrzuPRv7.woff2": {
-    "file": "assets/aref-ruqaa-700-normal-DrzuPRv7.woff2",
-    "src": "_aref-ruqaa-700-normal-DrzuPRv7.woff2"
-  },
-  "_aref-ruqaa-700-normal-DsYZho2f.woff2": {
-    "file": "assets/aref-ruqaa-700-normal-DsYZho2f.woff2",
-    "src": "_aref-ruqaa-700-normal-DsYZho2f.woff2"
-  },
-  "_fonts-B-EpNgZT.css": {
-    "file": "assets/fonts-B-EpNgZT.css",
-    "src": "_fonts-B-EpNgZT.css"
+  "_fonts-5fIXHqfM.css": {
+    "file": "assets/fonts-5fIXHqfM.css",
+    "src": "_fonts-5fIXHqfM.css"
   },
   "_ibm-plex-sans-arabic-400-normal-Bjm8chgm.woff": {
     "file": "assets/ibm-plex-sans-arabic-400-normal-Bjm8chgm.woff",
@@ -147,8 +99,72 @@
     "file": "assets/ibm-plex-sans-arabic-600-normal-KrqB56Mw.woff2",
     "src": "_ibm-plex-sans-arabic-600-normal-KrqB56Mw.woff2"
   },
+  "_reem-kufi-400-normal-BBJU0Qav.woff": {
+    "file": "assets/reem-kufi-400-normal-BBJU0Qav.woff",
+    "src": "_reem-kufi-400-normal-BBJU0Qav.woff"
+  },
+  "_reem-kufi-400-normal-CC1rmUNx.woff": {
+    "file": "assets/reem-kufi-400-normal-CC1rmUNx.woff",
+    "src": "_reem-kufi-400-normal-CC1rmUNx.woff"
+  },
+  "_reem-kufi-400-normal-CkEL2vhd.woff": {
+    "file": "assets/reem-kufi-400-normal-CkEL2vhd.woff",
+    "src": "_reem-kufi-400-normal-CkEL2vhd.woff"
+  },
+  "_reem-kufi-400-normal-CtrjvQUY.woff2": {
+    "file": "assets/reem-kufi-400-normal-CtrjvQUY.woff2",
+    "src": "_reem-kufi-400-normal-CtrjvQUY.woff2"
+  },
+  "_reem-kufi-400-normal-DtbpzZsC.woff2": {
+    "file": "assets/reem-kufi-400-normal-DtbpzZsC.woff2",
+    "src": "_reem-kufi-400-normal-DtbpzZsC.woff2"
+  },
+  "_reem-kufi-400-normal-Za7ilK7N.woff2": {
+    "file": "assets/reem-kufi-400-normal-Za7ilK7N.woff2",
+    "src": "_reem-kufi-400-normal-Za7ilK7N.woff2"
+  },
+  "_reem-kufi-400-normal-dNVWXZsY.woff": {
+    "file": "assets/reem-kufi-400-normal-dNVWXZsY.woff",
+    "src": "_reem-kufi-400-normal-dNVWXZsY.woff"
+  },
+  "_reem-kufi-400-normal-mVApVoLm.woff2": {
+    "file": "assets/reem-kufi-400-normal-mVApVoLm.woff2",
+    "src": "_reem-kufi-400-normal-mVApVoLm.woff2"
+  },
+  "_reem-kufi-700-normal-2X0LRV6P.woff": {
+    "file": "assets/reem-kufi-700-normal-2X0LRV6P.woff",
+    "src": "_reem-kufi-700-normal-2X0LRV6P.woff"
+  },
+  "_reem-kufi-700-normal-BVODnn_J.woff": {
+    "file": "assets/reem-kufi-700-normal-BVODnn_J.woff",
+    "src": "_reem-kufi-700-normal-BVODnn_J.woff"
+  },
+  "_reem-kufi-700-normal-CFkdsF2J.woff": {
+    "file": "assets/reem-kufi-700-normal-CFkdsF2J.woff",
+    "src": "_reem-kufi-700-normal-CFkdsF2J.woff"
+  },
+  "_reem-kufi-700-normal-C_zHpWh6.woff": {
+    "file": "assets/reem-kufi-700-normal-C_zHpWh6.woff",
+    "src": "_reem-kufi-700-normal-C_zHpWh6.woff"
+  },
+  "_reem-kufi-700-normal-CbxOURXW.woff2": {
+    "file": "assets/reem-kufi-700-normal-CbxOURXW.woff2",
+    "src": "_reem-kufi-700-normal-CbxOURXW.woff2"
+  },
+  "_reem-kufi-700-normal-CwRvvSSB.woff2": {
+    "file": "assets/reem-kufi-700-normal-CwRvvSSB.woff2",
+    "src": "_reem-kufi-700-normal-CwRvvSSB.woff2"
+  },
+  "_reem-kufi-700-normal-D4MLSEVm.woff2": {
+    "file": "assets/reem-kufi-700-normal-D4MLSEVm.woff2",
+    "src": "_reem-kufi-700-normal-D4MLSEVm.woff2"
+  },
+  "_reem-kufi-700-normal-D4RhYlR1.woff2": {
+    "file": "assets/reem-kufi-700-normal-D4RhYlR1.woff2",
+    "src": "_reem-kufi-700-normal-D4RhYlR1.woff2"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-DHSSUepM.css",
+    "file": "assets/app-CeHmy0ee.css",
     "name": "app",
     "names": [
       "app.css"

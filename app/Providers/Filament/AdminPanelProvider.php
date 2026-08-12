@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
+use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
+use App\Modules\Store\Filament\Resources\Products\ProductResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,6 +37,11 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
+            ->resources([
+                CategoryResource::class,
+                ProductResource::class,
+                ProductOptionResource::class,
+            ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,

@@ -34,6 +34,7 @@ class ContactPageSettings extends Settings
 
     public string $social_intro;
 
+    /** @phpstan-var array<int, array<string, string>> */
     public array $social_links;
 
     public string $meta_title;

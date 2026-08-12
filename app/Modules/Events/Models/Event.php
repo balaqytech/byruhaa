@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -24,6 +25,7 @@ use Illuminate\Validation\ValidationException;
  * @property string $slug
  * @property EventType $type
  * @property EventStatus $status
+ * @property EventEnrollmentStatus $enrollment_status
  * @property string|null $landing_page_key
  * @property string|null $subtitle
  * @property string|null $excerpt
@@ -41,6 +43,7 @@ use Illuminate\Validation\ValidationException;
  * @property int $price_baisa
  * @property string $currency
  * @property-read Money $price
+ * @property-read Collection<int, Discount> $availableDiscounts
  */
 #[Fillable(['name', 'slug', 'type', 'status', 'enrollment_status', 'landing_page_key', 'subtitle', 'excerpt', 'card_topics', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'schedule_text', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
 class Event extends Model
@@ -52,9 +55,6 @@ class Event extends Model
     {
         return EventFactory::new();
     }
-
-    /** @var list<string> */
-    protected $appends = ['price'];
 
     /**
      * @var array<string, mixed>
@@ -141,6 +141,7 @@ class Event extends Model
         return $this->hasMany(BookingSeatAllocation::class);
     }
 
+    /** @return HasMany<EventInterest, $this> */
     public function eventInterests(): HasMany
     {
         return $this->hasMany(EventInterest::class);

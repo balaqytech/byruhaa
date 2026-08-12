@@ -33,6 +33,25 @@ use InvalidArgumentException;
 use OpenSpout\Reader\Common\Creator\ReaderFactory;
 use RuntimeException;
 
+/**
+ * @phpstan-type MigrantRow array{
+ *     row_number: int,
+ *     registered_at: CarbonImmutable,
+ *     student_name: string,
+ *     grade: string|null,
+ *     birth_date: CarbonImmutable,
+ *     relationship: string|null,
+ *     guardian_name: string,
+ *     civil_id: string,
+ *     phone_number: string,
+ *     email: string|null,
+ *     address: string,
+ *     amount_baisa: int,
+ *     payment_method: string|null,
+ *     status: string,
+ *     send_webhook: bool
+ * }
+ */
 class ImportMigrantsEventBookings
 {
     private const EventName = 'فعالية مهاجر إلى ربي - صيف 2026';
@@ -103,22 +122,7 @@ class ImportMigrantsEventBookings
     }
 
     /**
-     * @return Collection<int, array{
-     *     row_number: int,
-     *     registered_at: CarbonImmutable,
-     *     student_name: string,
-     *     grade: string|null,
-     *     birth_date: CarbonImmutable,
-     *     relationship: string|null,
-     *     guardian_name: string,
-     *     civil_id: string,
-     *     phone_number: string,
-     *     email: string|null,
-     *     address: string,
-     *     amount_baisa: int,
-     *     payment_method: string|null,
-     *     status: string
-     * }>
+     * @return Collection<int, array<string, mixed>>
      */
     private function rows(string $path): Collection
     {
@@ -375,7 +379,7 @@ class ImportMigrantsEventBookings
             throw new RuntimeException('Cannot import an empty booking group.');
         }
 
-        $sendWebhook = $rows->contains(fn (array $row): bool => $row['send_webhook'] ?? false);
+        $sendWebhook = $rows->contains(fn (array $row): bool => (bool) ($row['send_webhook'] ?? false));
         $customer = $this->upsertCustomer($firstRow, $temporaryPassword);
         $familyMembers = $rows->map(fn (array $row): FamilyMember => $this->upsertFamilyMember($customer, $row));
         $booking = $this->upsertBooking($customer, $event, $rows, $discounts);
@@ -857,6 +861,7 @@ class ImportMigrantsEventBookings
 
     /**
      * @param  array<int, mixed>  $values
+     * @param  array<string, int>  $headers
      */
     private function cell(array $values, array $headers, string $header): mixed
     {

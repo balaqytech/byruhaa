@@ -5,6 +5,7 @@ return [
         'content' => 'Content',
         'customer_management' => 'Customer Management',
         'finance' => 'Finance',
+        'store' => 'Store',
     ],
 
     'resources' => [
@@ -17,6 +18,21 @@ return [
             'label' => 'Blog post',
             'plural_label' => 'Blog posts',
             'navigation_label' => 'Blog posts',
+        ],
+        'store_categories' => [
+            'label' => 'Store category',
+            'plural_label' => 'Store categories',
+            'navigation_label' => 'Categories',
+        ],
+        'store_products' => [
+            'label' => 'Store product',
+            'plural_label' => 'Store products',
+            'navigation_label' => 'Products',
+        ],
+        'store_product_options' => [
+            'label' => 'Product option',
+            'plural_label' => 'Product options',
+            'navigation_label' => 'Product options',
         ],
         'bookings' => [
             'label' => 'Booking',
@@ -324,6 +340,11 @@ return [
         'password' => 'Password',
         'payloads' => 'Payloads',
         'payment' => 'Payment',
+        'product' => 'Product',
+        'sku' => 'SKU',
+        'image' => 'Image',
+        'is_available' => 'Available',
+        'is_default' => 'Default option',
         'payment_details' => 'Payment details',
         'phone_number' => 'Phone number',
         'percentage' => 'Percentage',
@@ -402,6 +423,23 @@ return [
         'succeeded' => 'Succeeded',
         'voided' => 'Voided',
         'suspended' => 'Suspended',
+        'default' => 'Default',
+        'no' => 'No',
+    ],
+
+    'store' => [
+        'default_option_help' => 'Each product must keep exactly one default option. Saving a new default will replace the current one.',
+        'sections' => [
+            'identity' => 'Identity',
+            'content' => 'Content',
+            'media' => 'Media',
+            'options' => 'Product options',
+        ],
+        'product_statuses' => [
+            'draft' => 'Draft',
+            'active' => 'Active',
+            'archived' => 'Archived',
+        ],
     ],
 
     'ledger_account_types' => [

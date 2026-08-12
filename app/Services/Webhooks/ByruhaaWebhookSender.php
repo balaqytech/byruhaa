@@ -32,7 +32,7 @@ class ByruhaaWebhookSender
         }
 
         try {
-            $freshCustomer = Customer::query()->findOrFail($customer->getKey());
+            $freshCustomer = Customer::query()->whereKey($customer->getKey())->firstOrFail();
 
             $this->dispatchWebhook(
                 url: $url,
@@ -80,7 +80,8 @@ class ByruhaaWebhookSender
         try {
             $freshBooking = Booking::query()
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->findOrFail($booking->getKey());
+                ->whereKey($booking->getKey())
+                ->firstOrFail();
 
             $this->dispatchWebhook(
                 url: $url,
@@ -104,7 +105,8 @@ class ByruhaaWebhookSender
         try {
             $freshBooking = Booking::query()
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->findOrFail($booking->getKey());
+                ->whereKey($booking->getKey())
+                ->firstOrFail();
 
             $this->dispatchWebhook(
                 url: $url,
@@ -152,7 +154,8 @@ class ByruhaaWebhookSender
         try {
             $freshBooking = Booking::query()
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->findOrFail($booking->getKey());
+                ->whereKey($booking->getKey())
+                ->firstOrFail();
 
             if (! $freshBooking->hasSignedContracts()) {
                 return;
@@ -187,7 +190,8 @@ class ByruhaaWebhookSender
                     'bookingInstallment.paymentSchedule.booking.event',
                     'bookingInstallment.paymentSchedule.installments',
                 ])
-                ->findOrFail($payment->getKey());
+                ->whereKey($payment->getKey())
+                ->firstOrFail();
 
             $this->dispatchWebhook(
                 url: $url,
@@ -475,7 +479,7 @@ class ByruhaaWebhookSender
                     'name' => $installment->name,
                     'sequence' => $installment->sequence,
                     'percentage' => $installment->percentage,
-                    'due_date' => $installment->due_date?->toDateString(),
+                    'due_date' => $installment->due_date->toDateString(),
                     'status' => $installment->state->value,
                     'amount' => $this->money($installment->amount_baisa, $installment->currency),
                     'currency' => $installment->currency,

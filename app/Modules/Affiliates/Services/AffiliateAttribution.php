@@ -42,7 +42,7 @@ class AffiliateAttribution
             return null;
         }
 
-        return $this->validPayload($payload) ? $payload : null;
+        return $this->normalizePayload($payload);
     }
 
     public function hydrateFromCookie(Request $request): void
@@ -59,13 +59,21 @@ class AffiliateAttribution
 
         $payload = json_decode($cookie, true);
 
-        if (! is_array($payload) || ! $this->validPayload($payload)) {
+        if (! is_array($payload)) {
             Cookie::expire($this->cookieName());
 
             return;
         }
 
-        $request->session()->put($this->sessionKey(), $payload);
+        $normalizedPayload = $this->normalizePayload($payload);
+
+        if ($normalizedPayload === null) {
+            Cookie::expire($this->cookieName());
+
+            return;
+        }
+
+        $request->session()->put($this->sessionKey(), $normalizedPayload);
     }
 
     public function forget(Request $request): void
@@ -91,17 +99,33 @@ class AffiliateAttribution
 
     /**
      * @param  array<mixed>  $payload
+     * @return array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null
      */
-    private function validPayload(array $payload): bool
+    private function normalizePayload(array $payload): ?array
     {
-        if (! isset($payload['affiliate_id'], $payload['code'], $payload['name'], $payload['captured_at'], $payload['expires_at'])) {
-            return false;
+        if (! isset($payload['affiliate_id'], $payload['code'], $payload['name'], $payload['captured_at'], $payload['expires_at'])
+            || (! is_int($payload['affiliate_id']) && ! ctype_digit((string) $payload['affiliate_id']))
+            || ! is_string($payload['code'])
+            || ! is_string($payload['name'])
+            || ! is_string($payload['captured_at'])
+            || ! is_string($payload['expires_at'])) {
+            return null;
         }
 
         try {
-            return Carbon::parse((string) $payload['expires_at'])->isFuture();
+            if (! Carbon::parse($payload['expires_at'])->isFuture()) {
+                return null;
+            }
         } catch (\Throwable) {
-            return false;
+            return null;
         }
+
+        return [
+            'affiliate_id' => (int) $payload['affiliate_id'],
+            'code' => $payload['code'],
+            'name' => $payload['name'],
+            'captured_at' => $payload['captured_at'],
+            'expires_at' => $payload['expires_at'],
+        ];
     }
 }

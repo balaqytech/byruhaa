@@ -77,6 +77,7 @@ class ContractVariables
         return $labels;
     }
 
+    /** @param  string|array<string, mixed>|null  $content */
     public static function render(string|array|null $content, EventContract|BookingFamilyMember $source): string
     {
         $values = self::values($source);
@@ -88,6 +89,7 @@ class ContractVariables
     }
 
     /**
+     * @param  string|array<string, mixed>|null  $content
      * @param  array<string, string>  $values
      */
     private static function renderRichEditorContent(string|array|null $content, array $values): string
@@ -186,7 +188,7 @@ class ContractVariables
             'discount_amount' => MoneyFormatter::baisa($amounts['discount_amount_baisa'], $booking->currency),
             'total_amount' => MoneyFormatter::baisa($amounts['total_baisa'], $booking->currency),
 
-            'contract_date' => self::date($contract?->created_at ?? now()),
+            'contract_date' => self::date($contract === null ? now() : $contract->created_at),
             'contract_signed_name' => self::value($contract?->signed_name),
             'contract_signed_at' => self::dateTime($contract?->signed_at),
         ];

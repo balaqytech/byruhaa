@@ -5,7 +5,8 @@ namespace App\Filament\Resources\Events\Schemas;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
-use App\Models\Event;
+use App\Modules\Events\Models\Event;
+use App\Modules\Events\Models\EventPriceTier;
 use App\Support\ContractVariables;
 use App\Support\EventLandingPageRegistry;
 use App\Support\Money\MoneyFactory;
@@ -110,7 +111,7 @@ class EventForm
                                 ->required()
                                 ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
                                 ->default('0.000')
-                                ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                                ->formatStateUsing(fn (mixed $state, ?Event $record): ?string => self::moneyInputState($state ?? $record?->price))
                                 ->suffix('OMR'),
                             TextInput::make('currency')
                                 ->label(__('admin.fields.currency'))
@@ -172,7 +173,7 @@ class EventForm
                                                 }
                                             },
                                         ])
-                                        ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                                        ->formatStateUsing(fn (mixed $state, ?EventPriceTier $record): ?string => self::moneyInputState($state ?? $record?->price))
                                         ->suffix('OMR'),
                                     Toggle::make('is_active')
                                         ->label(__('admin.fields.is_active'))

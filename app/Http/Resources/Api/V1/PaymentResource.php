@@ -3,9 +3,11 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\FormatsApiMoney;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/** @mixin Payment */
 class PaymentResource extends JsonResource
 {
     use FormatsApiMoney;
@@ -43,7 +45,7 @@ class PaymentResource extends JsonResource
                 'name' => $this->bookingInstallment->name,
                 'sequence' => $this->bookingInstallment->sequence,
                 'percentage' => $this->bookingInstallment->percentage,
-                'due_date' => $this->bookingInstallment->due_date?->toDateString(),
+                'due_date' => $this->bookingInstallment->due_date->toDateString(),
                 'amount' => $this->money($this->bookingInstallment->amount),
                 'currency' => $this->bookingInstallment->currency,
                 'state' => $this->bookingInstallment->state->value,

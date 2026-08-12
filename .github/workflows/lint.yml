@@ -38,8 +38,11 @@ jobs:
           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
           npm install
 
-      - name: Run Pint
-        run: composer lint
+      - name: Run Pint check
+        run: composer lint:check
+
+      - name: Composer audit
+        run: composer audit --locked
 
       # - name: Commit Changes
       #   uses: stefanzweifel/git-auto-commit-action@v7

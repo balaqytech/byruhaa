@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Modules\Content\Models\BlogPost;
 use App\Modules\Content\Models\BlogPostCategory;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 class BlogController extends Controller
@@ -65,7 +64,7 @@ class BlogController extends Controller
         return BlogPostCategory::query()
             ->visible()
             ->withCount([
-                'posts' => fn (Builder $query): Builder => $query->publiclyVisible(),
+                'posts' => fn ($query) => $query->publiclyVisible(),
             ])
             ->orderBy('sort_order')
             ->orderBy('name')

@@ -10,6 +10,9 @@ use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\Event;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Store\Models\Category;
+use App\Modules\Store\Models\Product;
+use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Providers\StoreServiceProvider;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
@@ -25,6 +28,9 @@ test('domain models live under their owning module namespaces', function (): voi
         Event::class,
         Payment::class,
         Customer::class,
+        Category::class,
+        Product::class,
+        ProductOption::class,
     ] as $model) {
         expect(str_starts_with($model, 'App\\Modules\\'))->toBeTrue();
     }

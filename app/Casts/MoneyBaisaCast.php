@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
 /**
- * @implements CastsAttributes<Money|null, Money|int|string|null>
+ * @implements CastsAttributes<Money|null, mixed>
  */
 class MoneyBaisaCast implements CastsAttributes
 {

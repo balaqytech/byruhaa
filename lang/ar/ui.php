@@ -274,6 +274,8 @@ return [
         'price_tier_in_use' => 'لا يمكن حذف باقة مستخدمة؛ عطّلها بدلاً من ذلك.',
         'price_tier_price_above_base' => 'لا يمكن أن يزيد سعر الباقة على السعر الأساسي للفعالية.',
         'price_tier_prices_must_increase' => 'يجب أن تبقى أسعار الباقات مرتبة تصاعدياً.',
+        'store_default_option_cannot_be_deleted' => 'لا يمكن حذف خيار المنتج الافتراضي. قم بأرشفته أو تعطيله بدلاً من ذلك.',
+        'store_default_option_required' => 'يجب أن يمتلك كل منتج خياراً افتراضياً واحداً فقط.',
         'pay_installments_in_order' => 'يرجى دفع الأقساط بالترتيب.',
         'password_updated' => 'تم تحديث كلمة المرور.',
         'payment_cancelled' => 'تم إلغاء الدفع.',
