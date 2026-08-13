@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Events\Schemas;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
+use App\Models\Event;
 use App\Support\ContractVariables;
 use App\Support\EventLandingPageRegistry;
 use App\Support\Money\MoneyFactory;

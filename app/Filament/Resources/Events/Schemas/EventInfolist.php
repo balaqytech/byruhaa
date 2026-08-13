@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Events\Schemas;
 
 use App\Models\Event;
+use App\Models\EventCancellation;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -133,12 +134,18 @@ class EventInfolist
                                         TextEntry::make('cancellation.payments_count')->label('المدفوعات'),
                                         TextEntry::make('cancellation.refundable_amount_baisa')
                                             ->label('المبلغ المطلوب رده')
-                                            ->state(fn (Event $record): string => MoneyFormatter::baisa($record->cancellation->refundable_amount_baisa, $record->cancellation->currency)),
+                                            ->state(fn (Event $record): string => self::cancellationMoney($record, 'refundable_amount_baisa')),
                                         TextEntry::make('cancellation.refunded_payments_count')->label('المدفوعات المستردة'),
                                         TextEntry::make('cancellation.refunded_amount_baisa')
                                             ->label('المبلغ المسترد')
-                                            ->state(fn (Event $record): string => MoneyFormatter::baisa($record->cancellation->refunded_amount_baisa, $record->cancellation->currency)),
-                                        TextEntry::make('cancellation.errors')->label('أخطاء تحتاج متابعة')->json()->columnSpanFull()->placeholder('-'),
+                                            ->state(fn (Event $record): string => self::cancellationMoney($record, 'refunded_amount_baisa')),
+                                        TextEntry::make('cancellation.errors')
+                                            ->label('أخطاء تحتاج متابعة')
+                                            ->state(fn (Event $record): array => self::cancellationErrorSummary($record))
+                                            ->listWithLineBreaks()
+                                            ->bulleted()
+                                            ->columnSpanFull()
+                                            ->placeholder('-'),
                                     ]),
                             ]),
                     ]),
@@ -160,5 +167,38 @@ class EventInfolist
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function cancellationErrorSummary(Event $event): array
+    {
+        $cancellation = EventCancellation::query()->where('event_id', $event->id)->first();
+        $errors = $cancellation instanceof EventCancellation ? ($cancellation->errors ?? []) : [];
+
+        return collect($errors)
+            ->map(function (array $error): string {
+                $message = (string) ($error['message'] ?? 'خطأ غير معروف');
+                $context = collect([
+                    isset($error['booking_id']) ? 'الحجز: '.$error['booking_id'] : null,
+                    isset($error['affiliate_commission_id']) ? 'العمولة: '.$error['affiliate_commission_id'] : null,
+                ])->filter()->implode('، ');
+
+                return $context === '' ? $message : "{$message} ({$context})";
+            })
+            ->values()
+            ->all();
+    }
+
+    private static function cancellationMoney(Event $event, string $amountField): string
+    {
+        $cancellation = EventCancellation::query()->where('event_id', $event->id)->first();
+
+        if (! $cancellation instanceof EventCancellation) {
+            return '-';
+        }
+
+        return MoneyFormatter::baisa((int) $cancellation->getAttribute($amountField), $cancellation->currency);
     }
 }

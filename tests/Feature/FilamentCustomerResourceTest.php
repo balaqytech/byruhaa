@@ -33,6 +33,7 @@ use App\Models\Coupon;
 use App\Models\Customer;
 use App\Models\Discount;
 use App\Models\Event;
+use App\Models\EventCancellation;
 use App\Models\EventContract;
 use App\Models\EventPaymentPlan;
 use App\Models\EventPaymentPlanInstallment;
@@ -406,6 +407,18 @@ test('event edit form hydrates stored base and tier prices without requiring re-
         ->and($event->priceTiers()->firstOrFail()->price_baisa)->toBe(4000);
 });
 
+test('event edit page resolves the event model in status field closures', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create();
+
+    $this->actingAs($staff, 'web')
+        ->get(EventResource::getUrl('edit', ['record' => $event]))
+        ->assertOk();
+
+    Livewire::test(EditEvent::class, ['record' => $event->getRouteKey()])
+        ->assertSuccessful();
+});
+
 test('event view page combines infolist and relation manager tabs', function () {
     $staff = User::factory()->create();
     $event = Event::factory()->create(['name' => 'Tabbed Event']);
@@ -446,6 +459,23 @@ test('event view page combines infolist and relation manager tabs', function () 
         'pageClass' => ViewEvent::class,
     ])
         ->assertCanSeeTableRecords([$booking]);
+});
+
+test('event view page renders cancellation errors without unsupported infolist methods', function () {
+    $staff = User::factory()->create();
+    $event = Event::factory()->create();
+    EventCancellation::factory()->for($event)->create([
+        'errors' => [
+            ['booking_id' => 42, 'message' => 'Refund gateway unavailable'],
+        ],
+    ]);
+
+    $this->actingAs($staff, 'web')
+        ->get(EventResource::getUrl('view', ['record' => $event]))
+        ->assertOk();
+
+    Livewire::test(ViewEvent::class, ['record' => $event->getRouteKey()])
+        ->assertSuccessful();
 });
 
 test('staff can edit customer profile fields in filament', function () {
