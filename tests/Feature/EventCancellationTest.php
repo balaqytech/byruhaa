@@ -93,6 +93,7 @@ test('event cancellation refunds captured payments and voids future installments
     expect($payment->refresh()->state)->toBe(PaymentState::Refunded)
         ->and($futureInstallment->refresh()->state)->toBe(BookingInstallmentState::Voided)
         ->and($booking->refresh()->state->getValue())->toBe('cancelled')
+        ->and($booking->cancellation_reason)->toBe('إلغاء من المنظم')
         ->and($cancellation->refresh()->status)->toBe(EventCancellationStatus::Completed)
         ->and($cancellation->refunded_amount_baisa)->toBe(5000)
         ->and($allocation->refresh()->state)->toBe(SeatAllocationState::Released)

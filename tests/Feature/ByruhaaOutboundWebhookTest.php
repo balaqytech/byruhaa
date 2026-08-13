@@ -89,7 +89,9 @@ test('cancelled booking queues one webhook with booking customer and event paylo
         'email' => 'cancelled@example.com',
     ]);
     $event = Event::factory()->create(['name' => 'Cancelled Camp']);
-    $booking = Booking::factory()->for($customer)->for($event)->create();
+    $booking = Booking::factory()->for($customer)->for($event)->create([
+        'cancellation_reason' => 'The participant cannot attend.',
+    ]);
 
     $booking->state->transitionTo(Cancelled::class);
     $job = byruhaaQueuedWebhook('https://partner.test/webhooks/booking-cancelled');
@@ -99,6 +101,7 @@ test('cancelled booking queues one webhook with booking customer and event paylo
         ->customer_phone->toBe('+96891234567')
         ->data->booking->id->toBe($booking->id)
         ->data->booking->status->toBe('cancelled')
+        ->data->booking->reason->toBe('The participant cannot attend.')
         ->data->event->name->toBe('Cancelled Camp')
         ->data->customer->email->toBe('cancelled@example.com');
 

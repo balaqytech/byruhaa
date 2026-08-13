@@ -362,6 +362,7 @@ class ByruhaaWebhookSender
                     'id' => $booking->id,
                     'reference' => $booking->reference,
                     'status' => $booking->state->getValue(),
+                    ...($eventName === 'booking.cancelled' ? ['reason' => $booking->cancellation_reason] : []),
                     'customer_panel_url' => route('customer.bookings.show', $booking),
                 ],
                 'event' => [

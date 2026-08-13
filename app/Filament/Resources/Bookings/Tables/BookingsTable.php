@@ -13,6 +13,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -85,8 +86,17 @@ class BookingsTable
                     ->label(__('admin.actions.cancel'))
                     ->visible(fn (Booking $record): bool => ! $record->state instanceof Cancelled)
                     ->color('warning')
+                    ->schema([
+                        Textarea::make('reason')
+                            ->label('سبب الإلغاء')
+                            ->required()
+                            ->maxLength(1000),
+                    ])
                     ->requiresConfirmation()
-                    ->action(function (Booking $record): void {
+                    ->action(function (Booking $record, array $data): void {
+                        $record->forceFill([
+                            'cancellation_reason' => trim((string) $data['reason']),
+                        ])->save();
                         $record->state->transitionTo(Cancelled::class);
                     }),
                 ViewAction::make(),

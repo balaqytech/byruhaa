@@ -34,6 +34,7 @@ use Spatie\ModelStates\HasStates;
  * @property int|null $reviewed_by_user_id
  * @property Carbon|null $reviewed_at
  * @property string|null $review_notes
+ * @property string|null $cancellation_reason
  * @property int $unit_price_baisa
  * @property string $currency
  * @property int $family_member_count
@@ -49,7 +50,7 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $discount_amount
  * @property-read Money $total
  */
-#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'coupon_id', 'coupon_code', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
+#[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'cancellation_reason', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'coupon_id', 'coupon_code', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */

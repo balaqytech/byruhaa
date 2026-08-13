@@ -147,6 +147,9 @@ class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQ
 
         $booking->refresh();
         if ($booking->state instanceof PendingReview || $booking->state instanceof Approved) {
+            $booking->forceFill([
+                'cancellation_reason' => $cancellation->reason,
+            ])->save();
             $booking->state->transitionTo(Cancelled::class);
         }
 
