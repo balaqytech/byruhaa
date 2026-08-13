@@ -5,6 +5,7 @@ namespace App\Modules\Store\Filament\Resources\Options;
 use App\Modules\Store\Filament\Resources\Options\Pages\CreateProductOption;
 use App\Modules\Store\Filament\Resources\Options\Pages\EditProductOption;
 use App\Modules\Store\Filament\Resources\Options\Pages\ListProductOptions;
+use App\Modules\Store\Filament\Resources\Options\RelationManagers\InventoryMovementsRelationManager;
 use App\Modules\Store\Filament\Resources\Options\Schemas\ProductOptionForm;
 use App\Modules\Store\Filament\Resources\Options\Tables\ProductOptionsTable;
 use App\Modules\Store\Models\ProductOption;
@@ -57,6 +58,13 @@ class ProductOptionResource extends Resource
             'index' => ListProductOptions::route('/'),
             'create' => CreateProductOption::route('/create'),
             'edit' => EditProductOption::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            InventoryMovementsRelationManager::class,
         ];
     }
 }

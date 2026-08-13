@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Str;
 use Slimani\MediaManager\Models\File;
 
 /**
@@ -43,21 +42,6 @@ class Product extends Model
         'sort_order' => 0,
     ];
 
-    protected static function booted(): void
-    {
-        static::created(function (Product $product): void {
-            $product->options()->create([
-                'name' => 'Standard',
-                'sku' => 'STORE-'.$product->getKey().'-'.Str::upper(Str::random(5)),
-                'price_baisa' => 0,
-                'currency' => 'OMR',
-                'sort_order' => 0,
-                'is_available' => true,
-                'is_default' => true,
-            ]);
-        });
-    }
-
     /** @return BelongsTo<Category, $this> */
     public function category(): BelongsTo
     {
@@ -80,6 +64,25 @@ class Product extends Model
     public function featuredImage(): BelongsTo
     {
         return $this->belongsTo(File::class, 'featured_image_id');
+    }
+
+    public function isPublishable(): bool
+    {
+        $this->loadMissing(['category', 'options']);
+
+        $defaults = $this->options->filter(fn (ProductOption $option): bool => $option->is_default === true);
+
+        $default = $defaults->first();
+
+        return $this->category?->is_active === true
+            && $defaults->count() === 1
+            && $default instanceof ProductOption
+            && filled(trim($default->sku))
+            && ! ProductOption::query()
+                ->where('sku', $default->sku)
+                ->whereKeyNot($default->getKey())
+                ->exists()
+            && $default->price_baisa > 0;
     }
 
     /**

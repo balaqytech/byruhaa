@@ -94,6 +94,7 @@ return [
      */
     'auto_discover_settings' => [
         app_path('Settings'),
+        app_path('Modules/Store/Settings'),
     ],
 
     /*

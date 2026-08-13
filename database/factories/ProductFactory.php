@@ -35,7 +35,7 @@ class ProductFactory extends Factory
     {
         return $this->afterCreating(function (Product $product): void {
             if (! $product->options()->exists()) {
-                ProductOption::factory()->for($product)->default()->create();
+                ProductOption::factory()->for($product)->default()->create(['price_baisa' => 0]);
             }
         });
     }

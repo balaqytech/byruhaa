@@ -100,6 +100,17 @@ class ProductForm
                                 Toggle::make('is_available')
                                     ->label(__('admin.fields.is_available'))
                                     ->default(true),
+                                Toggle::make('tracks_inventory')
+                                    ->label('Track inventory')
+                                    ->default(false),
+                                TextInput::make('stock_on_hand')
+                                    ->label('Current stock')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->disabled()
+                                    ->dehydrated(false)
+                                    ->visible(fn (callable $get): bool => (bool) $get('tracks_inventory')),
                                 Toggle::make('is_default')
                                     ->label(__('admin.fields.is_default'))
                                     ->default(true),

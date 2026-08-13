@@ -64,6 +64,16 @@ class ProductOptionForm
                         Toggle::make('is_available')
                             ->label(__('admin.fields.is_available'))
                             ->default(true),
+                        Toggle::make('tracks_inventory')
+                            ->label('Track inventory')
+                            ->default(false),
+                        TextInput::make('stock_on_hand')
+                            ->label('Current stock')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->disabled()
+                            ->dehydrated(false),
                         Toggle::make('is_default')
                             ->label(__('admin.fields.is_default'))
                             ->helperText(__('admin.store.default_option_help'))

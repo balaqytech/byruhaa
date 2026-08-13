@@ -2,9 +2,12 @@
 
 namespace App\Modules\Store\Filament\Resources\Options\Tables;
 
+use App\Modules\Store\Actions\AdjustStock;
 use App\Modules\Store\Models\ProductOption;
 use App\Support\MoneyFormatter;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -41,6 +44,10 @@ class ProductOptionsTable
                     ->label(__('admin.fields.is_default'))
                     ->formatStateUsing(fn (?bool $state): string => $state === true ? __('admin.statuses.default') : __('admin.statuses.no'))
                     ->badge(),
+                TextColumn::make('stock_on_hand')
+                    ->label('Stock')
+                    ->state(fn (ProductOption $record): string => $record->tracks_inventory ? (string) $record->stock_on_hand : '—')
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('product_id')
@@ -55,7 +62,35 @@ class ProductOptionsTable
             ])
             ->defaultSort('sort_order')
             ->recordActions([
+                self::adjustStockAction(),
                 EditAction::make(),
             ]);
+    }
+
+    private static function adjustStockAction(): Action
+    {
+        return Action::make('adjust-stock')
+            ->label('Adjust stock')
+            ->visible(fn (ProductOption $record): bool => $record->tracks_inventory)
+            ->form([
+                TextInput::make('quantity_change')
+                    ->label('Quantity change')
+                    ->numeric()
+                    ->integer()
+                    ->required(),
+                TextInput::make('reason')
+                    ->label('Reason')
+                    ->required()
+                    ->maxLength(255),
+            ])
+            ->action(function (ProductOption $record, array $data, AdjustStock $adjustStock): void {
+                $actorId = auth()->id();
+                $adjustStock->execute(
+                    $record,
+                    (int) $data['quantity_change'],
+                    (string) $data['reason'],
+                    is_numeric($actorId) ? (int) $actorId : null,
+                );
+            });
     }
 }
