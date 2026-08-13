@@ -17,6 +17,7 @@ class OrderResource extends JsonResource
     {
         return [
             'reference' => $this->reference,
+            'payment_token' => $this->payment_token,
             'status' => (string) $this->status,
             'currency' => $this->currency,
             'customer_name' => $this->customer_name,

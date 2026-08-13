@@ -26,6 +26,7 @@ abstract class OrderState extends State implements HasColor, HasLabel
             ->default(PendingPayment::class)
             ->allowTransition(PendingPayment::class, Confirmed::class)
             ->allowTransition(PendingPayment::class, Expired::class)
+            ->allowTransition(Expired::class, RefundPending::class)
             ->allowTransition(Confirmed::class, Preparing::class)
             ->allowTransition(Confirmed::class, Accepted::class)
             ->allowTransition(Confirmed::class, Rejected::class)

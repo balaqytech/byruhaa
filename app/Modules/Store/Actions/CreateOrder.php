@@ -5,7 +5,6 @@ namespace App\Modules\Store\Actions;
 use App\Modules\Store\Enums\OrderPickupType;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Order;
-use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Settings\StoreSettings;
 use Carbon\Exceptions\InvalidFormatException;
 use Illuminate\Support\Carbon;
@@ -14,11 +13,20 @@ use Illuminate\Validation\ValidationException;
 
 class CreateOrder
 {
-    public function __construct(private ReserveInventory $reserveInventory, private StoreSettings $settings) {}
+    public function __construct(
+        private ReserveInventory $reserveInventory,
+        private QuoteCart $quoteCart,
+        private StoreSettings $settings,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function execute(Cart $cart, array $data): Order
     {
+        if (is_string($data['note'] ?? null)
+            && count(preg_split('/\s+/u', trim((string) $data['note']), -1, PREG_SPLIT_NO_EMPTY) ?: []) > 50) {
+            throw ValidationException::withMessages(['note' => 'The note may contain no more than 50 words.']);
+        }
+
         return DB::transaction(function () use ($cart, $data): Order {
             $cart = Cart::query()->whereKey($cart->getKey())->lockForUpdate()->firstOrFail();
             $cartCustomerId = $cart->getRawOriginal('customer_id');
@@ -42,51 +50,8 @@ class CreateOrder
                 throw ValidationException::withMessages(['ordering' => 'Store ordering is currently disabled.']);
             }
 
-            $items = $cart->items()->with('productOption.product.category')->orderBy('product_option_id')->get();
-
-            if ($items->isEmpty()) {
-                throw ValidationException::withMessages(['cart' => 'The cart is empty.']);
-            }
-
             $this->validatePickup($data);
-            $subtotal = 0;
-            $vat = 0;
-            $snapshots = [];
-            $reservationQuantities = [];
-
-            foreach ($items as $item) {
-                $option = ProductOption::query()
-                    ->with('product.category')
-                    ->whereKey($item->product_option_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-                AddCartItem::ensurePurchasable($option);
-
-                if ($option->currency !== 'OMR') {
-                    throw ValidationException::withMessages(['currency' => 'Only OMR products can be ordered.']);
-                }
-                $lineSubtotal = $option->price_baisa * $item->quantity;
-                $lineVat = intdiv($lineSubtotal * $this->settings->vat_rate_percentage, 100);
-                $subtotal += $lineSubtotal;
-                $vat += $lineVat;
-                $snapshots[] = [
-                    'product_option_id' => $option->id,
-                    'product_name' => $option->product->name,
-                    'option_name' => $option->name,
-                    'sku' => $option->sku,
-                    'currency' => $option->currency,
-                    'unit_price_baisa' => $option->price_baisa,
-                    'quantity' => $item->quantity,
-                    'vat_baisa' => $lineVat,
-                    'line_subtotal_baisa' => $lineSubtotal,
-                    'line_total_baisa' => $lineSubtotal + $lineVat,
-                    'note' => $item->note,
-                ];
-
-                if ($option->tracks_inventory) {
-                    $reservationQuantities[$option->id] = ($reservationQuantities[$option->id] ?? 0) + $item->quantity;
-                }
-            }
+            $quote = $this->quoteCart->execute($cart, true);
 
             $order = Order::query()->create([
                 'idempotency_key' => $data['idempotency_key'],
@@ -99,17 +64,17 @@ class CreateOrder
                 'note' => $data['note'] ?? null,
                 'pickup_type' => $data['pickup_type'],
                 'pickup_at' => $data['pickup_type'] === OrderPickupType::Scheduled->value ? $data['pickup_at'] : null,
-                'subtotal_baisa' => $subtotal,
-                'vat_baisa' => $vat,
-                'total_baisa' => $subtotal + $vat,
-                'currency' => 'OMR',
+                'subtotal_baisa' => $quote['subtotal_baisa'],
+                'vat_baisa' => $quote['vat_baisa'],
+                'total_baisa' => $quote['total_baisa'],
+                'currency' => $quote['currency'],
             ]);
 
-            $order->items()->createMany($snapshots);
+            $order->items()->createMany($quote['items']);
             $order->statusHistory()->create(['from_status' => null, 'to_status' => 'pending_payment']);
 
-            if ($reservationQuantities !== []) {
-                $reservation = $this->reserveInventory->execute($reservationQuantities);
+            if ($quote['reservation_quantities'] !== []) {
+                $reservation = $this->reserveInventory->execute($quote['reservation_quantities']);
                 $order->inventoryReservation()->create(['reservation_id' => $reservation->id]);
             }
 

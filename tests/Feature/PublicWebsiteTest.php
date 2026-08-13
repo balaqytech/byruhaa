@@ -13,10 +13,20 @@ use App\Modules\Events\Models\Event;
 use App\Modules\Events\Models\EventPaymentPlan;
 use App\Modules\Events\Models\EventPaymentPlanInstallment;
 use App\Support\EventLandingPageRegistry;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
+
+beforeEach(function () {
+    Carbon::setTestNow(Carbon::create(2026, 8, 1, 9));
+});
+
+afterEach(function () {
+    Carbon::setTestNow();
+});
 
 test('homepage loads', function () {
     $featuredEvent = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
+    $featuredEvent->update(['status' => EventStatus::Published]);
 
     $this->get(route('home'))
         ->assertSuccessful()
@@ -80,7 +90,7 @@ test('public event cards show their editorial card content', function () {
         ->assertSee('من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة');
 });
 
-test('coffee page shows the launch menu without a parallel store', function () {
+test('coffee page renders the database-backed public storefront', function () {
     expect(config('coffee.groups'))->toHaveCount(4)
         ->and(config('coffee.currency'))->toBe('OMR');
 
@@ -91,18 +101,13 @@ test('coffee page shows the launch menu without a parallel store', function () {
         ->assertSuccessful()
         ->assertViewIs('pages.public.site.coffee')
         ->assertSee('قهوة بيرحاء')
-        ->assertSee('القائمة الافتتاحية')
-        ->assertSee('V60 حبوب الموسم')
-        ->assertSee('كرواسون اللوز')
-        ->assertSee('2.200')
-        ->assertSee('البيع والاستلام من الموقع')
+        ->assertSee('اطلب مسبقًا')
+        ->assertSee('wire:id=', false)
         ->assertSee('images/coffee-byruha-hero.webp', false)
         ->assertSee('images/coffee-byruha-menu.webp', false)
         ->assertSee('https://wa.me/96874155123', false)
         ->assertSee('relative z-10 mt-4 max-w-md', false)
-        ->assertDontSee('-mt-6', false)
-        ->assertDontSee('أضف إلى السلة')
-        ->assertDontSee('الدفع الآن');
+        ->assertDontSee('-mt-6', false);
 });
 
 test('umrah event is seeded with its canonical landing page data', function () {
@@ -329,6 +334,7 @@ test('homepage features the nearest published event and hides drafts', function 
 
 test('homepage shows the current price tier followed by the next tier', function () {
     $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
+    $event->update(['status' => EventStatus::Published]);
     $firstTier = $event->priceTiers()->firstOrFail();
     $booking = Booking::factory()->for($event)->create();
 

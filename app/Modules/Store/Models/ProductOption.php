@@ -131,6 +131,10 @@ class ProductOption extends Model
             return 0;
         }
 
+        if ($this->relationLoaded('reservationItems')) {
+            return (int) $this->reservationItems->sum('quantity');
+        }
+
         return (int) $this->reservationItems()
             ->whereHas('reservation', fn ($query) => $query
                 ->where('status', 'pending')

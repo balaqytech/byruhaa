@@ -4,9 +4,11 @@ namespace App\Modules\Finance\Actions;
 
 use App\Enums\ThawaniWebhookEventStatus;
 use App\Exceptions\PaymentGatewayException;
+use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\ThawaniWebhookEvent;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 use Throwable;
 
@@ -15,6 +17,7 @@ class HandleThawaniWebhook
     public function __construct(
         private ResolveThawaniWebhookPayment $resolvePayment,
         private ConfirmThawaniPayment $confirmThawaniPayment,
+        private PaymentService $paymentService,
     ) {}
 
     /**
@@ -46,13 +49,19 @@ class HandleThawaniWebhook
             }
 
             $event->forceFill(['payment_id' => $payment->id])->save();
-            $this->confirmThawaniPayment->confirm($payment);
+            if ($payment->subject_type !== null) {
+                $this->paymentService->verifyPayment($payment->reference);
+            } else {
+                $this->confirmThawaniPayment->confirm($payment);
+            }
 
             return $this->complete($event, ThawaniWebhookEventStatus::Processed, 200);
         } catch (PaymentGatewayException $exception) {
             report($exception);
 
             return $this->complete($event, ThawaniWebhookEventStatus::Failed, 503, $exception->getMessage());
+        } catch (ValidationException $exception) {
+            return $this->complete($event, ThawaniWebhookEventStatus::Rejected, 202, $exception->getMessage());
         } catch (RuntimeException $exception) {
             return $this->complete($event, ThawaniWebhookEventStatus::Rejected, 202, $exception->getMessage());
         } catch (Throwable $exception) {

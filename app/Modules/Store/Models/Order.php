@@ -17,12 +17,13 @@ use Spatie\ModelStates\HasStates;
 
 /**
  * @property OrderState $status
+ * @property string $payment_token
  * @property Carbon|null $pickup_at
  * @property-read Money $subtotal
  * @property-read Money $vat
  * @property-read Money $total
  */
-#[Fillable(['reference', 'idempotency_key', 'customer_id', 'status', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa'])]
+#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'status', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
@@ -47,6 +48,7 @@ class Order extends Model
     {
         static::creating(function (Order $order): void {
             $order->reference ??= 'BRH-ORD-'.Str::upper(Str::random(10));
+            $order->payment_token ??= (string) Str::uuid();
         });
     }
 

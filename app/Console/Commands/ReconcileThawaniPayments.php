@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -18,7 +19,7 @@ class ReconcileThawaniPayments extends Command
     /**
      * Execute the console command.
      */
-    public function handle(ConfirmThawaniPayment $confirmThawaniPayment): int
+    public function handle(ConfirmThawaniPayment $confirmThawaniPayment, PaymentService $paymentService): int
     {
         $limit = max(1, (int) $this->option('limit'));
         $payments = Payment::query()
@@ -33,7 +34,11 @@ class ReconcileThawaniPayments extends Command
 
         foreach ($payments as $payment) {
             try {
-                $confirmThawaniPayment->confirm($payment);
+                if ($payment->subject_type !== null) {
+                    $paymentService->verifyPayment($payment->reference);
+                } else {
+                    $confirmThawaniPayment->confirm($payment);
+                }
             } catch (Throwable $exception) {
                 $failures++;
                 $this->warn("Payment {$payment->reference} could not be reconciled: {$exception->getMessage()}");

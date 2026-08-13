@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\OrderController;
+use App\Http\Controllers\Store\PaymentController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,4 +22,10 @@ Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(funct
     Route::scopeBindings()->patch('cart/{cart:token}/items/{item}', [CartController::class, 'update'])->name('cart.items.update');
     Route::scopeBindings()->delete('cart/{cart:token}/items/{item}', [CartController::class, 'remove'])->name('cart.items.destroy');
     Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::post('orders/{order:payment_token}/payment', [PaymentController::class, 'store'])->middleware('throttle:10,1')->name('orders.payment.store');
+    Route::middleware('signed')->group(function (): void {
+        Route::get('orders/{order:payment_token}/payment/success', [PaymentController::class, 'success'])->name('orders.payment.success');
+        Route::get('orders/{order:payment_token}/payment/cancel', [PaymentController::class, 'cancel'])->name('orders.payment.cancel');
+        Route::get('orders/{order:payment_token}/status', [PaymentController::class, 'status'])->name('orders.status');
+    });
 });

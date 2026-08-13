@@ -39,17 +39,23 @@ class PaymentResource extends JsonResource
             'paid_at' => $this->paid_at?->toJSON(),
             'created_at' => $this->created_at?->toJSON(),
             'updated_at' => $this->updated_at?->toJSON(),
-            'booking_installment' => $this->whenLoaded('bookingInstallment', fn (): array => [
-                'id' => $this->bookingInstallment->id,
-                'booking_payment_schedule_id' => $this->bookingInstallment->booking_payment_schedule_id,
-                'name' => $this->bookingInstallment->name,
-                'sequence' => $this->bookingInstallment->sequence,
-                'percentage' => $this->bookingInstallment->percentage,
-                'due_date' => $this->bookingInstallment->due_date->toDateString(),
-                'amount' => $this->money($this->bookingInstallment->amount),
-                'currency' => $this->bookingInstallment->currency,
-                'state' => $this->bookingInstallment->state->value,
-            ]),
+            'booking_installment' => $this->whenLoaded('bookingInstallment', function (): ?array {
+                if ($this->bookingInstallment === null) {
+                    return null;
+                }
+
+                return [
+                    'id' => $this->bookingInstallment->id,
+                    'booking_payment_schedule_id' => $this->bookingInstallment->booking_payment_schedule_id,
+                    'name' => $this->bookingInstallment->name,
+                    'sequence' => $this->bookingInstallment->sequence,
+                    'percentage' => $this->bookingInstallment->percentage,
+                    'due_date' => $this->bookingInstallment->due_date->toDateString(),
+                    'amount' => $this->money($this->bookingInstallment->amount),
+                    'currency' => $this->bookingInstallment->currency,
+                    'state' => $this->bookingInstallment->state->value,
+                ];
+            }),
         ];
     }
 

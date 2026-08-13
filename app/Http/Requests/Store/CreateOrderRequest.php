@@ -29,7 +29,11 @@ class CreateOrderRequest extends FormRequest
             'customer_email' => ['nullable', 'email', 'max:255'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
             'recipient_phone' => ['nullable', 'string', 'max:32'],
-            'note' => ['nullable', 'string', 'max:5000'],
+            'note' => ['nullable', 'string', 'max:5000', function (string $attribute, mixed $value, \Closure $fail): void {
+                if (count(preg_split('/\s+/u', trim((string) $value), -1, PREG_SPLIT_NO_EMPTY) ?: []) > 50) {
+                    $fail('The note may contain no more than 50 words.');
+                }
+            }],
             'pickup_type' => ['required', 'in:immediate,scheduled'],
             'pickup_at' => ['nullable', 'date'],
         ];

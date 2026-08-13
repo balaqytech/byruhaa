@@ -26,7 +26,9 @@ use Illuminate\Support\Str;
 
 /**
  * @property int $id
- * @property int $booking_installment_id
+ * @property int|null $booking_installment_id
+ * @property string|null $subject_type
+ * @property string|null $subject_reference
  * @property PaymentProvider $provider
  * @property string $reference
  * @property int $amount_baisa
@@ -44,7 +46,7 @@ use Illuminate\Support\Str;
  * @property Carbon|null $paid_at
  * @property-read int $refundable_amount_baisa
  */
-#[Fillable(['booking_installment_id', 'provider', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at'])]
+#[Fillable(['booking_installment_id', 'subject_type', 'subject_reference', 'provider', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_session_id', 'provider_payment_id', 'provider_invoice', 'provider_payment_status', 'checkout_url', 'request_payload', 'response_payload', 'verified_at', 'paid_at'])]
 class Payment extends Model
 {
     /** @use HasFactory<PaymentFactory> */

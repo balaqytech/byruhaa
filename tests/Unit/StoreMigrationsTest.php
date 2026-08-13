@@ -44,6 +44,7 @@ test('store catalog migrations run up and down cleanly', function (): void {
             'database/migrations/2026_08_13_100003_create_store_order_items_table.php',
             'database/migrations/2026_08_13_100004_create_store_order_status_histories_table.php',
             'database/migrations/2026_08_13_100005_create_store_order_inventory_reservations_table.php',
+            'database/migrations/2026_08_13_103809_add_payment_token_to_store_orders_table.php',
         ];
         $migrations = [];
 
@@ -62,6 +63,8 @@ test('store catalog migrations run up and down cleanly', function (): void {
             ->and(Schema::hasTable('store_order_items'))->toBeTrue()
             ->and(Schema::hasTable('store_order_status_histories'))->toBeTrue()
             ->and(Schema::hasTable('store_order_inventory_reservations'))->toBeTrue();
+
+        expect(Schema::hasColumn('store_orders', 'payment_token'))->toBeTrue();
 
         foreach (array_reverse($migrations) as $migration) {
             $migration->down();
