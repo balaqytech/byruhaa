@@ -47,6 +47,9 @@
                             {{ __('ui.labels.payments') }}
                         </span>
                     </flux:sidebar.item>
+                    <flux:sidebar.item :href="route('customer.store.orders.index')" :current="request()->routeIs('customer.store.orders.*')" wire:navigate>
+                        <span class="inline-flex items-center gap-2"><x-hugeicon name="sparkles" class="text-lg" />طلبات القهوة</span>
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

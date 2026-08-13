@@ -11,6 +11,7 @@ use App\Modules\Store\States\Order\Confirmed;
 use App\Modules\Store\States\Order\Expired;
 use App\Modules\Store\States\Order\Refunded;
 use App\Modules\Store\States\Order\RefundPending;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class ConfirmStorePayment
@@ -32,8 +33,24 @@ class ConfirmStorePayment
             throw ValidationException::withMessages(['payment' => 'The payment amount or currency does not match the order.']);
         }
 
+        if ($order->paid_at === null || $order->payment_reference === null) {
+            $order->forceFill([
+                'paid_at' => Carbon::now(),
+                'payment_reference' => $payment->paymentReference,
+                'provider_invoice' => $payment->providerInvoice,
+            ])->save();
+        }
+
         $status = $order->status->getValue();
         if (in_array($status, [OrderStatus::Confirmed->value, OrderStatus::Accepted->value, OrderStatus::Preparing->value, OrderStatus::ReadyForPickup->value, OrderStatus::Completed->value], true)) {
+            if ($order->paid_at === null || $order->payment_reference === null) {
+                $order->forceFill([
+                    'paid_at' => $order->paid_at ?? Carbon::now(),
+                    'payment_reference' => $order->payment_reference ?? $payment->paymentReference,
+                    'provider_invoice' => $order->provider_invoice ?? $payment->providerInvoice,
+                ])->save();
+            }
+
             return;
         }
 

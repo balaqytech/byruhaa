@@ -44,6 +44,9 @@
                             {{ __('ui.labels.payments') }}
                         </span>
                     </flux:navbar.item>
+                    <flux:navbar.item :href="route('customer.store.orders.index')" :current="request()->routeIs('customer.store.orders.*')" wire:navigate>
+                        <span class="inline-flex items-center gap-2"><x-hugeicon name="sparkles" class="text-lg" />طلبات القهوة</span>
+                    </flux:navbar.item>
                 </flux:navbar>
 
                 <flux:spacer />
@@ -83,6 +86,9 @@
                                 <x-hugeicon name="wallet-02" class="text-lg" />
                                 {{ __('ui.labels.payments') }}
                             </span>
+                        </flux:menu.item>
+                        <flux:menu.item :href="route('customer.store.orders.index')" wire:navigate>
+                            <span class="inline-flex items-center gap-2"><x-hugeicon name="sparkles" class="text-lg" />طلبات القهوة</span>
                         </flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>

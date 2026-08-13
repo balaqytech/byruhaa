@@ -68,6 +68,12 @@ class CreateOrder
                 'vat_baisa' => $quote['vat_baisa'],
                 'total_baisa' => $quote['total_baisa'],
                 'currency' => $quote['currency'],
+                'vat_rate_percentage' => $this->settings->vat_rate_percentage,
+                'seller_legal_name' => $this->settings->legal_name,
+                'seller_tax_number' => $this->settings->tax_number,
+                'seller_address' => $this->settings->receipt_address,
+                'seller_phone' => $this->settings->receipt_phone,
+                'receipt_footer' => $this->settings->receipt_footer,
             ]);
 
             $order->items()->createMany($quote['items']);

@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class AddCartItem
 {
-    public function execute(Cart $cart, ProductOption $productOption, int $quantity, ?string $note = null): CartItem
+    public function execute(Cart $cart, ProductOption $productOption, int $quantity, ?string $note = null, bool $checkInventory = false): CartItem
     {
         if ($quantity < 1 || $quantity > 99) {
             throw ValidationException::withMessages(['quantity' => 'Quantity must be between 1 and 99.']);
@@ -18,7 +18,7 @@ class AddCartItem
 
         $this->validateNote($note);
 
-        return DB::transaction(function () use ($cart, $productOption, $quantity, $note): CartItem {
+        return DB::transaction(function () use ($cart, $productOption, $quantity, $note, $checkInventory): CartItem {
             $cart = Cart::query()->whereKey($cart->getKey())->lockForUpdate()->firstOrFail();
             $option = ProductOption::query()->with(['product.category'])->whereKey($productOption->getKey())->lockForUpdate()->firstOrFail();
 
@@ -28,6 +28,10 @@ class AddCartItem
 
             if ($nextQuantity > 99) {
                 throw ValidationException::withMessages(['quantity' => 'Quantity must be between 1 and 99.']);
+            }
+
+            if ($checkInventory && $option->tracks_inventory && ($option->availableQuantity() ?? 0) < $nextQuantity) {
+                throw ValidationException::withMessages(['quantity' => 'The requested quantity is not currently available.']);
             }
 
             $item ??= new CartItem(['cart_id' => $cart->id, 'product_option_id' => $option->id]);

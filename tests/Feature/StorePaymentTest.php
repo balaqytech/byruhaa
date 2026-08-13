@@ -108,6 +108,9 @@ test('store order payment is initiated idempotently and paid return confirms the
 
     $order->refresh();
     expect($order->status->getValue())->toBe('confirmed')
+        ->and($order->paid_at)->not->toBeNull()
+        ->and($order->payment_reference)->not->toBeNull()
+        ->and($order->provider_invoice)->toBe('INV-store_checkout_123')
         ->and($order->inventoryReservation->reservation->fresh()->status)->toBe(InventoryReservationStatus::Consumed)
         ->and($order->statusHistory()->where('to_status', 'confirmed')->count())->toBe(1)
         ->and($order->inventoryReservation->reservation->items()->count())->toBe(1);
