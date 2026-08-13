@@ -25,6 +25,18 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
 
     public ?string $couponCode = null;
 
+    public string $familyMemberName = '';
+
+    public string $familyMemberBirthDate = '';
+
+    public ?string $familyMemberSchoolName = null;
+
+    public ?string $familyMemberGrade = null;
+
+    public ?string $familyMemberMedicalNotes = null;
+
+    public ?string $familyMemberRelationship = null;
+
     public function mount(Event $event): void
     {
         abort_unless($event->status === EventStatus::Published, 404);
@@ -66,6 +78,62 @@ new #[Title('تفاصيل الفعالية')] class extends Component {
         ], EventInterestSource::Website);
 
         Flux::toast(variant: 'success', text: 'تم تسجيل اهتمامك وسنخبرك عند فتح الحجز.');
+    }
+
+    public function openAddFamilyMemberModal(): void
+    {
+        $this->resetFamilyMemberForm();
+
+        Flux::modal('event-family-member-form')->show();
+    }
+
+    public function saveFamilyMember(): void
+    {
+        $customer = Auth::guard('customer')->user();
+        $customer->ensureProfileIsComplete();
+
+        $validated = $this->validate([
+            'familyMemberName' => ['required', 'string', 'max:255'],
+            'familyMemberBirthDate' => ['required', 'date', 'before:today'],
+            'familyMemberSchoolName' => ['nullable', 'string', 'max:255'],
+            'familyMemberGrade' => ['nullable', 'string', 'max:50'],
+            'familyMemberMedicalNotes' => ['nullable', 'string', 'max:2000'],
+            'familyMemberRelationship' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $customer->familyMembers()->create([
+            'name' => $validated['familyMemberName'],
+            'birth_date' => $validated['familyMemberBirthDate'],
+            'school_name' => $validated['familyMemberSchoolName'],
+            'grade' => $validated['familyMemberGrade'],
+            'medical_notes' => $validated['familyMemberMedicalNotes'],
+            'relationship_to_customer' => $validated['familyMemberRelationship'],
+        ]);
+
+        $this->resetFamilyMemberForm();
+
+        Flux::modal('event-family-member-form')->close();
+        Flux::toast(variant: 'success', text: __('ui.messages.family_member_added'));
+    }
+
+    public function resetFamilyMemberForm(): void
+    {
+        $this->reset(
+            'familyMemberName',
+            'familyMemberBirthDate',
+            'familyMemberSchoolName',
+            'familyMemberGrade',
+            'familyMemberMedicalNotes',
+            'familyMemberRelationship',
+        );
+        $this->resetValidation([
+            'familyMemberName',
+            'familyMemberBirthDate',
+            'familyMemberSchoolName',
+            'familyMemberGrade',
+            'familyMemberMedicalNotes',
+            'familyMemberRelationship',
+        ]);
     }
 
     public function with(): array

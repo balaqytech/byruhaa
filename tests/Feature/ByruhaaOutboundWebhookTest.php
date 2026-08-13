@@ -17,6 +17,7 @@ use App\Modules\Events\Models\Event;
 use App\Modules\Events\Models\EventInterest;
 use App\Modules\Events\Services\BookingApprovalService;
 use App\Modules\Events\States\Booking\Approved;
+use App\Modules\Events\States\Booking\Cancelled;
 use App\Modules\Finance\Actions\ConfirmThawaniPayment;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;

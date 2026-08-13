@@ -3,6 +3,7 @@
 namespace App\Modules\Affiliates\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Models\AffiliateCommissionReversal;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
@@ -81,6 +82,7 @@ class AffiliateCommission extends Model
         return $this->morphOne(LedgerTransaction::class, 'source');
     }
 
+    /** @return HasOne<AffiliateCommissionReversal, $this> */
     public function reversal(): HasOne
     {
         return $this->hasOne(AffiliateCommissionReversal::class);

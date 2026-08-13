@@ -7,6 +7,7 @@ use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
 use App\Enums\EventType;
 use App\Enums\SeatAllocationState;
+use App\Models\EventCancellation;
 use App\Modules\Events\States\Booking\Approved;
 use Brick\Money\Money;
 use Database\Factories\EventFactory;
@@ -147,6 +148,7 @@ class Event extends Model
         return $this->hasMany(EventInterest::class);
     }
 
+    /** @return HasOne<EventCancellation, $this> */
     public function cancellation(): HasOne
     {
         return $this->hasOne(EventCancellation::class);

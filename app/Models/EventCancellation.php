@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\EventCancellationStatus;
+use App\Modules\Events\Models\Event;
+use App\Modules\Identity\Models\User;
 use Database\Factories\EventCancellationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

@@ -6,8 +6,8 @@ use App\Actions\CancelEvent;
 use App\Enums\EventCancellationStatus;
 use App\Enums\EventStatus;
 use App\Jobs\ProcessEventCancellation;
-use App\Models\Event;
-use App\Models\Payment;
+use App\Modules\Events\Models\Event;
+use App\Modules\Finance\Models\Payment;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -30,7 +30,8 @@ class CancelEventAction
             ])
             ->requiresConfirmation()
             ->action(function (Event $record, CancelEvent $cancelEvent, array $data): void {
-                $cancelEvent->execute($record, (string) $data['reason'], auth()->id());
+                $userId = auth()->id();
+                $cancelEvent->execute($record, (string) $data['reason'], is_numeric($userId) ? (int) $userId : null);
                 Notification::make()->title('أُغلقت الفعالية وبدأت معالجة الحجوزات والمدفوعات')->success()->send();
             });
     }

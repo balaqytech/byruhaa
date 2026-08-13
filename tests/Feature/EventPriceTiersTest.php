@@ -445,10 +445,12 @@ test('event REST endpoints expose active price tiers with their remaining seats'
         'price_tiers', 'available_discounts', 'payment_plans', 'created_at', 'updated_at',
     ]);
 
-    $this->getJson('/api/v1/events')
-        ->assertOk()
-        ->assertJsonCount(2, 'data.0.price_tiers')
-        ->assertJsonPath('data.0.price_tiers.0.remaining_seats', 0);
+    $indexResponse = $this->getJson('/api/v1/events?per_page=100')->assertOk();
+    $indexedEvent = collect($indexResponse->json('data'))->firstWhere('id', $event->id);
+
+    expect($indexedEvent)->not->toBeNull()
+        ->and($indexedEvent['price_tiers'])->toHaveCount(2)
+        ->and($indexedEvent['price_tiers'][0]['remaining_seats'])->toBe(0);
 });
 
 test('existing REST payment endpoint reserves seats without changing its response contract', function () {

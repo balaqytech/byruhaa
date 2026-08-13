@@ -2,21 +2,21 @@
 
 namespace App\Jobs;
 
-use App\Actions\ConfirmThawaniPayment;
-use App\Actions\RefundPayment;
-use App\Actions\ReleaseBookingSeats;
 use App\Actions\ReverseAffiliateCommission;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventCancellationStatus;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
-use App\Models\AffiliateCommission;
-use App\Models\Booking;
 use App\Models\EventCancellation;
-use App\Models\Payment;
-use App\States\Booking\Approved;
-use App\States\Booking\Cancelled;
-use App\States\Booking\PendingReview;
+use App\Modules\Affiliates\Models\AffiliateCommission;
+use App\Modules\Events\Actions\ReleaseBookingSeats;
+use App\Modules\Events\Models\Booking;
+use App\Modules\Events\States\Booking\Approved;
+use App\Modules\Events\States\Booking\Cancelled;
+use App\Modules\Events\States\Booking\PendingReview;
+use App\Modules\Finance\Actions\ConfirmThawaniPayment;
+use App\Modules\Finance\Actions\RefundPayment;
+use App\Modules\Finance\Models\Payment;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;

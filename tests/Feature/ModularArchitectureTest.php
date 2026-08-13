@@ -63,15 +63,15 @@ test('module providers preserve legacy polymorphic model aliases', function (): 
 
 test('moved modules do not import their former root namespaces', function (): void {
     $patterns = [
-        'App\\Models\\Affiliate',
-        'App\\Models\\BlogPost',
-        'App\\Models\\Booking',
-        'App\\Models\\Event',
-        'App\\Models\\Payment',
-        'App\\Models\\Customer',
-        'App\\Actions\\CreateAffiliatePayoutRequest',
-        'App\\Actions\\PostAffiliate',
-        'App\\Services\\AffiliateAttribution',
+        'App\\Models\\Affiliate;',
+        'App\\Models\\BlogPost;',
+        'App\\Models\\Booking;',
+        'App\\Models\\Event;',
+        'App\\Models\\Payment;',
+        'App\\Models\\Customer;',
+        'App\\Actions\\CreateAffiliatePayoutRequest;',
+        'App\\Actions\\PostAffiliate;',
+        'App\\Services\\AffiliateAttribution;',
     ];
 
     foreach (glob(base_path('app/Modules/*/*/*.php')) ?: [] as $path) {

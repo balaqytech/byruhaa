@@ -56,7 +56,8 @@ class ByruhaaWebhookSender
         try {
             $freshInterest = EventInterest::query()
                 ->with(['customer', 'event'])
-                ->findOrFail($interest->getKey());
+                ->whereKey($interest->getKey())
+                ->firstOrFail();
 
             $this->dispatchWebhook(
                 url: $url,
@@ -130,7 +131,8 @@ class ByruhaaWebhookSender
         try {
             $freshBooking = Booking::query()
                 ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->findOrFail($booking->getKey());
+                ->whereKey($booking->getKey())
+                ->firstOrFail();
 
             $this->dispatchWebhook(
                 url: $url,
@@ -308,8 +310,8 @@ class ByruhaaWebhookSender
                     'preferred_contact_channel' => $interest->preferred_contact_channel,
                     'source_reference' => $interest->source_reference,
                     'contact_consent_at' => $interest->contact_consent_at?->toJSON(),
-                    'last_expressed_at' => $interest->last_expressed_at?->toJSON(),
-                    'created_at' => $interest->created_at?->toJSON(),
+                    'last_expressed_at' => $interest->last_expressed_at->toJSON(),
+                    'created_at' => $interest->created_at->toJSON(),
                     'customer_panel_url' => route('customer.interests.index'),
                 ],
                 'event' => [

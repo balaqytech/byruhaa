@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\AffiliateCommission;
 use App\Models\AffiliateCommissionReversal;
 use App\Models\EventCancellation;
+use App\Modules\Affiliates\Models\AffiliateCommission;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

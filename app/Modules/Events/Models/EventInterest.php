@@ -4,6 +4,7 @@ namespace App\Modules\Events\Models;
 
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
+use App\Models\WebhookDelivery;
 use App\Modules\Identity\Models\Customer;
 use Database\Factories\EventInterestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

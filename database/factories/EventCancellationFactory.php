@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Enums\EventCancellationStatus;
-use App\Models\Event;
 use App\Models\EventCancellation;
+use App\Modules\Events\Models\Event;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

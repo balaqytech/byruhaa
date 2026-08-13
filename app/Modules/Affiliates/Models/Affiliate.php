@@ -4,6 +4,7 @@ namespace App\Modules\Affiliates\Models;
 
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Enums\AffiliateStatus;
+use App\Models\AffiliateCommissionReversal;
 use App\Modules\Identity\Models\User;
 use Database\Factories\AffiliateFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;

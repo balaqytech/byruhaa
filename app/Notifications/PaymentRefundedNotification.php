@@ -2,7 +2,7 @@
 
 namespace App\Notifications;
 
-use App\Models\PaymentRefund;
+use App\Modules\Finance\Models\PaymentRefund;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

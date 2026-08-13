@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Modules\Affiliates\Models\AffiliateCommission;
+use App\Modules\Finance\Models\LedgerTransaction;
 use Database\Factories\AffiliateCommissionReversalFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

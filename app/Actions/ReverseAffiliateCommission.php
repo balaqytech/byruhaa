@@ -4,10 +4,10 @@ namespace App\Actions;
 
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Enums\LedgerAccountType;
-use App\Models\AffiliateCommission;
 use App\Models\AffiliateCommissionReversal;
 use App\Models\EventCancellation;
-use App\Models\LedgerAccount;
+use App\Modules\Affiliates\Models\AffiliateCommission;
+use App\Modules\Finance\Models\LedgerAccount;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
