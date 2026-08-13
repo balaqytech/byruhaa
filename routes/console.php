@@ -15,3 +15,7 @@ Schedule::command('payments:reconcile-thawani')
 Schedule::command('seats:release-expired-holds')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('app:expire-store-orders')
+    ->everyMinute()
+    ->withoutOverlapping();

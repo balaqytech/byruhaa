@@ -2,8 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Modules\Store\Filament\Pages\ManageStoreSettings;
 use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
 use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
+use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Filament\Resources\Products\ProductResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -41,10 +43,12 @@ class AdminPanelProvider extends PanelProvider
                 CategoryResource::class,
                 ProductResource::class,
                 ProductOptionResource::class,
+                OrderResource::class,
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                ManageStoreSettings::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([

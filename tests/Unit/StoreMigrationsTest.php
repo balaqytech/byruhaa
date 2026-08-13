@@ -22,10 +22,28 @@ test('store catalog migrations run up and down cleanly', function (): void {
             $table->id();
         });
 
+        Schema::create('users', function (Blueprint $table): void {
+            $table->id();
+        });
+
+        Schema::create('customers', function (Blueprint $table): void {
+            $table->id();
+        });
+
         $migrationPaths = [
             'database/migrations/2026_08_09_110912_create_store_categories_table.php',
             'database/migrations/2026_08_09_110913_create_store_products_table.php',
             'database/migrations/2026_08_09_110914_create_store_product_options_table.php',
+            'database/migrations/2026_08_13_090000_add_inventory_tracking_to_store_product_options_table.php',
+            'database/migrations/2026_08_13_090001_create_store_inventory_movements_table.php',
+            'database/migrations/2026_08_13_090002_create_store_inventory_reservations_table.php',
+            'database/migrations/2026_08_13_090003_create_store_inventory_reservation_items_table.php',
+            'database/migrations/2026_08_13_100000_create_store_carts_table.php',
+            'database/migrations/2026_08_13_100001_create_store_cart_items_table.php',
+            'database/migrations/2026_08_13_100002_create_store_orders_table.php',
+            'database/migrations/2026_08_13_100003_create_store_order_items_table.php',
+            'database/migrations/2026_08_13_100004_create_store_order_status_histories_table.php',
+            'database/migrations/2026_08_13_100005_create_store_order_inventory_reservations_table.php',
         ];
         $migrations = [];
 
@@ -37,7 +55,13 @@ test('store catalog migrations run up and down cleanly', function (): void {
 
         expect(Schema::hasTable('store_categories'))->toBeTrue()
             ->and(Schema::hasTable('store_products'))->toBeTrue()
-            ->and(Schema::hasTable('store_product_options'))->toBeTrue();
+            ->and(Schema::hasTable('store_product_options'))->toBeTrue()
+            ->and(Schema::hasTable('store_carts'))->toBeTrue()
+            ->and(Schema::hasTable('store_cart_items'))->toBeTrue()
+            ->and(Schema::hasTable('store_orders'))->toBeTrue()
+            ->and(Schema::hasTable('store_order_items'))->toBeTrue()
+            ->and(Schema::hasTable('store_order_status_histories'))->toBeTrue()
+            ->and(Schema::hasTable('store_order_inventory_reservations'))->toBeTrue();
 
         foreach (array_reverse($migrations) as $migration) {
             $migration->down();
@@ -45,7 +69,16 @@ test('store catalog migrations run up and down cleanly', function (): void {
 
         expect(Schema::hasTable('store_categories'))->toBeFalse()
             ->and(Schema::hasTable('store_products'))->toBeFalse()
-            ->and(Schema::hasTable('store_product_options'))->toBeFalse();
+            ->and(Schema::hasTable('store_product_options'))->toBeFalse()
+            ->and(Schema::hasTable('store_inventory_movements'))->toBeFalse()
+            ->and(Schema::hasTable('store_inventory_reservations'))->toBeFalse()
+            ->and(Schema::hasTable('store_inventory_reservation_items'))->toBeFalse()
+            ->and(Schema::hasTable('store_carts'))->toBeFalse()
+            ->and(Schema::hasTable('store_cart_items'))->toBeFalse()
+            ->and(Schema::hasTable('store_orders'))->toBeFalse()
+            ->and(Schema::hasTable('store_order_items'))->toBeFalse()
+            ->and(Schema::hasTable('store_order_status_histories'))->toBeFalse()
+            ->and(Schema::hasTable('store_order_inventory_reservations'))->toBeFalse();
     } finally {
         DB::disconnect('sqlite');
         Config::set('database.default', $originalDefault);
