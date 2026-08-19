@@ -101,10 +101,10 @@ class ProductForm
                                     ->label(__('admin.fields.is_available'))
                                     ->default(true),
                                 Toggle::make('tracks_inventory')
-                                    ->label('Track inventory')
+                                    ->label(__('admin.fields.tracks_inventory'))
                                     ->default(false),
                                 TextInput::make('stock_on_hand')
-                                    ->label('Current stock')
+                                    ->label(__('admin.fields.stock_on_hand'))
                                     ->numeric()
                                     ->minValue(0)
                                     ->default(0)

@@ -32,17 +32,17 @@ class OrderResource extends Resource
 
     public static function getModelLabel(): string
     {
-        return 'Order';
+        return __('admin.resources.store_orders.label');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Orders';
+        return __('admin.resources.store_orders.plural_label');
     }
 
     public static function getNavigationLabel(): string
     {
-        return 'Orders';
+        return __('admin.resources.store_orders.navigation_label');
     }
 
     public static function getNavigationGroup(): string|UnitEnum|null

@@ -45,7 +45,7 @@ class ProductOptionsTable
                     ->formatStateUsing(fn (?bool $state): string => $state === true ? __('admin.statuses.default') : __('admin.statuses.no'))
                     ->badge(),
                 TextColumn::make('stock_on_hand')
-                    ->label('Stock')
+                    ->label(__('admin.fields.stock'))
                     ->state(fn (ProductOption $record): string => $record->tracks_inventory ? (string) $record->stock_on_hand : '—')
                     ->sortable(),
             ])
@@ -70,16 +70,16 @@ class ProductOptionsTable
     private static function adjustStockAction(): Action
     {
         return Action::make('adjust-stock')
-            ->label('Adjust stock')
+            ->label(__('admin.store.actions.adjust_stock'))
             ->visible(fn (ProductOption $record): bool => $record->tracks_inventory)
             ->form([
                 TextInput::make('quantity_change')
-                    ->label('Quantity change')
+                    ->label(__('admin.fields.quantity_change'))
                     ->numeric()
                     ->integer()
                     ->required(),
                 TextInput::make('reason')
-                    ->label('Reason')
+                    ->label(__('admin.fields.reason'))
                     ->required()
                     ->maxLength(255),
             ])

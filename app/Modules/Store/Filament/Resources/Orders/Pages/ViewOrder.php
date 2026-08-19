@@ -22,15 +22,15 @@ class ViewOrder extends ViewRecord
     {
         return [
             Action::make('change_status')
-                ->label('Change status')
+                ->label(__('admin.store.actions.change_status'))
                 ->form([
                     Select::make('status')
                         ->options(fn (Order $record): array => collect($record->status->transitionableStateInstances())
                             ->reject(fn (OrderState $state): bool => $record->pickup_type === OrderPickupType::Scheduled->value && $state::class === Preparing::class)
-                            ->mapWithKeys(fn (OrderState $state): array => [$state::class => $state->getLabel()])
+                            ->mapWithKeys(fn (OrderState $state): array => [$state::class => __('admin.store.order_statuses.'.$state->getValue())])
                             ->all())
                         ->required(),
-                    Textarea::make('note')->maxLength(500),
+                    Textarea::make('note')->label(__('admin.fields.note'))->maxLength(500),
                 ])
                 ->action(function (Order $record, array $data, ChangeOrderState $changeOrderState): void {
                     $target = (string) $data['status'];
@@ -39,7 +39,7 @@ class ViewOrder extends ViewRecord
                     }
 
                     $changeOrderState->execute($record, $target, is_numeric(auth()->id()) ? (int) auth()->id() : null, $data['note'] ?? null);
-                    Notification::make()->title('Order status updated')->success()->send();
+                    Notification::make()->title(__('admin.store.notifications.order_status_updated'))->success()->send();
                 }),
         ];
     }
