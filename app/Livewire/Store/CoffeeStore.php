@@ -11,7 +11,6 @@ use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Actions\UpdateCartItem;
 use App\Modules\Store\Models\Cart;
-use App\Modules\Store\Models\Order;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Contracts\View\View;
@@ -22,6 +21,10 @@ use Livewire\Component;
 
 class CoffeeStore extends Component
 {
+    private const CHECKOUT_IDEMPOTENCY_KEYS_SESSION = 'store_checkout_idempotency_keys';
+
+    private const LEGACY_CHECKOUT_IDEMPOTENCY_KEY_SESSION = 'store_checkout_idempotency_key';
+
     protected BrowseCatalog $browseCatalog;
 
     protected QuoteCart $quoteCart;
@@ -70,6 +73,7 @@ class CoffeeStore extends Component
 
     public function mount(): void
     {
+        session()->forget(self::LEGACY_CHECKOUT_IDEMPOTENCY_KEY_SESSION);
         $this->cartToken = session('store_cart_token');
         $customer = auth('customer')->user();
 
@@ -93,6 +97,7 @@ class CoffeeStore extends Component
             $option = ProductOption::query()->with('product.category')->findOrFail($optionId);
             $addCartItem->execute($cart, $option, 1);
             $this->rememberCart($cart);
+            $this->resetCheckoutAttempt();
             $this->feedback = 'أضيف المنتج إلى السلة.';
             $this->cartError = null;
         } catch (ValidationException $exception) {
@@ -106,6 +111,7 @@ class CoffeeStore extends Component
             $cart = $this->resolveExistingCart();
             $item = $cart->items()->whereKey($itemId)->firstOrFail();
             $updateCartItem->execute($cart, $item, $quantity, $item->note);
+            $this->resetCheckoutAttempt();
             $this->feedback = 'تم تحديث السلة.';
         } catch (ValidationException $exception) {
             $this->showValidation($exception);
@@ -118,6 +124,7 @@ class CoffeeStore extends Component
             $cart = $this->resolveExistingCart();
             $item = $cart->items()->whereKey($itemId)->firstOrFail();
             $updateCartItem->execute($cart, $item, (int) $item->quantity, $note);
+            $this->resetCheckoutAttempt();
             $this->feedback = 'تم حفظ الملاحظة.';
         } catch (ValidationException $exception) {
             $this->showValidation($exception);
@@ -130,6 +137,7 @@ class CoffeeStore extends Component
             $cart = $this->resolveExistingCart();
             $item = $cart->items()->whereKey($itemId)->firstOrFail();
             $removeCartItem->execute($cart, $item);
+            $this->resetCheckoutAttempt();
             $this->feedback = 'أزيل المنتج من السلة.';
         } catch (ValidationException $exception) {
             $this->showValidation($exception);
@@ -181,19 +189,9 @@ class CoffeeStore extends Component
             ])->validate();
             $validated['customer_id'] = $this->customerId();
 
-            $order = Order::query()
-                ->where('idempotency_key', $validated['idempotency_key'])
-                ->where('customer_phone', $validated['customer_phone'])
-                ->when(
-                    $validated['customer_id'] === null,
-                    fn ($query) => $query->whereNull('customer_id'),
-                    fn ($query) => $query->where('customer_id', $validated['customer_id']),
-                )
-                ->first();
-
-            $order ??= $createOrder->execute($this->resolveExistingCart(), $validated);
+            $order = $createOrder->execute($this->resolveExistingCart(), $validated);
             $payment = $initiatePayment->execute($order, $this->customerId());
-            session()->forget('store_checkout_idempotency_key');
+            $this->resetCheckoutAttempt();
 
             $this->submitting = false;
             $this->redirect($payment->checkoutUrl, navigate: false);
@@ -265,14 +263,27 @@ class CoffeeStore extends Component
 
     private function idempotencyKey(): string
     {
-        $key = session('store_checkout_idempotency_key');
+        $sessionKey = $this->checkoutIdempotencySessionKey();
+        $key = session($sessionKey);
 
         if (! is_string($key) || blank($key)) {
             $key = (string) Str::uuid();
-            session()->put('store_checkout_idempotency_key', $key);
+            session()->put($sessionKey, $key);
         }
 
         return $key;
+    }
+
+    private function resetCheckoutAttempt(): void
+    {
+        if (filled($this->cartToken)) {
+            session()->forget($this->checkoutIdempotencySessionKey());
+        }
+    }
+
+    private function checkoutIdempotencySessionKey(): string
+    {
+        return self::CHECKOUT_IDEMPOTENCY_KEYS_SESSION.'.'.hash('sha256', (string) $this->cartToken);
     }
 
     private function showValidation(ValidationException $exception): void
