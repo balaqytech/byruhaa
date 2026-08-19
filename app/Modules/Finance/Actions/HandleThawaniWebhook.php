@@ -59,15 +59,15 @@ class HandleThawaniWebhook
         } catch (PaymentGatewayException $exception) {
             report($exception);
 
-            return $this->complete($event, ThawaniWebhookEventStatus::Failed, 503, $exception->getMessage());
+            return $this->complete($event, ThawaniWebhookEventStatus::Failed, 503, 'Payment provider verification failed.');
         } catch (ValidationException $exception) {
-            return $this->complete($event, ThawaniWebhookEventStatus::Rejected, 202, $exception->getMessage());
+            return $this->complete($event, ThawaniWebhookEventStatus::Rejected, 202, 'The payment callback was rejected.');
         } catch (RuntimeException $exception) {
-            return $this->complete($event, ThawaniWebhookEventStatus::Rejected, 202, $exception->getMessage());
+            return $this->complete($event, ThawaniWebhookEventStatus::Rejected, 202, 'The payment callback was rejected.');
         } catch (Throwable $exception) {
             report($exception);
 
-            return $this->complete($event, ThawaniWebhookEventStatus::Failed, 503, $exception->getMessage());
+            return $this->complete($event, ThawaniWebhookEventStatus::Failed, 503, 'Payment processing failed.');
         }
     }
 

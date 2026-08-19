@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7e42a4fc-a492-4f4d-b59f-9c8313db1f2a",
     "name": "Byruha API v1",
-    "description": "Postman documentation for Byruha API v1. Event responses include enrollment capabilities and active price tiers with remaining seats. Event-interest endpoints are currently public and rate limited.",
+    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -57,6 +57,36 @@
     {
       "key": "customer_phone",
       "value": "+96891234567",
+      "type": "string"
+    },
+    {
+      "key": "uchat_api_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "uchat_phone",
+      "value": "+96891234567",
+      "type": "string"
+    },
+    {
+      "key": "store_product_slug",
+      "value": "sample-product",
+      "type": "string"
+    },
+    {
+      "key": "store_sku",
+      "value": "BYR-0001",
+      "type": "string"
+    },
+    {
+      "key": "store_order_reference",
+      "value": "BRH-ORD-EXAMPLE",
+      "type": "string"
+    },
+    {
+      "key": "store_idempotency_key",
+      "value": "uchat-order-001",
       "type": "string"
     }
   ],
@@ -1546,6 +1576,212 @@
             "header": [{"key": "Accept", "value": "application/json"}],
             "url": {"raw": "{{base_url}}/api/v1/integrations/assistant/event-interests?phone_number={{customer_phone}}&event_slug={{event_slug}}", "host": ["{{base_url}}"], "path": ["api", "v1", "integrations", "assistant", "event-interests"], "query": [{"key": "phone_number", "value": "{{customer_phone}}"}, {"key": "event_slug", "value": "{{event_slug}}"}]},
             "description": "Keeps the audit record and changes its status to withdrawn."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "UChat Store",
+      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "value": "{{uchat_api_token}}",
+            "type": "string"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "List published catalog",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/catalog",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "catalog"]
+            },
+            "description": "Returns active categories with published products, available options, SKU, price in baisa, currency, and current availability. The phone header is not used for catalog ownership but is included for a consistent UChat request shape."
+          },
+          "response": []
+        },
+        {
+          "name": "Show published product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/products/{{store_product_slug}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "products", "{{store_product_slug}}"]
+            },
+            "description": "Returns one published product by slug, including category and purchasable options. Returns product_not_found when the product is missing or not public."
+          },
+          "response": []
+        },
+        {
+          "name": "Show current cart",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/cart",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "cart"]
+            },
+            "description": "Resolves the cart owned by the normalized WhatsApp phone and returns its items and current server quote."
+          },
+          "response": []
+        },
+        {
+          "name": "Add cart item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{store_sku}}\",\n  \"quantity\": 1,\n  \"note\": \"بدون سكر\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/cart/items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "cart", "items"]
+            },
+            "description": "Adds or increments an available product option by SKU. Quantity must be from 1 to 99. The response is the refreshed cart and quote."
+          },
+          "response": []
+        },
+        {
+          "name": "Update cart item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2,\n  \"note\": \"بدون سكر\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/cart/items/{{store_sku}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "cart", "items", "{{store_sku}}"]
+            },
+            "description": "Replaces the quantity and optional note for the SKU in the current phone-owned cart."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove cart item",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/cart/items/{{store_sku}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "cart", "items", "{{store_sku}}"]
+            },
+            "description": "Removes the SKU from the current cart and returns the refreshed cart and quote."
+          },
+          "response": []
+        },
+        {
+          "name": "Create order and payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"},
+              {"key": "Idempotency-Key", "value": "{{store_idempotency_key}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer_name\": \"مريم\",\n  \"customer_email\": null,\n  \"pickup_type\": \"immediate\",\n  \"note\": \"الرجاء التواصل عبر واتساب\"\n}",
+              "options": {"raw": {"language": "json"}}
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "orders"]
+            },
+            "description": "Creates an order from the current cart, reserves tracked inventory, snapshots prices and VAT, and initiates Thawani checkout. Repeating the same Idempotency-Key for the same phone returns the same order. For scheduled pickup use pickup_type=scheduled and provide pickup_at."
+          },
+          "response": []
+        },
+        {
+          "name": "Retry order payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/orders/{{store_order_reference}}/payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "orders", "{{store_order_reference}}", "payment"]
+            },
+            "description": "Returns or recreates the eligible Thawani checkout for a phone-owned unpaid order. Payment initiation is idempotent."
+          },
+          "response": []
+        },
+        {
+          "name": "List customer Store orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/orders?page=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "orders"],
+              "query": [{"key": "page", "value": "1"}]
+            },
+            "description": "Returns the newest phone-owned orders, paginated at 20 orders per page."
+          },
+          "response": []
+        },
+        {
+          "name": "Show customer Store order",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "X-WhatsApp-Phone", "value": "{{uchat_phone}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/orders/{{store_order_reference}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "integrations", "uchat", "store", "orders", "{{store_order_reference}}"]
+            },
+            "description": "Returns one order only when its normalized customer phone matches X-WhatsApp-Phone."
           },
           "response": []
         }

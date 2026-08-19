@@ -15,7 +15,10 @@ return new class extends Migration
             $table->unsignedInteger('quantity');
             $table->timestamps();
 
-            $table->unique(['reservation_id', 'product_option_id']);
+            $table->unique(
+                ['reservation_id', 'product_option_id'],
+                'store_reservation_items_reservation_option_unique',
+            );
             $table->index('product_option_id');
         });
     }

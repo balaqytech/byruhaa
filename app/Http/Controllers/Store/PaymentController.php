@@ -16,6 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
 class PaymentController extends Controller
 {
@@ -45,7 +46,7 @@ class PaymentController extends Controller
             }
 
             return response()->json(['message' => $exception->getMessage(), 'errors' => $exception->errors()], 422);
-        } catch (PaymentGatewayException) {
+        } catch (PaymentGatewayException|RuntimeException) {
             if (! $request->expectsJson()) {
                 return back()->withErrors(['payment' => 'تعذر الاتصال ببوابة الدفع. حاول مرة أخرى.']);
             }

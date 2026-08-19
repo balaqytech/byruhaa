@@ -16,6 +16,7 @@ class BrowseCatalog
     {
         return Category::query()
             ->active()
+            ->when($categoryId !== null, fn ($query) => $query->whereKey($categoryId))
             ->with([
                 'products' => fn ($query) => $query
                     ->active()

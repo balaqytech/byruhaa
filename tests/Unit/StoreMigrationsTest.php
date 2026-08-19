@@ -1,9 +1,11 @@
 <?php
 
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 uses(TestCase::class);
@@ -46,10 +48,22 @@ test('store catalog migrations run up and down cleanly', function (): void {
             'database/migrations/2026_08_13_100005_create_store_order_inventory_reservations_table.php',
             'database/migrations/2026_08_13_103809_add_payment_token_to_store_orders_table.php',
             'database/migrations/2026_08_13_150123_add_receipt_snapshots_to_store_orders_table.php',
+            'database/migrations/2026_08_13_190000_add_uchat_owner_key_to_store_carts_table.php',
         ];
         $migrations = [];
+        $legacyCartId = null;
 
         foreach ($migrationPaths as $migrationPath) {
+            if ($migrationPath === 'database/migrations/2026_08_13_190000_add_uchat_owner_key_to_store_carts_table.php') {
+                $legacyCartId = DB::table('store_carts')->insertGetId([
+                    'token' => (string) Str::uuid(),
+                    'customer_id' => null,
+                    'last_activity_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
             $migration = require base_path($migrationPath);
             $migration->up();
             $migrations[] = $migration;
@@ -66,6 +80,30 @@ test('store catalog migrations run up and down cleanly', function (): void {
             ->and(Schema::hasTable('store_order_inventory_reservations'))->toBeTrue();
 
         expect(Schema::hasColumn('store_orders', 'payment_token'))->toBeTrue();
+        expect(Schema::hasColumn('store_carts', 'uchat_owner_key'))->toBeTrue();
+        expect(DB::table('store_carts')->where('id', $legacyCartId)->exists())->toBeTrue();
+        expect(collect(Schema::getIndexes('store_inventory_reservation_items'))->pluck('name')->all())
+            ->toContain('store_reservation_items_reservation_option_unique');
+        expect(collect(Schema::getIndexes('store_order_inventory_reservations'))->pluck('name')->all())
+            ->toContain('store_order_reservations_order_reservation_unique');
+
+        DB::table('store_carts')->insert([
+            'token' => (string) Str::uuid(),
+            'customer_id' => null,
+            'uchat_owner_key' => str_repeat('a', 64),
+            'last_activity_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        expect(fn () => DB::table('store_carts')->insert([
+            'token' => (string) Str::uuid(),
+            'customer_id' => null,
+            'uchat_owner_key' => str_repeat('a', 64),
+            'last_activity_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]))->toThrow(QueryException::class);
         expect(Schema::hasColumn('store_orders', 'vat_rate_percentage'))->toBeTrue()
             ->and(Schema::hasColumn('store_orders', 'paid_at'))->toBeTrue()
             ->and(Schema::hasColumn('store_orders', 'provider_invoice'))->toBeTrue();

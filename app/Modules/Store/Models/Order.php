@@ -3,6 +3,7 @@
 namespace App\Modules\Store\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Models\WebhookDelivery;
 use App\Modules\Store\States\Order\OrderState;
 use Brick\Money\Money;
 use Database\Factories\OrderFactory;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Spatie\ModelStates\HasStates;
@@ -68,6 +70,12 @@ class Order extends Model
     public function inventoryReservation(): HasOne
     {
         return $this->hasOne(OrderInventoryReservation::class);
+    }
+
+    /** @return MorphMany<WebhookDelivery, $this> */
+    public function webhookDeliveries(): MorphMany
+    {
+        return $this->morphMany(WebhookDelivery::class, 'webhookable');
     }
 
     protected function casts(): array

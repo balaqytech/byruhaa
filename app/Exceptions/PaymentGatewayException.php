@@ -35,6 +35,10 @@ class PaymentGatewayException extends Exception
      */
     public function context(): array
     {
-        return $this->payload();
+        return [
+            'error' => 'Payment gateway request failed.',
+            'exception' => static::class,
+            'code' => $this->getCode(),
+        ];
     }
 }

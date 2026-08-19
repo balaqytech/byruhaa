@@ -4,6 +4,7 @@ namespace App\Services\Webhooks;
 
 use App\Enums\BookingInstallmentState;
 use App\Enums\WebhookDeliveryStatus;
+use App\Jobs\UchatWebhookJob;
 use App\Models\EventCancellation;
 use App\Models\WebhookDelivery;
 use App\Modules\Events\Models\Booking;
@@ -13,16 +14,73 @@ use App\Modules\Events\Models\EventInterest;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Store\Models\Order;
 use App\Support\Money\MoneyFactory;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 use Spatie\WebhookServer\WebhookCall;
 use Throwable;
 
 class ByruhaaWebhookSender
 {
+    public function sendUchatOrderState(Order $order): void
+    {
+        $configuration = $this->uchatWebhookConfiguration();
+
+        if ($configuration === null) {
+            return;
+        }
+
+        [$url, $secret, $bearer] = $configuration;
+
+        try {
+            $freshOrder = Order::query()->with(['items', 'statusHistory'])->whereKey($order->getKey())->firstOrFail();
+            $event = 'store.order.'.$freshOrder->status->getValue();
+            $payload = [
+                'event' => $event,
+                'occurred_at' => now()->toJSON(),
+                'customer_phone' => $freshOrder->customer_phone,
+                'data' => [
+                    'order' => [
+                        'reference' => $freshOrder->reference,
+                        'status' => $freshOrder->status->getValue(),
+                        'status_label' => $freshOrder->status->label(),
+                        'pickup_type' => $freshOrder->pickup_type,
+                        'pickup_at' => $freshOrder->pickup_at?->toJSON(),
+                        'currency' => $freshOrder->currency,
+                        'subtotal_baisa' => $freshOrder->subtotal_baisa,
+                        'vat_baisa' => $freshOrder->vat_baisa,
+                        'total_baisa' => $freshOrder->total_baisa,
+                        'items' => $freshOrder->items->map(fn ($item): array => [
+                            'sku' => $item->sku,
+                            'name' => $item->product_name,
+                            'option' => $item->option_name,
+                            'quantity' => $item->quantity,
+                            'unit_price_baisa' => $item->unit_price_baisa,
+                            'vat_baisa' => $item->vat_baisa,
+                            'line_total_baisa' => $item->line_total_baisa,
+                        ])->values()->all(),
+                    ],
+                    'links' => [
+                        'status_url' => URL::temporarySignedRoute('store.orders.status', now()->addDays(7), ['order' => $freshOrder->payment_token]),
+                        'payment_url' => $freshOrder->status->getValue() === 'pending_payment'
+                            ? URL::temporarySignedRoute('store.orders.payment.store', now()->addHours(12), ['order' => $freshOrder->payment_token])
+                            : null,
+                    ],
+                ],
+            ];
+
+            $this->dispatchUchatWebhook($url, $event, $freshOrder, $payload, $secret, $bearer);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
     public function sendCustomerRegistered(Customer $customer): void
     {
         $url = $this->webhookUrl('customer_registered_url');
@@ -539,6 +597,61 @@ class ByruhaaWebhookSender
     }
 
     /**
+     * Dispatch a signed UChat delivery while retaining the shared webhook audit and queue behavior.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function dispatchUchatWebhook(string $url, string $event, Order $order, array $payload, string $secret, string $bearer): void
+    {
+        $defaultWebhookJob = config('webhook-server.webhook_job');
+        Config::set('webhook-server.webhook_job', UchatWebhookJob::class);
+
+        try {
+            $webhookCall = WebhookCall::create();
+        } finally {
+            Config::set('webhook-server.webhook_job', $defaultWebhookJob);
+        }
+
+        $webhookCall
+            ->url($url)
+            ->payload($payload)
+            ->withHeaders(['Authorization' => 'Bearer '.$bearer])
+            ->onQueue($this->queue())
+            ->timeoutInSeconds((int) config('byruhaa.webhooks.timeout', 10))
+            ->useSecret($secret);
+
+        $delivery = $this->createDelivery($webhookCall, $event, $url, $order, $payload);
+
+        if (! $delivery instanceof WebhookDelivery) {
+            return;
+        }
+
+        $payload['delivery_id'] = $delivery->id;
+        $delivery->forceFill(['payload' => $payload])->save();
+        $webhookCall->payload($payload);
+
+        try {
+            $webhookCall
+                ->meta(['webhook_delivery_id' => $delivery->id])
+                ->dispatch();
+
+            $delivery->forceFill([
+                'status' => WebhookDeliveryStatus::Queued,
+                'queued_at' => now(),
+            ])->save();
+        } catch (Throwable $exception) {
+            $delivery->forceFill([
+                'status' => WebhookDeliveryStatus::Failed,
+                'failed_at' => now(),
+                'error_type' => $exception::class,
+                'error_message' => $this->truncate($exception->getMessage()),
+            ])->save();
+
+            throw $exception;
+        }
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      */
     private function createDelivery(WebhookCall $webhookCall, string $event, string $url, Model $webhookable, array $payload): ?WebhookDelivery
@@ -571,6 +684,38 @@ class ByruhaaWebhookSender
     private function webhookUrl(string $key): string
     {
         return $this->configString("byruhaa.webhooks.{$key}");
+    }
+
+    /** @return array{string, string, string}|null */
+    private function uchatWebhookConfiguration(): ?array
+    {
+        $url = $this->configString('byruhaa.uchat.webhook_url');
+        $bearer = $this->configString('byruhaa.uchat.webhook_bearer_token');
+        $secret = $this->configString('byruhaa.uchat.webhook_signing_secret');
+
+        if ($url === '' && $bearer === '' && $secret === '') {
+            return null;
+        }
+
+        $missing = array_values(array_filter([
+            $url === '' ? 'UCHAT_STORE_WEBHOOK_URL' : null,
+            $bearer === '' ? 'UCHAT_STORE_WEBHOOK_BEARER_TOKEN' : null,
+            $secret === '' ? 'UCHAT_STORE_WEBHOOK_SIGNING_SECRET' : null,
+        ]));
+
+        if ($missing !== []) {
+            Log::warning('UChat Store webhook is disabled because its configuration is incomplete.', ['missing' => $missing]);
+
+            return null;
+        }
+
+        if (in_array(config('app.env'), ['staging', 'production'], true) && ! str_starts_with(strtolower($url), 'https://')) {
+            Log::warning('UChat Store webhook is disabled because staging and production require HTTPS.');
+
+            return null;
+        }
+
+        return [$url, $secret, $bearer];
     }
 
     private function queue(): ?string

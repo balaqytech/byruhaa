@@ -4,10 +4,13 @@ namespace App\Modules\Finance\Services\Payments;
 
 use App\Exceptions\PaymentGatewayException;
 use App\Modules\Finance\Contracts\PaymentGateway;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Jkbroot\Thawani\Helpers\ValidationHelper;
 use RuntimeException;
+use Throwable;
 
 class ThawaniPaymentGateway implements PaymentGateway
 {
@@ -116,7 +119,22 @@ class ThawaniPaymentGateway implements PaymentGateway
             ->asJson()
             ->connectTimeout(5)
             ->timeout(10)
-            ->retry([100, 200], throw: false)
+            ->retry(
+                [100, 200],
+                throw: false,
+                when: static function (Throwable $exception): bool {
+                    if ($exception instanceof ConnectionException) {
+                        return true;
+                    }
+
+                    if (! $exception instanceof RequestException) {
+                        return false;
+                    }
+
+                    return $exception->response->status() === 429
+                        || $exception->response->serverError();
+                },
+            )
             ->{$method}($uri, $data);
 
         $body = $this->responseBody($response);
@@ -157,11 +175,7 @@ class ThawaniPaymentGateway implements PaymentGateway
 
     private function configuredString(string $key, string $message): string
     {
-        $mode = config('thawani.mode', 'test');
-
-        if (! is_string($mode) || $mode === '') {
-            throw new RuntimeException('Thawani mode is not configured.');
-        }
+        $mode = $this->mode();
 
         $value = config("thawani.{$mode}.{$key}");
 
@@ -170,6 +184,21 @@ class ThawaniPaymentGateway implements PaymentGateway
         }
 
         return $value;
+    }
+
+    private function mode(): string
+    {
+        $mode = config('thawani.mode', 'test');
+
+        if (! is_string($mode) || ! in_array($mode, ['test', 'live'], true)) {
+            throw new RuntimeException('Thawani mode is not configured correctly.');
+        }
+
+        if (config('app.env') === 'staging' && $mode === 'live') {
+            throw new RuntimeException('Live Thawani payments are disabled in staging.');
+        }
+
+        return $mode;
     }
 
     /**

@@ -47,6 +47,59 @@ test('default payment gateway resolves through the service container', function 
     expect(app(PaymentGateway::class)->name())->toBe('thawani');
 });
 
+test('thawani payment initiation fails closed when credentials are missing', function (): void {
+    Http::preventStrayRequests();
+    config([
+        'thawani.test.secret_key' => null,
+        'thawani.test.publishable_key' => null,
+    ]);
+
+    expect(fn () => app(PaymentGateway::class)->createSession([
+        'client_reference_id' => 'test-reference',
+        'mode' => 'payment',
+        'products' => [['name' => 'Test', 'quantity' => 1, 'unit_amount' => 100]],
+        'success_url' => 'https://example.test/success',
+        'cancel_url' => 'https://example.test/cancel',
+        'metadata' => [],
+    ]))->toThrow(RuntimeException::class, 'Thawani secret key is not configured.');
+});
+
+test('live thawani mode is blocked in staging', function (): void {
+    Http::preventStrayRequests();
+    config([
+        'app.env' => 'staging',
+        'thawani.mode' => 'live',
+        'thawani.live.secret_key' => 'test-secret-only',
+        'thawani.live.publishable_key' => 'test-publishable-only',
+    ]);
+
+    expect(fn () => app(PaymentGateway::class)->checkoutUrl('session'))
+        ->toThrow(RuntimeException::class, 'Live Thawani payments are disabled in staging.');
+});
+
+test('thawani retries connection, rate-limit and temporary server failures only', function (): void {
+    Http::preventStrayRequests();
+    config([
+        'thawani.test.secret_key' => 'test_secret_key',
+        'thawani.test.publishable_key' => 'test_publishable_key',
+    ]);
+    Http::fakeSequence('https://uatcheckout.thawani.om/api/v1/checkout/session')
+        ->pushStatus(429)
+        ->pushStatus(503)
+        ->push(['success' => true, 'data' => ['session_id' => 'retry-session']]);
+
+    app(PaymentGateway::class)->createSession([
+        'client_reference_id' => 'retry-reference',
+        'mode' => 'payment',
+        'products' => [['name' => 'Test', 'quantity' => 1, 'unit_amount' => 100]],
+        'success_url' => 'https://example.test/success',
+        'cancel_url' => 'https://example.test/cancel',
+        'metadata' => [],
+    ]);
+
+    Http::assertSentCount(3);
+});
+
 test('customer can initiate a thawani checkout for the next installment', function () {
     Http::preventStrayRequests();
     Http::fake([

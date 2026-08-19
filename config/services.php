@@ -35,11 +35,4 @@ return [
         ],
     ],
 
-    'thawani' => [
-        'secret_key' => env('THAWANI_SECRET_KEY'),
-        'publishable_key' => env('THAWANI_PUBLISHABLE_KEY'),
-        'api_base_url' => env('THAWANI_API_BASE_URL', 'https://uatcheckout.thawani.om/api/v1'),
-        'checkout_base_url' => env('THAWANI_CHECKOUT_BASE_URL', 'https://uatcheckout.thawani.om'),
-    ],
-
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Store\Actions;
 
+use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\States\Order\OrderState;
 use App\Modules\Store\States\Order\Preparing;
@@ -39,6 +40,8 @@ class ChangeOrderState
             ]);
 
             $refreshed = $order->refresh();
+
+            OrderStateChanged::dispatch($refreshed, $current);
 
             return $refreshed;
         });

@@ -38,10 +38,12 @@ test('the existing API route contract remains stable', function (): void {
         ->filter(fn (Route $route): bool => str_starts_with($route->uri(), 'api/'))
         ->keyBy(fn (Route $route): ?string => $route->getName());
 
-    expect($apiRoutes)->toHaveCount(count($contract));
+    $legacyApiRoutes = $apiRoutes->reject(fn (Route $route): bool => str_contains($route->uri(), 'integrations/uchat/store'));
+
+    expect($legacyApiRoutes)->toHaveCount(count($contract));
 
     foreach ($contract as $name => $expected) {
-        $route = $apiRoutes->get($name);
+        $route = $legacyApiRoutes->get($name);
 
         expect($route)->toBeInstanceOf(Route::class)
             ->and($route->uri())->toBe($expected['uri'])
@@ -49,6 +51,6 @@ test('the existing API route contract remains stable', function (): void {
             ->and($route->gatherMiddleware())->toContain('api');
     }
 
-    expect($apiRoutes->filter(fn (Route $route): bool => str_contains($route->uri(), 'store'))->all())
+    expect($legacyApiRoutes->filter(fn (Route $route): bool => str_contains($route->uri(), 'store'))->all())
         ->toBeEmpty();
 });

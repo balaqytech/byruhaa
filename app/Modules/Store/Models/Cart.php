@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /** @property int|null $customer_id */
-#[Fillable(['token', 'customer_id', 'last_activity_at'])]
+#[Fillable(['token', 'customer_id', 'uchat_owner_key', 'last_activity_at'])]
 class Cart extends Model
 {
     /** @use HasFactory<CartFactory> */

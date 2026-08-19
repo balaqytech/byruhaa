@@ -4,7 +4,9 @@ namespace App\Modules\Identity\Providers;
 
 use App\Modules\Identity\Actions\Fortify\CreateNewUser;
 use App\Modules\Identity\Actions\Fortify\ResetUserPassword;
+use App\Modules\Identity\Contracts\CustomerIdentityResolver;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Services\PhoneCustomerIdentityResolver;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -59,5 +61,10 @@ class IdentityServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
+    }
+
+    public function register(): void
+    {
+        $this->app->bind(CustomerIdentityResolver::class, PhoneCustomerIdentityResolver::class);
     }
 }

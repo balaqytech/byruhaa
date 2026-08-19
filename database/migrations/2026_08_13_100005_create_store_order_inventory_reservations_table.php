@@ -14,7 +14,10 @@ return new class extends Migration
             $table->foreignId('reservation_id')->constrained('store_inventory_reservations')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->unique(['order_id', 'reservation_id']);
+            $table->unique(
+                ['order_id', 'reservation_id'],
+                'store_order_reservations_order_reservation_unique',
+            );
             $table->unique('order_id');
         });
     }
