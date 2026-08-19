@@ -1,7 +1,9 @@
 <?php
 
 use App\Livewire\Store\CoffeeStore;
+use App\Livewire\Store\FloatingCart;
 use App\Modules\Store\Enums\ProductStatus;
+use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
@@ -134,23 +136,41 @@ test('coffee store keeps all category tabs visible when filtering products', fun
         ->assertDontSee($espressoProduct->name);
 });
 
-test('coffee store exposes a floating cart trigger and drawer after adding an item', function (): void {
+test('the floating cart is available globally after adding an item', function (): void {
     $category = Category::factory()->create();
     $product = Product::factory()->active()->create(['category_id' => $category->id]);
     $option = $product->defaultOption()->firstOrFail();
     $option->update(['price_baisa' => 1500]);
 
-    $component = Livewire::test(CoffeeStore::class)
+    Livewire::test(CoffeeStore::class)
         ->call('addToCart', $option->id)
-        ->assertSee('عرض السلة')
-        ->assertSee('store-cart-drawer', false);
+        ->assertDispatched('store-cart-updated');
 
-    $component
+    $item = Cart::query()->where('token', session('store_cart_token'))->firstOrFail()->items()->firstOrFail();
+
+    Livewire::test(FloatingCart::class)
+        ->assertSee('عرض السلة')
+        ->assertSee('1')
         ->call('openCart')
-        ->assertSet('cartOpen', true)
-        ->assertSee('store-cart-drawer-title', false)
-        ->call('closeCart')
-        ->assertSet('cartOpen', false);
+        ->assertSee('store-cart-drawer', false)
+        ->assertSee('/store/checkout', false);
+
+    $this->get(route('coffee'))
+        ->assertSuccessful()
+        ->assertSee('عرض السلة');
+
+    $this->get(route('home'))
+        ->assertSuccessful()
+        ->assertSee('عرض السلة');
+
+    Livewire::test(FloatingCart::class)
+        ->call('updateItem', $item->id, 2)
+        ->assertSee('2')
+        ->call('removeItem', $item->id)
+        ->assertSet('itemCount', 0)
+        ->assertDontSee('عرض السلة');
+
+    Livewire::test(CoffeeStore::class)->assertDontSee('id="cart-title"', false);
 });
 
 test('catalog records can be edited and archived without deletion', function (): void {

@@ -235,6 +235,8 @@
         </div>
     </footer>
 
+    <livewire:store.floating-cart />
+
     <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" data-whatsapp-floating-button
         class="pointer-events-none invisible fixed bottom-24 end-4 z-[60] inline-flex max-w-[calc(100vw-2rem)] translate-y-3 items-center gap-3 rounded-sm bg-[#25d366] px-4 py-3 text-white opacity-0 shadow-2xl shadow-[#123329]/24 ring-1 ring-white/28 transition duration-300 hover:-translate-y-0.5 hover:bg-[#1fbd59] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#dfb458] motion-reduce:transition-none lg:bottom-6 lg:end-6"
         title="تحتاج مساعدة؟ تحدث مع مساعدنا الذكي" aria-label="تحتاج مساعدة؟ تحدث مع مساعدنا الذكي">

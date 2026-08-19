@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Store\Checkout;
 use App\Livewire\Store\CoffeeStore;
 use App\Modules\Store\Actions\AddCartItem;
 use App\Modules\Store\Models\Cart;
@@ -46,7 +47,6 @@ test('storefront rejects unavailable inventory before checkout', function (): vo
 
     Livewire::test(CoffeeStore::class)
         ->call('openCheckout')
-        ->assertSet('checkoutOpen', false)
         ->assertHasErrors('cart');
 });
 
@@ -97,13 +97,20 @@ test('reopening checkout keeps the key for an unchanged cart', function (): void
 });
 
 test('storefront disables checkout while ordering is disabled', function (): void {
+    $option = coffeeStoreOption();
+    $cart = Cart::factory()->create();
+    app(AddCartItem::class)->execute($cart, $option, 1);
+    session()->put('store_cart_token', $cart->token);
+
     $settings = app(StoreSettings::class);
     $settings->ordering_enabled = false;
     $settings->save();
 
-    $response = $this->get(route('coffee'));
+    $response = $this->get(route('store.checkout'));
 
     $response->assertSuccessful()
-        ->assertSee('wire:click="openCheckout"', false)
+        ->assertSee('store-checkout-title', false)
         ->assertSee('disabled', false);
+
+    Livewire::test(Checkout::class)->assertSee('disabled', false);
 });
