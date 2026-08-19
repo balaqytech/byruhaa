@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Store\CoffeeStore;
 use App\Modules\Store\Enums\ProductStatus;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
@@ -9,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Slimani\MediaManager\Models\File;
 
 test('catalog migrations create the store tables and required columns', function (): void {
@@ -104,6 +106,51 @@ test('catalog status and activation scopes expose only active records', function
         ->toContain($activeProduct->id)
         ->not->toContain($archivedProduct->id)
         ->and($activeProduct->status)->toBe(ProductStatus::Active);
+});
+
+test('coffee store keeps all category tabs visible when filtering products', function (): void {
+    $manualCategory = Category::factory()->create(['name' => 'Manual brewing']);
+    $espressoCategory = Category::factory()->create(['name' => 'Espresso']);
+
+    $manualProduct = Product::factory()->active()->create([
+        'category_id' => $manualCategory->id,
+        'name' => 'V60 Coffee',
+    ]);
+    $manualProduct->defaultOption()->update(['price_baisa' => 1500]);
+
+    $espressoProduct = Product::factory()->active()->create([
+        'category_id' => $espressoCategory->id,
+        'name' => 'Espresso Coffee',
+    ]);
+    $espressoProduct->defaultOption()->update(['price_baisa' => 1800]);
+
+    Livewire::test(CoffeeStore::class)
+        ->assertSee($manualCategory->name)
+        ->assertSee($espressoCategory->name)
+        ->call('selectCategory', $manualCategory->id)
+        ->assertSee($manualCategory->name)
+        ->assertSee($espressoCategory->name)
+        ->assertSee($manualProduct->name)
+        ->assertDontSee($espressoProduct->name);
+});
+
+test('coffee store exposes a floating cart trigger and drawer after adding an item', function (): void {
+    $category = Category::factory()->create();
+    $product = Product::factory()->active()->create(['category_id' => $category->id]);
+    $option = $product->defaultOption()->firstOrFail();
+    $option->update(['price_baisa' => 1500]);
+
+    $component = Livewire::test(CoffeeStore::class)
+        ->call('addToCart', $option->id)
+        ->assertSee('عرض السلة')
+        ->assertSee('store-cart-drawer', false);
+
+    $component
+        ->call('openCart')
+        ->assertSet('cartOpen', true)
+        ->assertSee('store-cart-drawer-title', false)
+        ->call('closeCart')
+        ->assertSet('cartOpen', false);
 });
 
 test('catalog records can be edited and archived without deletion', function (): void {

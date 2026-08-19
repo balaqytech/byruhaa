@@ -2,16 +2,11 @@
 
 namespace App\Livewire\Store;
 
-use App\Modules\Store\Actions\AddCartItem;
-use App\Modules\Store\Actions\BrowseCatalog;
 use App\Modules\Store\Actions\CreateOrder;
 use App\Modules\Store\Actions\InitiateStorePayment;
 use App\Modules\Store\Actions\QuoteCart;
-use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
-use App\Modules\Store\Actions\UpdateCartItem;
 use App\Modules\Store\Models\Cart;
-use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Validator;
@@ -19,23 +14,17 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
-class CoffeeStore extends Component
+class Checkout extends Component
 {
     private const CHECKOUT_IDEMPOTENCY_KEYS_SESSION = 'store_checkout_idempotency_keys';
 
     private const LEGACY_CHECKOUT_IDEMPOTENCY_KEY_SESSION = 'store_checkout_idempotency_key';
-
-    protected BrowseCatalog $browseCatalog;
 
     protected QuoteCart $quoteCart;
 
     protected ResolveCart $resolveCart;
 
     protected StoreSettings $settings;
-
-    public ?int $categoryId = null;
-
-    public ?int $selectedOptionId = null;
 
     public string $pickupType = 'immediate';
 
@@ -53,21 +42,14 @@ class CoffeeStore extends Component
 
     public string $orderNote = '';
 
-    public bool $checkoutOpen = false;
-
-    public bool $cartOpen = false;
-
     public bool $submitting = false;
-
-    public ?string $feedback = null;
 
     public ?string $cartError = null;
 
     public ?string $cartToken = null;
 
-    public function boot(BrowseCatalog $browseCatalog, QuoteCart $quoteCart, ResolveCart $resolveCart, StoreSettings $settings): void
+    public function boot(QuoteCart $quoteCart, ResolveCart $resolveCart, StoreSettings $settings): void
     {
-        $this->browseCatalog = $browseCatalog;
         $this->quoteCart = $quoteCart;
         $this->resolveCart = $resolveCart;
         $this->settings = $settings;
@@ -86,90 +68,9 @@ class CoffeeStore extends Component
         }
     }
 
-    public function selectCategory(?int $categoryId): void
+    public function backToStore(): void
     {
-        $this->categoryId = $categoryId;
-        $this->selectedOptionId = null;
-    }
-
-    public function openCart(): void
-    {
-        $this->cartOpen = true;
-    }
-
-    public function closeCart(): void
-    {
-        $this->cartOpen = false;
-    }
-
-    public function addToCart(int $optionId, AddCartItem $addCartItem, ResolveCart $resolveCart): void
-    {
-        try {
-            $cart = $resolveCart->execute($this->cartToken, $this->customerId(), true);
-            $option = ProductOption::query()->with('product.category')->findOrFail($optionId);
-            $addCartItem->execute($cart, $option, 1);
-            $this->rememberCart($cart);
-            $this->resetCheckoutAttempt();
-            $this->feedback = 'أضيف المنتج إلى السلة.';
-            $this->cartError = null;
-        } catch (ValidationException $exception) {
-            $this->showValidation($exception);
-        }
-    }
-
-    public function updateCartItem(int $itemId, int $quantity, UpdateCartItem $updateCartItem): void
-    {
-        try {
-            $cart = $this->resolveExistingCart();
-            $item = $cart->items()->whereKey($itemId)->firstOrFail();
-            $updateCartItem->execute($cart, $item, $quantity, $item->note);
-            $this->resetCheckoutAttempt();
-            $this->feedback = 'تم تحديث السلة.';
-        } catch (ValidationException $exception) {
-            $this->showValidation($exception);
-        }
-    }
-
-    public function updateCartItemNote(int $itemId, string $note, UpdateCartItem $updateCartItem): void
-    {
-        try {
-            $cart = $this->resolveExistingCart();
-            $item = $cart->items()->whereKey($itemId)->firstOrFail();
-            $updateCartItem->execute($cart, $item, (int) $item->quantity, $note);
-            $this->resetCheckoutAttempt();
-            $this->feedback = 'تم حفظ الملاحظة.';
-        } catch (ValidationException $exception) {
-            $this->showValidation($exception);
-        }
-    }
-
-    public function removeFromCart(int $itemId, RemoveCartItem $removeCartItem): void
-    {
-        try {
-            $cart = $this->resolveExistingCart();
-            $item = $cart->items()->whereKey($itemId)->firstOrFail();
-            $removeCartItem->execute($cart, $item);
-            $this->resetCheckoutAttempt();
-            if (! $cart->items()->exists()) {
-                $this->closeCart();
-            }
-            $this->feedback = 'أزيل المنتج من السلة.';
-        } catch (ValidationException $exception) {
-            $this->showValidation($exception);
-        }
-    }
-
-    public function openCheckout(): void
-    {
-        try {
-            $this->quoteCart->execute($this->resolveExistingCart());
-            $this->closeCart();
-            $this->feedback = null;
-            $this->idempotencyKey();
-            $this->redirect(route('store.checkout'), navigate: true);
-        } catch (ValidationException $exception) {
-            $this->showValidation($exception);
-        }
+        $this->redirect(route('coffee').'#menu', navigate: true);
     }
 
     public function placeOrder(CreateOrder $createOrder, InitiateStorePayment $initiatePayment): void
@@ -217,13 +118,12 @@ class CoffeeStore extends Component
         } catch (\Throwable $exception) {
             report($exception);
             $this->submitting = false;
-            $this->addError('checkout', 'تعذر بدء الدفع الآن. حاول مرة أخرى بعد لحظات.');
+            $this->addError('checkout', 'تعذّر بدء الدفع الآن. حاول مرة أخرى بعد لحظات.');
         }
     }
 
     public function render(): View
     {
-        $catalog = $this->browseCatalog->execute();
         $cart = $this->loadCart();
         $quote = null;
 
@@ -236,8 +136,7 @@ class CoffeeStore extends Component
             }
         }
 
-        return view('livewire.store.coffee-store', [
-            'catalog' => $catalog,
+        return view('livewire.store.checkout', [
             'cart' => $cart,
             'quote' => $quote,
             'orderingEnabled' => $this->settings->ordering_enabled,
@@ -262,12 +161,6 @@ class CoffeeStore extends Component
     {
         return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
             ->load('items.productOption.product.category');
-    }
-
-    private function rememberCart(Cart $cart): void
-    {
-        $this->cartToken = (string) $cart->token;
-        session()->put('store_cart_token', $this->cartToken);
     }
 
     private function customerId(): ?int
@@ -305,7 +198,7 @@ class CoffeeStore extends Component
     private function showValidation(ValidationException $exception): void
     {
         foreach ($exception->errors() as $field => $messages) {
-            $this->addError($field, is_array($messages) ? (string) ($messages[0] ?? 'تعذر تنفيذ الطلب.') : (string) $messages);
+            $this->addError($field, is_array($messages) ? (string) ($messages[0] ?? 'تعذّر تنفيذ الطلب.') : (string) $messages);
         }
     }
 }

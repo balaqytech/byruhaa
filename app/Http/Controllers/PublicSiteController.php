@@ -74,6 +74,14 @@ class PublicSiteController extends Controller
         ]);
     }
 
+    public function checkout(): View
+    {
+        return view('pages.public.site.store.checkout', [
+            'title' => 'إتمام طلب القهوة',
+            'metaDescription' => 'أكمل بيانات طلب القهوة واختر وقت الاستلام ثم انتقل إلى الدفع الآمن.',
+        ]);
+    }
+
     public function events(): View
     {
         $events = Event::query()

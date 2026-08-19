@@ -1,176 +1,17 @@
 {
-  "_fonts-5fIXHqfM.css": {
-    "file": "assets/fonts-5fIXHqfM.css",
-    "src": "_fonts-5fIXHqfM.css"
-  },
-  "_ibm-plex-sans-arabic-400-normal-Bjm8chgm.woff": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-Bjm8chgm.woff",
-    "src": "_ibm-plex-sans-arabic-400-normal-Bjm8chgm.woff"
-  },
-  "_ibm-plex-sans-arabic-400-normal-Bo5KPYvw.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-Bo5KPYvw.woff2",
-    "src": "_ibm-plex-sans-arabic-400-normal-Bo5KPYvw.woff2"
-  },
-  "_ibm-plex-sans-arabic-400-normal-BpLfq-63.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-BpLfq-63.woff2",
-    "src": "_ibm-plex-sans-arabic-400-normal-BpLfq-63.woff2"
-  },
-  "_ibm-plex-sans-arabic-400-normal-CZLC1jgY.woff": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-CZLC1jgY.woff",
-    "src": "_ibm-plex-sans-arabic-400-normal-CZLC1jgY.woff"
-  },
-  "_ibm-plex-sans-arabic-400-normal-CyU-ddYS.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-CyU-ddYS.woff2",
-    "src": "_ibm-plex-sans-arabic-400-normal-CyU-ddYS.woff2"
-  },
-  "_ibm-plex-sans-arabic-400-normal-KAuemXZb.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-KAuemXZb.woff2",
-    "src": "_ibm-plex-sans-arabic-400-normal-KAuemXZb.woff2"
-  },
-  "_ibm-plex-sans-arabic-400-normal-oj16r74j.woff": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-oj16r74j.woff",
-    "src": "_ibm-plex-sans-arabic-400-normal-oj16r74j.woff"
-  },
-  "_ibm-plex-sans-arabic-400-normal-sbZiljcy.woff": {
-    "file": "assets/ibm-plex-sans-arabic-400-normal-sbZiljcy.woff",
-    "src": "_ibm-plex-sans-arabic-400-normal-sbZiljcy.woff"
-  },
-  "_ibm-plex-sans-arabic-500-normal-BKKTaxl1.woff": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-BKKTaxl1.woff",
-    "src": "_ibm-plex-sans-arabic-500-normal-BKKTaxl1.woff"
-  },
-  "_ibm-plex-sans-arabic-500-normal-BrC3D1t3.woff": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-BrC3D1t3.woff",
-    "src": "_ibm-plex-sans-arabic-500-normal-BrC3D1t3.woff"
-  },
-  "_ibm-plex-sans-arabic-500-normal-C4MQITzh.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-C4MQITzh.woff2",
-    "src": "_ibm-plex-sans-arabic-500-normal-C4MQITzh.woff2"
-  },
-  "_ibm-plex-sans-arabic-500-normal-Cd6jVIg7.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-Cd6jVIg7.woff2",
-    "src": "_ibm-plex-sans-arabic-500-normal-Cd6jVIg7.woff2"
-  },
-  "_ibm-plex-sans-arabic-500-normal-Ck_W4G78.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-Ck_W4G78.woff2",
-    "src": "_ibm-plex-sans-arabic-500-normal-Ck_W4G78.woff2"
-  },
-  "_ibm-plex-sans-arabic-500-normal-DvhI1aHE.woff": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-DvhI1aHE.woff",
-    "src": "_ibm-plex-sans-arabic-500-normal-DvhI1aHE.woff"
-  },
-  "_ibm-plex-sans-arabic-500-normal-OtpNIXEE.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-OtpNIXEE.woff2",
-    "src": "_ibm-plex-sans-arabic-500-normal-OtpNIXEE.woff2"
-  },
-  "_ibm-plex-sans-arabic-500-normal-XmtXq_5I.woff": {
-    "file": "assets/ibm-plex-sans-arabic-500-normal-XmtXq_5I.woff",
-    "src": "_ibm-plex-sans-arabic-500-normal-XmtXq_5I.woff"
-  },
-  "_ibm-plex-sans-arabic-600-normal-0pRdybE_.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-0pRdybE_.woff2",
-    "src": "_ibm-plex-sans-arabic-600-normal-0pRdybE_.woff2"
-  },
-  "_ibm-plex-sans-arabic-600-normal-5MnVa4PS.woff": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-5MnVa4PS.woff",
-    "src": "_ibm-plex-sans-arabic-600-normal-5MnVa4PS.woff"
-  },
-  "_ibm-plex-sans-arabic-600-normal-ABNWglN6.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-ABNWglN6.woff2",
-    "src": "_ibm-plex-sans-arabic-600-normal-ABNWglN6.woff2"
-  },
-  "_ibm-plex-sans-arabic-600-normal-B3qNl98V.woff": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-B3qNl98V.woff",
-    "src": "_ibm-plex-sans-arabic-600-normal-B3qNl98V.woff"
-  },
-  "_ibm-plex-sans-arabic-600-normal-BPig9_JX.woff": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-BPig9_JX.woff",
-    "src": "_ibm-plex-sans-arabic-600-normal-BPig9_JX.woff"
-  },
-  "_ibm-plex-sans-arabic-600-normal-BdaAnz9X.woff": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-BdaAnz9X.woff",
-    "src": "_ibm-plex-sans-arabic-600-normal-BdaAnz9X.woff"
-  },
-  "_ibm-plex-sans-arabic-600-normal-DjDAeNQD.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-DjDAeNQD.woff2",
-    "src": "_ibm-plex-sans-arabic-600-normal-DjDAeNQD.woff2"
-  },
-  "_ibm-plex-sans-arabic-600-normal-KrqB56Mw.woff2": {
-    "file": "assets/ibm-plex-sans-arabic-600-normal-KrqB56Mw.woff2",
-    "src": "_ibm-plex-sans-arabic-600-normal-KrqB56Mw.woff2"
-  },
-  "_reem-kufi-400-normal-BBJU0Qav.woff": {
-    "file": "assets/reem-kufi-400-normal-BBJU0Qav.woff",
-    "src": "_reem-kufi-400-normal-BBJU0Qav.woff"
-  },
-  "_reem-kufi-400-normal-CC1rmUNx.woff": {
-    "file": "assets/reem-kufi-400-normal-CC1rmUNx.woff",
-    "src": "_reem-kufi-400-normal-CC1rmUNx.woff"
-  },
-  "_reem-kufi-400-normal-CkEL2vhd.woff": {
-    "file": "assets/reem-kufi-400-normal-CkEL2vhd.woff",
-    "src": "_reem-kufi-400-normal-CkEL2vhd.woff"
-  },
-  "_reem-kufi-400-normal-CtrjvQUY.woff2": {
-    "file": "assets/reem-kufi-400-normal-CtrjvQUY.woff2",
-    "src": "_reem-kufi-400-normal-CtrjvQUY.woff2"
-  },
-  "_reem-kufi-400-normal-DtbpzZsC.woff2": {
-    "file": "assets/reem-kufi-400-normal-DtbpzZsC.woff2",
-    "src": "_reem-kufi-400-normal-DtbpzZsC.woff2"
-  },
-  "_reem-kufi-400-normal-Za7ilK7N.woff2": {
-    "file": "assets/reem-kufi-400-normal-Za7ilK7N.woff2",
-    "src": "_reem-kufi-400-normal-Za7ilK7N.woff2"
-  },
-  "_reem-kufi-400-normal-dNVWXZsY.woff": {
-    "file": "assets/reem-kufi-400-normal-dNVWXZsY.woff",
-    "src": "_reem-kufi-400-normal-dNVWXZsY.woff"
-  },
-  "_reem-kufi-400-normal-mVApVoLm.woff2": {
-    "file": "assets/reem-kufi-400-normal-mVApVoLm.woff2",
-    "src": "_reem-kufi-400-normal-mVApVoLm.woff2"
-  },
-  "_reem-kufi-700-normal-2X0LRV6P.woff": {
-    "file": "assets/reem-kufi-700-normal-2X0LRV6P.woff",
-    "src": "_reem-kufi-700-normal-2X0LRV6P.woff"
-  },
-  "_reem-kufi-700-normal-BVODnn_J.woff": {
-    "file": "assets/reem-kufi-700-normal-BVODnn_J.woff",
-    "src": "_reem-kufi-700-normal-BVODnn_J.woff"
-  },
-  "_reem-kufi-700-normal-CFkdsF2J.woff": {
-    "file": "assets/reem-kufi-700-normal-CFkdsF2J.woff",
-    "src": "_reem-kufi-700-normal-CFkdsF2J.woff"
-  },
-  "_reem-kufi-700-normal-C_zHpWh6.woff": {
-    "file": "assets/reem-kufi-700-normal-C_zHpWh6.woff",
-    "src": "_reem-kufi-700-normal-C_zHpWh6.woff"
-  },
-  "_reem-kufi-700-normal-CbxOURXW.woff2": {
-    "file": "assets/reem-kufi-700-normal-CbxOURXW.woff2",
-    "src": "_reem-kufi-700-normal-CbxOURXW.woff2"
-  },
-  "_reem-kufi-700-normal-CwRvvSSB.woff2": {
-    "file": "assets/reem-kufi-700-normal-CwRvvSSB.woff2",
-    "src": "_reem-kufi-700-normal-CwRvvSSB.woff2"
-  },
-  "_reem-kufi-700-normal-D4MLSEVm.woff2": {
-    "file": "assets/reem-kufi-700-normal-D4MLSEVm.woff2",
-    "src": "_reem-kufi-700-normal-D4MLSEVm.woff2"
-  },
-  "_reem-kufi-700-normal-D4RhYlR1.woff2": {
-    "file": "assets/reem-kufi-700-normal-D4RhYlR1.woff2",
-    "src": "_reem-kufi-700-normal-D4RhYlR1.woff2"
-  },
   "resources/css/app.css": {
-    "file": "assets/app-CeHmy0ee.css",
+    "file": "assets/app-BKjK5I9J.css",
     "name": "app",
     "names": [
       "app.css"
     ],
     "src": "resources/css/app.css",
-    "isEntry": true
+    "isEntry": true,
+    "assets": [
+      "assets/thmanyahsans-Regular-NTPOWdsf.woff2",
+      "assets/thmanyahserifdisplay-Bold-kzw7Oegj.woff2",
+      "assets/thmanyahserifdisplay-Black-Hu95DQR-.woff2"
+    ]
   },
   "resources/css/filament/admin/theme.css": {
     "file": "assets/theme-CtbDrRNU.css",
@@ -180,6 +21,18 @@
     ],
     "src": "resources/css/filament/admin/theme.css",
     "isEntry": true
+  },
+  "resources/fonts/thmanyahsans-Regular.woff2": {
+    "file": "assets/thmanyahsans-Regular-NTPOWdsf.woff2",
+    "src": "resources/fonts/thmanyahsans-Regular.woff2"
+  },
+  "resources/fonts/thmanyahserifdisplay-Black.woff2": {
+    "file": "assets/thmanyahserifdisplay-Black-Hu95DQR-.woff2",
+    "src": "resources/fonts/thmanyahserifdisplay-Black.woff2"
+  },
+  "resources/fonts/thmanyahserifdisplay-Bold.woff2": {
+    "file": "assets/thmanyahserifdisplay-Bold-kzw7Oegj.woff2",
+    "src": "resources/fonts/thmanyahserifdisplay-Bold.woff2"
   },
   "resources/js/app.js": {
     "file": "assets/app-BvRk9kiK.js",

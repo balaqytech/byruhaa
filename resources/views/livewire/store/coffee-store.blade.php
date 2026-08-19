@@ -74,6 +74,22 @@
         @endif
     </div>
 
+    @if ($cart?->items->isNotEmpty())
+        <button type="button" wire:click="openCart" wire:loading.attr="disabled" aria-controls="store-cart-drawer" aria-label="فتح السلة" class="fixed bottom-24 start-4 z-50 inline-flex min-h-14 items-center gap-3 rounded-full bg-[#007a52] px-4 py-3 text-sm font-bold text-white shadow-xl shadow-[#007a52]/25 transition hover:-translate-y-0.5 hover:bg-[#006746] focus:outline-none focus:ring-4 focus:ring-[#007a52]/25 lg:bottom-8 lg:start-8">
+            <span class="relative grid size-9 place-items-center rounded-full bg-white/15"><x-hugeicon name="wallet-02" class="text-xl" /><span class="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-[#f0c96a] px-1 text-[10px] font-black leading-5 text-[#123329]">{{ $cart->items->sum('quantity') }}</span></span>
+            <span>عرض السلة</span>
+        </button>
+    @endif
+
+    @if ($cartOpen)
+        <div wire:keydown.escape.window="closeCart" class="fixed inset-0 z-[70]" role="dialog" aria-modal="true" aria-labelledby="store-cart-drawer-title">
+            <button type="button" wire:click="closeCart" class="absolute inset-0 bg-[#07120f]/50 backdrop-blur-[2px]" aria-label="إغلاق السلة"></button>
+            <div id="store-cart-drawer-shell" class="absolute inset-x-4 bottom-4 max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl shadow-2xl sm:inset-x-auto sm:start-6 sm:top-24 sm:bottom-auto sm:w-[min(26rem,calc(100vw-3rem))]">
+                @include('livewire.store.partials.cart', ['cart' => $cart, 'quote' => $quote, 'orderingEnabled' => $orderingEnabled, 'cartId' => 'store-cart-drawer', 'keyPrefix' => 'drawer'])
+            </div>
+        </div>
+    @endif
+
     @if ($checkoutOpen)
         <div class="fixed inset-0 z-[80] overflow-y-auto bg-[#07120f]/70 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
             <div class="mx-auto max-w-2xl rounded-sm border border-[#2a8069]/18 bg-[#f6fbf8] p-6 shadow-2xl dark:border-white/10 dark:bg-[#0c1e19] sm:p-8">

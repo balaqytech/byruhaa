@@ -2,6 +2,30 @@
 @plugin "@tailwindcss/typography";
 @import '../../vendor/livewire/flux/dist/flux.css';
 
+@font-face {
+    font-family: 'Thmanyah Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/thmanyahsans-Regular.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Thmanyah Serif Display';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../fonts/thmanyahserifdisplay-Bold.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Thmanyah Serif Display';
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url('../fonts/thmanyahserifdisplay-Black.woff2') format('woff2');
+}
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
@@ -10,8 +34,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-heading: 'Reem Kufi', 'IBM Plex Sans Arabic', ui-sans-serif, sans-serif;
+    --font-sans: 'Thmanyah Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-heading: 'Thmanyah Serif Display', 'Thmanyah Sans', ui-sans-serif, sans-serif;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -54,8 +78,35 @@
     [data-flux-heading],
     flux-heading {
         font-family: var(--font-heading);
+        font-feature-settings: 'swsh' 1;
         letter-spacing: 0;
         line-height: 1.35;
+    }
+
+    body,
+    button,
+    input,
+    select,
+    textarea {
+        font-weight: 400;
+    }
+
+    h1,
+    h1[class*='font-'] {
+        font-weight: 900;
+    }
+
+    h2,
+    h2[class*='font-'],
+    h3,
+    h3[class*='font-'],
+    h4,
+    h4[class*='font-'],
+    h5,
+    h5[class*='font-'],
+    h6,
+    h6[class*='font-'] {
+        font-weight: 700;
     }
 
     h1,

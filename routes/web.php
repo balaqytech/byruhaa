@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\OrderController;
 use App\Http\Controllers\Store\PaymentController;
@@ -17,6 +18,7 @@ Route::middleware('signed')->group(function () {
 require __DIR__.'/customer.php';
 
 Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(function (): void {
+    Route::get('checkout', [PublicSiteController::class, 'checkout'])->name('checkout');
     Route::get('cart', [CartController::class, 'show'])->name('cart.show');
     Route::post('cart/items', [CartController::class, 'add'])->name('cart.items.store');
     Route::scopeBindings()->patch('cart/{cart:token}/items/{item}', [CartController::class, 'update'])->name('cart.items.update');

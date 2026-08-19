@@ -50,7 +50,7 @@ test('storefront rejects unavailable inventory before checkout', function (): vo
         ->assertHasErrors('cart');
 });
 
-test('opening checkout replaces an idempotency key left by a previous order', function (): void {
+test('opening checkout redirects to the dedicated checkout page and replaces an old idempotency key', function (): void {
     $option = coffeeStoreOption();
     $cart = Cart::factory()->create();
     app(AddCartItem::class)->execute($cart, $option, 1);
@@ -60,7 +60,7 @@ test('opening checkout replaces an idempotency key left by a previous order', fu
 
     Livewire::test(CoffeeStore::class)
         ->call('openCheckout')
-        ->assertSet('checkoutOpen', true);
+        ->assertRedirect(route('store.checkout'));
 
     $checkoutKeys = session('store_checkout_idempotency_keys', []);
 
@@ -73,7 +73,8 @@ test('changing the cart discards the current checkout attempt', function (): voi
     $option = coffeeStoreOption();
     $component = Livewire::test(CoffeeStore::class)
         ->call('addToCart', $option->id)
-        ->call('openCheckout');
+        ->call('openCheckout')
+        ->assertRedirect(route('store.checkout'));
 
     expect(session('store_checkout_idempotency_keys', []))->toHaveCount(1);
 
@@ -90,7 +91,7 @@ test('reopening checkout keeps the key for an unchanged cart', function (): void
 
     $firstKey = array_values(session('store_checkout_idempotency_keys', []))[0];
 
-    $component->call('openCheckout');
+    $component->call('openCheckout')->assertRedirect(route('store.checkout'));
 
     expect(array_values(session('store_checkout_idempotency_keys', []))[0])->toBe($firstKey);
 });
