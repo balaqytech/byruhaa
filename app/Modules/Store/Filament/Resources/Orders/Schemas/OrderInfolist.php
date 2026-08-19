@@ -36,7 +36,9 @@ class OrderInfolist
                     TextEntry::make('option_name')->label('Option'),
                     TextEntry::make('sku')->label('SKU'),
                     TextEntry::make('quantity')->label('Quantity'),
-                    TextEntry::make('line_total_baisa')->label('Total')->state(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR')),
+                    TextEntry::make('line_total_baisa')
+                        ->label('Total')
+                        ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR')),
                     TextEntry::make('note')->label('Note')->placeholder('-'),
                 ])->columns(3),
             ]),
