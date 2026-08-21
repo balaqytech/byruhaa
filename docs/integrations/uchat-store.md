@@ -32,6 +32,8 @@ The integration fails closed unless both `UCHAT_STORE_API_TOKEN` and `UCHAT_STOR
 
 Order creation requires `Idempotency-Key`. Repeating the same key for the same normalized phone returns the same order; reusing it for another phone is rejected. Prices, VAT, totals, currency, availability and ownership are always calculated on the server.
 
+All monetary fields ending in `_baisa` are integer values. Product `price_baisa` and order-item `unit_price_baisa`/`line_total_baisa` are final VAT-inclusive prices. `subtotal_baisa` and `line_subtotal_baisa` are the amounts before VAT, while `vat_baisa` is the embedded 5% VAT amount. The invariant is `total_baisa = subtotal_baisa + vat_baisa`; this final total is the amount sent to Thawani (there is no separate VAT line item). For example, a VAT-inclusive price of 2,000 baisa is represented as 1,905 baisa before VAT plus 95 baisa VAT.
+
 Example order request:
 
 ```json

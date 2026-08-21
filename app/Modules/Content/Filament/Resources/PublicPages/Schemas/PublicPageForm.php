@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\PublicPages\Schemas;
+namespace App\Modules\Content\Filament\Resources\PublicPages\Schemas;
 
 use App\Modules\Content\Enums\PublicPageStatus;
 use Filament\Forms\Components\DateTimePicker;

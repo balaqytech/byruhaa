@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\PublicPages;
+namespace App\Modules\Content\Filament\Resources\PublicPages;
 
-use App\Filament\Resources\PublicPages\Pages\EditPublicPage;
-use App\Filament\Resources\PublicPages\Pages\ListPublicPages;
-use App\Filament\Resources\PublicPages\Schemas\PublicPageForm;
-use App\Filament\Resources\PublicPages\Tables\PublicPagesTable;
+use App\Modules\Content\Filament\Resources\PublicPages\Pages\EditPublicPage;
+use App\Modules\Content\Filament\Resources\PublicPages\Pages\ListPublicPages;
+use App\Modules\Content\Filament\Resources\PublicPages\Schemas\PublicPageForm;
+use App\Modules\Content\Filament\Resources\PublicPages\Tables\PublicPagesTable;
 use App\Modules\Content\Models\PublicPage;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -19,6 +19,8 @@ class PublicPageResource extends Resource
     protected static ?string $model = PublicPage::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+
+    protected static ?string $slug = 'public-pages';
 
     public static function form(Schema $schema): Schema
     {

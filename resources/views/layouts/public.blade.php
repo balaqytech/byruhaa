@@ -26,13 +26,15 @@
 <body
     class="min-h-screen overflow-x-hidden bg-[#f6fbf8] text-[#173f35] antialiased selection:bg-[#bfe7da] selection:text-[#173f35] dark:bg-[#07120f] dark:text-[#f7f1df]">
     @php
-        $publicName = $siteIdentity?->public_name ?: 'منتجع بيرحاء';
+        $publicName = $siteIdentity?->public_name ?: 'بِيرُحاء إبراء';
+        $commercialRegistrationNumber = $siteIdentity?->commercial_registration_number;
+        $taxNumber = $siteIdentity?->tax_number;
         $navigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
             ['label' => 'قهوة بيرحاء', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
             ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
-            ['label' => 'عن المنتجع', 'route' => 'about', 'active' => 'about', 'icon' => 'information-circle'],
+            ['label' => 'عن بِيرُحاء', 'route' => 'about', 'active' => 'about', 'icon' => 'information-circle'],
         ];
         $footerNavigationLinks = [
             ...$navigationLinks,
@@ -187,6 +189,12 @@
                     </span>
                     <div>
                         <p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">{{ $publicName }}</p>
+                        @if (filled($commercialRegistrationNumber))
+                            <p class="mt-2 text-xs text-[#123329]/58 dark:text-[#f7f1df]/62">السجل التجاري: {{ $commercialRegistrationNumber }}</p>
+                        @endif
+                        @if (filled($taxNumber))
+                            <p class="text-xs text-[#123329]/58 dark:text-[#f7f1df]/62">الرقم الضريبي: {{ $taxNumber }}</p>
+                        @endif
                         <p class="mt-1 text-sm text-[#123329]/58 dark:text-[#f7f1df]/62">تجارب سياحية وتعليمية بروح
                             عُمانية فاخرة.</p>
                     </div>

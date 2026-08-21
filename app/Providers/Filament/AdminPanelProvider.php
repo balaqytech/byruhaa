@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
 use App\Modules\Store\Filament\Pages\ManageStoreSettings;
 use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
 use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
@@ -44,6 +45,7 @@ class AdminPanelProvider extends PanelProvider
                 ProductResource::class,
                 ProductOptionResource::class,
                 OrderResource::class,
+                PublicPageResource::class,
             ])
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

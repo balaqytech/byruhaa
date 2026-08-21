@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\PublicEventInterestController;
-use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Middleware\CaptureAffiliateReferral;
+use App\Modules\Content\Http\Controllers\PublicPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('sitemap.xml', SitemapController::class)->name('sitemap');

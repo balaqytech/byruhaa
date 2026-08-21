@@ -9,10 +9,12 @@ use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Actions\UpdateCartItem;
 use App\Modules\Store\Models\Cart;
+use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -147,22 +149,29 @@ class CoffeeStore extends Component
     public function render(): View
     {
         $catalog = $this->browseCatalog->execute();
-        $displayCatalog = $this->featuredOnly
-            ? $catalog
-                ->map(function ($category) {
-                    $category->setRelation(
-                        'products',
-                        $category->products
-                            ->filter(fn (Product $product): bool => $product->is_featured)
-                            ->sortBy('featured_sort_order')
-                            ->values(),
-                    );
+        $this->initializeSelectedOptions($catalog);
 
-                    return $category;
-                })
-                ->filter(fn ($category): bool => $category->products->isNotEmpty())
-                ->values()
-            : $catalog;
+        $featuredCatalog = $catalog
+            ->map(function (Category $category): Category {
+                $featuredCategory = clone $category;
+                $featuredCategory->setRelation(
+                    'products',
+                    $featuredCategory->products
+                        ->filter(fn (Product $product): bool => $product->is_featured)
+                        ->sortBy('featured_sort_order')
+                        ->values(),
+                );
+
+                return $featuredCategory;
+            })
+            ->filter(fn (Category $category): bool => $category->products->isNotEmpty())
+            ->values();
+
+        if ($this->featuredOnly && $featuredCatalog->isEmpty()) {
+            $this->featuredOnly = false;
+        }
+
+        $displayCatalog = $this->featuredOnly ? $featuredCatalog : $catalog;
         $cart = $this->loadCart();
         $quote = null;
 
@@ -178,10 +187,34 @@ class CoffeeStore extends Component
         return view('livewire.store.coffee-store', [
             'catalog' => $catalog,
             'displayCatalog' => $displayCatalog,
+            'hasFeaturedProducts' => $featuredCatalog->isNotEmpty(),
             'cart' => $cart,
             'quote' => $quote,
             'orderingEnabled' => $this->settings->ordering_enabled,
         ]);
+    }
+
+    /** @param Collection<int, Category> $catalog */
+    private function initializeSelectedOptions(Collection $catalog): void
+    {
+        foreach ($catalog as $category) {
+            foreach ($category->products as $product) {
+                if ($product->options->count() < 2) {
+                    continue;
+                }
+
+                $selectedOption = $product->options->firstWhere(
+                    'id',
+                    (int) ($this->selectedOptions[$product->getKey()] ?? 0),
+                )
+                    ?? $product->options->firstWhere('is_default', true)
+                    ?? $product->options->first();
+
+                if ($selectedOption !== null) {
+                    $this->selectedOptions[$product->getKey()] = (int) $selectedOption->getKey();
+                }
+            }
+        }
     }
 
     private function loadCart(): ?Cart

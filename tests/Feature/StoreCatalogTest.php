@@ -158,6 +158,32 @@ test('the catalog exposes featured products in a separate tab without changing t
         ->assertSee($regular->name);
 });
 
+test('the featured tab is hidden when the catalog has no featured products', function (): void {
+    $category = Category::factory()->create();
+    Product::factory()->active()->create(['category_id' => $category->id, 'is_featured' => false]);
+
+    Livewire::test(CoffeeStore::class)
+        ->assertDontSee('الأكثر طلبًا')
+        ->call('selectFeatured')
+        ->assertSet('featuredOnly', false);
+});
+
+test('the initial selector state uses the product default option', function (): void {
+    $product = Product::factory()->active()->create();
+    $default = $product->defaultOption()->firstOrFail();
+    $default->update(['price_baisa' => 1500]);
+    $alternative = ProductOption::factory()->for($product)->create([
+        'name' => 'Alternative',
+        'price_baisa' => 1800,
+        'is_default' => false,
+    ]);
+
+    Livewire::test(CoffeeStore::class)
+        ->assertSet('selectedOptions.'.$product->id, $default->id)
+        ->assertSee($default->name)
+        ->assertDontSee('wire:click="addToCart('.$alternative->id.')"', false);
+});
+
 test('the catalog adds the selected option for products with multiple options', function (): void {
     $product = Product::factory()->active()->create();
     $default = $product->defaultOption()->firstOrFail();

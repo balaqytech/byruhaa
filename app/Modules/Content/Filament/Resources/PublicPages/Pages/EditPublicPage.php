@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Filament\Resources\PublicPages\Pages;
+namespace App\Modules\Content\Filament\Resources\PublicPages\Pages;
 
-use App\Filament\Resources\PublicPages\PublicPageResource;
 use App\Modules\Content\Enums\PublicPageStatus;
+use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
 use Filament\Resources\Pages\EditRecord;
 
 class EditPublicPage extends EditRecord

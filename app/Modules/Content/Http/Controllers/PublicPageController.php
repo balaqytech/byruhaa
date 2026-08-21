@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Modules\Content\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Modules\Content\Models\PublicPage;
 use Illuminate\Contracts\View\View;
 

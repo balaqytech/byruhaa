@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\PublicPages\Tables;
+namespace App\Modules\Content\Filament\Resources\PublicPages\Tables;
 
 use App\Modules\Content\Enums\PublicPageStatus;
 use Filament\Actions\EditAction;

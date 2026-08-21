@@ -4,6 +4,8 @@ use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use App\Modules\Affiliates\Models\AffiliateReferral;
+use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
+use App\Modules\Content\Http\Controllers\PublicPageController;
 use App\Modules\Content\Models\BlogPost;
 use App\Modules\Content\Models\BlogPostCategory;
 use App\Modules\Events\Models\Booking;
@@ -88,4 +90,19 @@ test('future commerce module is registered as an explicit application provider',
 
     expect($providers)
         ->toContain(StoreServiceProvider::class);
+});
+
+test('content public pages keep their web and Filament entry points inside the module', function (): void {
+    $contentModulePath = str_replace('\\', '/', base_path('app/Modules/Content'));
+    $controllerPath = str_replace('\\', '/', (new ReflectionClass(PublicPageController::class))->getFileName());
+    $resourcePath = str_replace('\\', '/', (new ReflectionClass(PublicPageResource::class))->getFileName());
+
+    expect($controllerPath)
+        ->toStartWith($contentModulePath)
+        ->and($resourcePath)
+        ->toStartWith($contentModulePath);
+
+    $provider = file_get_contents(base_path('app/Providers/Filament/AdminPanelProvider.php'));
+
+    expect($provider)->toContain(PublicPageResource::class);
 });
