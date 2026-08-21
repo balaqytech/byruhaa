@@ -37,6 +37,7 @@ class ProductOptionForm
                             ->maxLength(255),
                         TextInput::make('price')
                             ->label(__('admin.fields.price'))
+                            ->helperText(__('admin.store.price_includes_vat_help'))
                             ->required()
                             ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
                             ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))

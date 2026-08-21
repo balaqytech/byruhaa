@@ -3,7 +3,7 @@
         <div class="mx-auto max-w-3xl text-center">
             <p class="text-sm font-bold uppercase tracking-[0.18em] text-[#b07c00]">الخطوة الأخيرة</p>
             <h1 id="store-checkout-title" class="mt-3 font-heading text-4xl font-bold text-[#123329] lg:text-5xl dark:text-[#f7f1df]">إتمام الطلب</h1>
-            <p class="mt-4 leading-8 text-[#315e52] dark:text-[#d2e7df]/76">أدخل بيانات الاستلام، راجع طلبك، ثم انتقل إلى بوابة الدفع الآمنة.</p>
+            <p class="mt-4 leading-8 text-[#315e52] dark:text-[#d2e7df]/76">أدخل بيانات الاستلام، راجع طلبك، ثم انتقل إلى بوابة الدفع الآمنة. الأسعار النهائية تشمل ٥٪ ضريبة القيمة المضافة.</p>
         </div>
 
         <button type="button" wire:click="backToStore" class="mt-8 inline-flex min-h-11 items-center gap-2 rounded-xl border border-[#2a8069]/18 bg-white/70 px-4 py-2 text-sm font-bold text-[#007a52] transition hover:border-[#007a52] dark:border-white/12 dark:bg-white/5 dark:text-[#6ee7b7]">
@@ -81,6 +81,12 @@
 
                     <div class="rounded-xl border border-[#007a52]/18 bg-[#e9f7f0] p-4 text-sm leading-7 text-[#006746] dark:border-[#6ee7b7]/20 dark:bg-[#0c2a20] dark:text-[#a7f3d0]">بعد تأكيد الطلب ستنتقل إلى بوابة ثواني للدفع الآمن. لا نحتفظ ببيانات بطاقتك.</div>
 
+                    <p class="text-xs leading-6 text-[#315e52]/75 dark:text-[#d2e7df]/65">
+                        بمتابعة الطلب، يمكنك مراجعة
+                        <a href="{{ route('policies.show', ['page' => 'terms']) }}" class="font-bold text-[#007a52] underline underline-offset-2 dark:text-[#6ee7b7]">الشروط والأحكام</a>
+                        و<a href="{{ route('policies.show', ['page' => 'refund-cancellation']) }}" class="font-bold text-[#007a52] underline underline-offset-2 dark:text-[#6ee7b7]">سياسة الإلغاء والاسترداد</a>.
+                    </p>
+
                     <button type="submit" wire:loading.attr="disabled" wire:target="placeOrder" @disabled(! $orderingEnabled || ! $quote) class="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#007a52] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#006746] disabled:cursor-wait disabled:opacity-55">
                         <span wire:loading.remove wire:target="placeOrder">تأكيد الطلب والمتابعة إلى الدفع</span>
                         <span wire:loading wire:target="placeOrder">جارٍ تجهيز الطلب…</span>
@@ -106,8 +112,8 @@
                     </div>
                     @if ($quote)
                         <dl class="mt-5 grid gap-2 border-t border-[#2a8069]/12 pt-4 text-sm dark:border-white/10">
-                            <div class="flex justify-between"><dt>المجموع</dt><dd class="font-bold"><x-money :amount-baisa="$quote['subtotal_baisa']" currency="OMR" /></dd></div>
-                            <div class="flex justify-between text-[#315e52] dark:text-[#d2e7df]/65"><dt>ضريبة القيمة المضافة</dt><dd><x-money :amount-baisa="$quote['vat_baisa']" currency="OMR" /></dd></div>
+                            <div class="flex justify-between"><dt>المجموع قبل الضريبة</dt><dd class="font-bold"><x-money :amount-baisa="$quote['subtotal_baisa']" currency="OMR" /></dd></div>
+                            <div class="flex justify-between text-[#315e52] dark:text-[#d2e7df]/65"><dt>ضريبة القيمة المضافة (مضمنة)</dt><dd><x-money :amount-baisa="$quote['vat_baisa']" currency="OMR" /></dd></div>
                             <div class="flex justify-between border-t border-[#2a8069]/12 pt-3 text-base font-bold dark:border-white/10"><dt>الإجمالي</dt><dd class="text-[#007a52] dark:text-[#6ee7b7]"><x-money :amount-baisa="$quote['total_baisa']" currency="OMR" /></dd></div>
                         </dl>
                     @endif

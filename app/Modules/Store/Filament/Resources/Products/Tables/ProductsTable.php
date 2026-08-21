@@ -26,6 +26,11 @@ class ProductsTable
                     ->label(__('admin.fields.status'))
                     ->badge()
                     ->sortable(),
+                TextColumn::make('is_featured')
+                    ->label(__('admin.fields.is_featured'))
+                    ->formatStateUsing(fn (bool $state): string => $state ? __('admin.statuses.active') : __('admin.statuses.inactive'))
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('sort_order')
                     ->label(__('admin.fields.sort_order'))
                     ->sortable(),

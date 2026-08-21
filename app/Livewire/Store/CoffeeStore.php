@@ -9,6 +9,7 @@ use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Actions\UpdateCartItem;
 use App\Modules\Store\Models\Cart;
+use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Contracts\View\View;
@@ -31,6 +32,11 @@ class CoffeeStore extends Component
     protected StoreSettings $settings;
 
     public ?int $categoryId = null;
+
+    public bool $featuredOnly = false;
+
+    /** @var array<int, int|string> */
+    public array $selectedOptions = [];
 
     public ?int $selectedOptionId = null;
 
@@ -57,6 +63,14 @@ class CoffeeStore extends Component
     public function selectCategory(?int $categoryId): void
     {
         $this->categoryId = $categoryId;
+        $this->featuredOnly = false;
+        $this->selectedOptionId = null;
+    }
+
+    public function selectFeatured(): void
+    {
+        $this->categoryId = null;
+        $this->featuredOnly = true;
         $this->selectedOptionId = null;
     }
 
@@ -133,6 +147,22 @@ class CoffeeStore extends Component
     public function render(): View
     {
         $catalog = $this->browseCatalog->execute();
+        $displayCatalog = $this->featuredOnly
+            ? $catalog
+                ->map(function ($category) {
+                    $category->setRelation(
+                        'products',
+                        $category->products
+                            ->filter(fn (Product $product): bool => $product->is_featured)
+                            ->sortBy('featured_sort_order')
+                            ->values(),
+                    );
+
+                    return $category;
+                })
+                ->filter(fn ($category): bool => $category->products->isNotEmpty())
+                ->values()
+            : $catalog;
         $cart = $this->loadCart();
         $quote = null;
 
@@ -147,6 +177,7 @@ class CoffeeStore extends Component
 
         return view('livewire.store.coffee-store', [
             'catalog' => $catalog,
+            'displayCatalog' => $displayCatalog,
             'cart' => $cart,
             'quote' => $quote,
             'orderingEnabled' => $this->settings->ordering_enabled,

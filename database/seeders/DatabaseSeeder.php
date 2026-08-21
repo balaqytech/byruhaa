@@ -17,6 +17,11 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
+        $this->call([
+            PublicPageSeeder::class,
+            StoreCatalogSeeder::class,
+        ]);
+
         User::factory()->create([
             'name' => 'As3ad',
             'email' => 'as3ad.moh@gmail.com',

@@ -136,6 +136,47 @@ test('coffee store keeps all category tabs visible when filtering products', fun
         ->assertDontSee($espressoProduct->name);
 });
 
+test('the catalog exposes featured products in a separate tab without changing their category', function (): void {
+    $category = Category::factory()->create();
+    $featured = Product::factory()->active()->create([
+        'category_id' => $category->id,
+        'is_featured' => true,
+        'featured_sort_order' => 1,
+    ]);
+    $regular = Product::factory()->active()->create(['category_id' => $category->id]);
+    $featured->defaultOption()->update(['price_baisa' => 1500]);
+    $regular->defaultOption()->update(['price_baisa' => 1600]);
+
+    Livewire::test(CoffeeStore::class)
+        ->call('selectFeatured')
+        ->assertSet('featuredOnly', true)
+        ->assertSee('الأكثر طلبًا')
+        ->assertSee($featured->name)
+        ->assertDontSee($regular->name)
+        ->call('selectCategory', $category->id)
+        ->assertSet('featuredOnly', false)
+        ->assertSee($regular->name);
+});
+
+test('the catalog adds the selected option for products with multiple options', function (): void {
+    $product = Product::factory()->active()->create();
+    $default = $product->defaultOption()->firstOrFail();
+    $default->update(['price_baisa' => 1500, 'name' => 'كلاسيك']);
+    $selected = ProductOption::factory()->for($product)->create([
+        'name' => 'سبانيش',
+        'price_baisa' => 1800,
+        'is_default' => false,
+    ]);
+
+    Livewire::test(CoffeeStore::class)
+        ->set('selectedOptions.'.$product->id, $selected->id)
+        ->assertSee($selected->name)
+        ->call('addToCart', $selected->id);
+
+    expect(Cart::query()->where('token', session('store_cart_token'))->firstOrFail()->items()->sole()->product_option_id)
+        ->toBe($selected->id);
+});
+
 test('the floating cart is available globally after adding an item', function (): void {
     $category = Category::factory()->create();
     $product = Product::factory()->active()->create(['category_id' => $category->id]);

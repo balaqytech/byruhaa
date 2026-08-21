@@ -54,14 +54,6 @@ class InitiateStorePayment
                 'unit_amount' => (int) $item->unit_price_baisa,
             ])->values()->all();
 
-            if ($order->vat_baisa > 0) {
-                $products[] = [
-                    'name' => 'VAT',
-                    'quantity' => 1,
-                    'unit_amount' => (int) $order->vat_baisa,
-                ];
-            }
-
             $expiresAt = $reservation?->expires_at;
             $successUrl = URL::temporarySignedRoute('store.orders.payment.success', now()->addHours(12), ['order' => $order->payment_token]);
             $cancelUrl = URL::temporarySignedRoute('store.orders.payment.cancel', now()->addHours(12), ['order' => $order->payment_token]);

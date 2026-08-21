@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Settings\GeneralSettings;
 use BackedEnum;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Pages\SettingsPage;
 use Filament\Schemas\Components\Section;
@@ -31,6 +32,21 @@ class ManageGeneralSettings extends SettingsPage
     public function form(Schema $schema): Schema
     {
         return $schema->components([
+            Section::make('هوية الموقع العامة')
+                ->columns(2)
+                ->schema([
+                    TextInput::make('public_name')
+                        ->label('الاسم الظاهر للزوار')
+                        ->required()
+                        ->maxLength(255),
+                    TextInput::make('commercial_registration_number')
+                        ->label('رقم السجل التجاري')
+                        ->maxLength(50),
+                    TextInput::make('tax_number')
+                        ->label('الرقم الضريبي')
+                        ->helperText('اتركه فارغًا إلى حين اعتماده.')
+                        ->maxLength(50),
+                ]),
             Section::make('حالة الموقع')
                 ->description('يمكنك إخفاء الموقع العام مؤقتًا مع إبقاء لوحة الإدارة متاحة.')
                 ->schema([

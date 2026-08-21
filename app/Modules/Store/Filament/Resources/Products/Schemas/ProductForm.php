@@ -51,6 +51,15 @@ class ProductForm
                             ->numeric()
                             ->minValue(0)
                             ->default(0),
+                        Toggle::make('is_featured')
+                            ->label(__('admin.fields.is_featured'))
+                            ->helperText(__('admin.store.featured_help')),
+                        TextInput::make('featured_sort_order')
+                            ->label(__('admin.fields.featured_sort_order'))
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(0)
+                            ->visible(fn (callable $get): bool => (bool) $get('is_featured')),
                     ]),
                 Section::make(__('admin.store.sections.content'))
                     ->schema([
@@ -82,6 +91,7 @@ class ProductForm
                                     ->maxLength(255),
                                 TextInput::make('price')
                                     ->label(__('admin.fields.price'))
+                                    ->helperText(__('admin.store.price_includes_vat_help'))
                                     ->required()
                                     ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
                                     ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))

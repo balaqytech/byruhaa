@@ -35,6 +35,7 @@ test('store catalog migrations run up and down cleanly', function (): void {
         $migrationPaths = [
             'database/migrations/2026_08_09_110912_create_store_categories_table.php',
             'database/migrations/2026_08_09_110913_create_store_products_table.php',
+            'database/migrations/2026_08_21_000001_add_featured_fields_to_store_products_table.php',
             'database/migrations/2026_08_09_110914_create_store_product_options_table.php',
             'database/migrations/2026_08_13_090000_add_inventory_tracking_to_store_product_options_table.php',
             'database/migrations/2026_08_13_090001_create_store_inventory_movements_table.php',
@@ -80,6 +81,8 @@ test('store catalog migrations run up and down cleanly', function (): void {
             ->and(Schema::hasTable('store_order_inventory_reservations'))->toBeTrue();
 
         expect(Schema::hasColumn('store_orders', 'payment_token'))->toBeTrue();
+        expect(Schema::hasColumn('store_products', 'is_featured'))->toBeTrue()
+            ->and(Schema::hasColumn('store_products', 'featured_sort_order'))->toBeTrue();
         expect(Schema::hasColumn('store_carts', 'uchat_owner_key'))->toBeTrue();
         expect(DB::table('store_carts')->where('id', $legacyCartId)->exists())->toBeTrue();
         expect(collect(Schema::getIndexes('store_inventory_reservation_items'))->pluck('name')->all())

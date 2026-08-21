@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\PublicEventInterestController;
+use App\Http\Controllers\PublicPageController;
 use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Middleware\CaptureAffiliateReferral;
@@ -19,6 +20,8 @@ Route::middleware(CaptureAffiliateReferral::class)->group(function (): void {
         ->name('events.interests.store');
     Route::get('about', [PublicSiteController::class, 'about'])->name('about');
     Route::get('contact', [PublicSiteController::class, 'contact'])->name('contact');
+
+    Route::get('policies/{page}', [PublicPageController::class, 'show'])->name('policies.show');
 
     Route::get('blog', [BlogController::class, 'index'])->name('blog.index');
     Route::get('blog/category/{category:slug}', [BlogController::class, 'category'])->name('blog.category');

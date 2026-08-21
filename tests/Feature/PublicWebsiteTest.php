@@ -30,7 +30,7 @@ test('homepage loads', function () {
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSee('منتجع بيرحاء')
+        ->assertSee('بِيرُحاء إبراء')
         ->assertSee('مساحةٌ ينضج فيها الفتى بالفعل')
         ->assertSee('يومٌ متوازن، وأثرٌ يمتد')
         ->assertSee('التربية تبدأ بالصحبة، لا بالشعار')

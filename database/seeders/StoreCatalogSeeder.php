@@ -12,17 +12,7 @@ class StoreCatalogSeeder extends Seeder
 {
     public function run(): void
     {
-        $categories = [
-            'hot-coffee' => ['name' => 'القهوة الساخنة', 'sort_order' => 10],
-            'cold-coffee' => ['name' => 'القهوة الباردة', 'sort_order' => 20],
-            'manual-brew' => ['name' => 'التقطير اليدوي', 'sort_order' => 30],
-            'matcha' => ['name' => 'الماتشا', 'sort_order' => 40],
-            'refreshments' => ['name' => 'المشروبات المنعشة', 'sort_order' => 50],
-            'beans' => ['name' => 'البن', 'sort_order' => 60],
-            'cakes' => ['name' => 'الحلويات', 'sort_order' => 70],
-        ];
-
-        foreach ($categories as $slug => $data) {
+        foreach ($this->categories() as $slug => $data) {
             Category::query()->firstOrCreate(
                 ['slug' => $slug],
                 [...$data, 'is_active' => true],
@@ -38,106 +28,145 @@ class StoreCatalogSeeder extends Seeder
                     'description' => $productData['description'],
                     'status' => ProductStatus::Draft,
                     'sort_order' => $productData['sort_order'],
+                    'is_featured' => $productData['is_featured'],
+                    'featured_sort_order' => $productData['featured_sort_order'],
                 ],
             );
 
-            ProductOption::query()->firstOrCreate(
-                ['sku' => $productData['sku']],
-                [
-                    'product_id' => $product->getKey(),
-                    'name' => 'Standard',
-                    'price_baisa' => $productData['price_baisa'],
-                    'currency' => 'OMR',
-                    'is_available' => true,
-                    'is_default' => true,
-                    'tracks_inventory' => false,
-                    'stock_on_hand' => 0,
-                    'sort_order' => 0,
-                ],
-            );
+            foreach ($productData['options'] as $optionData) {
+                ProductOption::query()->firstOrCreate(
+                    ['sku' => $optionData['sku']],
+                    [
+                        'product_id' => $product->getKey(),
+                        'name' => $optionData['name'],
+                        'price_baisa' => $optionData['price_baisa'],
+                        'currency' => 'OMR',
+                        'is_available' => true,
+                        'is_default' => $optionData['is_default'],
+                        'tracks_inventory' => false,
+                        'stock_on_hand' => 0,
+                        'sort_order' => $optionData['sort_order'],
+                    ],
+                );
+            }
         }
     }
 
-    /** @return list<array{category: string, slug: string, sku: string, name: string, description: string, price_baisa: int, sort_order: int}> */
+    /**
+     * @return array<string, array{name: string, sort_order: int}>
+     */
+    private function categories(): array
+    {
+        return [
+            'frozen' => ['name' => 'الجميدة والمثلجات', 'sort_order' => 10],
+            'refreshments' => ['name' => 'المنعش البارد', 'sort_order' => 20],
+            'cold-coffee' => ['name' => 'قهوة باردة', 'sort_order' => 30],
+            'matcha' => ['name' => 'ماتشا', 'sort_order' => 40],
+            'baked' => ['name' => 'حلويات ومخبوزات', 'sort_order' => 50],
+            'hot-coffee' => ['name' => 'قهوة ساخنة', 'sort_order' => 60],
+            'manual-brew' => ['name' => 'التقطير اليدوي', 'sort_order' => 70],
+            'byruha-special' => ['name' => 'مشروبات بيرحاء الخاصة', 'sort_order' => 80],
+            'store' => ['name' => 'دكان بيرحاء', 'sort_order' => 90],
+        ];
+    }
+
+    /**
+     * @return list<array{
+     *     category: string,
+     *     slug: string,
+     *     name: string,
+     *     description: string,
+     *     sort_order: int,
+     *     is_featured: bool,
+     *     featured_sort_order: int,
+     *     options: list<array{name: string, sku: string, price_baisa: int, sort_order: int, is_default: bool}>
+     * }>
+     */
     private function products(): array
     {
-        $groups = [
-            ['category' => 'hot-coffee', 'items' => [
-                ['name' => 'خلاصة البن (إسبريسو)', 'price' => 1400, 'description' => 'جوهر القهوة في أصفى صوره. استخلاص مركز يكلله تاج من الكريما الذهبية، ليكشف عن خبايا البن الفاخر.'],
-                ['name' => 'القهوة السوداء النقية (أمريكانو ساخنة)', 'price' => 1500, 'description' => 'أصالة تتنفس. جرعات من الإسبريسو تُخفف بالماء الحار لتبوح بأعقد النكهات والإيحاءات الكامنة في حبوب البن، لتبدأ يومك بذهنٍ صافٍ.'],
-                ['name' => 'القهوة المتزنة (كورتادو)', 'price' => 1500, 'description' => 'عندما تتعادل الكفتان. جرعة مركزة من القهوة قُطعت بمقدار مماثل من الحليب المبخر، لمذاق يجمع بين الحدة والنعومة.'],
-                ['name' => 'القهوة المخملية (فلات وايت)', 'price' => 1600, 'description' => 'ملمس الحرير. ريستريتو مركز ينسكب عليه حليب برغوة رقيقة جداً (مايكروفوم)، لتجربة كريمية تذوب في الفم.'],
-                ['name' => 'القهوة المخملية البيضاء (لاتيه ساخنة)', 'price' => 1700, 'description' => 'عناق دافئ. حليب مبخر ببراعة يمتزج مع جرعة إسبريسو غنية، تكلله طبقة رقيقة من الرغوة ليمنحك توازناً يرضي ذائقتك الكلاسيكية.'],
-                ['name' => 'القهوة الأندلسية (سبانيش لاتيه ساخنة)', 'price' => 1800, 'description' => 'حلاوة الأندلس. وصفتنا الخاصة التي تمزج الحليب المكثف المحلى مع القهوة المختصة، لمذاق دافئ يأسر الحواس.'],
-                ['name' => 'قهوة الفستق الفاخرة (فستق لاتيه ساخنة)', 'price' => 1800, 'description' => 'الترف الأخضر. كريمة الفستق الغنية ممزوجة بمهارة مع قهوتنا المختصة وحليب ناعم، لتجربة استثنائية تذوب في الفم.'],
-                ['name' => 'القهوة الجوزاء التليدة (بندق لاتيه ساخنة)', 'price' => 1800, 'description' => 'دفء الأخشاب العطرية. تناغم مذهل بين القهوة والحليب الساخن مع خلاصة البندق المحمص، لرحلة تذوق تفيض بالذكريات.'],
-                ['name' => 'القهوة الوردية (ورد لاتيه ساخنة)', 'price' => 1800, 'description' => 'عبق البساتين. جرعة غنية من الإسبريسو ممزوجة بالحليب المبخر وخلاصة الورد، لرحلة تذوق تفيض بالرقة والجمال.'],
-                ['name' => 'قهوة الكراميل (كراميل لاتيه ساخنة)', 'price' => 1800, 'description' => 'عناق الحلاوة. مزيج دافئ من القهوة المختصة والحليب المبخر، يتخلله صوص الكراميل الغني ليمنحك لحظات من الدفء واللذة.'],
+        $products = [
+            ['category' => 'hot-coffee', 'name' => 'إسبريسو', 'description' => 'جرعة مركزة وواضحة من القهوة المختصة.', 'options' => [['name' => 'قياسي', 'price_baisa' => 1400]]],
+            ['category' => 'hot-coffee', 'name' => 'أمريكانو ساخنة', 'description' => 'إسبريسو يخفف بالماء الساخن لنكهة صافية.', 'options' => [['name' => 'قياسي', 'price_baisa' => 1500]]],
+            ['category' => 'hot-coffee', 'name' => 'كورتادو', 'description' => 'توازن بين جرعة القهوة والحليب المبخر.', 'options' => [['name' => 'قياسي', 'price_baisa' => 1500]]],
+            ['category' => 'hot-coffee', 'name' => 'فلات وايت', 'description' => 'قهوة مركزة مع حليب برغوة رقيقة وقوام ناعم.', 'options' => [['name' => 'قياسي', 'price_baisa' => 1600]]],
+            ['category' => 'hot-coffee', 'name' => 'لاتيه ساخنة', 'description' => 'وصفة لاتيه دافئة بخيارات نكهات متعددة.', 'options' => [
+                ['name' => 'كلاسيك', 'price_baisa' => 1700],
+                ['name' => 'سبانيش', 'price_baisa' => 1800],
+                ['name' => 'فستق', 'price_baisa' => 1800],
+                ['name' => 'بندق', 'price_baisa' => 1800],
+                ['name' => 'ورد', 'price_baisa' => 1800],
+                ['name' => 'كراميل', 'price_baisa' => 1800],
             ]],
-            ['category' => 'cold-coffee', 'items' => [
-                ['name' => 'القهوة السوداء النقية (أمريكانو باردة)', 'price' => 1500, 'description' => 'صفاء ويقظة. جرعات الإسبريسو الفاخرة تُصب فوراً فوق الثلج والماء البارد، لتحفظ نكهة القهوة الفاكهية وتمنحك انتعاشاً فورياً.'],
-                ['name' => 'القهوة المخملية البيضاء (لاتيه باردة)', 'price' => 1700, 'description' => 'انسياب النعومة. جرعة الإسبريسو الكلاسيكية تغوص في بحر من الحليب البارد والثلج، لتصنع لوحة من المذاق المعتدل والمنعش.'],
-                ['name' => 'القهوة الإسبانية المثلجة (سبانيش لاتيه باردة)', 'price' => 1800, 'description' => 'السعادة في طبقات. تمازج القهوة الداكنة مع الحليب المحلى والثلج، المشروب المثالي لرفع مستوى السعادة.'],
-                ['name' => 'قهوة الفستق الفاخرة (فستق لاتيه باردة)', 'price' => 1800, 'description' => 'نسيم الفستق. حلاوة الفستق الحلبي البارد تندمج مع الإسبريسو والثلج، لترف أخضر ينعش أوقاتك الصيفية.'],
-                ['name' => 'القهوة الجوزاء التليدة (بندق لاتيه باردة)', 'price' => 1800, 'description' => 'سحر البندق في كأس. برودة الحليب والثلج تتراقص مع نكهة البندق الفريدة والإسبريسو الغني، لانتعاش يوقظ الحواس.'],
-                ['name' => 'القهوة الوردية (ورد لاتيه باردة)', 'price' => 1800, 'description' => 'نسيم الأزهار. برودة الثلج والحليب تتناغم مع الإسبريسو وقطرات من عطر الورد، لتنعش حواسك بلمسة ساحرة.'],
-                ['name' => 'قهوة الكراميل (كراميل لاتيه باردة)', 'price' => 1800, 'description' => 'شلال الذهب. حلاوة الكراميل الذهبي تذوب بين الإسبريسو والثلج والحليب البارد، لتجربة تجمع بين المتعة والانتعاش.'],
+            ['category' => 'cold-coffee', 'name' => 'أمريكانو باردة', 'description' => 'إسبريسو فوق الثلج والماء البارد لانتعاش واضح.', 'options' => [['name' => 'قياسي', 'price_baisa' => 1500]]],
+            ['category' => 'cold-coffee', 'name' => 'لاتيه باردة', 'description' => 'قهوة باردة مع الحليب والثلج وخيارات نكهات مختارة.', 'is_featured' => true, 'featured_sort_order' => 3, 'options' => [
+                ['name' => 'كلاسيك', 'price_baisa' => 1700],
+                ['name' => 'سبانيش', 'price_baisa' => 1800, 'is_default' => true],
+                ['name' => 'فستق', 'price_baisa' => 1800],
+                ['name' => 'بندق', 'price_baisa' => 1800],
+                ['name' => 'ورد', 'price_baisa' => 1800],
+                ['name' => 'كراميل', 'price_baisa' => 1800],
             ]],
-            ['category' => 'manual-brew', 'items' => [
-                ['name' => 'التقطير اليدوي المختص (V60 ساخنة)', 'price' => 1800, 'description' => 'طقوس القهوة. تحضير يدوي دقيق يستخلص أنقى نكهات البن وأعقدها، لتستمتع بكل رشفة بوضوح تام.'],
-                ['name' => 'التقطير اليدوي المختص (V60 باردة)', 'price' => 1800, 'description' => 'قطرات الندى. تقطير يدوي يُصب مباشرة على مكعبات الثلج، ليعزل مرارة القهوة ويبرز إيحاءاتها الفاكهية بنقاء مطلق وانتعاش لا يضاهى.'],
-                ['name' => 'قهوة اليوم المقطرة (كولد برو)', 'price' => 1800, 'description' => 'طول الأناة يثمر ألذ النكهات. قهوة مختصة نُقعت ببطء في الماء البارد لساعات طوال، لتنتج لك خلاصة سلسة، خالية من المرارة، ومنعشة إلى أبعد الحدود.'],
+            ['category' => 'manual-brew', 'name' => 'V60', 'description' => 'تقطير يدوي يبرز تفاصيل البن بوضوح.', 'options' => [
+                ['name' => 'ساخنة', 'price_baisa' => 1800],
+                ['name' => 'باردة', 'price_baisa' => 1800, 'is_default' => true],
             ]],
-            ['category' => 'matcha', 'items' => [
-                ['name' => 'الزمرد الياباني البارد (ماتشا لاتيه باردة)', 'price' => 1700, 'description' => 'روح الطبيعة في كأس. شاي الماتشا الياباني الفاخر يُخفق بعناية مع الحليب المثلج، ليقدم لك طاقة هادئة ومذاقاً مخملياً أصيلاً.'],
-                ['name' => 'الزمرد الياباني الساخن (ماتشا لاتيه ساخنة)', 'price' => 1700, 'description' => 'روح الطبيعة في كأس. شاي الماتشا الياباني الفاخر يُخفق بعناية مع الحليب الساخن، ليقدم لك طاقة هادئة ومذاقاً مخملياً أصيلاً.'],
-                ['name' => 'الزمرد الياباني بالفستق البارد (ماتشا لاتيه بالفستق باردة)', 'price' => 1900, 'description' => 'لقاء الشرق بالشرق. سحر الماتشا اليابانية يتعانق مع كريمة الفستق الغنية والحليب المثلج، لسيمفونية من المذاق الفاخر واللون البديع.'],
-                ['name' => 'الزمرد الياباني بالفستق الساخن (ماتشا لاتيه بالفستق ساخنة)', 'price' => 1900, 'description' => 'لقاء الشرق بالشرق. سحر الماتشا اليابانية يتعانق مع كريمة الفستق الغنية والحليب الساخن، لسيمفونية من المذاق الفاخر واللون البديع.'],
-                ['name' => 'الزمرد الياباني بالبندق البارد (ماتشا لاتيه بالبندق باردة)', 'price' => 1900, 'description' => 'ترابية ساحرة. نكهة البندق الدافئة تكسر حدة الماتشا لتخلق توازناً فريداً مع الحليب المثلج ليكون ملاذك اللذيذ.'],
-                ['name' => 'الزمرد الياباني بالبندق الساخن (ماتشا لاتيه بالبندق ساخنة)', 'price' => 1900, 'description' => 'ترابية ساحرة. نكهة البندق الدافئة تكسر حدة الماتشا لتخلق توازناً فريداً مع الحليب الساخن ليكون ملاذك اللذيذ.'],
+            ['category' => 'manual-brew', 'name' => 'كولد برو', 'description' => 'قهوة مختصة منقوعة ببطء في الماء البارد لساعات.', 'is_featured' => true, 'featured_sort_order' => 4, 'options' => [['name' => 'قياسي', 'price_baisa' => 1800]]],
+            ['category' => 'matcha', 'name' => 'ماتشا لاتيه', 'description' => 'ماتشا يابانية مخفوقة بعناية مع الحليب.', 'options' => [
+                ['name' => 'باردة', 'price_baisa' => 1700],
+                ['name' => 'ساخنة', 'price_baisa' => 1700],
+                ['name' => 'فستق باردة', 'price_baisa' => 1900],
+                ['name' => 'فستق ساخنة', 'price_baisa' => 1900],
+                ['name' => 'بندق باردة', 'price_baisa' => 1900],
+                ['name' => 'بندق ساخنة', 'price_baisa' => 1900, 'is_default' => true],
             ]],
-            ['category' => 'refreshments', 'items' => [
-                ['name' => 'المنعش الفوار بالباشن (موهيتو باشن)', 'price' => 1200, 'description' => 'لمسة استوائية. نكهة فاكهة العاطفة (الباشن) الغنية ممزوجة بالليمون الطازج والنعناع، لمذاق ينقلك إلى الجزر البعيدة.'],
-                ['name' => 'المنعش الفوار بالتوت (موهيتو توت)', 'price' => 1200, 'description' => 'عناق الغابات. مزيج فوار بعبق التوت البري، يتخلله الليمون والنعناع ليأخذك في رحلة منعشة إلى قلب الطبيعة.'],
-                ['name' => 'المنعش الفوار بالمانجو (موهيتو مانجو)', 'price' => 1200, 'description' => 'شمس الاستواء. حلاوة المانجو الاستوائية تتفجر وسط فقاعات الانتعاش، لتروي ظمأك بلمسة ذهبية لا تُنسى.'],
-                ['name' => 'المنعش الفوار بالخوخ (موهيتو خوخ)', 'price' => 1200, 'description' => 'رقة الخوخ. نكهة الخوخ الناعمة تتراقص مع الثلج والنعناع، لتهديك أوقاتاً مليئة بالبهجة والانتعاش الفوري.'],
-                ['name' => 'المنعش الفوار بالفراولة (موهيتو فراولة)', 'price' => 1200, 'description' => 'حمرة الخجل. حلاوة الفراولة الكلاسيكية تنسجم مع لذعة الليمون، في مشروب فوار نابض بالحياة.'],
-                ['name' => 'الشاي المثلج بالخوخ (آيس تي خوخ)', 'price' => 1600, 'description' => 'انتعاش الظهيرة. شاي مخمر بعناية ومخفوق يدوياً مع خلاصة الخوخ الطبيعي، يُقدم بارداً جداً لإطفاء الظمأ.'],
-                ['name' => 'الشاي المثلج بالليمون (آيس تي ليمون)', 'price' => 1600, 'description' => 'الكلاسيكية المنعشة. تمازج أصيل بين الشاي الفاخر وحموضة الليمون المنعشة، الجواب الأمثل لأيام الصيف الساخنة.'],
-                ['name' => 'الشاي المثلج بالنعناع (آيس تي نعناع)', 'price' => 1600, 'description' => 'أنفاس الجليد. شاي مثلج غني بخلاصة النعناع الطازج، يترك في الأنفاس أثراً من البرودة والصفاء اللامتناهي.'],
-                ['name' => 'كركديه', 'price' => 1600, 'description' => 'ياقوت الجلسات. منقوع زهور الكركديه الفاخر بلونه الأحمر القاني ومذاقه اللاذع المحبب.'],
-                ['name' => 'جميدة', 'price' => 1000, 'description' => 'برودة تعانق الروح. مزيج مثلج ومجروش بدقة فائقة ليمنحك قمة الانتعاش في قوالب من السعادة الباردة، خيارك الأمثل لكسر حرارة اليوم.'],
+            ['category' => 'refreshments', 'name' => 'موهيتو', 'description' => 'مشروب فوار بالليمون والنعناع مع خيارات فاكهية.', 'is_featured' => true, 'featured_sort_order' => 2, 'options' => [
+                ['name' => 'باشن', 'price_baisa' => 1200],
+                ['name' => 'توت', 'price_baisa' => 1200],
+                ['name' => 'مانجو', 'price_baisa' => 1200, 'is_default' => true],
+                ['name' => 'خوخ', 'price_baisa' => 1200],
+                ['name' => 'فراولة', 'price_baisa' => 1200],
             ]],
-            ['category' => 'beans', 'items' => [
-                ['name' => 'بن إسبريسو برازيلي', 'price' => 6000, 'description' => 'حصاد السهول البرازيلية. بن مجفف بعناية فائقة يحمل في طياته عراقة سلالة (الكاتوي الأحمر). يفوح عند استخلاصه بإيحاءات الشوكولاتة الداكنة، والكراميل، والمكسرات المحمصة. (٥٠٠ جرام من الشغف).'],
+            ['category' => 'refreshments', 'name' => 'آيس تي', 'description' => 'شاي مثلج منعش بثلاث نكهات.', 'is_featured' => true, 'featured_sort_order' => 5, 'options' => [
+                ['name' => 'خوخ', 'price_baisa' => 1600],
+                ['name' => 'ليمون', 'price_baisa' => 1600, 'is_default' => true],
+                ['name' => 'نعناع', 'price_baisa' => 1600],
             ]],
-            ['category' => 'cakes', 'items' => [
-                ['name' => 'كعكة الشوكولاتة', 'price' => 0, 'description' => 'غيمة من الكاكاو. طبقات غنية من الكيك الإسفنجي الداكن تتخللها كريمة الشوكولاتة المخملية، لتذوب في الفم مع كل قضمة.'],
-                ['name' => 'كعكة العسل', 'price' => 0, 'description' => 'رحيق الذهب. طبقات رقيقة وهشة معجونة بخلاصة العسل الطبيعي، تتوسطها كريمة خفيفة لتجربة كلاسيكية تفيض بالدفء.'],
-                ['name' => 'كعكة فيريرو', 'price' => 0, 'description' => 'ترف البندق. مزيج ساحر من الشوكولاتة الفاخرة وقطع البندق المقرمشة، مستوحاة من الشوكولاتة الإيطالية العريقة لتأسر حواسك.'],
-                ['name' => 'كعكة الأوريو', 'price' => 0, 'description' => 'بهجة التناقض. كعكة إسفنجية غنية بالكاكاو تتناغم مع كريمة الفانيليا وفتات بسكويت الأوريو المقرمش، لمتعة لا تقاوم.'],
-                ['name' => 'تشيز كيك اللوتس', 'price' => 0, 'description' => 'سحر الكراميل. طبقة مخملية من الجبن الكريمي تستقر على قاعدة هشة، ومغطاة بكريمة اللوتس الغنية لمذاق يذوب نعومة.'],
-            ]],
+            ['category' => 'refreshments', 'name' => 'كركديه', 'description' => 'منقوع كركديه بلون غني ومذاق منعش.', 'options' => [['name' => 'قياسي', 'price_baisa' => 1600]]],
+            ['category' => 'frozen', 'name' => 'جميدة', 'description' => 'مزيج مثلج ومنعش بملمس ناعم.', 'is_featured' => true, 'featured_sort_order' => 1, 'options' => [['name' => 'قياسي', 'price_baisa' => 1000]]],
+            ['category' => 'baked', 'name' => 'كعكة الشوكولاتة', 'description' => 'طبقات غنية من الكيك وكريمة الشوكولاتة.', 'options' => [['name' => 'قياسي', 'price_baisa' => 0]]],
+            ['category' => 'baked', 'name' => 'كعكة العسل', 'description' => 'طبقات هشة مع كريمة خفيفة ونكهة عسل.', 'options' => [['name' => 'قياسي', 'price_baisa' => 0]]],
+            ['category' => 'baked', 'name' => 'كعكة فيريرو', 'description' => 'شوكولاتة فاخرة مع قطع البندق المقرمشة.', 'options' => [['name' => 'قياسي', 'price_baisa' => 0]]],
+            ['category' => 'baked', 'name' => 'كعكة أوريو', 'description' => 'كيك الكاكاو مع كريمة الفانيليا وبسكويت أوريو.', 'is_featured' => true, 'featured_sort_order' => 6, 'options' => [['name' => 'قياسي', 'price_baisa' => 0]]],
+            ['category' => 'baked', 'name' => 'تشيز كيك اللوتس', 'description' => 'جبن كريمي ناعم فوق قاعدة اللوتس.', 'options' => [['name' => 'قياسي', 'price_baisa' => 0]]],
+            ['category' => 'store', 'name' => 'بن إسبريسو برازيلي', 'description' => 'بن برازيلي بإيحاءات الشوكولاتة والكراميل والمكسرات.', 'options' => [['name' => 'قياسي', 'price_baisa' => 6000]]],
+            ['category' => 'byruha-special', 'name' => 'كرك بيرحاء', 'description' => 'كرك بيرحاء بوصفة المكان.', 'options' => [['name' => 'قياسي', 'sku' => 'BYR-0043', 'price_baisa' => 600]]],
+            ['category' => 'byruha-special', 'name' => 'أفناء برو', 'description' => 'مشروب بيرحاء الخاص بنكهة عميقة ومنعشة.', 'options' => [['name' => 'قياسي', 'sku' => 'BYR-0044', 'price_baisa' => 2500]]],
+            ['category' => 'byruha-special', 'name' => 'نسيم قرنان', 'description' => 'وصفة خاصة مستوحاة من نسيم قرنان.', 'options' => [['name' => 'قياسي', 'sku' => 'BYR-0045', 'price_baisa' => 2800]]],
         ];
 
-        $products = [];
-        $sequence = 1;
+        $sku = 1;
 
-        foreach ($groups as $group) {
-            foreach ($group['items'] as $item) {
-                $products[] = [
-                    'category' => $group['category'],
-                    'slug' => 'catalogue-'.$sequence,
-                    'sku' => sprintf('BYR-%04d', $sequence),
-                    'name' => $item['name'],
-                    'description' => $item['description'],
-                    'price_baisa' => $item['price'],
-                    'sort_order' => $sequence,
+        return array_values(collect($products)->values()->map(function (array $product, int $index) use (&$sku): array {
+            $options = array_values(collect($product['options'])->values()->map(function (array $option, int $optionIndex) use (&$sku): array {
+                return [
+                    'name' => $option['name'],
+                    'sku' => $option['sku'] ?? sprintf('BYR-%04d', $sku++),
+                    'price_baisa' => $option['price_baisa'],
+                    'sort_order' => $optionIndex,
+                    'is_default' => $option['is_default'] ?? $optionIndex === 0,
                 ];
-                $sequence++;
-            }
-        }
+            })->values()->all());
 
-        return $products;
+            return [
+                'category' => $product['category'],
+                'slug' => 'catalogue-'.($index + 1),
+                'name' => $product['name'],
+                'description' => $product['description'],
+                'sort_order' => $index + 1,
+                'is_featured' => $product['is_featured'] ?? false,
+                'featured_sort_order' => $product['featured_sort_order'] ?? 0,
+                'options' => $options,
+            ];
+        })->values()->all());
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\EventStatus;
 use App\Modules\Content\Models\BlogPost;
+use App\Modules\Content\Models\PublicPage;
 use App\Modules\Events\Models\Event;
 use Illuminate\Http\Response;
 
@@ -42,8 +43,20 @@ class SitemapController extends Controller
                 'priority' => '0.6',
             ]);
 
+        $policyUrls = PublicPage::query()
+            ->published()
+            ->whereIn('key', PublicPage::FIXED_KEYS)
+            ->select(['id', 'key', 'updated_at'])
+            ->get()
+            ->map(fn (PublicPage $page): array => [
+                'location' => route('policies.show', ['page' => $page->key]),
+                'lastModified' => $page->updated_at?->toAtomString(),
+                'changeFrequency' => 'monthly',
+                'priority' => '0.4',
+            ]);
+
         return response()
-            ->view('sitemap', ['urls' => $staticUrls->concat($eventUrls)->concat($postUrls)])
+            ->view('sitemap', ['urls' => $staticUrls->concat($eventUrls)->concat($postUrls)->concat($policyUrls)])
             ->header('Content-Type', 'application/xml; charset=UTF-8');
     }
 }

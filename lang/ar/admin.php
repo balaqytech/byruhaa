@@ -19,6 +19,11 @@ return [
             'plural_label' => 'التدوينات',
             'navigation_label' => 'التدوينات',
         ],
+        'public_pages' => [
+            'label' => 'صفحة عامة',
+            'plural_label' => 'الصفحات العامة',
+            'navigation_label' => 'السياسات والصفحات العامة',
+        ],
         'store_categories' => [
             'label' => 'تصنيف متجر',
             'plural_label' => 'تصنيفات المتجر',
@@ -390,10 +395,18 @@ return [
         'starts_at' => 'يبدأ في',
         'state' => 'الحالة',
         'status' => 'الحالة',
+        'is_featured' => 'الأكثر طلبًا',
+        'featured_sort_order' => 'ترتيب الأكثر طلبًا',
+        'key' => 'المفتاح',
+        'effective_at' => 'سارية من',
+        'version' => 'الإصدار',
         'title' => 'العنوان',
         'total' => 'الإجمالي',
         'subtotal' => 'الإجمالي الفرعي',
         'vat' => 'ضريبة القيمة المضافة',
+        'subtotal_before_vat' => 'الإجمالي قبل الضريبة',
+        'vat_included' => 'ضريبة القيمة المضافة المضمنة',
+        'total_including_vat' => 'الإجمالي شامل الضريبة',
         'option' => 'الخيار',
         'quantity' => 'الكمية',
         'note' => 'ملاحظة',
@@ -456,6 +469,8 @@ return [
 
     'store' => [
         'default_option_help' => 'يجب أن يحتفظ كل منتج بخيار افتراضي واحد فقط. حفظ خيار افتراضي جديد يستبدل الخيار الحالي.',
+        'price_includes_vat_help' => 'السعر المدخل هو السعر النهائي شامل ضريبة القيمة المضافة ٥٪.',
+        'featured_help' => 'يظهر المنتج في تبويب «الأكثر طلبًا» مع بقائه ضمن تصنيفه الأصلي.',
         'sections' => [
             'identity' => 'الهوية',
             'content' => 'المحتوى',
@@ -514,6 +529,14 @@ return [
         ],
         'inventory' => [
             'history' => 'سجل المخزون',
+        ],
+    ],
+
+    'public_page_form' => [
+        'sections' => [
+            'identity' => 'بيانات الصفحة',
+            'content' => 'محتوى الصفحة',
+            'seo' => 'بيانات محركات البحث',
         ],
     ],
 

@@ -68,8 +68,8 @@ class PublicSiteController extends Controller
     {
         return view('pages.public.site.coffee', [
             'coffee' => config('coffee'),
-            'title' => 'قهوة بيرحاء',
-            'metaDescription' => 'قهوة مختصة ومخبوزات خفيفة في مخيم بيرحاء بولاية إبراء، مع قائمة واضحة والبيع من الموقع.',
+            'title' => 'قهوة بيرحاء | بِيرُحاء إبراء',
+            'metaDescription' => 'قهوة بيرحاء في إبراء: قائمة واضحة، أسعار نهائية شاملة الضريبة، واستلام سهل من الموقع.',
             'metaImage' => asset('images/coffee-byruha-hero.webp'),
         ]);
     }

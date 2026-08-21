@@ -28,6 +28,8 @@ class ProductFactory extends Factory
             'featured_image_id' => null,
             'status' => ProductStatus::Draft,
             'sort_order' => fake()->numberBetween(0, 10),
+            'is_featured' => false,
+            'featured_sort_order' => 0,
         ];
     }
 

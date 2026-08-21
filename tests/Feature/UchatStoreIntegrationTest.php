@@ -119,7 +119,7 @@ test('UChat cart is phone-owned and quotes from server prices', function (): voi
     ]);
 
     $response->assertSuccessful()
-        ->assertJsonPath('data.quote.subtotal_baisa', 4600)
+        ->assertJsonPath('data.quote.subtotal_baisa', 4381)
         ->assertJsonPath('data.items.0.sku', $option->sku);
 
     $this->withHeaders(uchatHeaders(['X-WhatsApp-Phone' => '92345678']))
@@ -148,7 +148,7 @@ test('UChat creates an idempotent order and initiates payment without trusting c
     $second->assertCreated()->assertJsonPath('data.reference', $first->json('data.reference'));
 
     expect(Order::query()->count())->toBe(1)
-        ->and(Order::query()->sole()->total_baisa)->toBe(2100);
+        ->and(Order::query()->sole()->total_baisa)->toBe(2000);
 });
 
 test('UChat does not expose missing Thawani credentials', function (): void {

@@ -22,8 +22,10 @@ use Slimani\MediaManager\Models\File;
  * @property int|null $featured_image_id
  * @property ProductStatus $status
  * @property int $sort_order
+ * @property bool $is_featured
+ * @property int $featured_sort_order
  */
-#[Fillable(['category_id', 'name', 'slug', 'description', 'featured_image_id', 'status', 'sort_order'])]
+#[Fillable(['category_id', 'name', 'slug', 'description', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
 class Product extends Model
 {
     protected $table = 'store_products';
@@ -40,6 +42,8 @@ class Product extends Model
     protected $attributes = [
         'status' => ProductStatus::Draft->value,
         'sort_order' => 0,
+        'is_featured' => false,
+        'featured_sort_order' => 0,
     ];
 
     /** @return BelongsTo<Category, $this> */
@@ -105,6 +109,8 @@ class Product extends Model
         return [
             'status' => ProductStatus::class,
             'sort_order' => 'integer',
+            'is_featured' => 'boolean',
+            'featured_sort_order' => 'integer',
         ];
     }
 }

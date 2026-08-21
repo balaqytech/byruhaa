@@ -19,6 +19,11 @@ return [
             'plural_label' => 'Blog posts',
             'navigation_label' => 'Blog posts',
         ],
+        'public_pages' => [
+            'label' => 'Public page',
+            'plural_label' => 'Public pages',
+            'navigation_label' => 'Policies and public pages',
+        ],
         'store_categories' => [
             'label' => 'Store category',
             'plural_label' => 'Store categories',
@@ -390,10 +395,18 @@ return [
         'starts_at' => 'Starts at',
         'state' => 'State',
         'status' => 'Status',
+        'is_featured' => 'Best seller',
+        'featured_sort_order' => 'Best seller order',
+        'key' => 'Key',
+        'effective_at' => 'Effective from',
+        'version' => 'Version',
         'title' => 'Title',
         'total' => 'Total',
         'subtotal' => 'Subtotal',
         'vat' => 'VAT',
+        'subtotal_before_vat' => 'Subtotal before VAT',
+        'vat_included' => 'Included VAT',
+        'total_including_vat' => 'Total including VAT',
         'option' => 'Option',
         'quantity' => 'Quantity',
         'note' => 'Note',
@@ -456,6 +469,8 @@ return [
 
     'store' => [
         'default_option_help' => 'Each product must keep exactly one default option. Saving a new default will replace the current one.',
+        'price_includes_vat_help' => 'The entered price is the final customer price and includes 5% VAT.',
+        'featured_help' => 'Shows the product in the Best sellers tab while keeping it in its original category.',
         'sections' => [
             'identity' => 'Identity',
             'content' => 'Content',
@@ -514,6 +529,14 @@ return [
         ],
         'inventory' => [
             'history' => 'Inventory history',
+        ],
+    ],
+
+    'public_page_form' => [
+        'sections' => [
+            'identity' => 'Page details',
+            'content' => 'Page content',
+            'seo' => 'Search engine metadata',
         ],
     ],
 

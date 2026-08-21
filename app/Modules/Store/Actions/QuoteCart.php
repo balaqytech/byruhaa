@@ -4,12 +4,16 @@ namespace App\Modules\Store\Actions;
 
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\ProductOption;
+use App\Modules\Store\Services\InclusiveVatCalculator;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Validation\ValidationException;
 
 class QuoteCart
 {
-    public function __construct(private StoreSettings $settings) {}
+    public function __construct(
+        private StoreSettings $settings,
+        private InclusiveVatCalculator $vatCalculator,
+    ) {}
 
     /**
      * @return array{
@@ -45,8 +49,10 @@ class QuoteCart
             ->orderBy('id');
         $options = ($lockOptions ? $optionsQuery->lockForUpdate() : $optionsQuery)->get()->keyBy('id');
 
+        // Product option prices are final, VAT-inclusive amounts.
         $subtotal = 0;
         $vat = 0;
+        $total = 0;
         $snapshots = [];
         $reservationQuantities = [];
 
@@ -67,10 +73,13 @@ class QuoteCart
                 ]);
             }
 
-            $lineSubtotal = $option->price_baisa * $item->quantity;
-            $lineVat = intdiv($lineSubtotal * $this->settings->vat_rate_percentage, 100);
+            $lineTotal = $option->price_baisa * $item->quantity;
+            $lineAmounts = $this->vatCalculator->calculate($lineTotal, $this->settings->vat_rate_percentage);
+            $lineSubtotal = $lineAmounts['net_baisa'];
+            $lineVat = $lineAmounts['vat_baisa'];
             $subtotal += $lineSubtotal;
             $vat += $lineVat;
+            $total += $lineTotal;
             $snapshots[] = [
                 'product_option_id' => $option->id,
                 'product_name' => $option->product->name,
@@ -81,7 +90,7 @@ class QuoteCart
                 'quantity' => $item->quantity,
                 'vat_baisa' => $lineVat,
                 'line_subtotal_baisa' => $lineSubtotal,
-                'line_total_baisa' => $lineSubtotal + $lineVat,
+                'line_total_baisa' => $lineTotal,
                 'note' => $item->note,
             ];
 
@@ -94,7 +103,7 @@ class QuoteCart
             'items' => $snapshots,
             'subtotal_baisa' => $subtotal,
             'vat_baisa' => $vat,
-            'total_baisa' => $subtotal + $vat,
+            'total_baisa' => $total,
             'currency' => 'OMR',
             'reservation_quantities' => $reservationQuantities,
         ];

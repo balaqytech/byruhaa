@@ -26,6 +26,7 @@
 <body
     class="min-h-screen overflow-x-hidden bg-[#f6fbf8] text-[#173f35] antialiased selection:bg-[#bfe7da] selection:text-[#173f35] dark:bg-[#07120f] dark:text-[#f7f1df]">
     @php
+        $publicName = $siteIdentity?->public_name ?: 'منتجع بيرحاء';
         $navigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
@@ -68,11 +69,11 @@
         <input id="public-navigation-toggle" type="checkbox" class="peer sr-only">
 
         <div class="mx-auto flex min-h-20 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-            <a href="{{ route('home') }}" class="group inline-flex items-center gap-3" aria-label="منتجع بيرحاء">
+            <a href="{{ route('home') }}" class="group inline-flex items-center gap-3" aria-label="{{ $publicName }}">
                 <span class="flex h-20 w-auto items-center justify-center overflow-hidden">
-                    <img src="{{ asset('logo-dark.png') }}" alt="منتجع بيرحاء"
+                    <img src="{{ asset('logo-dark.png') }}" alt="{{ $publicName }}"
                         class="h-16 w-auto object-contain dark:hidden">
-                    <img src="{{ asset('logo.png') }}" alt="منتجع بيرحاء"
+                    <img src="{{ asset('logo.png') }}" alt="{{ $publicName }}"
                         class="hidden h-16 w-auto object-contain dark:block">
                 </span>
             </a>
@@ -179,13 +180,13 @@
                 <div class="flex items-center gap-3">
                     <span
                         class="flex size-12 items-center justify-center rounded-sm bg-white/76 p-1 ring-1 ring-[#2a8069]/12 dark:bg-white/10 dark:ring-white/10">
-                        <img src="{{ asset('logo-dark.png') }}" alt="منتجع بيرحاء"
+                        <img src="{{ asset('logo-dark.png') }}" alt="{{ $publicName }}"
                             class="h-10 w-auto object-contain dark:hidden">
-                        <img src="{{ asset('logo.png') }}" alt="منتجع بيرحاء"
+                        <img src="{{ asset('logo.png') }}" alt="{{ $publicName }}"
                             class="hidden h-10 w-auto object-contain dark:block">
                     </span>
                     <div>
-                        <p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">منتجع بيرحاء</p>
+                        <p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">{{ $publicName }}</p>
                         <p class="mt-1 text-sm text-[#123329]/58 dark:text-[#f7f1df]/62">تجارب سياحية وتعليمية بروح
                             عُمانية فاخرة.</p>
                     </div>
@@ -198,6 +199,10 @@
                 @foreach ($footerNavigationLinks as $link)
                     <a href="{{ route($link['route']) }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $link['label'] }}</a>
+                @endforeach
+                @foreach ($publishedPolicyPages ?? [] as $policy)
+                    <a href="{{ route('policies.show', ['page' => $policy->key]) }}"
+                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $policy->title }}</a>
                 @endforeach
             </nav>
 
@@ -225,7 +230,7 @@
 
         <div class="border-t border-[#2a8069]/12 dark:border-white/10">
             <div class="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-5 text-center text-sm text-[#123329]/58 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:text-start lg:px-8 dark:text-[#f7f1df]/62">
-                <p>© {{ now()->year }} منتجع بيرحاء. جميع الحقوق محفوظة.</p>
+                <p>© {{ now()->year }} {{ $publicName }}. جميع الحقوق محفوظة.</p>
                 <p>
                     تطوير
                     <a href="https://red1ai.com/" target="_blank" rel="noopener noreferrer"

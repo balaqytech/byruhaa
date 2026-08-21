@@ -30,9 +30,9 @@ class OrderInfolist
                 TextEntry::make('note')->label(__('admin.fields.note'))->placeholder('-')->columnSpanFull(),
             ]),
             Section::make(__('admin.store.sections.totals'))->columns(3)->schema([
-                TextEntry::make('subtotal_baisa')->label(__('admin.fields.subtotal'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->subtotal_baisa, 'OMR')),
-                TextEntry::make('vat_baisa')->label(__('admin.fields.vat'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->vat_baisa, 'OMR')),
-                TextEntry::make('total_baisa')->label(__('admin.fields.total'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->total_baisa, 'OMR')),
+                TextEntry::make('subtotal_baisa')->label(__('admin.fields.subtotal_before_vat'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->subtotal_baisa, 'OMR')),
+                TextEntry::make('vat_baisa')->label(__('admin.fields.vat_included'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->vat_baisa, 'OMR')),
+                TextEntry::make('total_baisa')->label(__('admin.fields.total_including_vat'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->total_baisa, 'OMR')),
             ]),
             Section::make(__('admin.store.sections.items'))->schema([
                 RepeatableEntry::make('items')->schema([

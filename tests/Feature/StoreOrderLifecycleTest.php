@@ -101,9 +101,9 @@ test('order creation calculates VAT from settings and snapshots mutable product 
 
     $order = app(CreateOrder::class)->execute($cart, storeOrderData());
 
-    expect($order->subtotal_baisa)->toBe(2000)
-        ->and($order->vat_baisa)->toBe(100)
-        ->and($order->total_baisa)->toBe(2100)
+    expect($order->subtotal_baisa)->toBe(1905)
+        ->and($order->vat_baisa)->toBe(95)
+        ->and($order->total_baisa)->toBe(2000)
         ->and($order->status->getValue())->toBe('pending_payment')
         ->and($order->statusHistory()->count())->toBe(1);
 

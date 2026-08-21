@@ -19,19 +19,19 @@
                         قهوة بيرحاء
                     </p>
                     <h1 class="mt-6 font-heading text-4xl font-bold leading-[1.18] text-[#123329] sm:text-5xl lg:text-6xl dark:text-[#f7f1df]">
-                        فنجان هادئ، من روح المكان
+                        الأول في سلطنة عُمان<br>لصناعة يومٍ أهدأ
                     </h1>
                     <p class="mt-6 max-w-[55ch] text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/80">
-                        مشروبات مختارة ومخبوزات خفيفة تُحضّر بعناية في بيرحاء. اطلب مسبقًا، ادفع بأمان، واستلم طلبك عند وصولك.
+                        قهوة بيرحاء مساحة يومية منظمة لطلاب الصف السابع إلى الثاني عشر، وللمربين الذين يرافقونهم. اختر مشروبك، ادفع بأمان، واستلمه من المكان.
                     </p>
                     <div class="mt-8 flex flex-wrap gap-3">
                         <a href="#menu" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#007a52] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#007a52]/20 transition hover:-translate-y-0.5 hover:bg-[#006746] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a800] motion-reduce:transition-none">
                             تصفّح القائمة
                             <x-hugeicon name="arrow-left-02" class="text-lg" />
                         </a>
-                        <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#123329]/18 bg-white/75 px-6 py-3 text-sm font-bold text-[#123329] transition hover:-translate-y-0.5 hover:border-[#007a52]/40 hover:text-[#007a52] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a800] dark:border-white/16 dark:bg-white/5 dark:text-[#f7f1df] dark:hover:text-[#6ee7b7] motion-reduce:transition-none">
-                            اسأل عن القهوة
-                            <x-hugeicon name="mail-01" class="text-lg" />
+                        <a href="{{ route('register') }}" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm border border-[#123329]/18 bg-white/75 px-6 py-3 text-sm font-bold text-[#123329] transition hover:-translate-y-0.5 hover:border-[#007a52]/40 hover:text-[#007a52] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a800] dark:border-white/16 dark:bg-white/5 dark:text-[#f7f1df] dark:hover:text-[#6ee7b7] motion-reduce:transition-none">
+                            أنشئ حسابًا لمتابعة طلباتك
+                            <x-hugeicon name="user-add-01" class="text-lg" />
                         </a>
                     </div>
                     <dl class="mt-10 grid gap-5 border-t border-[#2a8069]/16 pt-6 sm:grid-cols-3 dark:border-white/12">
@@ -45,7 +45,7 @@
                         <img src="{{ asset('images/coffee-byruha-hero.webp') }}" alt="تحضير قهوة بيرحاء في إبراء" width="1536" height="1024" fetchpriority="high" class="aspect-[3/2] h-full w-full object-cover">
                     </div>
                     <p class="relative z-10 mt-4 max-w-md rounded-sm border border-[#2a8069]/14 bg-white px-5 py-4 text-sm font-semibold leading-7 text-[#123329] shadow-xl shadow-[#123329]/10 dark:border-white/10 dark:bg-[#0c1e19] dark:text-[#f7f1df] sm:ms-auto">
-                        قائمة قصيرة عن قصد؛ حتى تبقى كلّ وصفة واضحة، وكلّ فنجان جيدًا.
+                        قائمة واضحة، سعر نهائي، واستلام من المكان في الوقت الذي يناسبك.
                     </p>
                 </div>
             </div>
@@ -59,16 +59,33 @@
                 <div class="max-w-2xl">
                     <p class="text-sm font-bold tracking-[0.18em] text-[#b07c00]">ضيافة بيرحاء</p>
                     <h2 class="mt-3 font-heading text-3xl font-bold leading-tight text-[#123329] lg:text-5xl dark:text-[#f7f1df]">القهوة امتدادٌ للمكان</h2>
-                    <p class="mt-5 leading-8 text-[#315e52] dark:text-[#d2e7df]/76">ليست قائمة ضخمة ولا متجرًا منفصلًا؛ هي محطة يومية للزائر، ومساحة لقاء خفيفة قبل البرنامج أو بعده، بخيارات معروفة وسعر ظاهر من البداية.</p>
-                    <div class="mt-7 grid gap-4 sm:grid-cols-2">
-                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">تحضير واضح</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">مشروبات أساسية وموسمية بلا تشتيت.</p></div>
-                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">استلام من المكان</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">اختر وقتك، وسنجهّز طلبك عند الوصول.</p></div>
+                    <p class="mt-5 leading-8 text-[#315e52] dark:text-[#d2e7df]/76">ليست قائمة ضخمة ولا متجرًا منفصلًا؛ هي محطة يومية للزائر، ومساحة لقاء خفيفة قبل البرنامج أو بعده، بخيارات معروفة وسعر نهائي ظاهر من البداية.</p>
+                    <div class="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">معرفة</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">نتعلم من التفاصيل.</p></div>
+                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">صحبة</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">نلتقي باحترام.</p></div>
+                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">مسؤولية</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">نختار ونلتزم.</p></div>
+                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">أصالة</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">نحفظ معنى المكان.</p></div>
+                        <div class="border-t border-[#2a8069]/18 pt-4 dark:border-white/12"><p class="font-heading text-xl font-bold text-[#123329] dark:text-[#f7f1df]">أثر</p><p class="mt-2 leading-7 text-[#315e52] dark:text-[#d2e7df]/72">يستمر بعد الزيارة.</p></div>
                     </div>
                 </div>
             </div>
         </section>
 
         <livewire:store.coffee-store />
+
+        <section class="border-t border-[#2a8069]/12 bg-[#e9f7f0]/65 dark:border-white/10 dark:bg-[#0c2a20]/35">
+            <div class="mx-auto grid w-full max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:px-8 lg:py-16">
+                <div>
+                    <p class="text-sm font-bold tracking-[0.18em] text-[#b07c00]">لولي الأمر</p>
+                    <h2 class="mt-3 font-heading text-3xl font-bold text-[#123329] lg:text-4xl dark:text-[#f7f1df]">طلب واضح، وبيئة تعرفها</h2>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="rounded-sm border border-[#2a8069]/14 bg-white/80 p-4 dark:border-white/10 dark:bg-white/5"><p class="font-bold text-[#123329] dark:text-[#f7f1df]">سعر نهائي</p><p class="mt-2 text-sm leading-6 text-[#315e52] dark:text-[#d2e7df]/70">الأسعار تشمل ٥٪ ضريبة القيمة المضافة.</p></div>
+                    <div class="rounded-sm border border-[#2a8069]/14 bg-white/80 p-4 dark:border-white/10 dark:bg-white/5"><p class="font-bold text-[#123329] dark:text-[#f7f1df]">حساب واحد</p><p class="mt-2 text-sm leading-6 text-[#315e52] dark:text-[#d2e7df]/70">أنشئ حسابًا لمتابعة الطلبات والفواتير.</p></div>
+                    <div class="rounded-sm border border-[#2a8069]/14 bg-white/80 p-4 dark:border-white/10 dark:bg-white/5"><p class="font-bold text-[#123329] dark:text-[#f7f1df]">تواصل مباشر</p><p class="mt-2 text-sm leading-6 text-[#315e52] dark:text-[#d2e7df]/70">نحن متاحون عبر واتساب عند الحاجة.</p></div>
+                </div>
+            </div>
+        </section>
 
         <section class="border-t border-[#2a8069]/12 bg-white/62 dark:border-white/10 dark:bg-white/[0.03]">
             <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-14 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8 lg:py-16">
