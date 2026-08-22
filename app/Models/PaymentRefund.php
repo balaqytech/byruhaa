@@ -30,8 +30,15 @@ use Illuminate\Support\Str;
  * @property array<string, mixed>|null $request_payload
  * @property array<string, mixed>|null $response_payload
  * @property Carbon|null $processed_at
+ * @property string|null $resolution_method
+ * @property string|null $manual_reference
+ * @property string|null $manual_notes
+ * @property string|null $manual_evidence_path
+ * @property Carbon|null $manual_required_at
+ * @property Carbon|null $manually_completed_at
+ * @property int|null $manually_completed_by_user_id
  */
-#[Fillable(['payment_id', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at'])]
+#[Fillable(['payment_id', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'resolution_method', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at', 'manual_reference', 'manual_notes', 'manual_evidence_path', 'manual_required_at', 'manually_completed_at', 'manually_completed_by_user_id'])]
 class PaymentRefund extends Model
 {
     /** @use HasFactory<PaymentRefundFactory> */
@@ -68,6 +75,7 @@ class PaymentRefund extends Model
         return $this->morphOne(LedgerTransaction::class, 'source');
     }
 
+    /** @return MorphMany<WebhookDelivery, $this> */
     public function webhookDeliveries(): MorphMany
     {
         return $this->morphMany(WebhookDelivery::class, 'webhookable');
@@ -85,6 +93,8 @@ class PaymentRefund extends Model
             'request_payload' => 'array',
             'response_payload' => 'array',
             'processed_at' => 'datetime',
+            'manual_required_at' => 'datetime',
+            'manually_completed_at' => 'datetime',
         ];
     }
 }

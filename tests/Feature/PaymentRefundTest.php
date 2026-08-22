@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\ConfirmManualPaymentRefund;
 use App\Actions\RefundPayment;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
@@ -12,6 +13,7 @@ use App\Models\Event;
 use App\Models\LedgerAccount;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
+use App\Models\User;
 use App\Notifications\PaymentRefundedNotification;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Client\Request;
@@ -179,6 +181,78 @@ test('refund action records failed refund attempts when thawani rejects the requ
         ->and($paymentRefund->response_payload['status'])->toBe(422)
         ->and(data_get($paymentRefund->response_payload, 'response.description'))->toBe('Refund rejected')
         ->and($paymentRefund->ledgerTransaction()->exists())->toBeFalse();
+});
+
+test('thawani code 4300 reserves the amount for manual refund without financial side effects', function () {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/refunds' => Http::response([
+            'success' => false,
+            'description' => 'Refund is not allowed, please contact thawani support',
+            'code' => 4300,
+        ], 400),
+    ]);
+    $payment = refundablePaymentFixture(amountBaisa: 12000);
+
+    expect(fn () => app(RefundPayment::class)->execute($payment, reason: 'Event cancelled'))
+        ->toThrow(ValidationException::class);
+
+    $refund = $payment->refunds()->firstOrFail();
+    expect($refund->state)->toBe(PaymentRefundState::ManualRequired)
+        ->and($refund->provider_status)->toBe('manual_required')
+        ->and($refund->manual_required_at)->not->toBeNull()
+        ->and($payment->refresh()->state)->toBe(PaymentState::Paid)
+        ->and($payment->refundableAmountBaisa())->toBe(0)
+        ->and($refund->ledgerTransaction()->exists())->toBeFalse();
+
+    expect(fn () => app(RefundPayment::class)->execute($payment->refresh(), reason: 'Retry'))
+        ->toThrow(ValidationException::class)
+        ->and($payment->refunds()->count())->toBe(1);
+});
+
+test('admin confirmation completes a manual refund and runs normal accounting and notifications', function () {
+    Notification::fake();
+    Queue::fake();
+    config(['byruhaa.webhooks.payment_refunded_url' => 'https://partner.test/webhooks/payment-refunded']);
+    $payment = refundablePaymentFixture(amountBaisa: 12000);
+    $refund = PaymentRefund::factory()->for($payment)->create([
+        'amount_baisa' => 12000,
+        'state' => PaymentRefundState::ManualRequired,
+        'provider_payment_id' => $payment->provider_payment_id,
+        'provider_status' => 'manual_required',
+        'manual_required_at' => now()->subDay(),
+    ]);
+    $user = User::factory()->create();
+
+    $completed = app(ConfirmManualPaymentRefund::class)->execute(
+        $refund,
+        'THW-MANUAL-987',
+        now(),
+        $user->id,
+        'Confirmed by Thawani support.',
+        'refund-evidence/proof.pdf',
+    );
+
+    expect($completed->state)->toBe(PaymentRefundState::Succeeded)
+        ->and($completed->resolution_method)->toBe('manual')
+        ->and($completed->manual_reference)->toBe('THW-MANUAL-987')
+        ->and($completed->provider_status)->toBe('manual_completed')
+        ->and($completed->ledgerTransaction()->exists())->toBeTrue()
+        ->and($payment->refresh()->state)->toBe(PaymentState::Refunded)
+        ->and($payment->bookingInstallment->refresh()->state)->toBe(BookingInstallmentState::Pending);
+
+    Notification::assertSentToTimes(
+        $payment->bookingInstallment->paymentSchedule->booking->customer,
+        PaymentRefundedNotification::class,
+        1,
+    );
+    Queue::assertPushed(CallWebhookJob::class, function (CallWebhookJob $job): bool {
+        return $job->webhookUrl === 'https://partner.test/webhooks/payment-refunded'
+            && $job->payload['event'] === 'payment.refunded'
+            && $job->payload['data']['refund']['method'] === 'manual'
+            && $job->payload['data']['refund']['manual_reference'] === 'THW-MANUAL-987'
+            && $job->payload['data']['refund']['completed_at'] !== null;
+    });
 });
 
 function refundablePaymentFixture(int $amountBaisa): Payment

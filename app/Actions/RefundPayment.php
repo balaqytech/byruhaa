@@ -3,15 +3,12 @@
 namespace App\Actions;
 
 use App\Contracts\Payments\PaymentGateway;
-use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Exceptions\PaymentGatewayException;
 use App\Models\Payment;
 use App\Models\PaymentRefund;
-use App\Notifications\PaymentRefundedNotification;
 use App\Services\Payments\PaymentGatewayManager;
-use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -22,9 +19,7 @@ class RefundPayment
 {
     public function __construct(
         private PaymentGatewayManager $paymentGateways,
-        private PostRefundLedgerTransaction $postRefundLedgerTransaction,
-        private ReleaseBookingSeats $releaseBookingSeats,
-        private ByruhaaWebhookSender $webhookSender,
+        private CompletePaymentRefund $completePaymentRefund,
     ) {}
 
     public function execute(Payment $payment, ?int $amountBaisa = null, string $reason = 'Customer refund'): PaymentRefund
@@ -45,12 +40,12 @@ class RefundPayment
             $alreadyRefunded = MoneyFactory::fromMinor((int) $payment->refunds
                 ->where('state', PaymentRefundState::Succeeded)
                 ->sum('amount_baisa'), $payment->currency);
-            $pendingRefund = MoneyFactory::fromMinor((int) $payment->refunds
-                ->where('state', PaymentRefundState::Pending)
+            $reservedRefund = MoneyFactory::fromMinor((int) $payment->refunds
+                ->whereIn('state', [PaymentRefundState::Pending, PaymentRefundState::ManualRequired])
                 ->sum('amount_baisa'), $payment->currency);
             $remaining = $payment->amount
                 ->minus($alreadyRefunded)
-                ->minus($pendingRefund);
+                ->minus($reservedRefund);
             $refundAmount = $amountBaisa === null
                 ? $remaining
                 : MoneyFactory::fromMinor($amountBaisa, $payment->currency);
@@ -84,64 +79,32 @@ class RefundPayment
         try {
             $response = $this->gateway($paymentRefund->payment)->createRefund($payload);
         } catch (Throwable $exception) {
+            $manualRequired = $this->requiresManualRefund($exception);
             $paymentRefund->forceFill([
-                'state' => PaymentRefundState::Failed,
+                'state' => $manualRequired ? PaymentRefundState::ManualRequired : PaymentRefundState::Failed,
+                'provider_status' => $manualRequired ? 'manual_required' : 'failed',
                 'response_payload' => $this->exceptionPayload($exception),
+                'manual_required_at' => $manualRequired ? now() : null,
                 'processed_at' => now(),
             ])->save();
 
             throw ValidationException::withMessages([
-                'refund' => __('ui.messages.refund_gateway_unavailable'),
+                'refund' => $manualRequired
+                    ? 'رفضت ثواني الاسترداد الآلي، ويلزم إتمامه يدويًا من سجل الاستردادات.'
+                    : __('ui.messages.refund_gateway_unavailable'),
             ]);
         }
 
         $refundId = (string) data_get($response, 'data.refund_id');
         $providerStatus = (string) data_get($response, 'data.status', 'succeeded');
 
-        $paymentRefund = DB::transaction(function () use ($paymentRefund, $response, $refundId, $providerPaymentId, $providerStatus): PaymentRefund {
-            $paymentRefund = PaymentRefund::query()
-                ->whereKey($paymentRefund->id)
-                ->with('payment.bookingInstallment')
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $paymentRefund->forceFill([
-                'state' => PaymentRefundState::Succeeded,
-                'provider_refund_id' => $refundId,
-                'provider_payment_id' => $providerPaymentId,
-                'provider_status' => $providerStatus,
-                'response_payload' => $response,
-                'processed_at' => now(),
-            ])->save();
-
-            $payment = $paymentRefund->payment;
-            $payment->forceFill([
-                'provider_payment_id' => $providerPaymentId,
-                'state' => $this->paymentStateAfterRefund($payment),
-            ])->save();
-
-            if ($payment->state === PaymentState::Refunded) {
-                $payment->bookingInstallment->forceFill([
-                    'state' => BookingInstallmentState::Pending,
-                    'paid_at' => null,
-                ])->save();
-            }
-
-            $this->postRefundLedgerTransaction->execute($paymentRefund);
-
-            return $paymentRefund->refresh();
-        });
-
-        if ($paymentRefund->payment->state === PaymentState::Refunded) {
-            $this->releaseBookingSeats->execute($paymentRefund->payment);
-        }
-
-        $paymentRefund->loadMissing('payment.bookingInstallment.paymentSchedule.booking.customer');
-        $paymentRefund->payment->bookingInstallment->paymentSchedule->booking->customer
-            ->notify(new PaymentRefundedNotification($paymentRefund->id));
-        $this->webhookSender->sendPaymentRefunded($paymentRefund);
-
-        return $paymentRefund;
+        return $this->completePaymentRefund->execute($paymentRefund, [
+            'resolution_method' => 'automatic',
+            'provider_refund_id' => $refundId,
+            'provider_payment_id' => $providerPaymentId,
+            'provider_status' => $providerStatus,
+            'response_payload' => $response,
+        ]);
     }
 
     private function providerPaymentId(Payment $payment): string
@@ -163,19 +126,6 @@ class RefundPayment
         }
 
         return (string) $providerPaymentId;
-    }
-
-    private function paymentStateAfterRefund(Payment $payment): PaymentState
-    {
-        $payment->load('refunds');
-
-        $succeededRefundTotal = MoneyFactory::fromMinor((int) $payment->refunds
-            ->where('state', PaymentRefundState::Succeeded)
-            ->sum('amount_baisa'), $payment->currency);
-
-        return $succeededRefundTotal->isGreaterThanOrEqualTo($payment->amount)
-            ? PaymentState::Refunded
-            : PaymentState::PartiallyRefunded;
     }
 
     private function gateway(Payment $payment): PaymentGateway
@@ -201,5 +151,17 @@ class RefundPayment
         return [
             'error' => $exception->getMessage(),
         ];
+    }
+
+    private function requiresManualRefund(Throwable $exception): bool
+    {
+        if (! $exception instanceof PaymentGatewayException) {
+            return false;
+        }
+
+        $payload = $exception->payload();
+
+        return (int) data_get($payload, 'response.code') === 4300
+            || (int) data_get($payload, 'code') === 4300;
     }
 }

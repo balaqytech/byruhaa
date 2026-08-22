@@ -1,10 +1,12 @@
 <?php
 
 use App\Actions\CancelEvent;
+use App\Actions\ConfirmManualPaymentRefund;
 use App\Enums\BookingInstallmentState;
 use App\Enums\EventCancellationStatus;
 use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventStatus;
+use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Enums\SeatAllocationState;
 use App\Jobs\ProcessEventCancellation;
@@ -15,6 +17,8 @@ use App\Models\BookingSeatAllocation;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
@@ -135,4 +139,56 @@ test('a failed refund leaves the cancellation visible for admin attention and re
         ->and($cancellation->refresh()->status)->toBe(EventCancellationStatus::NeedsAttention)
         ->and($allocation->refresh()->state)->toBe(SeatAllocationState::Reserved)
         ->and($cancellation->errors)->not->toBeEmpty();
+});
+
+test('a refund requiring manual processing remains visible for attention without creating duplicates', function () {
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/refunds' => Http::response([
+            'success' => false,
+            'code' => 4300,
+            'description' => 'Refund is not allowed, please contact thawani support',
+        ], 400),
+    ]);
+
+    $event = Event::factory()->create();
+    $booking = Booking::factory()->for(Customer::factory())->for($event)->create();
+    $schedule = BookingPaymentSchedule::factory()->for($booking)->create();
+    $installment = BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create([
+        'amount_baisa' => 3000,
+        'state' => BookingInstallmentState::Paid,
+    ]);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
+        'amount_baisa' => 3000,
+        'state' => PaymentState::Paid,
+        'provider_payment_id' => 'payment_manual_refund',
+    ]);
+
+    Queue::fake();
+    $cancellation = app(CancelEvent::class)->execute($event, 'Organizer cancellation');
+    app()->call([new ProcessEventCancellation($cancellation->id), 'handle']);
+    app()->call([new ProcessEventCancellation($cancellation->id), 'handle']);
+
+    $refund = PaymentRefund::query()->sole();
+
+    expect($refund->state)->toBe(PaymentRefundState::ManualRequired)
+        ->and($payment->refresh()->state)->toBe(PaymentState::Paid)
+        ->and($payment->refundableAmountBaisa())->toBe(0)
+        ->and($cancellation->refresh()->status)->toBe(EventCancellationStatus::NeedsAttention)
+        ->and($cancellation->errors[0])->toHaveKey('payment_refund_id')
+        ->and(PaymentRefund::query()->count())->toBe(1);
+
+    app(ConfirmManualPaymentRefund::class)->execute(
+        $refund,
+        'THW-EVENT-MANUAL-001',
+        now(),
+        User::factory()->create()->id,
+    );
+    app()->call([new ProcessEventCancellation($cancellation->id), 'handle']);
+
+    expect($refund->refresh()->state)->toBe(PaymentRefundState::Succeeded)
+        ->and($payment->refresh()->state)->toBe(PaymentState::Refunded)
+        ->and($cancellation->refresh()->status)->toBe(EventCancellationStatus::Completed)
+        ->and($cancellation->errors)->toBeNull()
+        ->and(PaymentRefund::query()->count())->toBe(1);
 });

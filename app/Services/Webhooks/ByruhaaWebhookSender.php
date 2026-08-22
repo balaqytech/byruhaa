@@ -248,7 +248,7 @@ class ByruhaaWebhookSender
                 'customer_phone' => $booking->customer->phone_number,
                 'occurred_at' => $refund->processed_at?->toJSON() ?? now()->toJSON(),
                 'data' => [
-                    'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'amount' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason],
+                    'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'method' => $refund->resolution_method, 'manual_reference' => $refund->manual_reference, 'amount' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason, 'completed_at' => $refund->processed_at?->toJSON()],
                     'payment' => ['id' => $refund->payment_id, 'reference' => $refund->payment->reference],
                     'booking' => ['id' => $booking->id, 'reference' => $booking->reference],
                     'customer' => ['id' => $booking->customer->id, 'name' => $booking->customer->name, 'phone' => $booking->customer->phone_number, 'email' => $booking->customer->email],

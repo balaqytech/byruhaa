@@ -55,6 +55,11 @@ class PaymentRefundInfolist
                                             ->label(__('admin.fields.processed_at'))
                                             ->dateTime()
                                             ->placeholder('-'),
+                                        TextEntry::make('resolution_method')->label('طريقة الاسترداد')->placeholder('-'),
+                                        TextEntry::make('manual_reference')->label('مرجع الاسترداد اليدوي')->copyable()->placeholder('-'),
+                                        TextEntry::make('manually_completed_at')->label('تاريخ التأكيد اليدوي')->dateTime()->placeholder('-'),
+                                        TextEntry::make('manual_notes')->label('ملاحظات الاسترداد اليدوي')->columnSpanFull()->placeholder('-'),
+                                        TextEntry::make('manual_evidence_path')->label('مسار مستند الإثبات')->copyable()->placeholder('-'),
                                     ]),
                             ]),
                         Tab::make(__('admin.resources.payments.label'))

@@ -87,6 +87,20 @@ class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQ
             $errors[] = ['message' => 'توجد مبالغ مدفوعة لم يكتمل استردادها.'];
         }
 
+        $manualRefunds = $this->eventPayments($cancellation)
+            ->whereHas('refunds', fn ($query) => $query->where('state', PaymentRefundState::ManualRequired->value))
+            ->with(['refunds' => fn ($query) => $query->where('state', PaymentRefundState::ManualRequired->value)])
+            ->get()
+            ->flatMap->refunds;
+
+        foreach ($manualRefunds as $manualRefund) {
+            $errors[] = [
+                'payment_refund_id' => $manualRefund->id,
+                'payment_id' => $manualRefund->payment_id,
+                'message' => 'يتطلب الاسترداد معالجة يدوية وتأكيدًا من الإدارة.',
+            ];
+        }
+
         $unreversedCommissionsCount = AffiliateCommission::query()
             ->whereHas('booking', fn ($query) => $query->where('event_id', $cancellation->event_id))
             ->whereDoesntHave('reversal')

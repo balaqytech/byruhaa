@@ -118,10 +118,10 @@ class Payment extends Model
 
         $reservedRefundBaisa = (int) ($this->relationLoaded('refunds')
             ? $this->refunds
-                ->filter(fn (PaymentRefund $refund): bool => in_array($refund->state, [PaymentRefundState::Pending, PaymentRefundState::Succeeded], true))
+                ->filter(fn (PaymentRefund $refund): bool => in_array($refund->state, [PaymentRefundState::Pending, PaymentRefundState::Succeeded, PaymentRefundState::ManualRequired], true))
                 ->sum('amount_baisa')
             : $this->refunds()
-                ->whereIn('state', [PaymentRefundState::Pending->value, PaymentRefundState::Succeeded->value])
+                ->whereIn('state', [PaymentRefundState::Pending->value, PaymentRefundState::Succeeded->value, PaymentRefundState::ManualRequired->value])
                 ->sum('amount_baisa'));
 
         $refundableAmount = $this->amount->minus(

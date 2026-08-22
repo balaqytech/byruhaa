@@ -10,6 +10,7 @@ enum PaymentRefundState: string implements HasColor, HasLabel
     case Pending = 'pending';
     case Succeeded = 'succeeded';
     case Failed = 'failed';
+    case ManualRequired = 'manual_required';
 
     public function getLabel(): string
     {
@@ -17,6 +18,7 @@ enum PaymentRefundState: string implements HasColor, HasLabel
             self::Pending => __('admin.statuses.pending'),
             self::Succeeded => __('admin.statuses.succeeded'),
             self::Failed => __('admin.statuses.failed'),
+            self::ManualRequired => 'يتطلب استردادًا يدويًا',
         };
     }
 
@@ -26,6 +28,7 @@ enum PaymentRefundState: string implements HasColor, HasLabel
             self::Pending => 'warning',
             self::Succeeded => 'success',
             self::Failed => 'danger',
+            self::ManualRequired => 'warning',
         };
     }
 
