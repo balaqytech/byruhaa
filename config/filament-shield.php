@@ -252,7 +252,9 @@ return [
     |
     */
 
-    'custom_permissions' => [],
+    'custom_permissions' => [
+        'View:LogViewer' => 'View Log Viewer',
+    ],
 
     /*
     |--------------------------------------------------------------------------

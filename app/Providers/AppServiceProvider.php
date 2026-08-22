@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
 use App\Listeners\UpdateWebhookDeliveryStatus;
+use App\Modules\Identity\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
@@ -29,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerWebhookDeliveryListeners();
+        $this->registerLogViewerAuthorization();
         $this->configureDefaults();
     }
 
@@ -37,6 +41,15 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(WebhookCallSucceededEvent::class, UpdateWebhookDeliveryStatus::class);
         Event::listen(WebhookCallFailedEvent::class, UpdateWebhookDeliveryStatus::class);
         Event::listen(FinalWebhookCallFailedEvent::class, UpdateWebhookDeliveryStatus::class);
+    }
+
+    protected function registerLogViewerAuthorization(): void
+    {
+        Gate::define('viewLogViewer', static function (?User $user): bool {
+            return $user?->role === UserRole::Admin
+                || $user?->hasRole('super_admin')
+                || $user?->can('View:LogViewer');
+        });
     }
 
     /**
