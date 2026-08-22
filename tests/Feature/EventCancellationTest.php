@@ -18,7 +18,7 @@ use App\Modules\Events\Models\Event;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 

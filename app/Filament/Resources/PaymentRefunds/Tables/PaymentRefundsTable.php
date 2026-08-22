@@ -6,7 +6,7 @@ use App\Actions\ConfirmManualPaymentRefund;
 use App\Enums\PaymentRefundState;
 use App\Filament\Resources\Payments\PaymentResource;
 use App\Modules\Finance\Models\PaymentRefund;
-use App\Models\User;
+use App\Modules\Identity\Models\User;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
