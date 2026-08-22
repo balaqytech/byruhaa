@@ -36,6 +36,11 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
+### Git Flow branching strategy
+
+- This project uses the Git Flow branching strategy, with `main` reserved for production-ready code and `develop` used for integration.
+- When developing a new feature or module, create a separate branch from `develop` using the `feature/<short-description>` naming convention; do not develop directly on `main` or `develop`.
+
 ## Verification Scripts
 
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
