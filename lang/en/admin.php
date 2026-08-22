@@ -6,6 +6,7 @@ return [
         'customer_management' => 'Customer Management',
         'finance' => 'Finance',
         'store' => 'Store',
+        'user_management' => 'User Management',
     ],
 
     'resources' => [
@@ -53,6 +54,11 @@ return [
             'label' => 'Customer',
             'plural_label' => 'Customers',
             'navigation_label' => 'Customers',
+        ],
+        'users' => [
+            'label' => 'User',
+            'plural_label' => 'Users',
+            'navigation_label' => 'Users',
         ],
         'discounts' => [
             'label' => 'Discount',
@@ -275,6 +281,7 @@ return [
         'amount' => 'Amount',
         'additional_info' => 'Additional info',
         'address' => 'Address',
+        'account_role' => 'Account role',
         'area' => 'Area',
         'affiliate' => 'Affiliate',
         'affiliate_code' => 'Affiliate code',
@@ -348,6 +355,7 @@ return [
         'paid_by' => 'Paid by',
         'paid_payouts' => 'Paid payouts',
         'password' => 'Password',
+        'permission_roles' => 'Permission roles',
         'payloads' => 'Payloads',
         'payment' => 'Payment',
         'product' => 'Product',
@@ -428,6 +436,16 @@ return [
         'usage' => 'Usage',
         'verified_at' => 'Verified at',
         'wilaya' => 'Wilaya',
+    ],
+
+    'user_form' => [
+        'sections' => [
+            'account' => 'Account',
+            'permissions' => 'Permissions and roles',
+        ],
+        'help' => [
+            'permission_roles' => 'Assign Shield roles to control this user’s Filament permissions.',
+        ],
     ],
 
     'filters' => [

@@ -6,11 +6,14 @@ use App\Modules\Identity\Actions\Fortify\CreateNewUser;
 use App\Modules\Identity\Actions\Fortify\ResetUserPassword;
 use App\Modules\Identity\Contracts\CustomerIdentityResolver;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Policies\UserPolicy;
 use App\Modules\Identity\Services\PhoneCustomerIdentityResolver;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -24,6 +27,8 @@ class IdentityServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(User::class, UserPolicy::class);
+
         Relation::morphMap([
             'App\\Models\\Customer' => Customer::class,
         ]);

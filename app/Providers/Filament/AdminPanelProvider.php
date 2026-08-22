@@ -8,6 +8,7 @@ use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
 use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Filament\Resources\Products\ProductResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -71,6 +72,9 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,
