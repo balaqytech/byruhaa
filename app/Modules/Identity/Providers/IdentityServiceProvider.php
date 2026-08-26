@@ -5,17 +5,26 @@ namespace App\Modules\Identity\Providers;
 use App\Modules\Identity\Actions\Fortify\CreateNewUser;
 use App\Modules\Identity\Actions\Fortify\ResetUserPassword;
 use App\Modules\Identity\Contracts\CustomerIdentityResolver;
+use App\Modules\Identity\Listeners\RecordPermissionChangeAudit;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Policies\UserPolicy;
 use App\Modules\Identity\Services\PhoneCustomerIdentityResolver;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Fortify;
+use Spatie\Permission\Events\PermissionAttachedEvent;
+use Spatie\Permission\Events\PermissionDetachedEvent;
+use Spatie\Permission\Events\RoleAttachedEvent;
+use Spatie\Permission\Events\RoleDetachedEvent;
 
 class IdentityServiceProvider extends ServiceProvider
 {
@@ -24,6 +33,9 @@ class IdentityServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(User::class, UserPolicy::class);
+        $this->registerPermissionAuditListeners();
+
         Relation::morphMap([
             'App\\Models\\Customer' => Customer::class,
         ]);
@@ -66,5 +78,17 @@ class IdentityServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CustomerIdentityResolver::class, PhoneCustomerIdentityResolver::class);
+    }
+
+    protected function registerPermissionAuditListeners(): void
+    {
+        foreach ([
+            PermissionAttachedEvent::class,
+            PermissionDetachedEvent::class,
+            RoleAttachedEvent::class,
+            RoleDetachedEvent::class,
+        ] as $event) {
+            Event::listen($event, RecordPermissionChangeAudit::class);
+        }
     }
 }

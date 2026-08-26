@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\ModelStates\HasStates;
 
 /**
@@ -26,10 +28,34 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $total
  */
 #[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'status', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
-class Order extends Model
+class Order extends Model implements AuditableContract
 {
     /** @use HasFactory<OrderFactory> */
-    use HasFactory, HasStates;
+    use AuditableTrait, HasFactory, HasStates;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'reference',
+        'customer_id',
+        'status',
+        'currency',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
+        'recipient_name',
+        'recipient_phone',
+        'note',
+        'pickup_type',
+        'pickup_at',
+        'subtotal_baisa',
+        'vat_baisa',
+        'total_baisa',
+        'vat_rate_percentage',
+        'paid_at',
+        'payment_reference',
+    ];
 
     protected $table = 'store_orders';
 

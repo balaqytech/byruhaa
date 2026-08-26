@@ -18,6 +18,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 use UnitEnum;
 
 class AffiliateResource extends Resource
@@ -67,6 +68,7 @@ class AffiliateResource extends Resource
             ReferralsRelationManager::class,
             CommissionsRelationManager::class,
             PayoutRequestsRelationManager::class,
+            AuditsRelationManager::class,
         ];
     }
 

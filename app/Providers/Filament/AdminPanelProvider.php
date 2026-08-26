@@ -8,6 +8,7 @@ use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
 use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Filament\Resources\Products\ProductResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -25,6 +26,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Slimani\MediaManager\MediaManagerPlugin;
+use Tapp\FilamentAuditing\FilamentAuditingPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -71,6 +73,10 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make(),
+                FilamentAuditingPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,
