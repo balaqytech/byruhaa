@@ -3,6 +3,8 @@
 namespace App\Modules\Identity\Models;
 
 use App\Enums\UserRole;
+use App\Modules\Identity\Concerns\RecordsCustomAudits;
+use App\Modules\Identity\Contracts\AuditsIdentityRelations;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -14,6 +16,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -32,10 +36,20 @@ use Spatie\Permission\Traits\HasRoles;
  */
 #[Fillable(['name', 'email', 'role', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements AuditableContract, AuditsIdentityRelations, FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use AuditableTrait, HasFactory, HasRoles, Notifiable, RecordsCustomAudits;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'name',
+        'email',
+        'role',
+        'email_verified_at',
+    ];
 
     protected static function newFactory(): UserFactory
     {

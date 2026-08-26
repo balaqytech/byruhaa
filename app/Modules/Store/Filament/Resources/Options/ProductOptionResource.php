@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 use UnitEnum;
 
 class ProductOptionResource extends Resource
@@ -65,6 +66,7 @@ class ProductOptionResource extends Resource
     {
         return [
             InventoryMovementsRelationManager::class,
+            AuditsRelationManager::class,
         ];
     }
 }

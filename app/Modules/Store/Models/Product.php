@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Slimani\MediaManager\Models\File;
 
 /**
@@ -26,12 +28,27 @@ use Slimani\MediaManager\Models\File;
  * @property int $featured_sort_order
  */
 #[Fillable(['category_id', 'name', 'slug', 'description', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
-class Product extends Model
+class Product extends Model implements AuditableContract
 {
     protected $table = 'store_products';
 
     /** @use HasFactory<ProductFactory> */
-    use HasFactory;
+    use AuditableTrait, HasFactory;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'category_id',
+        'name',
+        'slug',
+        'description',
+        'featured_image_id',
+        'status',
+        'sort_order',
+        'is_featured',
+        'featured_sort_order',
+    ];
 
     protected static function newFactory(): ProductFactory
     {

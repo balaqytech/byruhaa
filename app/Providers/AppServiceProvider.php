@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Enums\UserRole;
 use App\Listeners\UpdateWebhookDeliveryStatus;
 use App\Modules\Identity\Models\User;
+use App\Policies\AuditPolicy;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,7 @@ use Illuminate\Validation\Rules\Password;
 use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
+use Tapp\FilamentAuditing\Models\Audit;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerWebhookDeliveryListeners();
+        $this->registerAuditAuthorization();
         $this->registerLogViewerAuthorization();
         $this->configureDefaults();
     }
@@ -49,6 +52,21 @@ class AppServiceProvider extends ServiceProvider
             return $user?->role === UserRole::Admin
                 || $user?->hasRole('super_admin')
                 || $user?->can('View:LogViewer');
+        });
+    }
+
+    protected function registerAuditAuthorization(): void
+    {
+        Gate::policy(Audit::class, AuditPolicy::class);
+
+        Gate::define('audit', static function (?User $user): bool {
+            return $user?->role === UserRole::Admin
+                || $user?->can('View:Audit');
+        });
+
+        Gate::define('restoreAudit', static function (?User $user): bool {
+            return $user?->role === UserRole::Admin
+                || $user?->can('Restore:Audit');
         });
     }
 

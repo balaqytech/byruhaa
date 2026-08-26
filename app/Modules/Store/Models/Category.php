@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @property int $id
@@ -18,12 +20,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $is_active
  */
 #[Fillable(['name', 'slug', 'description', 'sort_order', 'is_active'])]
-class Category extends Model
+class Category extends Model implements AuditableContract
 {
     protected $table = 'store_categories';
 
     /** @use HasFactory<CategoryFactory> */
-    use HasFactory;
+    use AuditableTrait, HasFactory;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'name',
+        'slug',
+        'description',
+        'sort_order',
+        'is_active',
+    ];
 
     protected static function newFactory(): CategoryFactory
     {

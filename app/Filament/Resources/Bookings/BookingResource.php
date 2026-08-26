@@ -21,6 +21,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 
 class BookingResource extends Resource
 {
@@ -181,6 +182,7 @@ class BookingResource extends Resource
         return [
             FamilyMembersRelationManager::class,
             InstallmentsRelationManager::class,
+            AuditsRelationManager::class,
         ];
     }
 

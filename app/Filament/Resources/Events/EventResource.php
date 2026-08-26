@@ -20,6 +20,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 
 class EventResource extends Resource
 {
@@ -65,6 +66,7 @@ class EventResource extends Resource
             PaymentPlansRelationManager::class,
             BookingsRelationManager::class,
             EventInterestsRelationManager::class,
+            AuditsRelationManager::class,
         ];
     }
 

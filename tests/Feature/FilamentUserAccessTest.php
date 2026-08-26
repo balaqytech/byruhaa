@@ -3,12 +3,13 @@
 use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\UserResource;
+use App\Modules\Identity\Models\Role;
 use App\Modules\Identity\Models\User;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use Tapp\FilamentAuditing\Filament\Resources\Audits\AuditResource;
 
 test('administrators can create users and assign Shield roles', function () {
     $administrator = User::factory()->admin()->create();
@@ -23,6 +24,9 @@ test('administrators can create users and assign Shield roles', function () {
         ->assertSee($administrator->email);
 
     $this->get(RoleResource::getUrl('index'))
+        ->assertSuccessful();
+
+    $this->get(AuditResource::getUrl('index'))
         ->assertSuccessful();
 
     Livewire::test(CreateUser::class)
@@ -55,6 +59,28 @@ test('staff cannot access user or role management', function () {
         ->assertForbidden();
 
     $this->get(RoleResource::getUrl('index'))
+        ->assertForbidden();
+
+    $this->get(AuditResource::getUrl('index'))
+        ->assertForbidden();
+});
+
+test('audit detail access follows audit permissions', function () {
+    config(['audit.console' => true]);
+
+    $administrator = User::factory()->admin()->create();
+    $auditedUser = User::factory()->create();
+    $audit = $auditedUser->audits()->latest()->firstOrFail();
+    $auditUrl = AuditResource::getUrl('view', ['record' => $audit]);
+
+    $this->actingAs($administrator, 'web')
+        ->get($auditUrl)
+        ->assertSuccessful();
+
+    $staff = User::factory()->create();
+
+    $this->actingAs($staff, 'web')
+        ->get($auditUrl)
         ->assertForbidden();
 });
 

@@ -1,10 +1,14 @@
 <?php
 
+use Illuminate\Support\Str;
 use Opcodes\LogViewer\Enums\SortingMethod;
 use Opcodes\LogViewer\Enums\SortingOrder;
 use Opcodes\LogViewer\Enums\Theme;
 use Opcodes\LogViewer\Http\Middleware\AuthorizeLogViewer;
 use Opcodes\LogViewer\Http\Middleware\EnsureFrontendRequestsAreStateful;
+
+$apiStatefulDomains = env('LOG_VIEWER_API_STATEFUL_DOMAINS');
+$appEnvironment = env('APP_ENV', 'local');
 
 return [
 
@@ -121,7 +125,9 @@ return [
         AuthorizeLogViewer::class,
     ],
 
-    'api_stateful_domains' => env('LOG_VIEWER_API_STATEFUL_DOMAINS') ? explode(',', env('LOG_VIEWER_API_STATEFUL_DOMAINS')) : null,
+    'api_stateful_domains' => is_string($apiStatefulDomains) && $apiStatefulDomains !== ''
+        ? explode(',', $apiStatefulDomains)
+        : null,
 
     /*
     |--------------------------------------------------------------------------
@@ -135,7 +141,7 @@ return [
 
     'hosts' => [
         'local' => [
-            'name' => ucfirst(env('APP_ENV', 'local')),
+            'name' => Str::ucfirst(is_string($appEnvironment) ? $appEnvironment : 'local'),
         ],
 
         // 'staging' => [

@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\ModelStates\HasStates;
 
 /**
@@ -55,10 +57,34 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $total
  */
 #[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'cancellation_reason', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'coupon_id', 'coupon_code', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
-class Booking extends Model
+class Booking extends Model implements AuditableContract
 {
     /** @use HasFactory<BookingFactory> */
-    use HasFactory, HasStates;
+    use AuditableTrait, HasFactory, HasStates;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'customer_id',
+        'event_id',
+        'reference',
+        'state',
+        'reviewed_by_user_id',
+        'reviewed_at',
+        'review_notes',
+        'cancellation_reason',
+        'unit_price_baisa',
+        'currency',
+        'family_member_count',
+        'subtotal_baisa',
+        'discount_id',
+        'coupon_id',
+        'coupon_code',
+        'discount_name',
+        'discount_amount_baisa',
+        'total_baisa',
+    ];
 
     protected static function newFactory(): BookingFactory
     {

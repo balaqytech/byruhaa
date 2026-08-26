@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Validation\ValidationException;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Slimani\MediaManager\Models\File;
 
 /**
@@ -29,12 +31,29 @@ use Slimani\MediaManager\Models\File;
  * @property-read Money $price
  */
 #[Fillable(['product_id', 'name', 'sku', 'price', 'price_baisa', 'currency', 'image_id', 'sort_order', 'is_available', 'is_default', 'tracks_inventory', 'stock_on_hand'])]
-class ProductOption extends Model
+class ProductOption extends Model implements AuditableContract
 {
     protected $table = 'store_product_options';
 
     /** @use HasFactory<ProductOptionFactory> */
-    use HasFactory;
+    use AuditableTrait, HasFactory;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'product_id',
+        'name',
+        'sku',
+        'price_baisa',
+        'currency',
+        'image_id',
+        'sort_order',
+        'is_available',
+        'is_default',
+        'tracks_inventory',
+        'stock_on_hand',
+    ];
 
     protected static function newFactory(): ProductOptionFactory
     {

@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 use UnitEnum;
 
 class OrderResource extends Resource
@@ -48,6 +49,13 @@ class OrderResource extends Resource
     public static function getNavigationGroup(): string|UnitEnum|null
     {
         return __('admin.navigation.store');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            AuditsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

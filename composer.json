@@ -23,10 +23,12 @@
         "livewire/flux": "^2.13.1",
         "livewire/livewire": "^4.1",
         "opcodesio/log-viewer": "^3.24",
+        "owen-it/laravel-auditing": "^14.0",
         "propaganistas/laravel-phone": "~6.0",
         "slimani/filament-media-manager": "^0.13.0",
         "spatie/laravel-model-states": "~2.14",
-        "spatie/laravel-webhook-server": "^3.10"
+        "spatie/laravel-webhook-server": "^3.10",
+        "tapp/filament-auditing": "^4.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

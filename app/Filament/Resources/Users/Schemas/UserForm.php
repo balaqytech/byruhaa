@@ -3,11 +3,14 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\UserRole;
+use App\Modules\Identity\Actions\SyncUserRoles;
+use App\Modules\Identity\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rules\Password;
 
 class UserForm
@@ -48,6 +51,15 @@ class UserForm
                         Select::make('roles')
                             ->label(__('admin.fields.permission_roles'))
                             ->relationship('roles', 'name')
+                            ->saveRelationshipsUsing(static function (Select $component, SyncUserRoles $syncUserRoles): void {
+                                $record = $component->getRecord();
+
+                                if (! $record instanceof User) {
+                                    return;
+                                }
+
+                                $syncUserRoles->execute($record, Arr::wrap($component->getState()));
+                            })
                             ->multiple()
                             ->preload()
                             ->searchable()
