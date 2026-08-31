@@ -22,12 +22,13 @@ use Spatie\ModelStates\HasStates;
 /**
  * @property OrderState $status
  * @property string $payment_token
+ * @property int|null $minor_profile_id
  * @property Carbon|null $pickup_at
  * @property-read Money $subtotal
  * @property-read Money $vat
  * @property-read Money $total
  */
-#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'status', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
+#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'minor_profile_id', 'status', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
 class Order extends Model implements AuditableContract
 {
     /** @use HasFactory<OrderFactory> */
@@ -39,6 +40,7 @@ class Order extends Model implements AuditableContract
     protected $auditInclude = [
         'reference',
         'customer_id',
+        'minor_profile_id',
         'status',
         'currency',
         'customer_name',

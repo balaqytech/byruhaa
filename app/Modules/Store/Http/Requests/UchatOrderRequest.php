@@ -27,6 +27,7 @@ class UchatOrderRequest extends UchatRequest
         return [
             'uchat_phone' => $this->phoneRules(),
             'idempotency_key' => ['required', 'string', 'max:100'],
+            'minor_profile_id' => ['nullable', 'integer'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'recipient_name' => ['nullable', 'string', 'max:255'],

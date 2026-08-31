@@ -8,12 +8,23 @@ use Illuminate\Validation\ValidationException;
 
 class ResolveUchatCart
 {
-    public function execute(string $ownerKey, ?int $customerId = null, bool $create = true): Cart
+    public function execute(string $ownerKey, ?int $customerId = null, bool $create = true, ?int $minorProfileId = null): Cart
     {
-        return DB::transaction(function () use ($ownerKey, $customerId, $create): Cart {
-            $cart = Cart::query()->where('uchat_owner_key', $ownerKey)->lockForUpdate()->first();
+        $scopedOwnerKey = $minorProfileId === null
+            ? $ownerKey
+            : hash('sha256', $ownerKey.'|minor-profile|'.$minorProfileId);
+
+        return DB::transaction(function () use ($scopedOwnerKey, $customerId, $create, $minorProfileId): Cart {
+            $cart = Cart::query()
+                ->where('uchat_owner_key', $scopedOwnerKey)
+                ->lockForUpdate()
+                ->first();
 
             if ($cart instanceof Cart) {
+                if ($customerId !== null && $cart->getRawOriginal('customer_id') !== null && (int) $cart->getRawOriginal('customer_id') !== $customerId) {
+                    throw ValidationException::withMessages(['cart' => 'This cart does not belong to the authenticated customer.']);
+                }
+
                 if ($customerId !== null && $cart->getRawOriginal('customer_id') === null) {
                     $cart->forceFill(['customer_id' => $customerId])->save();
                 }
@@ -27,7 +38,8 @@ class ResolveUchatCart
 
             return Cart::query()->create([
                 'customer_id' => $customerId,
-                'uchat_owner_key' => $ownerKey,
+                'minor_profile_id' => $minorProfileId,
+                'uchat_owner_key' => $scopedOwnerKey,
             ]);
         });
     }

@@ -21,18 +21,16 @@ class CartController extends Controller
 {
     public function show(Request $request, ResolveCart $resolveCart): JsonResponse
     {
-        $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
-        $customerId = is_numeric($customerIdentifier) ? (int) $customerIdentifier : null;
-        $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId, false);
+        ['customerId' => $customerId, 'minorProfileId' => $minorProfileId] = $this->storeIdentity($request);
+        $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId, false, $minorProfileId);
 
         return CartResource::make($cart->load('items.productOption.product'))->response();
     }
 
     public function add(AddCartItemRequest $request, ResolveCart $resolveCart, AddCartItem $addCartItem): JsonResponse
     {
-        $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
-        $customerId = is_numeric($customerIdentifier) ? (int) $customerIdentifier : null;
-        $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId);
+        ['customerId' => $customerId, 'minorProfileId' => $minorProfileId] = $this->storeIdentity($request);
+        $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId, true, $minorProfileId);
         $item = $addCartItem->execute(
             $cart,
             ProductOption::query()->findOrFail($request->integer('product_option_id')),
@@ -45,9 +43,8 @@ class CartController extends Controller
 
     public function update(UpdateCartItemRequest $request, Cart $cart, CartItem $item, ResolveCart $resolveCart, UpdateCartItem $updateCartItem): JsonResponse
     {
-        $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
-        $customerId = is_numeric($customerIdentifier) ? (int) $customerIdentifier : null;
-        $cart = $resolveCart->execute($cart->token, $customerId, false);
+        ['customerId' => $customerId, 'minorProfileId' => $minorProfileId] = $this->storeIdentity($request);
+        $cart = $resolveCart->execute($cart->token, $customerId, false, $minorProfileId);
         $updated = $updateCartItem->execute($cart, $item, $request->integer('quantity'), $request->input('note'));
 
         return CartItemResource::make($updated)->response();
@@ -55,11 +52,32 @@ class CartController extends Controller
 
     public function remove(Request $request, Cart $cart, CartItem $item, ResolveCart $resolveCart, RemoveCartItem $removeCartItem): JsonResponse
     {
-        $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
-        $customerId = is_numeric($customerIdentifier) ? (int) $customerIdentifier : null;
-        $cart = $resolveCart->execute($cart->token, $customerId, false);
+        ['customerId' => $customerId, 'minorProfileId' => $minorProfileId] = $this->storeIdentity($request);
+        $cart = $resolveCart->execute($cart->token, $customerId, false, $minorProfileId);
         $removeCartItem->execute($cart, $item);
 
         return response()->json(status: 204);
+    }
+
+    /** @return array{customerId: int|null, minorProfileId: int|null} */
+    private function storeIdentity(Request $request): array
+    {
+        $minorProfile = $request->user('minor-profile');
+
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember');
+
+            return [
+                'customerId' => (int) $minorProfile->familyMember->customer_id,
+                'minorProfileId' => (int) $minorProfile->id,
+            ];
+        }
+
+        $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
+
+        return [
+            'customerId' => is_numeric($customerIdentifier) ? (int) $customerIdentifier : null,
+            'minorProfileId' => null,
+        ];
     }
 }

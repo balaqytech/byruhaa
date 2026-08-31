@@ -2,6 +2,7 @@
 
 namespace App\Modules\Store\Actions;
 
+use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Store\Enums\OrderPickupType;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Order;
@@ -17,6 +18,7 @@ class CreateOrder
         private ReserveInventory $reserveInventory,
         private QuoteCart $quoteCart,
         private StoreSettings $settings,
+        private MinorProfilePurchasing $minorProfiles,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -30,16 +32,32 @@ class CreateOrder
         return DB::transaction(function () use ($cart, $data): Order {
             $cart = Cart::query()->whereKey($cart->getKey())->lockForUpdate()->firstOrFail();
             $cartCustomerId = $cart->getRawOriginal('customer_id');
+            $cartMinorProfileId = $cart->getRawOriginal('minor_profile_id');
             $orderCustomerId = $data['customer_id'] ?? null;
+            $minorProfileId = filled($data['minor_profile_id'] ?? null) ? (int) $data['minor_profile_id'] : null;
 
             if ($cartCustomerId !== null && (int) $cartCustomerId !== (int) $orderCustomerId) {
                 throw ValidationException::withMessages(['cart' => 'This cart does not belong to the customer creating the order.']);
             }
 
+            if ($minorProfileId !== null) {
+                if ($orderCustomerId === null) {
+                    throw ValidationException::withMessages(['minor_profile_id' => 'A guardian account is required for a minor order.']);
+                }
+
+                $this->minorProfiles->forGuardian($minorProfileId, (int) $orderCustomerId);
+
+                if ((int) ($cartMinorProfileId ?? 0) !== $minorProfileId) {
+                    throw ValidationException::withMessages(['cart' => 'This cart does not belong to the selected minor profile.']);
+                }
+            } elseif ($cartMinorProfileId !== null) {
+                throw ValidationException::withMessages(['minor_profile_id' => 'A minor profile is required for this cart.']);
+            }
+
             $existing = Order::query()->where('idempotency_key', $data['idempotency_key'])->lockForUpdate()->first();
 
             if ($existing instanceof Order) {
-                if (($data['customer_id'] ?? null) !== $existing->customer_id || $existing->customer_phone !== $data['customer_phone']) {
+                if (($data['customer_id'] ?? null) !== $existing->customer_id || $existing->customer_phone !== $data['customer_phone'] || (int) ($existing->minor_profile_id ?? 0) !== (int) ($minorProfileId ?? 0)) {
                     throw ValidationException::withMessages(['idempotency_key' => 'This idempotency key belongs to another order.']);
                 }
 
@@ -56,6 +74,7 @@ class CreateOrder
             $order = Order::query()->create([
                 'idempotency_key' => $data['idempotency_key'],
                 'customer_id' => $data['customer_id'] ?? null,
+                'minor_profile_id' => $minorProfileId,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,

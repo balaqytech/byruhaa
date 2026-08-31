@@ -16,6 +16,7 @@ Route::middleware('signed')->group(function () {
 });
 
 require __DIR__.'/customer.php';
+require __DIR__.'/minor-profile.php';
 
 Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(function (): void {
     Route::get('checkout', [PublicSiteController::class, 'checkout'])->name('checkout');
@@ -25,6 +26,7 @@ Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(funct
     Route::scopeBindings()->delete('cart/{cart:token}/items/{item}', [CartController::class, 'remove'])->name('cart.items.destroy');
     Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
     Route::post('orders/{order:payment_token}/payment', [PaymentController::class, 'store'])->middleware('throttle:10,1')->name('orders.payment.store');
+    Route::get('orders/{order:payment_token}/payment', [PaymentController::class, 'store'])->middleware(['throttle:10,1', 'signed'])->name('orders.payment.link');
     Route::middleware('signed')->group(function (): void {
         Route::get('orders/{order:payment_token}/payment/success', [PaymentController::class, 'success'])->name('orders.payment.success');
         Route::get('orders/{order:payment_token}/payment/cancel', [PaymentController::class, 'cancel'])->name('orders.payment.cancel');

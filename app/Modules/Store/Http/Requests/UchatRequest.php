@@ -32,6 +32,11 @@ abstract class UchatRequest extends FormRequest
         return app(CustomerIdentityResolver::class)->findCustomerIdByPhone($this->phone());
     }
 
+    public function minorProfileId(): ?int
+    {
+        return filled($this->input('minor_profile_id')) ? (int) $this->input('minor_profile_id') : null;
+    }
+
     /** @return array<int, ValidationRule|array<mixed>|string> */
     protected function phoneRules(): array
     {

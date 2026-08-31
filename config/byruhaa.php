@@ -4,6 +4,13 @@ return [
     'approval_mechanism' => env('BYRUHAA_APPROVAL_MECHANISM', 'manual'),
     'seat_hold_minutes' => (int) env('BYRUHAA_SEAT_HOLD_MINUTES', 15),
 
+    'minor_accounts' => [
+        'enabled' => filter_var(env('MINOR_ACCOUNTS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+        'otp_expiry_minutes' => (int) env('MINOR_ACCOUNT_OTP_EXPIRY_MINUTES', 10),
+        'policy_version' => env('MINOR_ACCOUNT_POLICY_VERSION', 'phase-2a'),
+        'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase'),
+    ],
+
     'uchat' => [
         'api_token' => env('UCHAT_STORE_API_TOKEN'),
         'webhook_url' => env('UCHAT_STORE_WEBHOOK_URL'),
