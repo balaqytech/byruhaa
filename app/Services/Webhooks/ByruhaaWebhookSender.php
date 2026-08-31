@@ -14,6 +14,7 @@ use App\Modules\Events\Models\EventInterest;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\MinorProfile;
 use App\Modules\Store\Models\Order;
 use App\Support\Money\MoneyFactory;
 use Carbon\CarbonInterface;
@@ -28,6 +29,44 @@ use Throwable;
 
 class ByruhaaWebhookSender
 {
+    public function sendUchatMinorVerificationCode(MinorProfile $profile, string $code): void
+    {
+        $configuration = $this->uchatWebhookConfiguration();
+
+        if ($configuration === null) {
+            return;
+        }
+
+        [$url, $secret, $bearer] = $configuration;
+
+        try {
+            $profile->loadMissing('familyMember.customer');
+            $payload = [
+                'event' => 'minor.guardian.verification_code',
+                'occurred_at' => now()->toJSON(),
+                'customer_phone' => $profile->familyMember->customer->phone_number,
+                'data' => [
+                    'minor_profile' => [
+                        'id' => $profile->id,
+                        'member_code' => $profile->member_code,
+                        'name' => $profile->familyMember->name,
+                    ],
+                    'verification' => [
+                        'code' => $code,
+                        'expires_at' => now()->addMinutes((int) config('byruhaa.minor_accounts.otp_expiry_minutes', 10))->toJSON(),
+                    ],
+                ],
+            ];
+
+            $auditPayload = $payload;
+            $auditPayload['data']['verification']['code'] = '[redacted]';
+
+            $this->dispatchUchatWebhook($url, 'minor.guardian.verification_code', $profile, $payload, $secret, $bearer, $auditPayload);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
     public function sendUchatOrderState(Order $order): void
     {
         $configuration = $this->uchatWebhookConfiguration();
@@ -40,6 +79,9 @@ class ByruhaaWebhookSender
 
         try {
             $freshOrder = Order::query()->with(['items', 'statusHistory'])->whereKey($order->getKey())->firstOrFail();
+            $minorProfile = $freshOrder->minor_profile_id === null
+                ? null
+                : MinorProfile::query()->with('familyMember')->find($freshOrder->minor_profile_id);
             $event = 'store.order.'.$freshOrder->status->getValue();
             $payload = [
                 'event' => $event,
@@ -50,6 +92,8 @@ class ByruhaaWebhookSender
                         'reference' => $freshOrder->reference,
                         'status' => $freshOrder->status->getValue(),
                         'status_label' => $freshOrder->status->label(),
+                        'minor_profile_id' => $freshOrder->minor_profile_id,
+                        'minor_name' => $minorProfile?->familyMember?->name,
                         'pickup_type' => $freshOrder->pickup_type,
                         'pickup_at' => $freshOrder->pickup_at?->toJSON(),
                         'currency' => $freshOrder->currency,
@@ -600,8 +644,9 @@ class ByruhaaWebhookSender
      * Dispatch a signed UChat delivery while retaining the shared webhook audit and queue behavior.
      *
      * @param  array<string, mixed>  $payload
+     * @param  array<string, mixed>|null  $auditPayload
      */
-    private function dispatchUchatWebhook(string $url, string $event, Order $order, array $payload, string $secret, string $bearer): void
+    private function dispatchUchatWebhook(string $url, string $event, Model $webhookable, array $payload, string $secret, string $bearer, ?array $auditPayload = null): void
     {
         $defaultWebhookJob = config('webhook-server.webhook_job');
         Config::set('webhook-server.webhook_job', UchatWebhookJob::class);
@@ -620,14 +665,15 @@ class ByruhaaWebhookSender
             ->timeoutInSeconds((int) config('byruhaa.webhooks.timeout', 10))
             ->useSecret($secret);
 
-        $delivery = $this->createDelivery($webhookCall, $event, $url, $order, $payload);
+        $deliveryPayload = $auditPayload ?? $payload;
+        $delivery = $this->createDelivery($webhookCall, $event, $url, $webhookable, $deliveryPayload);
 
         if (! $delivery instanceof WebhookDelivery) {
             return;
         }
 
         $payload['delivery_id'] = $delivery->id;
-        $delivery->forceFill(['payload' => $payload])->save();
+        $delivery->forceFill(['payload' => [...$deliveryPayload, 'delivery_id' => $delivery->id]])->save();
         $webhookCall->payload($payload);
 
         try {

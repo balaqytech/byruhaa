@@ -4,6 +4,7 @@ namespace App\Modules\Store\Http\Controllers;
 
 use App\Exceptions\PaymentGatewayException;
 use App\Modules\Finance\Data\Payments\PaymentCheckoutData;
+use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Store\Actions\AddCartItem;
 use App\Modules\Store\Actions\BrowseCatalog;
 use App\Modules\Store\Actions\BrowseProduct;
@@ -39,6 +40,7 @@ class UchatStoreController
     public function __construct(
         private UchatOwnerKey $ownerKey,
         private QuoteCart $quoteCart,
+        private MinorProfilePurchasing $minorProfiles,
     ) {}
 
     public function catalog(BrowseCatalog $browseCatalog): AnonymousResourceCollection
@@ -58,7 +60,7 @@ class UchatStoreController
     public function cart(UchatIdentityRequest $request, ResolveUchatCart $resolveCart, QuoteCart $quoteCart): JsonResponse
     {
         try {
-            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId());
+            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), true, $this->selectedMinorProfileId($request));
             $quote = $this->quote($cart, $quoteCart);
         } catch (ValidationException $exception) {
             return $this->validationError($exception);
@@ -69,7 +71,13 @@ class UchatStoreController
 
     public function addCartItem(UchatCartItemRequest $request, ResolveUchatCart $resolveCart, AddCartItem $addCartItem): JsonResponse
     {
-        $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId());
+        try {
+            $minorProfileId = $this->selectedMinorProfileId($request);
+            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), true, $minorProfileId);
+        } catch (ValidationException $exception) {
+            return $this->validationError($exception);
+        }
+
         $option = ProductOption::query()->where('sku', $request->string('sku')->toString())->with('product.category')->first();
 
         if (! $option instanceof ProductOption) {
@@ -87,7 +95,13 @@ class UchatStoreController
 
     public function updateCartItem(string $sku, UchatCartUpdateRequest $request, ResolveUchatCart $resolveCart, UpdateCartItem $updateCartItem): JsonResponse
     {
-        $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId());
+        try {
+            $minorProfileId = $this->selectedMinorProfileId($request);
+            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), true, $minorProfileId);
+        } catch (ValidationException $exception) {
+            return $this->validationError($exception);
+        }
+
         $item = $cart->items()->whereHas('productOption', fn ($query) => $query->where('sku', $sku))->first();
 
         if (! $item) {
@@ -105,7 +119,13 @@ class UchatStoreController
 
     public function removeCartItem(string $sku, UchatIdentityRequest $request, ResolveUchatCart $resolveCart, RemoveCartItem $removeCartItem): JsonResponse
     {
-        $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId());
+        try {
+            $minorProfileId = $this->selectedMinorProfileId($request);
+            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), true, $minorProfileId);
+        } catch (ValidationException $exception) {
+            return $this->validationError($exception);
+        }
+
         $item = $cart->items()->whereHas('productOption', fn ($query) => $query->where('sku', $sku))->first();
 
         if (! $item) {
@@ -120,11 +140,13 @@ class UchatStoreController
     public function createOrder(UchatOrderRequest $request, ResolveUchatCart $resolveCart, CreateOrder $createOrder, InitiateStorePayment $initiatePayment): JsonResponse
     {
         try {
-            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), false);
+            $minorProfileId = $this->selectedMinorProfileId($request);
+            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), false, $minorProfileId);
             $order = $createOrder->execute($cart, [
                 ...$request->validated(),
                 'customer_id' => $request->customerId(),
                 'customer_phone' => $request->phone(),
+                'minor_profile_id' => $minorProfileId,
             ]);
             $checkout = $initiatePayment->execute($order, $request->customerId());
         } catch (ValidationException $exception) {
@@ -139,7 +161,7 @@ class UchatStoreController
     public function initiatePayment(string $reference, UchatIdentityRequest $request, ResolveUchatOrder $resolveOrder, InitiateStorePayment $initiatePayment): JsonResponse
     {
         try {
-            $order = $resolveOrder->execute($reference, $request->phone());
+            $order = $resolveOrder->execute($reference, $request->phone(), $this->selectedMinorProfileId($request));
             $checkout = $initiatePayment->execute($order, $request->customerId());
         } catch (ValidationException $exception) {
             return $this->validationError($exception);
@@ -152,9 +174,16 @@ class UchatStoreController
 
     public function orders(UchatIdentityRequest $request): JsonResponse
     {
+        try {
+            $minorProfileId = $this->selectedMinorProfileId($request);
+        } catch (ValidationException $exception) {
+            return $this->validationError($exception);
+        }
+
         $orders = Order::query()
             ->with(['items', 'statusHistory'])
             ->where('customer_phone', $request->phone())
+            ->when($minorProfileId !== null, fn ($query) => $query->where('minor_profile_id', $minorProfileId))
             ->latest('id')
             ->paginate(20);
 
@@ -164,7 +193,7 @@ class UchatStoreController
     public function order(string $reference, UchatIdentityRequest $request, ResolveUchatOrder $resolveOrder): JsonResponse
     {
         try {
-            $order = $resolveOrder->execute($reference, $request->phone());
+            $order = $resolveOrder->execute($reference, $request->phone(), $this->selectedMinorProfileId($request));
         } catch (ValidationException $exception) {
             return $this->validationError($exception, 404, 'order_not_found');
         }
@@ -175,7 +204,7 @@ class UchatStoreController
     private function cartResponse(UchatRequest $request, ResolveUchatCart $resolveCart, QuoteCart $quoteCart): JsonResponse
     {
         try {
-            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId());
+            $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), true, $this->selectedMinorProfileId($request));
             $quote = $this->quote($cart, $quoteCart);
         } catch (ValidationException $exception) {
             return $this->validationError($exception);
@@ -204,6 +233,23 @@ class UchatStoreController
             'currency' => $quote['currency'],
             'items' => $quote['items'],
         ];
+    }
+
+    private function selectedMinorProfileId(UchatRequest $request): ?int
+    {
+        $profileId = $request->minorProfileId();
+
+        if ($profileId !== null) {
+            $customerId = $request->customerId();
+
+            if ($customerId === null) {
+                throw ValidationException::withMessages(['minor_profile_id' => 'A guardian account is required for a minor profile.']);
+            }
+
+            $this->minorProfiles->forGuardian($profileId, $customerId);
+        }
+
+        return $profileId;
     }
 
     private function orderResponse(Order $order, PaymentCheckoutData $checkout, int $status = 200): JsonResponse

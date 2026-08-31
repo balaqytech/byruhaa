@@ -8,6 +8,7 @@ use App\Modules\Store\Actions\QuoteCart;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Settings\StoreSettings;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -48,6 +49,8 @@ class Checkout extends Component
 
     public ?string $cartToken = null;
 
+    public ?int $minorProfileId = null;
+
     public function boot(QuoteCart $quoteCart, ResolveCart $resolveCart, StoreSettings $settings): void
     {
         $this->quoteCart = $quoteCart;
@@ -59,11 +62,19 @@ class Checkout extends Component
     {
         session()->forget(self::LEGACY_CHECKOUT_IDEMPOTENCY_KEY_SESSION);
         $this->cartToken = session('store_cart_token');
-        $customer = auth('customer')->user();
+        $minorProfile = auth('minor-profile')->user();
 
-        if ($customer !== null) {
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember.customer');
+            $this->minorProfileId = (int) $minorProfile->id;
+            $guardian = $minorProfile->familyMember->customer;
+            $this->customerName = (string) $guardian->name;
+            $this->customerPhone = (string) $guardian->phone_number;
+            $this->customerEmail = (string) ($guardian->email ?? '');
+            $this->recipientName = (string) $minorProfile->familyMember->name;
+        } elseif (($customer = auth('customer')->user()) !== null) {
             $this->customerName = (string) ($customer->name ?? '');
-            $this->customerPhone = (string) ($customer->phone ?? '');
+            $this->customerPhone = (string) ($customer->phone_number ?? '');
             $this->customerEmail = (string) ($customer->email ?? '');
         }
     }
@@ -73,7 +84,7 @@ class Checkout extends Component
         $this->redirect(route('coffee').'#menu', navigate: true);
     }
 
-    public function placeOrder(CreateOrder $createOrder, InitiateStorePayment $initiatePayment): void
+    public function placeOrder(CreateOrder $createOrder, InitiateStorePayment $initiatePayment, ByruhaaWebhookSender $webhookSender): void
     {
         if ($this->submitting) {
             return;
@@ -105,9 +116,20 @@ class Checkout extends Component
                 'pickup_at' => ['nullable', 'date'],
             ])->validate();
             $validated['customer_id'] = $this->customerId();
+            $validated['minor_profile_id'] = $this->minorProfileId;
 
             $order = $createOrder->execute($this->resolveExistingCart(), $validated);
-            $payment = $initiatePayment->execute($order, $this->customerId());
+
+            if ($this->minorProfileId !== null && ! (bool) auth('minor-profile')->user()?->direct_payment_enabled) {
+                $webhookSender->sendUchatOrderState($order);
+                $this->resetCheckoutAttempt();
+                $this->submitting = false;
+                $this->redirect(route('minor.orders.show', $order->payment_token), navigate: true);
+
+                return;
+            }
+
+            $payment = $initiatePayment->execute($order, $this->customerId(), $this->minorProfileId);
             $this->resetCheckoutAttempt();
 
             $this->submitting = false;
@@ -150,7 +172,7 @@ class Checkout extends Component
         }
 
         try {
-            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId)
                 ->load('items.productOption.product.category');
         } catch (ValidationException) {
             return null;
@@ -159,13 +181,19 @@ class Checkout extends Component
 
     private function resolveExistingCart(): Cart
     {
-        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId)
             ->load('items.productOption.product.category');
     }
 
     private function customerId(): ?int
     {
         $identifier = auth('customer')->user()?->getAuthIdentifier();
+
+        if ($identifier === null) {
+            $minorProfile = auth('minor-profile')->user();
+            $minorProfile?->loadMissing('familyMember');
+            $identifier = $minorProfile?->familyMember?->customer_id;
+        }
 
         return is_numeric($identifier) ? (int) $identifier : null;
     }

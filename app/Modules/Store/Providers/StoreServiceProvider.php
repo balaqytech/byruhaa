@@ -5,6 +5,7 @@ namespace App\Modules\Store\Providers;
 use App\Modules\Finance\Events\PaymentSucceeded;
 use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Listeners\HandlePaymentSucceeded;
+use App\Modules\Store\Listeners\NotifyMinorProfileOrderStatus;
 use App\Modules\Store\Listeners\SendUchatOrderStateWebhook;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Order;
@@ -28,6 +29,7 @@ class StoreServiceProvider extends ServiceProvider
     {
         Event::listen(PaymentSucceeded::class, HandlePaymentSucceeded::class);
         Event::listen(OrderStateChanged::class, SendUchatOrderStateWebhook::class);
+        Event::listen(OrderStateChanged::class, NotifyMinorProfileOrderStatus::class);
         Relation::morphMap(['store_order' => Order::class]);
         RateLimiter::for('uchat-store', function (Request $request) {
             $integrationFingerprint = hash('sha256', (string) config('byruhaa.uchat.api_token', 'unconfigured'));

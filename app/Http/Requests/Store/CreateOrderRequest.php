@@ -24,6 +24,7 @@ class CreateOrderRequest extends FormRequest
     {
         return [
             'idempotency_key' => ['required', 'string', 'max:100'],
+            'minor_profile_id' => ['nullable', 'integer'],
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_phone' => ['required', 'string', 'max:32'],
             'customer_email' => ['nullable', 'email', 'max:255'],

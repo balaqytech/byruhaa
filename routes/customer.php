@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Identity\Http\Controllers\MinorProfileController;
 use App\Modules\Store\Http\Controllers\CustomerOrderReceiptController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,13 @@ Route::middleware(['auth:customer'])
         Route::livewire('events/{event:slug}', 'pages::customer.events.show')->name('events.show');
         Route::livewire('interests', 'pages::customer.interests.index')->name('interests.index');
         Route::livewire('family-members', 'pages::customer.family-members.index')->name('family-members.index');
+        Route::get('minor-profiles', [MinorProfileController::class, 'index'])->name('minor-profiles.index');
+        Route::post('minor-profiles', [MinorProfileController::class, 'store'])->name('minor-profiles.store');
+        Route::post('minor-profiles/{minorProfile}/verify', [MinorProfileController::class, 'verify'])->name('minor-profiles.verify');
+        Route::post('minor-profiles/{minorProfile}/suspend', [MinorProfileController::class, 'suspend'])->name('minor-profiles.suspend');
+        Route::post('minor-profiles/{minorProfile}/resume', [MinorProfileController::class, 'resume'])->name('minor-profiles.resume');
+        Route::post('minor-profiles/{minorProfile}/direct-payment', [MinorProfileController::class, 'toggleDirectPayment'])->name('minor-profiles.direct-payment');
+        Route::post('minor-profiles/{minorProfile}/delete-request', [MinorProfileController::class, 'requestDeletion'])->name('minor-profiles.delete-request');
         Route::livewire('bookings', 'pages::customer.bookings.index')->name('bookings.index');
         Route::livewire('bookings/{booking}/contracts/{contract}', 'pages::customer.bookings.contract')->name('bookings.contracts.show');
         Route::livewire('bookings/{booking}', 'pages::customer.bookings.show')->name('bookings.show');

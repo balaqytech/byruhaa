@@ -5,15 +5,20 @@ namespace App\Modules\Identity\Providers;
 use App\Modules\Identity\Actions\Fortify\CreateNewUser;
 use App\Modules\Identity\Actions\Fortify\ResetUserPassword;
 use App\Modules\Identity\Contracts\CustomerIdentityResolver;
+use App\Modules\Identity\Contracts\MinorProfileOrderNotifier;
+use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Identity\Listeners\RecordPermissionChangeAudit;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Policies\UserPolicy;
+use App\Modules\Identity\Services\MinorProfileOrderNotifierService;
+use App\Modules\Identity\Services\MinorProfilePurchaseService;
 use App\Modules\Identity\Services\PhoneCustomerIdentityResolver;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
@@ -58,6 +63,9 @@ class IdentityServiceProvider extends ServiceProvider
                 : Customer::where('phone_number', $phoneNumberNormalizer->normalize($login))->first();
 
             if ($customer && Hash::check((string) $request->input('password'), $customer->password)) {
+                Auth::guard('minor-profile')->logout();
+                $request->session()->forget(['store_cart_token', 'store_checkout_idempotency_keys', 'store_checkout_idempotency_key']);
+
                 return $customer;
             }
 
@@ -78,6 +86,8 @@ class IdentityServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(CustomerIdentityResolver::class, PhoneCustomerIdentityResolver::class);
+        $this->app->bind(MinorProfilePurchasing::class, MinorProfilePurchaseService::class);
+        $this->app->bind(MinorProfileOrderNotifier::class, MinorProfileOrderNotifierService::class);
     }
 
     protected function registerPermissionAuditListeners(): void

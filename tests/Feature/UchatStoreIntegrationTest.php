@@ -3,6 +3,8 @@
 use App\Jobs\UchatWebhookJob;
 use App\Models\WebhookDelivery;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
+use App\Modules\Identity\Models\MinorProfile;
 use App\Modules\Store\Actions\ChangeOrderState;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Order;
@@ -126,6 +128,30 @@ test('UChat cart is phone-owned and quotes from server prices', function (): voi
         ->getJson('/api/v1/integrations/uchat/store/cart')
         ->assertSuccessful()
         ->assertJsonPath('data.items', []);
+});
+
+test('UChat keeps guardian and minor carts separate for the same phone', function (): void {
+    enableUchatStore();
+    $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
+    $option = uchatOption();
+    $headers = uchatHeaders();
+
+    $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/cart/items', [
+        'sku' => $option->sku,
+        'quantity' => 1,
+        'minor_profile_id' => $profile->id,
+    ])->assertSuccessful();
+
+    $this->withHeaders($headers)
+        ->getJson('/api/v1/integrations/uchat/store/cart')
+        ->assertSuccessful()
+        ->assertJsonPath('data.items', []);
+
+    $this->withHeaders($headers)
+        ->getJson('/api/v1/integrations/uchat/store/cart?minor_profile_id='.$profile->id)
+        ->assertSuccessful()
+        ->assertJsonPath('data.items.0.sku', $option->sku);
 });
 
 test('UChat creates an idempotent order and initiates payment without trusting client prices', function (): void {

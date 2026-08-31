@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -92,6 +93,14 @@ class Customer extends Authenticatable
     public function familyMembers(): HasMany
     {
         return $this->hasMany(FamilyMember::class);
+    }
+
+    /**
+     * @return HasManyThrough<MinorProfile, FamilyMember, $this>
+     */
+    public function minorProfiles(): HasManyThrough
+    {
+        return $this->hasManyThrough(MinorProfile::class, FamilyMember::class);
     }
 
     /**

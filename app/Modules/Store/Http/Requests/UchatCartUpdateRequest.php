@@ -9,6 +9,7 @@ class UchatCartUpdateRequest extends UchatRequest
     {
         return [
             'uchat_phone' => $this->phoneRules(),
+            'minor_profile_id' => ['nullable', 'integer'],
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
             'note' => ['nullable', 'string', 'max:500'],
         ];

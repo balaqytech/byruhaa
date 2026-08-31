@@ -41,12 +41,12 @@
             ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
         ];
 
-        $accountRoute = auth('customer')->check() ? 'customer.dashboard' : 'login';
+        $accountRoute = auth('minor-profile')->check() ? 'minor.dashboard' : (auth('customer')->check() ? 'customer.dashboard' : 'login');
         $bottomNavigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
             ['label' => 'القهوة', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
-            ['label' => 'حسابي', 'route' => $accountRoute, 'active' => 'customer.*', 'icon' => 'user-circle'],
+            ['label' => 'حسابي', 'route' => $accountRoute, 'active' => auth('minor-profile')->check() ? 'minor.*' : 'customer.*', 'icon' => 'user-circle'],
         ];
 
         $themeOptions = [
@@ -106,8 +106,8 @@
                 @if (Route::has($accountRoute))
                     <a href="{{ route($accountRoute) }}"
                         class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-[#009060]/18 px-4 py-2 text-sm font-semibold text-[#009060] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-[#e0a800]/24 dark:text-[#e0a800] dark:hover:bg-[#e0a800]/10">
-                        <x-hugeicon :name="auth('customer')->check() ? 'dashboard-square-01' : 'login-03'" class="text-lg" />
-                        <span>{{ auth('customer')->check() ? __('ui.labels.dashboard') : __('ui.actions.log_in') }}</span>
+                        <x-hugeicon :name="auth('customer')->check() || auth('minor-profile')->check() ? 'dashboard-square-01' : 'login-03'" class="text-lg" />
+                        <span>{{ auth('customer')->check() || auth('minor-profile')->check() ? __('ui.labels.dashboard') : __('ui.actions.log_in') }}</span>
                     </a>
                 @endif
             </div>
@@ -157,7 +157,7 @@
                 @php
                     $isAccount = $link['label'] === 'حسابي';
                     $isActive = $isAccount
-                        ? request()->routeIs('customer.*') || request()->routeIs('login', 'register', 'password.*')
+                        ? request()->routeIs('customer.*') || request()->routeIs('minor.*') || request()->routeIs('login', 'register', 'password.*')
                         : request()->routeIs($link['active']);
                 @endphp
 

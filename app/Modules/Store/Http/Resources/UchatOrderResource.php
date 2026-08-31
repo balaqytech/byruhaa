@@ -23,6 +23,7 @@ class UchatOrderResource extends JsonResource
             'vat_baisa' => $this->vat_baisa,
             'total_baisa' => $this->total_baisa,
             'customer_name' => $this->customer_name,
+            'minor_profile_id' => $this->minor_profile_id,
             'recipient_name' => $this->recipient_name,
             'items' => $this->when($this->relationLoaded('items'), fn (): array => $this->items->map(fn ($item): array => [
                 'sku' => $item->sku,

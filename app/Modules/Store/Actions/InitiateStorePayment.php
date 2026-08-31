@@ -5,6 +5,7 @@ namespace App\Modules\Store\Actions;
 use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Data\Payments\PaymentCheckoutData;
 use App\Modules\Finance\Data\Payments\PaymentCheckoutRequest;
+use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Store\Enums\InventoryReservationStatus;
 use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Models\Order;
@@ -16,19 +17,39 @@ use Illuminate\Validation\ValidationException;
 
 class InitiateStorePayment
 {
-    public function __construct(private PaymentService $payments, private StoreSettings $settings) {}
+    public function __construct(private PaymentService $payments, private StoreSettings $settings, private MinorProfilePurchasing $minorProfiles) {}
 
-    public function execute(Order $order, ?int $customerId = null): PaymentCheckoutData
+    public function execute(Order $order, ?int $customerId = null, ?int $minorProfileId = null, bool $allowSignedLink = false): PaymentCheckoutData
     {
-        $request = DB::transaction(function () use ($order, $customerId): PaymentCheckoutRequest {
+        $request = DB::transaction(function () use ($order, $customerId, $minorProfileId, $allowSignedLink): PaymentCheckoutRequest {
             $order = Order::query()
                 ->with(['items', 'inventoryReservation.reservation'])
                 ->whereKey($order->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($order->getRawOriginal('customer_id') !== null && (int) $order->getRawOriginal('customer_id') !== $customerId) {
+            if ($order->getRawOriginal('customer_id') !== null && $customerId !== null && (int) $order->getRawOriginal('customer_id') !== $customerId) {
                 throw ValidationException::withMessages(['order' => 'This order does not belong to the authenticated customer.']);
+            }
+
+            if ($order->getRawOriginal('customer_id') !== null && $customerId === null && ! $allowSignedLink) {
+                throw ValidationException::withMessages(['order' => 'Authentication or a signed payment link is required.']);
+            }
+
+            if ($minorProfileId !== null) {
+                if ($customerId === null) {
+                    throw ValidationException::withMessages(['payment' => 'A guardian account is required for direct payment.']);
+                }
+
+                $profile = $this->minorProfiles->forGuardian($minorProfileId, $customerId);
+
+                if ((int) ($order->getRawOriginal('minor_profile_id') ?? 0) !== $minorProfileId) {
+                    throw ValidationException::withMessages(['order' => 'This order does not belong to the authenticated minor profile.']);
+                }
+
+                if (! $profile->directPaymentEnabled) {
+                    throw ValidationException::withMessages(['payment' => 'This order must be paid by the guardian.']);
+                }
             }
 
             if ($order->status->getValue() !== OrderStatus::PendingPayment->value) {

@@ -79,7 +79,7 @@ class CoffeeStore extends Component
     public function addToCart(int $optionId, AddCartItem $addCartItem, ResolveCart $resolveCart): void
     {
         try {
-            $cart = $resolveCart->execute($this->cartToken, $this->customerId(), true);
+            $cart = $resolveCart->execute($this->cartToken, $this->customerId(), true, $this->minorProfileId());
             $option = ProductOption::query()->with('product.category')->findOrFail($optionId);
             $addCartItem->execute($cart, $option, 1);
             $this->rememberCart($cart);
@@ -224,7 +224,7 @@ class CoffeeStore extends Component
         }
 
         try {
-            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId())
                 ->load('items.productOption.product.category');
         } catch (ValidationException) {
             return null;
@@ -233,7 +233,7 @@ class CoffeeStore extends Component
 
     private function resolveExistingCart(): Cart
     {
-        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId())
             ->load('items.productOption.product.category');
     }
 
@@ -245,7 +245,24 @@ class CoffeeStore extends Component
 
     private function customerId(): ?int
     {
+        $minorProfile = auth('minor-profile')->user();
+
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember');
+
+            return is_numeric($minorProfile->familyMember?->customer_id)
+                ? (int) $minorProfile->familyMember->customer_id
+                : null;
+        }
+
         $identifier = auth('customer')->user()?->getAuthIdentifier();
+
+        return is_numeric($identifier) ? (int) $identifier : null;
+    }
+
+    private function minorProfileId(): ?int
+    {
+        $identifier = auth('minor-profile')->user()?->getAuthIdentifier();
 
         return is_numeric($identifier) ? (int) $identifier : null;
     }
