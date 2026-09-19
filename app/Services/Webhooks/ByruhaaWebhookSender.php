@@ -13,6 +13,8 @@ use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Events\Models\EventInterest;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
+use App\Modules\Finance\Models\WalletMovement;
+use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\MinorProfile;
 use App\Modules\Store\Models\Order;
@@ -29,7 +31,36 @@ use Throwable;
 
 class ByruhaaWebhookSender
 {
-    public function sendUchatMinorVerificationCode(MinorProfile $profile, string $code): void
+    public function sendUchatCustomerPhoneVerificationCode(Customer $customer, string $code, CarbonInterface $expiresAt, ?string $deliveryKey = null): void
+    {
+        $configuration = $this->uchatWebhookConfiguration();
+
+        if ($configuration === null) {
+            return;
+        }
+
+        [$url, $secret, $bearer] = $configuration;
+
+        try {
+            $payload = [
+                'event' => 'customer.phone.verification_code',
+                'occurred_at' => now()->toJSON(),
+                'customer_phone' => $customer->phone_number,
+                'data' => [
+                    'customer' => ['id' => $customer->id, 'name' => $customer->name],
+                    'verification' => ['code' => $code, 'expires_at' => $expiresAt->toJSON()],
+                ],
+            ];
+            $auditPayload = $payload;
+            $auditPayload['data']['verification']['code'] = '[redacted]';
+
+            $this->dispatchUchatWebhook($url, 'customer.phone.verification_code', $customer, $payload, $secret, $bearer, $auditPayload, $deliveryKey);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    public function sendUchatMinorVerificationCode(MinorProfile $profile, string $code, ?string $deliveryKey = null): void
     {
         $configuration = $this->uchatWebhookConfiguration();
 
@@ -61,7 +92,7 @@ class ByruhaaWebhookSender
             $auditPayload = $payload;
             $auditPayload['data']['verification']['code'] = '[redacted]';
 
-            $this->dispatchUchatWebhook($url, 'minor.guardian.verification_code', $profile, $payload, $secret, $bearer, $auditPayload);
+            $this->dispatchUchatWebhook($url, 'minor.guardian.verification_code', $profile, $payload, $secret, $bearer, $auditPayload, $deliveryKey);
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -93,6 +124,7 @@ class ByruhaaWebhookSender
                         'status' => $freshOrder->status->getValue(),
                         'status_label' => $freshOrder->status->label(),
                         'minor_profile_id' => $freshOrder->minor_profile_id,
+                        'payment_method' => $freshOrder->payment_method,
                         'minor_name' => $minorProfile?->familyMember?->name,
                         'pickup_type' => $freshOrder->pickup_type,
                         'pickup_at' => $freshOrder->pickup_at?->toJSON(),
@@ -112,14 +144,65 @@ class ByruhaaWebhookSender
                     ],
                     'links' => [
                         'status_url' => URL::temporarySignedRoute('store.orders.status', now()->addDays(7), ['order' => $freshOrder->payment_token]),
-                        'payment_url' => $freshOrder->status->getValue() === 'pending_payment'
+                        'payment_url' => $freshOrder->status->getValue() === 'pending_payment' && $freshOrder->payment_method === 'thawani'
                             ? URL::temporarySignedRoute('store.orders.payment.store', now()->addHours(12), ['order' => $freshOrder->payment_token])
+                            : null,
+                        'wallet_confirmation_url' => $freshOrder->status->getValue() === 'pending_payment' && $freshOrder->payment_method === 'wallet'
+                            ? URL::temporarySignedRoute('store.orders.wallet.confirm.link', now()->addHours(12), ['order' => $freshOrder->payment_token])
                             : null,
                     ],
                 ],
             ];
 
             $this->dispatchUchatWebhook($url, $event, $freshOrder, $payload, $secret, $bearer);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+    }
+
+    public function sendUchatWalletMovement(WalletMovement $movement): void
+    {
+        $configuration = $this->uchatWebhookConfiguration();
+
+        if ($configuration === null) {
+            return;
+        }
+
+        [$url, $secret, $bearer] = $configuration;
+
+        try {
+            $movement = WalletMovement::query()->with('wallet')->findOrFail($movement->id);
+            $profile = MinorProfile::query()->with('familyMember.customer')->find($movement->wallet->minor_profile_id);
+
+            if (! $profile instanceof MinorProfile) {
+                return;
+            }
+
+            $payload = [
+                'event' => 'wallet.'.$movement->type,
+                'occurred_at' => $movement->created_at?->toJSON() ?? now()->toJSON(),
+                'customer_phone' => $profile->familyMember->customer->phone_number,
+                'data' => [
+                    'wallet' => [
+                        'id' => $movement->wallet_id,
+                        'minor_profile_id' => $profile->id,
+                        'balance_baisa' => $movement->balance_after_baisa,
+                        'currency' => $movement->wallet->currency,
+                        'status' => $movement->wallet->status,
+                    ],
+                    'movement' => [
+                        'id' => $movement->id,
+                        'type' => $movement->type,
+                        'order_reference' => $movement->order_reference,
+                        'credit_baisa' => $movement->credit_baisa,
+                        'debit_baisa' => $movement->debit_baisa,
+                        'balance_after_baisa' => $movement->balance_after_baisa,
+                        'created_at' => $movement->created_at?->toJSON(),
+                    ],
+                ],
+            ];
+
+            $this->dispatchUchatWebhook($url, $payload['event'], $movement->wallet, $payload, $secret, $bearer, null, $movement->operation_key);
         } catch (Throwable $exception) {
             report($exception);
         }
@@ -350,7 +433,29 @@ class ByruhaaWebhookSender
 
         try {
             $refund = PaymentRefund::query()->with('payment.bookingInstallment.paymentSchedule.booking.customer')->findOrFail($refund->id);
-            $booking = $refund->payment->bookingInstallment->paymentSchedule->booking;
+            $booking = $refund->payment->bookingInstallment?->paymentSchedule?->booking;
+
+            if ($booking === null) {
+                $walletTopUp = WalletTopUp::query()->where('reference', $refund->payment->subject_reference)->first();
+                $profile = $walletTopUp?->wallet_id === null
+                    ? null
+                    : MinorProfile::query()->with('familyMember.customer')->find($walletTopUp->wallet->minor_profile_id);
+
+                $this->dispatchWebhook($url, 'payment.refunded', $refund, [
+                    'event' => 'payment.refunded',
+                    'customer_phone' => $profile?->familyMember?->customer?->phone_number,
+                    'occurred_at' => $refund->processed_at?->toJSON() ?? now()->toJSON(),
+                    'data' => [
+                        'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'method' => $refund->resolution_method, 'manual_reference' => $refund->manual_reference, 'amount' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason, 'completed_at' => $refund->processed_at?->toJSON()],
+                        'payment' => ['id' => $refund->payment_id, 'reference' => $refund->payment->reference],
+                        'wallet_top_up' => ['reference' => $refund->payment->subject_reference],
+                        'customer' => $profile === null ? null : ['id' => $profile->familyMember->customer->id, 'name' => $profile->familyMember->customer->name, 'phone' => $profile->familyMember->customer->phone_number, 'email' => $profile->familyMember->customer->email],
+                    ],
+                ]);
+
+                return;
+            }
+
             $this->dispatchWebhook($url, 'payment.refunded', $refund, [
                 'event' => 'payment.refunded',
                 'customer_phone' => $booking->customer->phone_number,
@@ -646,7 +751,7 @@ class ByruhaaWebhookSender
      * @param  array<string, mixed>  $payload
      * @param  array<string, mixed>|null  $auditPayload
      */
-    private function dispatchUchatWebhook(string $url, string $event, Model $webhookable, array $payload, string $secret, string $bearer, ?array $auditPayload = null): void
+    private function dispatchUchatWebhook(string $url, string $event, Model $webhookable, array $payload, string $secret, string $bearer, ?array $auditPayload = null, ?string $deliveryKey = null): void
     {
         $defaultWebhookJob = config('webhook-server.webhook_job');
         Config::set('webhook-server.webhook_job', UchatWebhookJob::class);
@@ -666,7 +771,7 @@ class ByruhaaWebhookSender
             ->useSecret($secret);
 
         $deliveryPayload = $auditPayload ?? $payload;
-        $delivery = $this->createDelivery($webhookCall, $event, $url, $webhookable, $deliveryPayload);
+        $delivery = $this->createDelivery($webhookCall, $event, $url, $webhookable, $deliveryPayload, $deliveryKey);
 
         if (! $delivery instanceof WebhookDelivery) {
             return;
@@ -700,12 +805,13 @@ class ByruhaaWebhookSender
     /**
      * @param  array<string, mixed>  $payload
      */
-    private function createDelivery(WebhookCall $webhookCall, string $event, string $url, Model $webhookable, array $payload): ?WebhookDelivery
+    private function createDelivery(WebhookCall $webhookCall, string $event, string $url, Model $webhookable, array $payload, ?string $deliveryKey = null): ?WebhookDelivery
     {
         try {
             return WebhookDelivery::query()->create([
                 'uuid' => $webhookCall->getUuid(),
                 'event' => $event,
+                'delivery_key' => $deliveryKey ?? '',
                 'webhook_url' => $url,
                 'webhook_url_hash' => hash('sha256', $url),
                 'webhookable_type' => $webhookable->getMorphClass(),

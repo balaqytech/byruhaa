@@ -9,8 +9,8 @@ class SendMinorProfileVerificationCode
 {
     public function __construct(private ByruhaaWebhookSender $sender) {}
 
-    public function execute(MinorProfile $profile, string $code): void
+    public function execute(MinorProfile $profile, string $code, ?string $deliveryKey = null): void
     {
-        $this->sender->sendUchatMinorVerificationCode($profile, $code);
+        $this->sender->sendUchatMinorVerificationCode($profile, $code, $deliveryKey);
     }
 }

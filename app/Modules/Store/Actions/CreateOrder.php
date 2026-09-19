@@ -35,6 +35,15 @@ class CreateOrder
             $cartMinorProfileId = $cart->getRawOriginal('minor_profile_id');
             $orderCustomerId = $data['customer_id'] ?? null;
             $minorProfileId = filled($data['minor_profile_id'] ?? null) ? (int) $data['minor_profile_id'] : null;
+            $paymentMethod = (string) ($data['payment_method'] ?? 'thawani');
+
+            if (! in_array($paymentMethod, ['thawani', 'wallet'], true)) {
+                throw ValidationException::withMessages(['payment_method' => 'This payment method is not supported.']);
+            }
+
+            if ($paymentMethod === 'wallet' && ! config('byruhaa.wallets.enabled', false)) {
+                throw ValidationException::withMessages(['payment_method' => 'Wallet payments are currently unavailable.']);
+            }
 
             if ($cartCustomerId !== null && (int) $cartCustomerId !== (int) $orderCustomerId) {
                 throw ValidationException::withMessages(['cart' => 'This cart does not belong to the customer creating the order.']);
@@ -45,7 +54,15 @@ class CreateOrder
                     throw ValidationException::withMessages(['minor_profile_id' => 'A guardian account is required for a minor order.']);
                 }
 
-                $this->minorProfiles->forGuardian($minorProfileId, (int) $orderCustomerId);
+                $minorProfile = $this->minorProfiles->forGuardian($minorProfileId, (int) $orderCustomerId);
+
+                if ($paymentMethod === 'wallet' && ! $minorProfile->walletSpendingEnabled) {
+                    throw ValidationException::withMessages(['payment_method' => 'Wallet spending is not enabled for this child account.']);
+                }
+
+                if ($paymentMethod === 'wallet' && ! $minorProfile->guardianPhoneVerified) {
+                    throw ValidationException::withMessages(['payment_method' => 'Verify the guardian phone before using the wallet.']);
+                }
 
                 if ((int) ($cartMinorProfileId ?? 0) !== $minorProfileId) {
                     throw ValidationException::withMessages(['cart' => 'This cart does not belong to the selected minor profile.']);
@@ -54,10 +71,17 @@ class CreateOrder
                 throw ValidationException::withMessages(['minor_profile_id' => 'A minor profile is required for this cart.']);
             }
 
+            if ($paymentMethod === 'wallet' && $minorProfileId === null) {
+                throw ValidationException::withMessages(['payment_method' => 'A child account is required for wallet payment.']);
+            }
+
             $existing = Order::query()->where('idempotency_key', $data['idempotency_key'])->lockForUpdate()->first();
 
             if ($existing instanceof Order) {
-                if (($data['customer_id'] ?? null) !== $existing->customer_id || $existing->customer_phone !== $data['customer_phone'] || (int) ($existing->minor_profile_id ?? 0) !== (int) ($minorProfileId ?? 0)) {
+                if (($data['customer_id'] ?? null) !== $existing->customer_id
+                    || $existing->customer_phone !== $data['customer_phone']
+                    || (int) ($existing->minor_profile_id ?? 0) !== (int) ($minorProfileId ?? 0)
+                    || $existing->payment_method !== $paymentMethod) {
                     throw ValidationException::withMessages(['idempotency_key' => 'This idempotency key belongs to another order.']);
                 }
 
@@ -75,6 +99,7 @@ class CreateOrder
                 'idempotency_key' => $data['idempotency_key'],
                 'customer_id' => $data['customer_id'] ?? null,
                 'minor_profile_id' => $minorProfileId,
+                'payment_method' => $paymentMethod,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,

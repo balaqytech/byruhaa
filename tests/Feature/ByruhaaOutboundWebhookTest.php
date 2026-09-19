@@ -38,6 +38,14 @@ use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
 
 beforeEach(function (): void {
     config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
+
+beforeEach(function (): void {
+    config([
         'app.url' => 'https://byruhaa.test',
         'byruhaa.webhooks.customer_registered_url' => null,
         'byruhaa.webhooks.interest_created_url' => null,

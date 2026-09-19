@@ -6,7 +6,10 @@ use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Modules\Finance\Actions\ConfirmThawaniPayment;
 use App\Modules\Finance\Contracts\PaymentService;
+use App\Modules\Finance\Contracts\WalletService;
+use App\Modules\Finance\Enums\WalletTopUpStatus;
 use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\WalletTopUp;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -19,7 +22,7 @@ class ReconcileThawaniPayments extends Command
     /**
      * Execute the console command.
      */
-    public function handle(ConfirmThawaniPayment $confirmThawaniPayment, PaymentService $paymentService): int
+    public function handle(ConfirmThawaniPayment $confirmThawaniPayment, PaymentService $paymentService, WalletService $wallets): int
     {
         $limit = max(1, (int) $this->option('limit'));
         $payments = Payment::query()
@@ -45,7 +48,33 @@ class ReconcileThawaniPayments extends Command
             }
         }
 
-        $this->info("Reconciled {$payments->count()} pending Thawani payment(s).");
+        $walletPayments = Payment::query()
+            ->where('provider', PaymentProvider::Thawani->value)
+            ->where('subject_type', 'wallet_topup')
+            ->where('state', PaymentState::Paid->value)
+            ->whereIn('subject_reference', WalletTopUp::query()
+                ->select('reference')
+            )
+            ->where(function ($query): void {
+                $query->whereIn('subject_reference', WalletTopUp::query()
+                    ->select('reference')
+                    ->where('status', WalletTopUpStatus::Pending->value))
+                    ->orWhereDoesntHave('ledgerTransaction');
+            })
+            ->oldest()
+            ->limit($limit)
+            ->get();
+
+        foreach ($walletPayments as $payment) {
+            try {
+                $wallets->creditTopUp($payment, retryNotification: true);
+            } catch (Throwable $exception) {
+                $failures++;
+                $this->warn("Wallet top-up {$payment->subject_reference} could not be credited: {$exception->getMessage()}");
+            }
+        }
+
+        $this->info("Reconciled {$payments->count()} pending Thawani payment(s) and recovered {$walletPayments->count()} paid wallet top-up(s).");
 
         return $failures === 0 ? self::SUCCESS : self::FAILURE;
     }

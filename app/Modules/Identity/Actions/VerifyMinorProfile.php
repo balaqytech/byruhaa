@@ -13,11 +13,12 @@ class VerifyMinorProfile
 {
     public function execute(MinorProfile $profile, string $code, ?string $ipAddress = null): string
     {
-        return DB::transaction(function () use ($profile, $code, $ipAddress): string {
+        /** @var array{activation_token: string|null, error: string|null} $result */
+        $result = DB::transaction(function () use ($profile, $code, $ipAddress): array {
             $profile = MinorProfile::query()->lockForUpdate()->findOrFail($profile->id);
 
             if ($profile->status !== MinorProfileStatus::PendingGuardianVerification) {
-                throw ValidationException::withMessages(['code' => 'This verification is no longer available.']);
+                return ['activation_token' => null, 'error' => 'unavailable'];
             }
 
             $verification = $profile->verifications()
@@ -27,13 +28,13 @@ class VerifyMinorProfile
                 ->first();
 
             if ($verification === null || $verification->expires_at->isPast() || $verification->attempts >= 5) {
-                throw ValidationException::withMessages(['code' => 'The verification code has expired.']);
+                return ['activation_token' => null, 'error' => 'expired'];
             }
 
             $verification->increment('attempts');
 
             if (! Hash::check($code, $verification->code_hash)) {
-                throw ValidationException::withMessages(['code' => 'The verification code is incorrect.']);
+                return ['activation_token' => null, 'error' => 'incorrect'];
             }
 
             $verification->forceFill(['consumed_at' => now()])->save();
@@ -53,7 +54,19 @@ class VerifyMinorProfile
                 'accepted_ip' => $ipAddress,
             ]);
 
-            return $activationToken;
+            return ['activation_token' => $activationToken, 'error' => null];
         });
+
+        if ($result['error'] !== null) {
+            throw ValidationException::withMessages([
+                'code' => match ($result['error']) {
+                    'incorrect' => 'The verification code is incorrect.',
+                    'unavailable' => 'This verification is no longer available.',
+                    default => 'The verification code has expired.',
+                },
+            ]);
+        }
+
+        return (string) $result['activation_token'];
     }
 }

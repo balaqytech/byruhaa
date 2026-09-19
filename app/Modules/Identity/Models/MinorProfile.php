@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string $password
  * @property MinorProfileStatus $status
  * @property bool $direct_payment_enabled
+ * @property bool $wallet_spending_enabled
  * @property Carbon|null $activated_at
  * @property Carbon|null $suspended_at
  * @property Carbon|null $invalidated_at
@@ -27,7 +28,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $deletion_requested_at
  * @property Carbon|null $activation_token_expires_at
  */
-#[Fillable(['family_member_id', 'member_code', 'password', 'status', 'direct_payment_enabled', 'activated_at', 'suspended_at', 'invalidated_at', 'invalidation_reason', 'deletion_requested_at', 'activation_token_hash', 'activation_token_expires_at'])]
+#[Fillable(['family_member_id', 'member_code', 'password', 'status', 'direct_payment_enabled', 'wallet_spending_enabled', 'activated_at', 'suspended_at', 'invalidated_at', 'invalidation_reason', 'deletion_requested_at', 'activation_token_hash', 'activation_token_expires_at'])]
 #[Hidden(['password', 'remember_token', 'activation_token_hash'])]
 class MinorProfile extends Authenticatable
 {
@@ -82,6 +83,7 @@ class MinorProfile extends Authenticatable
             'status' => MinorProfileStatus::class,
             'password' => 'hashed',
             'direct_payment_enabled' => 'boolean',
+            'wallet_spending_enabled' => 'boolean',
             'activated_at' => 'datetime',
             'suspended_at' => 'datetime',
             'invalidated_at' => 'datetime',

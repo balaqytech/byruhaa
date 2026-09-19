@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string|null $uuid
  * @property string $event
+ * @property string $delivery_key
  * @property string $webhook_url
  * @property string $webhook_url_hash
  * @property string $webhookable_type
@@ -30,7 +31,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $error_type
  * @property string|null $error_message
  */
-#[Fillable(['uuid', 'event', 'webhook_url', 'webhook_url_hash', 'webhookable_type', 'webhookable_id', 'payload', 'status', 'attempts', 'queued_at', 'delivered_at', 'failed_at', 'final_failed_at', 'response_status', 'response_body', 'error_type', 'error_message'])]
+#[Fillable(['uuid', 'event', 'delivery_key', 'webhook_url', 'webhook_url_hash', 'webhookable_type', 'webhookable_id', 'payload', 'status', 'attempts', 'queued_at', 'delivered_at', 'failed_at', 'final_failed_at', 'response_status', 'response_body', 'error_type', 'error_message'])]
 class WebhookDelivery extends Model
 {
     /** @use HasFactory<WebhookDeliveryFactory> */

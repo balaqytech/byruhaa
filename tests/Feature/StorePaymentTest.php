@@ -129,6 +129,24 @@ test('browser payment returns render a signed human-readable order status page',
         ->assertSee('wire:id=', false);
 });
 
+test('signed wallet confirmation pages require the owning customer session', function (): void {
+    config(['byruhaa.wallets.enabled' => true]);
+    $customer = Customer::factory()->create();
+    $order = storePaymentOrder();
+    $order->forceFill(['customer_id' => $customer->id, 'payment_method' => 'wallet'])->save();
+
+    $signedUrl = URL::signedRoute('store.orders.wallet.confirm.link', ['order' => $order->payment_token]);
+
+    $this->get($signedUrl)->assertRedirect();
+
+    $this->actingAs($customer, 'customer')->get($signedUrl)
+        ->assertSuccessful()
+        ->assertSee($order->reference)
+        ->assertSee('تأكيد الدفع من المحفظة');
+
+    $this->actingAs(Customer::factory()->create(), 'customer')->get($signedUrl)->assertNotFound();
+});
+
 test('paid verification rejects a mismatched amount without confirming the order', function (): void {
     Http::preventStrayRequests();
     $order = storePaymentOrder();

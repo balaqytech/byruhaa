@@ -2,6 +2,8 @@
 
 namespace App\Modules\Store\Actions;
 
+use App\Modules\Finance\Contracts\WalletService;
+use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\States\Order\OrderState;
@@ -12,6 +14,8 @@ use Spatie\ModelStates\Exceptions\CouldNotPerformTransition;
 
 class ChangeOrderState
 {
+    public function __construct(private WalletService $wallets) {}
+
     public function execute(Order $order, string $targetState, ?int $actorUserId = null, ?string $note = null): Order
     {
         if (! is_a($targetState, OrderState::class, true)) {
@@ -38,6 +42,19 @@ class ChangeOrderState
                 'actor_user_id' => $actorUserId,
                 'note' => $note,
             ]);
+
+            if ($order->payment_method === 'wallet'
+                && in_array($order->status->getValue(), [
+                    OrderStatus::Cancelled->value,
+                    OrderStatus::Rejected->value,
+                    OrderStatus::Refunded->value,
+                ], true)) {
+                $this->wallets->reversePurchase($order->reference);
+            }
+
+            if ($order->payment_method === 'wallet' && $order->status->getValue() === OrderStatus::Completed->value) {
+                $this->wallets->markPurchaseEligible($order->reference);
+            }
 
             $refreshed = $order->refresh();
 

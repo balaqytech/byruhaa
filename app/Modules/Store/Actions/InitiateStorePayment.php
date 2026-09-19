@@ -36,6 +36,10 @@ class InitiateStorePayment
                 throw ValidationException::withMessages(['order' => 'Authentication or a signed payment link is required.']);
             }
 
+            if ($order->payment_method === 'wallet') {
+                throw ValidationException::withMessages(['payment' => 'This order must be confirmed from the wallet checkout.']);
+            }
+
             if ($minorProfileId !== null) {
                 if ($customerId === null) {
                     throw ValidationException::withMessages(['payment' => 'A guardian account is required for direct payment.']);

@@ -12,6 +12,10 @@ Schedule::command('payments:reconcile-thawani')
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+Schedule::command('wallets:reconcile')
+    ->dailyAt('01:00')
+    ->withoutOverlapping();
+
 Schedule::command('seats:release-expired-holds')
     ->everyMinute()
     ->withoutOverlapping();

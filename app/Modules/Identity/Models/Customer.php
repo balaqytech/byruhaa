@@ -23,6 +23,7 @@ use Illuminate\Validation\ValidationException;
  * @property string $name
  * @property string|null $email
  * @property string $phone_number
+ * @property Carbon|null $phone_verified_at
  * @property string|null $civil_id
  * @property string|null $address
  * @property string|null $wilaya
@@ -43,6 +44,15 @@ class Customer extends Authenticatable
     protected static function newFactory(): CustomerFactory
     {
         return CustomerFactory::new();
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (Customer $customer): void {
+            if ($customer->isDirty('phone_number')) {
+                $customer->phone_verified_at = null;
+            }
+        });
     }
 
     /**
@@ -96,6 +106,19 @@ class Customer extends Authenticatable
     }
 
     /**
+     * @return HasMany<CustomerPhoneVerification, $this>
+     */
+    public function phoneVerifications(): HasMany
+    {
+        return $this->hasMany(CustomerPhoneVerification::class);
+    }
+
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone_verified_at !== null;
+    }
+
+    /**
      * @return HasManyThrough<MinorProfile, FamilyMember, $this>
      */
     public function minorProfiles(): HasManyThrough
@@ -134,6 +157,7 @@ class Customer extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'additional_info' => 'array',
         ];

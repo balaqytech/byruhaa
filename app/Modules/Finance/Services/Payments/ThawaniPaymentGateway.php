@@ -98,7 +98,13 @@ class ThawaniPaymentGateway implements PaymentGateway
      */
     public function createRefund(array $payload): array
     {
-        $body = $this->request('post', '/refunds', $payload, 'Unable to create Thawani refund.');
+        $body = $this->request(
+            'post',
+            '/refunds',
+            $payload,
+            'Unable to create Thawani refund.',
+            shouldRetry: false,
+        );
 
         if (! data_get($body, 'success') || ! data_get($body, 'data.refund_id')) {
             throw $this->gatewayResponseException($body, 'Thawani refund response is invalid.');
@@ -111,15 +117,17 @@ class ThawaniPaymentGateway implements PaymentGateway
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function request(string $method, string $uri, array $data = [], string $failureMessage = 'Thawani API request failed.'): array
+    private function request(string $method, string $uri, array $data = [], string $failureMessage = 'Thawani API request failed.', bool $shouldRetry = true): array
     {
-        $response = Http::baseUrl($this->apiBaseUrl())
+        $request = Http::baseUrl($this->apiBaseUrl())
             ->withHeaders(['thawani-api-key' => $this->secretKey()])
             ->acceptJson()
             ->asJson()
             ->connectTimeout(5)
-            ->timeout(10)
-            ->retry(
+            ->timeout(10);
+
+        if ($shouldRetry) {
+            $request = $request->retry(
                 [100, 200],
                 throw: false,
                 when: static function (Throwable $exception): bool {
@@ -134,8 +142,10 @@ class ThawaniPaymentGateway implements PaymentGateway
                     return $exception->response->status() === 429
                         || $exception->response->serverError();
                 },
-            )
-            ->{$method}($uri, $data);
+            );
+        }
+
+        $response = $request->{$method}($uri, $data);
 
         $body = $this->responseBody($response);
 

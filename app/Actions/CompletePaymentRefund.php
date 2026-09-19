@@ -7,6 +7,7 @@ use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Modules\Events\Actions\ReleaseBookingSeats;
 use App\Modules\Finance\Actions\PostRefundLedgerTransaction;
+use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Notifications\PaymentRefundedNotification;
@@ -21,6 +22,7 @@ class CompletePaymentRefund
         private PostRefundLedgerTransaction $postRefundLedgerTransaction,
         private ReleaseBookingSeats $releaseBookingSeats,
         private ByruhaaWebhookSender $webhookSender,
+        private WalletService $wallets,
     ) {}
 
     /** @param array<string, mixed> $attributes */
@@ -46,7 +48,9 @@ class CompletePaymentRefund
                 'provider_payment_id' => $attributes['provider_payment_id'] ?? $payment->provider_payment_id,
                 'state' => $this->paymentStateAfterRefund($payment),
             ])->save();
-            if ($payment->state === PaymentState::Refunded) {
+            if ($payment->subject_type === 'wallet_topup') {
+                $this->wallets->refundTopUp($refund);
+            } elseif ($payment->state === PaymentState::Refunded && $payment->bookingInstallment !== null) {
                 $payment->bookingInstallment->forceFill([
                     'state' => BookingInstallmentState::Pending,
                     'paid_at' => null,
@@ -58,13 +62,17 @@ class CompletePaymentRefund
             return $refund->refresh();
         });
 
-        if ($refund->payment->state === PaymentState::Refunded) {
+        $refund->loadMissing('payment.bookingInstallment.paymentSchedule.booking.customer');
+        $booking = $refund->payment->bookingInstallment?->paymentSchedule?->booking;
+
+        if ($booking !== null && $refund->payment->state === PaymentState::Refunded) {
             $this->releaseBookingSeats->execute($refund->payment);
         }
 
-        $refund->loadMissing('payment.bookingInstallment.paymentSchedule.booking.customer');
-        $refund->payment->bookingInstallment->paymentSchedule->booking->customer
-            ->notify(new PaymentRefundedNotification($refund->id));
+        if ($booking?->customer !== null) {
+            $booking->customer->notify(new PaymentRefundedNotification($refund->id));
+        }
+
         $this->webhookSender->sendPaymentRefunded($refund);
 
         return $refund;

@@ -100,6 +100,10 @@ class PostPaymentLedgerTransaction
 
     private function memo(Payment $payment): string
     {
+        if ($payment->subject_type === 'wallet_topup') {
+            return Str::limit('Wallet top-up '.$payment->subject_reference.' payment '.$payment->reference, 255, '');
+        }
+
         $payment->loadMissing('bookingInstallment.paymentSchedule.booking');
 
         return Str::limit('Booking '.$payment->bookingInstallment->paymentSchedule->booking->reference.' payment '.$payment->reference, 255, '');

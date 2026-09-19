@@ -41,7 +41,13 @@ class ConfirmManualPaymentRefund
         ]);
 
         $refund->loadMissing('payment.bookingInstallment.paymentSchedule.booking.event');
-        $event = $refund->payment->bookingInstallment->paymentSchedule->booking->event;
+        $booking = $refund->payment->bookingInstallment?->paymentSchedule?->booking;
+
+        if ($booking === null) {
+            return $refund;
+        }
+
+        $event = $booking->event;
         $cancellation = EventCancellation::query()->whereBelongsTo($event)->first();
         if ($cancellation !== null) {
             ProcessEventCancellation::dispatch($cancellation->id);

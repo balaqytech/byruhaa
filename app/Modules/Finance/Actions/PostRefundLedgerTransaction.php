@@ -100,6 +100,10 @@ class PostRefundLedgerTransaction
 
     private function memo(PaymentRefund $paymentRefund): string
     {
+        if ($paymentRefund->payment->subject_type === 'wallet_topup') {
+            return Str::limit('Wallet top-up '.$paymentRefund->payment->subject_reference.' refund '.$paymentRefund->reference, 255, '');
+        }
+
         $paymentRefund->loadMissing('payment.bookingInstallment.paymentSchedule.booking');
 
         return Str::limit('Booking '.$paymentRefund->payment->bookingInstallment->paymentSchedule->booking->reference.' refund '.$paymentRefund->reference, 255, '');

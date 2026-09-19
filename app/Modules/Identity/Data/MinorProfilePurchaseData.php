@@ -11,5 +11,7 @@ final readonly class MinorProfilePurchaseData
         public string $name,
         public string $memberCode,
         public bool $directPaymentEnabled,
+        public bool $walletSpendingEnabled,
+        public bool $guardianPhoneVerified,
     ) {}
 }

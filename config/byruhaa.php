@@ -11,6 +11,18 @@ return [
         'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase'),
     ],
 
+    'wallets' => [
+        'enabled' => filter_var(env('WALLETS_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+        'top_up_refund_window_hours' => (int) env('WALLET_TOP_UP_REFUND_WINDOW_HOURS', 24),
+        'minimum_top_up_baisa' => (int) env('WALLET_MINIMUM_TOP_UP_BAISA', 100),
+        'maximum_top_up_baisa' => (int) env('WALLET_MAXIMUM_TOP_UP_BAISA', 100_000_000),
+        'phone_otp_expiry_minutes' => (int) env('WALLET_PHONE_OTP_EXPIRY_MINUTES', 10),
+        'phone_otp_max_attempts' => (int) env('WALLET_PHONE_OTP_MAX_ATTEMPTS', 5),
+        'phone_otp_resend_seconds' => (int) env('WALLET_PHONE_OTP_RESEND_SECONDS', 60),
+        'consent_policy_version' => env('WALLET_CONSENT_POLICY_VERSION', 'wallet-spending-v1'),
+        'consent_policy_text' => env('WALLET_CONSENT_POLICY_TEXT', 'guardian-consent-wallet-spending'),
+    ],
+
     'uchat' => [
         'api_token' => env('UCHAT_STORE_API_TOKEN'),
         'webhook_url' => env('UCHAT_STORE_WEBHOOK_URL'),

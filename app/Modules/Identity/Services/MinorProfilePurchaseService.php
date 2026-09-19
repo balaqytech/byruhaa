@@ -12,7 +12,7 @@ class MinorProfilePurchaseService implements MinorProfilePurchasing
     public function forGuardian(int $profileId, int $guardianId): MinorProfilePurchaseData
     {
         $profile = MinorProfile::query()
-            ->with('familyMember')
+            ->with('familyMember.customer')
             ->whereKey($profileId)
             ->whereHas('familyMember', fn ($query) => $query->where('customer_id', $guardianId))
             ->first();
@@ -57,6 +57,8 @@ class MinorProfilePurchaseService implements MinorProfilePurchasing
             $profile->familyMember->name,
             $profile->member_code,
             $profile->direct_payment_enabled,
+            $profile->wallet_spending_enabled,
+            $profile->familyMember->customer->hasVerifiedPhone(),
         );
     }
 }
