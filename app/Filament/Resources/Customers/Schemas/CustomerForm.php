@@ -28,7 +28,7 @@ class CustomerForm
                     ->tel()
                     ->required()
                     ->maxLength(255)
-                    ->rules(['phone:OM'])
+                    ->rules(['phone:INTERNATIONAL,OM'])
                     ->unique(ignoreRecord: true),
                 TextInput::make('civil_id')
                     ->label(__('admin.fields.civil_id'))
