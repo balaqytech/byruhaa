@@ -8,7 +8,7 @@ class Accepted extends OrderState
 
     public function getLabel(): string
     {
-        return 'Accepted';
+        return __('Accepted');
     }
 
     public function getColor(): string

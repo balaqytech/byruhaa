@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Store\Actions\InitiateStorePayment;
+use App\Modules\Store\Actions\ConfirmWalletOrder;
 use App\Modules\Store\Actions\ReorderStoreOrder;
 use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Models\Order;
@@ -65,6 +66,22 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
             return redirect()->route('customer.store.orders.show', $this->order->payment_token);
         } finally {
             $this->retrying = false;
+        }
+    }
+
+    public function payWithWallet(ConfirmWalletOrder $confirmWalletOrder): void
+    {
+        try {
+            $confirmWalletOrder->execute($this->ownedOrder($this->order->payment_token), (int) Auth::guard('customer')->id(), (int) $this->order->minor_profile_id);
+            $this->feedback = 'تم تأكيد الدفع من محفظة الابن.';
+            $this->refreshOrder();
+        } catch (\Throwable $exception) {
+            if ($exception instanceof \Illuminate\Validation\ValidationException) {
+                $this->error = collect($exception->errors())->flatten()->first();
+            } else {
+                report($exception);
+                $this->error = 'تعذر تأكيد الدفع من المحفظة الآن.';
+            }
         }
     }
 
@@ -163,11 +180,15 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
         <div class="mt-4 grid gap-2 border-t border-emerald-900/10 pt-4 text-sm dark:border-white/10 sm:max-w-sm sm:ms-auto"><div class="flex justify-between"><span>المجموع قبل الضريبة</span><span><x-money :amount-baisa="$order->subtotal_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between"><span>الضريبة المضمنة ({{ $order->vat_rate_percentage ?? 5 }}٪)</span><span><x-money :amount-baisa="$order->vat_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between text-base font-bold"><span>الإجمالي شامل الضريبة</span><span><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></span></div></div>
     </div>
 
-    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:heading>تتبع الحالة</flux:heading><div class="mt-4 space-y-4">@foreach ($order->statusHistory as $history)<div wire:key="status-history-{{ $history->id }}" class="flex gap-3"><span class="mt-1 size-2 shrink-0 rounded-full bg-emerald-600"></span><div><flux:heading class="text-sm">{{ $this->statusLabel($history->to_status) }}</flux:heading><flux:text>{{ $history->note }}</flux:text><flux:text dir="ltr">{{ $history->created_at->format('Y-m-d H:i') }}</flux:text></div></div>@endforeach</div></div>
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:heading>تتبع الحالة</flux:heading><div class="mt-4 space-y-4">@foreach ($order->statusHistory as $history)<div wire:key="status-history-{{ $history->id }}" class="flex gap-3"><span class="mt-1 size-2 shrink-0 rounded-full bg-emerald-600"></span><div><flux:heading class="text-sm">{{ $this->statusLabel($history->to_status) }}</flux:heading><flux:text>{{ $history->note ? __($history->note) : '' }}</flux:text><flux:text dir="ltr">{{ $history->created_at->format('Y-m-d H:i') }}</flux:text></div></div>@endforeach</div></div>
 
     <div class="flex flex-wrap gap-3">
         @if ($order->status->getValue() === OrderStatus::PendingPayment->value)
-            <flux:button wire:click="retryPayment" wire:target="retryPayment" wire:loading.attr="disabled" variant="primary"><x-hugeicon name="wallet-02" class="text-lg" /> ادفع الآن</flux:button>
+            @if ($order->payment_method === 'wallet')
+                <flux:button wire:click="payWithWallet" wire:target="payWithWallet" wire:loading.attr="disabled" variant="primary"><x-hugeicon name="wallet-02" class="text-lg" /> الدفع من المحفظة</flux:button>
+            @else
+                <flux:button wire:click="retryPayment" wire:target="retryPayment" wire:loading.attr="disabled" variant="primary"><x-hugeicon name="wallet-02" class="text-lg" /> ادفع الآن</flux:button>
+            @endif
         @endif
         @if ($receiptAvailable)
             <flux:button :href="route('customer.store.orders.receipt', $order->payment_token)" target="_blank" variant="outline"><x-hugeicon name="file-view" class="text-lg" /> طباعة الفاتورة</flux:button>

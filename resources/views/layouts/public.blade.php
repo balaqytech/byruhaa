@@ -41,6 +41,10 @@
             ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
         ];
 
+        if (config('byruhaa.minor_accounts.enabled', true)) {
+            $footerNavigationLinks[] = ['label' => 'دخول حساب القاصر', 'route' => 'minor.login', 'active' => 'minor.login', 'icon' => 'user-circle'];
+        }
+
         $accountRoute = auth('minor-profile')->check() ? 'minor.dashboard' : (auth('customer')->check() ? 'customer.dashboard' : 'login');
         $bottomNavigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],

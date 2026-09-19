@@ -8,7 +8,7 @@ class ReadyForPickup extends OrderState
 
     public function getLabel(): string
     {
-        return 'Ready for pickup';
+        return __('Ready for pickup');
     }
 
     public function getColor(): string

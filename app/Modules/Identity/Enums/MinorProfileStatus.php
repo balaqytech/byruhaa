@@ -11,6 +11,11 @@ enum MinorProfileStatus: string
     case Invalidated = 'invalidated';
     case DeletionRequested = 'deletion_requested';
 
+    public function label(): string
+    {
+        return __('admin_minors.statuses.'.$this->value);
+    }
+
     public function isUsable(): bool
     {
         return $this === self::Active;

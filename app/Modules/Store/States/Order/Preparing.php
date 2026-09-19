@@ -8,7 +8,7 @@ class Preparing extends OrderState
 
     public function getLabel(): string
     {
-        return 'Preparing';
+        return __('Preparing');
     }
 
     public function getColor(): string

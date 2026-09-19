@@ -8,7 +8,7 @@ class Cancelled extends OrderState
 
     public function getLabel(): string
     {
-        return 'Cancelled';
+        return __('Cancelled');
     }
 
     public function getColor(): string

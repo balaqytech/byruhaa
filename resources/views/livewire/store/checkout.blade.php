@@ -19,10 +19,10 @@
             </div>
         @else
             @if ($cartError)
-                <div role="alert" class="mt-8 rounded-xl border border-[#b45309]/25 bg-[#fff8e7] px-4 py-3 text-sm font-semibold text-[#92400e] dark:border-[#f0c96a]/20 dark:bg-[#2d2410] dark:text-[#f9d98b]">{{ $cartError }}</div>
+                <div role="alert" class="mt-8 rounded-xl border border-[#b45309]/25 bg-[#fff8e7] px-4 py-3 text-sm font-semibold text-[#92400e] dark:border-[#f0c96a]/20 dark:bg-[#2d2410] dark:text-[#f9d98b]">{{ __($cartError) }}</div>
             @endif
             @if ($errors->any())
-                <div role="alert" class="mt-8 rounded-xl border border-red-600/20 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-300/20 dark:bg-red-950/30 dark:text-red-200">{{ $errors->first() }}</div>
+                <div role="alert" class="mt-8 rounded-xl border border-red-600/20 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700 dark:border-red-300/20 dark:bg-red-950/30 dark:text-red-200">{{ __($errors->first()) }}</div>
             @endif
 
             <div class="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.42fr)] lg:items-start">
@@ -79,7 +79,23 @@
                         <p class="mt-2 text-xs text-[#315e52] dark:text-[#d2e7df]/65">حتى ٥٠ كلمة.</p>
                     </section>
 
-                    <div class="rounded-xl border border-[#007a52]/18 bg-[#e9f7f0] p-4 text-sm leading-7 text-[#006746] dark:border-[#6ee7b7]/20 dark:bg-[#0c2a20] dark:text-[#a7f3d0]">بعد تأكيد الطلب ستنتقل إلى بوابة ثواني للدفع الآمن. لا نحتفظ ببيانات بطاقتك.</div>
+                    <section class="border-t border-[#2a8069]/12 pt-6 dark:border-white/10" aria-labelledby="checkout-payment-title">
+                        <h2 id="checkout-payment-title" class="font-heading text-2xl font-bold text-[#123329] dark:text-[#f7f1df]">طريقة الدفع</h2>
+                        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                            <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#2a8069]/18 bg-[#f6fbf8] p-4 dark:border-white/12 dark:bg-white/5">
+                                <input type="radio" wire:model.live="paymentMethod" value="thawani" class="mt-1">
+                                <span><span class="block font-bold">الدفع الإلكتروني</span><span class="mt-1 block text-xs leading-5 text-[#315e52] dark:text-[#d2e7df]/65">الدفع عبر بوابة ثواني.</span></span>
+                            </label>
+                            @if ($walletPaymentAvailable)
+                                <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-[#2a8069]/18 bg-[#f6fbf8] p-4 dark:border-white/12 dark:bg-white/5">
+                                    <input type="radio" wire:model.live="paymentMethod" value="wallet" class="mt-1">
+                                    <span><span class="block font-bold">محفظة حساب الابن</span><span class="mt-1 block text-xs leading-5 text-[#315e52] dark:text-[#d2e7df]/65">يُخصم المبلغ من الرصيد المتاح.</span></span>
+                                </label>
+                            @endif
+                        </div>
+                    </section>
+
+                    <div class="rounded-xl border border-[#007a52]/18 bg-[#e9f7f0] p-4 text-sm leading-7 text-[#006746] dark:border-[#6ee7b7]/20 dark:bg-[#0c2a20] dark:text-[#a7f3d0]">{{ $paymentMethod === 'wallet' ? 'سيُخصم المبلغ من محفظة حساب الابن بعد التحقق من الرصيد والمخزون.' : 'بعد تأكيد الطلب ستنتقل إلى بوابة ثواني للدفع الآمن. لا نحتفظ ببيانات بطاقتك.' }}</div>
 
                     <p class="text-xs leading-6 text-[#315e52]/75 dark:text-[#d2e7df]/65">
                         بمتابعة الطلب، يمكنك مراجعة
@@ -88,7 +104,7 @@
                     </p>
 
                     <button type="submit" wire:loading.attr="disabled" wire:target="placeOrder" @disabled(! $orderingEnabled || ! $quote) class="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#007a52] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#006746] disabled:cursor-wait disabled:opacity-55">
-                        <span wire:loading.remove wire:target="placeOrder">تأكيد الطلب والمتابعة إلى الدفع</span>
+                        <span wire:loading.remove wire:target="placeOrder">{{ $paymentMethod === 'wallet' ? 'تأكيد الطلب والدفع من المحفظة' : 'تأكيد الطلب والمتابعة إلى الدفع' }}</span>
                         <span wire:loading wire:target="placeOrder">جارٍ تجهيز الطلب…</span>
                         <x-hugeicon name="arrow-left-02" class="text-lg" />
                     </button>

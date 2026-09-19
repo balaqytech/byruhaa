@@ -1,10 +1,26 @@
 @extends('layouts.public', ['title' => 'دخول حساب القاصر'])
 
 @section('content')
-<section class="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16" dir="rtl">
-    <div><h1 class="text-2xl font-semibold text-emerald-950 dark:text-white">دخول حساب القاصر</h1><p class="mt-2 text-sm text-emerald-900/70 dark:text-white/70">استخدم رمز الدخول الذي سلّمه لك وليّ الأمر.</p></div>
-    @if (session('success'))<div class="rounded-xl border border-emerald-300/50 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-300/10 dark:text-emerald-100">{{ session('success') }}</div>@endif
-    @if ($errors->any())<div class="rounded-xl border border-rose-300/50 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:bg-rose-300/10 dark:text-rose-100">{{ $errors->first() }}</div>@endif
-    <form method="POST" action="{{ route('minor.login.store') }}" class="flex flex-col gap-4 rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-white/5">@csrf<label class="flex flex-col gap-2 text-sm"><span>رمز الدخول</span><input name="member_code" value="{{ old('member_code') }}" required class="rounded-lg border-emerald-900/20 uppercase dark:border-white/10 dark:bg-white/5" dir="ltr"></label><label class="flex flex-col gap-2 text-sm"><span>كلمة المرور</span><input type="password" name="password" required class="rounded-lg border-emerald-900/20 dark:border-white/10 dark:bg-white/5" dir="ltr"></label><button class="rounded-lg bg-emerald-700 px-4 py-2 font-semibold text-white hover:bg-emerald-800">دخول</button></form>
+<section class="mx-auto w-full max-w-md px-4 py-12 sm:py-16" dir="rtl">
+    <header class="mb-8 text-center">
+        <h1 class="font-heading text-3xl font-semibold text-emerald-950 dark:text-white">دخول حساب القاصر</h1>
+        <p class="mt-3 text-sm leading-7 text-emerald-900/70 dark:text-white/70">طلباتك ومحفظتك في مكان واحد. استخدم رمز العضوية وكلمة المرور بعد تفعيل حسابك.</p>
+    </header>
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:p-8">
+        @if (session('success'))
+            <p role="status" class="mb-5 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-300/10 dark:text-emerald-100">{{ session('success') }}</p>
+        @endif
+        @if ($errors->any())
+            <p role="alert" class="mb-5 rounded-lg bg-rose-50 p-3 text-sm text-rose-800 dark:bg-rose-300/10 dark:text-rose-200">{{ __($errors->first()) }}</p>
+        @endif
+        <form method="POST" action="{{ route('minor.login.store') }}" class="grid gap-5">
+            @csrf
+            <flux:input name="member_code" :error:message="$errors->has('member_code') ? __($errors->first('member_code')) : null" label="رمز العضوية" :value="old('member_code')" placeholder="BRH-XXXXXXXX" autocomplete="username" dir="ltr" required autofocus />
+            <flux:input name="password" :error:message="$errors->has('password') ? __($errors->first('password')) : null" label="كلمة المرور" type="password" autocomplete="current-password" dir="ltr" required viewable />
+            <flux:button type="submit" variant="primary" class="w-full">دخول</flux:button>
+        </form>
+        <p class="mt-5 text-sm leading-7 text-emerald-900/70 dark:text-white/70">لم تفعّل حسابك بعد؟ اطلب رابط التفعيل من وليّ الأمر.</p>
+    </div>
+    <a href="{{ route('login') }}" class="mt-6 block text-center text-sm font-semibold text-emerald-700 underline dark:text-emerald-300">دخول وليّ الأمر</a>
 </section>
 @endsection

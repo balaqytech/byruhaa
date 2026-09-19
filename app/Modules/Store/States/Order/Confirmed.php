@@ -8,7 +8,7 @@ class Confirmed extends OrderState
 
     public function getLabel(): string
     {
-        return 'Confirmed';
+        return __('Confirmed');
     }
 
     public function getColor(): string
