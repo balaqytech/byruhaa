@@ -5,6 +5,7 @@ use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\OrderController;
 use App\Http\Controllers\Store\PaymentController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
+use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/public.php';
@@ -32,4 +33,7 @@ Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(funct
         Route::get('orders/{order:payment_token}/payment/cancel', [PaymentController::class, 'cancel'])->name('orders.payment.cancel');
         Route::get('orders/{order:payment_token}/status', [PaymentController::class, 'status'])->name('orders.status');
     });
+    Route::get('orders/{order:payment_token}/wallet/confirm', [WalletOrderController::class, 'confirmPage'])
+        ->middleware(['signed', 'auth:customer'])
+        ->name('orders.wallet.confirm.link');
 });

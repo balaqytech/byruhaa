@@ -3,7 +3,11 @@
 namespace App\Modules\Store\Http\Controllers;
 
 use App\Exceptions\PaymentGatewayException;
+use App\Modules\Finance\Actions\InitiateWalletTopUp;
+use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Data\Payments\PaymentCheckoutData;
+use App\Modules\Finance\Models\Wallet;
+use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Store\Actions\AddCartItem;
 use App\Modules\Store\Actions\BrowseCatalog;
@@ -20,6 +24,7 @@ use App\Modules\Store\Http\Requests\UchatCartUpdateRequest;
 use App\Modules\Store\Http\Requests\UchatIdentityRequest;
 use App\Modules\Store\Http\Requests\UchatOrderRequest;
 use App\Modules\Store\Http\Requests\UchatRequest;
+use App\Modules\Store\Http\Requests\UchatWalletTopUpRequest;
 use App\Modules\Store\Http\Resources\UchatCartResource;
 use App\Modules\Store\Http\Resources\UchatCatalogResource;
 use App\Modules\Store\Http\Resources\UchatOrderResource;
@@ -28,10 +33,12 @@ use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Services\UchatOwnerKey;
+use App\Support\Money\MoneyFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -148,7 +155,9 @@ class UchatStoreController
                 'customer_phone' => $request->phone(),
                 'minor_profile_id' => $minorProfileId,
             ]);
-            $checkout = $initiatePayment->execute($order, $request->customerId());
+            $checkout = $order->payment_method === 'wallet'
+                ? null
+                : $initiatePayment->execute($order, $request->customerId());
         } catch (ValidationException $exception) {
             return $this->validationError($exception);
         } catch (PaymentGatewayException|RuntimeException) {
@@ -162,7 +171,9 @@ class UchatStoreController
     {
         try {
             $order = $resolveOrder->execute($reference, $request->phone(), $this->selectedMinorProfileId($request));
-            $checkout = $initiatePayment->execute($order, $request->customerId());
+            $checkout = $order->payment_method === 'wallet'
+                ? null
+                : $initiatePayment->execute($order, $request->customerId());
         } catch (ValidationException $exception) {
             return $this->validationError($exception);
         } catch (PaymentGatewayException|RuntimeException) {
@@ -170,6 +181,180 @@ class UchatStoreController
         }
 
         return $this->orderResponse($order, $checkout);
+    }
+
+    public function wallet(UchatIdentityRequest $request, WalletService $wallets): JsonResponse
+    {
+        if (! config('byruhaa.wallets.enabled', false)) {
+            return $this->error('wallet_unavailable', 'Wallets are currently unavailable.', 404);
+        }
+
+        try {
+            $minorProfileId = $this->selectedMinorProfileId($request);
+
+            if ($minorProfileId === null) {
+                throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account to view its wallet.']);
+            }
+
+            $profile = $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
+            if (! $profile->guardianPhoneVerified) {
+                throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
+            }
+
+            $summary = $wallets->summary($minorProfileId);
+            $wallet = $wallets->walletForMinorProfile($minorProfileId);
+            $movements = $wallet->movements()->latest('id')->limit(50)->get();
+        } catch (ValidationException $exception) {
+            return $this->validationError($exception);
+        }
+
+        return response()->json([
+            'wallet_id' => $summary->walletId,
+            'minor_profile_id' => $summary->minorProfileId,
+            'balance_baisa' => $summary->balanceBaisa,
+            ...$this->walletBalances($wallet),
+            'currency' => $summary->currency,
+            'status' => $summary->status,
+            'movements' => $movements->map(fn ($movement): array => [
+                'id' => $movement->id,
+                'type' => $movement->type,
+                'order_reference' => $movement->order_reference,
+                'credit_baisa' => $movement->credit_baisa,
+                'debit_baisa' => $movement->debit_baisa,
+                'balance_after_baisa' => $movement->balance_after_baisa,
+                'created_at' => $movement->created_at?->toJSON(),
+            ])->values()->all(),
+        ]);
+    }
+
+    public function walletTopUp(UchatWalletTopUpRequest $request, InitiateWalletTopUp $initiateTopUp): JsonResponse
+    {
+        if (! config('byruhaa.wallets.enabled', false)) {
+            return $this->error('wallet_unavailable', 'Wallets are currently unavailable.', 404);
+        }
+
+        try {
+            $minorProfileId = $this->selectedMinorProfileId($request);
+
+            if ($minorProfileId === null) {
+                throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account before adding wallet funds.']);
+            }
+
+            $profile = $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
+            if (! $profile->guardianPhoneVerified) {
+                throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
+            }
+
+            $operationKey = $request->string('idempotency_key')->toString();
+            $amountBaisa = MoneyFactory::omrStringToBaisa((string) $request->validated('amount_omr'));
+            $checkout = $initiateTopUp->execute(
+                $minorProfileId,
+                $operationKey,
+                $amountBaisa,
+                URL::temporarySignedRoute('customer.minor-profiles.wallet.top-up.success', now()->addHours(12), [
+                    'minorProfile' => $minorProfileId,
+                    'operationKey' => $operationKey,
+                ]),
+                URL::temporarySignedRoute('customer.minor-profiles.wallet.top-up.cancel', now()->addHours(12), [
+                    'minorProfile' => $minorProfileId,
+                    'operationKey' => $operationKey,
+                ]),
+            );
+            $topUp = WalletTopUp::query()->where('operation_key', $operationKey)->firstOrFail();
+        } catch (ValidationException $exception) {
+            return $this->validationError($exception);
+        } catch (PaymentGatewayException|RuntimeException) {
+            return $this->error('payment_unavailable', 'The payment provider is temporarily unavailable.', 503);
+        }
+
+        return response()->json([
+            'top_up_reference' => $topUp->reference,
+            'payment_reference' => $checkout->paymentReference,
+            'amount_baisa' => $checkout->amountBaisa,
+            'currency' => $checkout->currency,
+            'status' => $checkout->status,
+            'checkout_url' => $checkout->checkoutUrl,
+            'expires_at' => $checkout->expiresAt?->format(DATE_ATOM),
+        ], 201);
+    }
+
+    public function walletMovements(UchatIdentityRequest $request, WalletService $wallets): JsonResponse
+    {
+        $wallet = $this->readableWallet($request, $wallets);
+        $movements = $wallet->movements()->latest('id')->paginate($request->integer('per_page', 20));
+
+        return response()->json([
+            'data' => $movements->map(fn ($movement): array => [
+                'id' => $movement->id,
+                'type' => $movement->type,
+                'order_reference' => $movement->order_reference,
+                'credit_baisa' => $movement->credit_baisa,
+                'debit_baisa' => $movement->debit_baisa,
+                'balance_after_baisa' => $movement->balance_after_baisa,
+                'created_at' => $movement->created_at?->toJSON(),
+            ]),
+            'meta' => ['current_page' => $movements->currentPage(), 'last_page' => $movements->lastPage(), 'per_page' => $movements->perPage(), 'total' => $movements->total()],
+        ]);
+    }
+
+    public function walletTopUpStatus(string $reference, UchatIdentityRequest $request, WalletService $wallets): JsonResponse
+    {
+        $wallet = $this->readableWallet($request, $wallets);
+        $topUp = $wallet->topUps()->where('reference', $reference)->with('payment')->first();
+        if (! $topUp instanceof WalletTopUp) {
+            return $this->error('top_up_not_found', 'The wallet top-up was not found.', 404);
+        }
+
+        return response()->json(['data' => [
+            'top_up_reference' => $topUp->reference,
+            'minor_profile_id' => $wallet->minor_profile_id,
+            'status' => $topUp->status,
+            'payment_status' => $topUp->payment?->state?->value,
+            'payment_reference' => $topUp->payment?->reference,
+            'amount_baisa' => $topUp->amount_baisa,
+            'currency' => $topUp->currency,
+            'credited_at' => $topUp->credited_at?->toJSON(),
+            'reserved_refund_baisa' => $topUp->reserved_refund_baisa,
+            'eligible_refund_baisa' => $this->eligibleRefund($topUp),
+            'refund_deadline_at' => $topUp->refund_deadline_at?->toJSON(),
+        ]]);
+    }
+
+    private function readableWallet(UchatIdentityRequest $request, WalletService $wallets): Wallet
+    {
+        if (! config('byruhaa.wallets.enabled', false)) {
+            abort(response()->json(['code' => 'wallet_unavailable', 'message' => 'Wallets are currently unavailable.'], 404));
+        }
+        $profileId = $this->selectedMinorProfileId($request);
+        if ($profileId === null) {
+            throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account to view its wallet.']);
+        }
+        $profile = $this->minorProfiles->forGuardian($profileId, (int) $request->customerId());
+        if (! $profile->guardianPhoneVerified) {
+            throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
+        }
+
+        return $wallets->walletForMinorProfile($profileId);
+    }
+
+    /** @return array{available_balance_baisa: int, reserved_balance_baisa: int, eligible_refund_baisa: int} */
+    private function walletBalances(Wallet $wallet): array
+    {
+        $topUps = $wallet->topUps()->get();
+        $spendable = (int) $topUps->whereIn('status', ['credited', 'refunding'])->sum(fn (WalletTopUp $topUp): int => max(0, $topUp->spendable_baisa - $topUp->reserved_refund_baisa));
+
+        return [
+            'available_balance_baisa' => $wallet->status === 'active' ? max(0, min($wallet->balance_baisa, $spendable)) : 0,
+            'reserved_balance_baisa' => (int) $topUps->sum('reserved_refund_baisa'),
+            'eligible_refund_baisa' => (int) $topUps->sum(fn (WalletTopUp $topUp): int => $this->eligibleRefund($topUp)),
+        ];
+    }
+
+    private function eligibleRefund(WalletTopUp $topUp): int
+    {
+        return in_array($topUp->status, ['credited', 'refunding'], true) && $topUp->refund_deadline_at?->isFuture()
+            ? max(0, min($topUp->spendable_baisa, $topUp->refundable_baisa) - $topUp->reserved_refund_baisa)
+            : 0;
     }
 
     public function orders(UchatIdentityRequest $request): JsonResponse
@@ -252,16 +437,23 @@ class UchatStoreController
         return $profileId;
     }
 
-    private function orderResponse(Order $order, PaymentCheckoutData $checkout, int $status = 200): JsonResponse
+    private function orderResponse(Order $order, ?PaymentCheckoutData $checkout, int $status = 200): JsonResponse
     {
+        $payment = $checkout === null
+            ? [
+                'method' => 'wallet',
+                'status' => 'confirmation_required',
+                'confirmation_url' => URL::temporarySignedRoute('store.orders.wallet.confirm.link', now()->addHours(12), ['order' => $order->payment_token]),
+            ]
+            : [
+                'method' => 'thawani',
+                'status' => $checkout->status,
+                'checkout_url' => $checkout->checkoutUrl,
+                'expires_at' => $checkout->expiresAt?->format(DATE_ATOM),
+            ];
+
         return UchatOrderResource::make($order->load(['items', 'statusHistory']))
-            ->additional([
-                'payment' => [
-                    'status' => $checkout->status,
-                    'checkout_url' => $checkout->checkoutUrl,
-                    'expires_at' => $checkout->expiresAt?->format(DATE_ATOM),
-                ],
-            ])
+            ->additional(['payment' => $payment])
             ->response()
             ->setStatusCode($status);
     }

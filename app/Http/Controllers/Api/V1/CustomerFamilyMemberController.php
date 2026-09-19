@@ -18,6 +18,7 @@ class CustomerFamilyMemberController extends Controller
     public function index(Request $request, Customer $customer): AnonymousResourceCollection
     {
         $familyMembers = $customer->familyMembers()
+            ->with('minorProfile')
             ->oldest('birth_date')
             ->paginate($this->perPage($request));
 
@@ -30,7 +31,7 @@ class CustomerFamilyMemberController extends Controller
 
         $familyMember = $customer->familyMembers()->create($request->validated());
 
-        return FamilyMemberResource::make($familyMember)
+        return FamilyMemberResource::make($familyMember->load('minorProfile'))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
     }
@@ -39,7 +40,7 @@ class CustomerFamilyMemberController extends Controller
     {
         abort_unless($familyMember->customer_id === $customer->id, 404);
 
-        return FamilyMemberResource::make($familyMember);
+        return FamilyMemberResource::make($familyMember->load('minorProfile'));
     }
 
     public function update(UpdateCustomerFamilyMemberRequest $request, Customer $customer, FamilyMember $familyMember): FamilyMemberResource
@@ -49,13 +50,18 @@ class CustomerFamilyMemberController extends Controller
 
         $familyMember->update($request->validated());
 
-        return FamilyMemberResource::make($familyMember->refresh());
+        return FamilyMemberResource::make($familyMember->refresh()->load('minorProfile'));
     }
 
     public function destroy(Customer $customer, FamilyMember $familyMember): Response
     {
         abort_unless($familyMember->customer_id === $customer->id, 404);
         $customer->ensureProfileIsComplete();
+
+        abort_if($familyMember->minorProfile()->exists(), response()->json([
+            'code' => 'minor_account_lifecycle_required',
+            'message' => __('api_accounts.minor_account_lifecycle_required'),
+        ], 409));
 
         $familyMember->delete();
 

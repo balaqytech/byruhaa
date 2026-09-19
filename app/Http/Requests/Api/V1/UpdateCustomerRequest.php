@@ -6,7 +6,6 @@ use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class UpdateCustomerRequest extends FormRequest
 {
@@ -29,7 +28,8 @@ class UpdateCustomerRequest extends FormRequest
             'wilaya' => ['sometimes', 'nullable', 'string', 'max:255'],
             'area' => ['sometimes', 'nullable', 'string', 'max:255'],
             'additional_info' => ['sometimes', 'nullable', 'array'],
-            'password' => ['sometimes', 'required', 'string', Password::default(), 'confirmed'],
+            'password' => ['prohibited'],
+            'password_confirmation' => ['prohibited'],
         ];
     }
 

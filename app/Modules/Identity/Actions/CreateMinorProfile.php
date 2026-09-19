@@ -14,17 +14,19 @@ use Illuminate\Validation\ValidationException;
 
 class CreateMinorProfile
 {
+    public function __construct(private IssueMinorProfileActivation $issueActivation) {}
+
     /**
      * @param  array<string, mixed>  $data
-     * @return array{profile: MinorProfile, code: string}
+     * @return array{profile: MinorProfile, activation_token: string}
      */
-    public function execute(Customer $guardian, array $data): array
+    public function execute(Customer $guardian, array $data, ?string $ipAddress = null): array
     {
         if (! config('byruhaa.minor_accounts.enabled', true)) {
             throw ValidationException::withMessages(['minor_accounts' => 'Minor accounts are currently disabled.']);
         }
 
-        return DB::transaction(function () use ($guardian, $data): array {
+        return DB::transaction(function () use ($guardian, $data, $ipAddress): array {
             $familyMember = $this->resolveFamilyMember($guardian, $data);
 
             if ($familyMember->minorProfile()->exists()) {
@@ -43,16 +45,12 @@ class CreateMinorProfile
                 'family_member_id' => $familyMember->id,
                 'member_code' => $this->uniqueMemberCode(),
                 'password' => Hash::make(Str::random(48)),
-                'status' => MinorProfileStatus::PendingGuardianVerification,
+                'status' => MinorProfileStatus::PendingChildActivation,
             ]);
 
-            $code = (string) random_int(100000, 999999);
-            $profile->verifications()->create([
-                'code_hash' => Hash::make($code),
-                'expires_at' => now()->addMinutes((int) config('byruhaa.minor_accounts.otp_expiry_minutes', 10)),
-            ]);
+            $activationToken = $this->issueActivation->execute($profile, $guardian->id, $ipAddress);
 
-            return compact('profile', 'code');
+            return ['profile' => $profile->refresh(), 'activation_token' => $activationToken];
         });
     }
 

@@ -19,6 +19,14 @@ use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
+beforeEach(function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
+
 test('customers can be managed through the api and require a phone number', function () {
     $this->postJson('/api/v1/customers', [
         'name' => 'Mona Said',

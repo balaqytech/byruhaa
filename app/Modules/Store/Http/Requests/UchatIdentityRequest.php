@@ -10,6 +10,8 @@ class UchatIdentityRequest extends UchatRequest
         return [
             'uchat_phone' => $this->phoneRules(),
             'minor_profile_id' => ['nullable', 'integer'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

@@ -29,6 +29,14 @@ function fakeCouponAffiliateAttribution(): void
     });
 }
 
+beforeEach(function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
+
 test('customer checkout applies an entered fixed coupon when it beats automatic discounts', function () {
     $customer = Customer::factory()->create();
     $event = Event::factory()->create([

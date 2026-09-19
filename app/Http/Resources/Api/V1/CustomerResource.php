@@ -29,6 +29,7 @@ class CustomerResource extends JsonResource
             'profile_complete' => $this->hasCompleteProfile(),
             'missing_required_profile_fields' => $this->missingRequiredProfileFields(),
             'email_verified_at' => $this->email_verified_at?->toJSON(),
+            'phone_verified_at' => $this->phone_verified_at?->toJSON(),
             'created_at' => $this->created_at?->toJSON(),
             'updated_at' => $this->updated_at?->toJSON(),
         ];

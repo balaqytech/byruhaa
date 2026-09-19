@@ -16,6 +16,7 @@ class UchatOrderResource extends JsonResource
             'reference' => $this->reference,
             'status' => $this->status->getValue(),
             'status_label' => $this->status->label(),
+            'payment_method' => $this->payment_method,
             'pickup_type' => $this->pickup_type,
             'pickup_at' => $this->pickup_at?->toJSON(),
             'currency' => $this->currency,

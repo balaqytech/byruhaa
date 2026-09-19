@@ -19,6 +19,8 @@ class FamilyMemberResource extends JsonResource
         return [
             'id' => $this->id,
             'customer_id' => $this->customer_id,
+            'minor_profile_id' => $this->whenLoaded('minorProfile', fn () => $this->minorProfile?->id),
+            'minor_profile_status' => $this->whenLoaded('minorProfile', fn () => $this->minorProfile?->status->value),
             'name' => $this->name,
             'birth_date' => $this->birth_date->toDateString(),
             'school_name' => $this->school_name,

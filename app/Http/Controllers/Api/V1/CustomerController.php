@@ -81,6 +81,11 @@ class CustomerController extends Controller
 
     public function destroy(Customer $customer): Response
     {
+        abort_if($customer->minorProfiles()->exists(), response()->json([
+            'code' => 'minor_account_lifecycle_required',
+            'message' => __('api_accounts.minor_account_lifecycle_required'),
+        ], 409));
+
         $customer->delete();
 
         return response()->noContent();

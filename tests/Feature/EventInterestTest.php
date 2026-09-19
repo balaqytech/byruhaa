@@ -10,6 +10,14 @@ use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use Livewire\Livewire;
 
+beforeEach(function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
+
 test('event api exposes enrollment capabilities and filters by enrollment status', function () {
     Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
     Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingOpen]);

@@ -71,6 +71,14 @@ function tierPaymentSchedule(Booking $booking): BookingInstallment
     ]);
 }
 
+beforeEach(function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
+
 test('a family moves as one group to the first tier that can fit every seat', function () {
     $event = Event::factory()->create(['seat_capacity' => 10, 'price_baisa' => 10000]);
     $firstTier = EventPriceTier::factory()->for($event)->create([

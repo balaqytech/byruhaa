@@ -2,8 +2,9 @@
 
 namespace App\Modules\Identity\Http\Controllers;
 
+use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Identity\Actions\CreateMinorProfile;
-use App\Modules\Identity\Actions\SendMinorProfileVerificationCode;
+use App\Modules\Identity\Actions\IssueMinorProfileActivation;
 use App\Modules\Identity\Actions\VerifyMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Http\Requests\StoreMinorProfileRequest;
@@ -13,7 +14,9 @@ use App\Modules\Identity\Models\MinorProfile;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\ValidationException;
 
 class MinorProfileController
 {
@@ -28,16 +31,32 @@ class MinorProfileController
         ]);
     }
 
-    public function store(StoreMinorProfileRequest $request, CreateMinorProfile $createMinorProfile, SendMinorProfileVerificationCode $sendCode): RedirectResponse
+    public function store(StoreMinorProfileRequest $request, CreateMinorProfile $createMinorProfile): RedirectResponse
     {
         /** @var Customer $guardian */
         $guardian = $request->user('customer');
-        $result = $createMinorProfile->execute($guardian, $request->validated());
-        $sendCode->execute($result['profile'], $result['code']);
+        $result = $createMinorProfile->execute($guardian, $request->validated(), $request->ip());
 
         return redirect()->route('customer.minor-profiles.index')->with([
-            'success' => 'تم إنشاء ملف القاصر وإرسال رمز التحقق إلى وليّ الأمر.',
-            'verification_profile_id' => $result['profile']->id,
+            'success' => 'تم إنشاء الحساب. شارك رابط التفعيل مع الابن لاختيار كلمة مروره.',
+            'activation_url' => URL::temporarySignedRoute('minor.activate', $result['profile']->activation_token_expires_at, [
+                'minorProfile' => $result['profile']->id,
+                'token' => $result['activation_token'],
+            ]),
+        ]);
+    }
+
+    public function activationLink(Request $request, MinorProfile $minorProfile, IssueMinorProfileActivation $issueActivation): RedirectResponse
+    {
+        $this->assertOwnedBy($request, $minorProfile);
+        $token = $issueActivation->execute($minorProfile, (int) $request->user('customer')->getAuthIdentifier(), $request->ip());
+
+        return redirect()->route('customer.minor-profiles.index')->with([
+            'success' => 'رابط التفعيل جاهز للمشاركة. لن تحتاج إلى رمز تحقق.',
+            'activation_url' => URL::temporarySignedRoute('minor.activate', $minorProfile->refresh()->activation_token_expires_at, [
+                'minorProfile' => $minorProfile->id,
+                'token' => $token,
+            ]),
         ]);
     }
 
@@ -92,14 +111,56 @@ class MinorProfileController
         return back()->with('success', $minorProfile->direct_payment_enabled ? 'تم السماح بالدفع المباشر.' : 'تم إيقاف الدفع المباشر.');
     }
 
-    public function requestDeletion(Request $request, MinorProfile $minorProfile): RedirectResponse
+    public function toggleWalletSpending(Request $request, MinorProfile $minorProfile): RedirectResponse
+    {
+        $this->assertOwnedBy($request, $minorProfile);
+        abort_unless(config('byruhaa.wallets.enabled', false), 404);
+
+        abort_unless($minorProfile->status === MinorProfileStatus::Active, 404);
+
+        /** @var Customer $customer */
+        $customer = $request->user('customer');
+        if (! $customer->hasVerifiedPhone()) {
+            throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before enabling wallet spending.']);
+        }
+
+        $enabling = ! $minorProfile->wallet_spending_enabled;
+        $minorProfile->forceFill(['wallet_spending_enabled' => $enabling])->save();
+
+        if ($enabling) {
+            $minorProfile->consents()->create([
+                'purpose' => 'wallet_spending',
+                'policy_version' => (string) config('byruhaa.wallets.consent_policy_version', 'wallet-spending-v1'),
+                'policy_hash' => hash('sha256', (string) config('byruhaa.wallets.consent_policy_text', 'guardian-consent-wallet-spending')),
+                'accepted_at' => now(),
+                'accepted_ip' => $request->ip(),
+            ]);
+        }
+
+        return back()->with('success', $minorProfile->wallet_spending_enabled ? 'تم السماح بالدفع من المحفظة.' : 'تم إيقاف الدفع من المحفظة.');
+    }
+
+    public function requestDeletion(Request $request, MinorProfile $minorProfile, WalletService $wallets): RedirectResponse
     {
         $this->assertOwnedBy($request, $minorProfile);
 
-        $minorProfile->forceFill([
-            'status' => MinorProfileStatus::DeletionRequested,
-            'deletion_requested_at' => now(),
-        ])->save();
+        DB::transaction(function () use ($minorProfile, $wallets): void {
+            $minorProfile = MinorProfile::query()
+                ->whereKey($minorProfile->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $wallets->canClose($minorProfile->id)) {
+                throw ValidationException::withMessages([
+                    'wallet' => 'Empty or cancel the child wallet before requesting account deletion.',
+                ]);
+            }
+
+            $minorProfile->forceFill([
+                'status' => MinorProfileStatus::DeletionRequested,
+                'deletion_requested_at' => now(),
+            ])->save();
+        });
 
         return back()->with('success', 'تم تسجيل طلب حذف الحساب، وسيتم التواصل معك عبر القنوات الرسمية.');
     }
