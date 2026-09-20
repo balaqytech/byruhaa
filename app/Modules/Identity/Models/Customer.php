@@ -118,6 +118,11 @@ class Customer extends Authenticatable
         return $this->phone_verified_at !== null;
     }
 
+    public function requiresPhoneVerification(): bool
+    {
+        return (bool) config('byruhaa.phone_verification.required', false) && ! $this->hasVerifiedPhone();
+    }
+
     /**
      * @return HasManyThrough<MinorProfile, FamilyMember, $this>
      */

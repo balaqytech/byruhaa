@@ -40,7 +40,7 @@ class WalletController
 
         /** @var Customer $customer */
         $customer = $request->user('customer');
-        if (! $customer->hasVerifiedPhone()) {
+        if ($customer->requiresPhoneVerification()) {
             return back()->withErrors(['phone' => 'Verify the guardian phone before adding wallet funds.']);
         }
 

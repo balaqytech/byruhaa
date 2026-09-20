@@ -32,6 +32,7 @@ class UchatAccountController extends Controller
             'customer_id' => $guardian->id,
             'name' => $guardian->name,
             'phone_verified' => $guardian->hasVerifiedPhone(),
+            'phone_verification_required' => (bool) config('byruhaa.phone_verification.required', false),
             'phone_verified_at' => $guardian->phone_verified_at?->toJSON(),
             'minor_accounts_enabled' => (bool) config('byruhaa.minor_accounts.enabled', true),
             'wallets_enabled' => (bool) config('byruhaa.wallets.enabled', false),

@@ -197,7 +197,7 @@ class UchatStoreController
             }
 
             $profile = $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
-            if (! $profile->guardianPhoneVerified) {
+            if ($profile->requiresGuardianPhoneVerification()) {
                 throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
             }
 
@@ -241,7 +241,7 @@ class UchatStoreController
             }
 
             $profile = $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
-            if (! $profile->guardianPhoneVerified) {
+            if ($profile->requiresGuardianPhoneVerification()) {
                 throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
             }
 
@@ -330,7 +330,7 @@ class UchatStoreController
             throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account to view its wallet.']);
         }
         $profile = $this->minorProfiles->forGuardian($profileId, (int) $request->customerId());
-        if (! $profile->guardianPhoneVerified) {
+        if ($profile->requiresGuardianPhoneVerification()) {
             throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
         }
 

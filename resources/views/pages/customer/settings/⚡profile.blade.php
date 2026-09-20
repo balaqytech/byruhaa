@@ -94,22 +94,24 @@ new #[Title('إعدادات الملف الشخصي')] class extends Component {
             </div>
         </form>
 
-        <div class="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-900/10 p-4 dark:border-white/10">
-            @if ($phoneVerified)
-                <flux:badge color="emerald">رقم الهاتف موثّق</flux:badge>
-            @else
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
-                    <form method="POST" action="{{ route('customer.phone-verification.send') }}">
-                        @csrf
-                        <flux:button type="submit" variant="outline">إرسال رمز التحقق</flux:button>
-                    </form>
-                    <form method="POST" action="{{ route('customer.phone-verification.verify') }}" class="flex items-end gap-2">
-                        @csrf
-                        <flux:input name="code" label="رمز التحقق" inputmode="numeric" maxlength="6" />
-                        <flux:button type="submit" variant="primary">تحقق</flux:button>
-                    </form>
-                </div>
-            @endif
-        </div>
+        @if (config('byruhaa.phone_verification.required', false))
+            <div class="flex flex-wrap items-center gap-3 rounded-xl border border-emerald-900/10 p-4 dark:border-white/10">
+                @if ($phoneVerified)
+                    <flux:badge color="emerald">رقم الهاتف موثّق</flux:badge>
+                @else
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                        <form method="POST" action="{{ route('customer.phone-verification.send') }}">
+                            @csrf
+                            <flux:button type="submit" variant="outline">إرسال رمز التحقق</flux:button>
+                        </form>
+                        <form method="POST" action="{{ route('customer.phone-verification.verify') }}" class="flex items-end gap-2">
+                            @csrf
+                            <flux:input name="code" label="رمز التحقق" inputmode="numeric" maxlength="6" />
+                            <flux:button type="submit" variant="primary">تحقق</flux:button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+        @endif
     </x-pages::customer.settings.layout>
 </section>

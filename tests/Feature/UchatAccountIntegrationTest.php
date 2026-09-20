@@ -29,7 +29,8 @@ test('account discovery is guardian scoped and includes inactive profiles and ve
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create(['status' => MinorProfileStatus::Suspended]);
     MinorProfile::factory()->create();
 
-    $this->getJson('/api/v1/integrations/uchat/store/account')->assertOk()->assertJsonPath('data.phone_verified', false);
+    $this->getJson('/api/v1/integrations/uchat/store/account')->assertOk()
+        ->assertJsonPath('data.phone_verified', false)->assertJsonPath('data.phone_verification_required', false);
     $this->getJson('/api/v1/integrations/uchat/store/minor-profiles')->assertOk()->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.minor_profile_id', $profile->id)->assertJsonPath('data.0.status', 'suspended')
         ->assertJsonMissingPath('data.0.password');
@@ -157,5 +158,8 @@ test('top up status distinguishes paid from credited and hides other wallets', f
     $other = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create();
     $this->getJson("/api/v1/integrations/uchat/store/wallet/top-ups/{$topUp->reference}?minor_profile_id={$other->id}")->assertNotFound();
     $guardian->forceFill(['phone_verified_at' => null])->save();
+    $this->getJson("/api/v1/integrations/uchat/store/wallet/movements?minor_profile_id={$profile->id}")->assertOk();
+    $this->getJson("/api/v1/integrations/uchat/store/wallet?minor_profile_id={$profile->id}")->assertOk();
+    config(['byruhaa.phone_verification.required' => true]);
     $this->getJson("/api/v1/integrations/uchat/store/wallet/movements?minor_profile_id={$profile->id}")->assertUnprocessable()->assertJsonPath('reasons.phone.0', 'guardian_phone_unverified');
 });

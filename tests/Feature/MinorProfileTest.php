@@ -232,6 +232,7 @@ test('guardian payment is required until direct payment is explicitly enabled', 
 });
 
 test('minor order payment controls respect the selected method and guardian permissions', function (string $method, bool $direct, bool $wallet, bool $verified, bool $enabled, ?string $reason, string $button): void {
+    config(['byruhaa.phone_verification.required' => true]);
     config(['byruhaa.wallets.enabled' => $enabled]);
     $customer = Customer::factory()->create(['phone_verified_at' => $verified ? now() : null]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create([

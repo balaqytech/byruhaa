@@ -96,7 +96,7 @@ class MinorProfileStoreController
             return 'يلزم أن يفعّل وليّ الأمر «السماح بالدفع من المحفظة» من حسابه.';
         }
 
-        if (! $profile->guardian()->hasVerifiedPhone()) {
+        if ($profile->guardian()->requiresPhoneVerification()) {
             return 'يلزم توثيق هاتف وليّ الأمر قبل الدفع من المحفظة.';
         }
 

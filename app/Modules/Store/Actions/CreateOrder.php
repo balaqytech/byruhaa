@@ -60,7 +60,7 @@ class CreateOrder
                     throw ValidationException::withMessages(['payment_method' => 'Wallet spending is not enabled for this child account.']);
                 }
 
-                if ($paymentMethod === 'wallet' && ! $minorProfile->guardianPhoneVerified) {
+                if ($paymentMethod === 'wallet' && $minorProfile->requiresGuardianPhoneVerification()) {
                     throw ValidationException::withMessages(['payment_method' => 'Verify the guardian phone before using the wallet.']);
                 }
 

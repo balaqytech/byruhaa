@@ -210,9 +210,9 @@ test('UChat order history and details are restricted to the normalized phone', f
     $this->withHeaders(uchatHeaders())->getJson('/api/v1/integrations/uchat/store/orders/'.$other->reference)->assertNotFound();
 });
 
-test('UChat can initiate an idempotent wallet top up for an owned verified child', function (): void {
+test('UChat wallet top ups respect the optional phone verification requirement', function (bool $verificationRequired): void {
     enableUchatStore();
-    config(['byruhaa.wallets.enabled' => true]);
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.phone_verification.required' => $verificationRequired]);
     Http::fake([
         'https://uatcheckout.thawani.om/api/v1/checkout/session' => Http::response([
             'success' => true,
@@ -222,7 +222,7 @@ test('UChat can initiate an idempotent wallet top up for an owned verified child
 
     $customer = Customer::factory()->create([
         'phone_number' => '+96891234567',
-        'phone_verified_at' => now(),
+        'phone_verified_at' => $verificationRequired ? now() : null,
     ]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
     $headers = uchatHeaders([
@@ -263,7 +263,7 @@ test('UChat can initiate an idempotent wallet top up for an owned verified child
         ->assertJsonPath('code', 'validation_failed');
 
     expect(Payment::query()->where('subject_type', 'wallet_topup')->count())->toBe(1);
-});
+})->with([true, false]);
 
 test('store state transitions queue one signed UChat webhook per state', function (): void {
     enableUchatStore();

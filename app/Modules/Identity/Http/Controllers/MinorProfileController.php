@@ -120,7 +120,7 @@ class MinorProfileController
 
         /** @var Customer $customer */
         $customer = $request->user('customer');
-        if (! $customer->hasVerifiedPhone()) {
+        if ($customer->requiresPhoneVerification()) {
             throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before enabling wallet spending.']);
         }
 

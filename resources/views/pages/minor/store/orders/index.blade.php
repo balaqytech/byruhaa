@@ -31,7 +31,7 @@
                         الدفع غير متاح من هذه المحفظة حاليًا. راجع وليّ الأمر.
                     @elseif (! $profile->wallet_spending_enabled)
                         الدفع من المحفظة غير مفعّل. اطلب من وليّ الأمر تفعيله من حسابه.
-                    @elseif (! $profile->guardian()->hasVerifiedPhone())
+                    @elseif ($profile->guardian()->requiresPhoneVerification())
                         يلزم توثيق هاتف وليّ الأمر قبل الدفع من المحفظة.
                     @else
                         يمكنك اختيار المحفظة عند إتمام الطلب. شحن الرصيد يتم من حساب وليّ الأمر.

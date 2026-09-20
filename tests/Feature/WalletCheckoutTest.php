@@ -21,11 +21,11 @@ use Livewire\Livewire;
 
 beforeEach(function (): void {
     Queue::fake();
-    config(['byruhaa.wallets.enabled' => true]);
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.phone_verification.required' => false]);
     $settings = app(StoreSettings::class);
     $settings->ordering_enabled = true;
     $settings->save();
-    $this->guardian = Customer::factory()->create(['phone_verified_at' => now()]);
+    $this->guardian = Customer::factory()->create(['phone_verified_at' => null]);
     $this->profile = MinorProfile::factory()->for(FamilyMember::factory()->for($this->guardian))
         ->create(['wallet_spending_enabled' => true]);
     $this->wallet = app(WalletService::class)->walletForMinorProfile($this->profile->id);
@@ -52,7 +52,8 @@ beforeEach(function (): void {
 
 test('minor wallet checkout confirms orders with or without tracked stock exactly once', function (bool $tracksInventory): void {
     $this->option->update(['tracks_inventory' => $tracksInventory]);
-    $component = Livewire::test(Checkout::class)->set('paymentMethod', 'wallet')->call('placeOrder')->assertHasNoErrors();
+    $component = Livewire::test(Checkout::class)->assertSet('walletPaymentAvailable', true)
+        ->set('paymentMethod', 'wallet')->call('placeOrder')->assertHasNoErrors();
     $order = Order::query()->sole();
     $component->assertRedirect(route('minor.orders.show', $order->payment_token))->assertDispatched('store-cart-updated');
     app(ConfirmWalletOrder::class)->execute($order, $this->guardian->id, $this->profile->id);
@@ -68,6 +69,16 @@ test('minor wallet checkout confirms orders with or without tracked stock exactl
         expect($order->inventoryReservation)->toBeNull();
     }
 })->with([true, false]);
+
+test('verification can be required again without marking unverified phones as verified', function (): void {
+    config(['byruhaa.phone_verification.required' => true]);
+    Livewire::test(Checkout::class)->assertSet('walletPaymentAvailable', false)
+        ->set('paymentMethod', 'wallet')->call('placeOrder')->assertHasErrors();
+
+    expect($this->guardian->refresh()->phone_verified_at)->toBeNull()
+        ->and($this->wallet->refresh()->balance_baisa)->toBe(5000)
+        ->and(Order::query()->count())->toBe(0);
+});
 
 test('insufficient wallet checkout keeps the cart and rolls back inventory so it can be retried', function (): void {
     $this->wallet->update(['balance_baisa' => 0]);

@@ -4,6 +4,10 @@ return [
     'approval_mechanism' => env('BYRUHAA_APPROVAL_MECHANISM', 'manual'),
     'seat_hold_minutes' => (int) env('BYRUHAA_SEAT_HOLD_MINUTES', 15),
 
+    'phone_verification' => [
+        'required' => filter_var(env('CUSTOMER_PHONE_VERIFICATION_REQUIRED', false), FILTER_VALIDATE_BOOLEAN),
+    ],
+
     'minor_accounts' => [
         'enabled' => filter_var(env('MINOR_ACCOUNTS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
         'otp_expiry_minutes' => (int) env('MINOR_ACCOUNT_OTP_EXPIRY_MINUTES', 10),
