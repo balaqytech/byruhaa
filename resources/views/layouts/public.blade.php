@@ -181,7 +181,7 @@
 
     <footer data-public-footer
         class="border-t border-[#2a8069]/12 bg-white/68 pb-28 dark:border-white/10 dark:bg-white/5 lg:pb-0">
-        <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_.8fr_.8fr] lg:px-8">
+        <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.2fr_.8fr_.8fr_1fr] lg:px-8">
             <div class="max-w-xl">
                 <div class="flex items-center gap-3">
                     <span
@@ -212,10 +212,6 @@
                     <a href="{{ route($link['route']) }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $link['label'] }}</a>
                 @endforeach
-                @foreach ($publishedPolicyPages ?? [] as $policy)
-                    <a href="{{ route('policies.show', ['page' => $policy->key]) }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $policy->title }}</a>
-                @endforeach
             </nav>
 
             <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62"
@@ -238,6 +234,17 @@
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
                 @endif
             </nav>
+
+            @if (($publishedPolicyPages ?? collect())->isNotEmpty())
+                <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62"
+                    aria-label="السياسات والشروط">
+                    <p class="font-heading text-base font-bold text-[#123329] dark:text-[#f7f1df]">السياسات والشروط</p>
+                    @foreach ($publishedPolicyPages as $policy)
+                        <a href="{{ route('policies.show', ['page' => $policy->key]) }}"
+                            class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $policy->title }}</a>
+                    @endforeach
+                </nav>
+            @endif
         </div>
 
         <div class="border-t border-[#2a8069]/12 dark:border-white/10">

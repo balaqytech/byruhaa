@@ -15,6 +15,7 @@
         @endif
         <flux:input name="password" :error:message="$errors->has('password') ? __($errors->first('password')) : null" label="كلمة المرور" type="password" autocomplete="new-password" dir="ltr" required viewable />
         <flux:input name="password_confirmation" :error:message="$errors->has('password_confirmation') ? __($errors->first('password_confirmation')) : null" label="تأكيد كلمة المرور" type="password" autocomplete="new-password" dir="ltr" required viewable />
+        <x-policy-links :pages="['student-accounts', 'privacy']" label="تعرف على استخدام حسابك وخصوصيتك" />
         <flux:button type="submit" variant="primary" class="w-full">تفعيل الحساب</flux:button>
     </form>
 </section>

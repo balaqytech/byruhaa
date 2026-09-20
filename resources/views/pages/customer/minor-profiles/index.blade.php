@@ -43,6 +43,7 @@
                 </div>
                 <p x-cloak x-show="familyMemberId" class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">سيُستخدم الاسم وتاريخ الميلاد المسجّلان لفرد الأسرة.</p>
                 <p class="text-xs leading-6 text-emerald-900/70 dark:text-white/70">بإنشاء الحساب، توافق على استخدام الابن للمتجر تحت إشرافك. تبقى صلاحيات الدفع متوقفة إلى أن تفعّلها.</p>
+                <x-policy-links :pages="['student-accounts', 'privacy']" label="راجع قبل إنشاء حساب الابن" />
                 <flux:button type="submit" variant="primary" class="w-full">إنشاء الحساب</flux:button>
             </form>
         </aside>
@@ -50,6 +51,7 @@
         <div class="min-w-0 space-y-4 lg:col-span-2">
             <div class="flex items-center gap-3"><h2 class="text-lg font-semibold">حسابات الأبناء</h2><flux:badge size="sm">{{ $profiles->count() }}</flux:badge></div>
             <p class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">بعد التفعيل، يدخل الابن برمز العضوية الموضّح في بطاقته وكلمة مروره.</p>
+            <x-policy-links :pages="['student-accounts', 'wallet', 'refund-cancellation']" label="راجع قبل تغيير صلاحيات الدفع أو طلب الحذف" />
             @forelse ($profiles as $profile)
                 <article class="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:border-white/10 dark:bg-zinc-900">
                     <header class="flex flex-wrap items-start justify-between gap-4 bg-emerald-50/60 p-5 dark:bg-white/5 sm:p-6">

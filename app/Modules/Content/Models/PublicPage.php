@@ -35,6 +35,7 @@ class PublicPage extends Model implements HasRichContent
         'terms',
         'pickup',
         'student-accounts',
+        'wallet',
         'faq',
         'allergens',
         'affiliate-terms',

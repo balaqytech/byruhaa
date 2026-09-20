@@ -182,6 +182,8 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
 
     <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:heading>تتبع الحالة</flux:heading><div class="mt-4 space-y-4">@foreach ($order->statusHistory as $history)<div wire:key="status-history-{{ $history->id }}" class="flex gap-3"><span class="mt-1 size-2 shrink-0 rounded-full bg-emerald-600"></span><div><flux:heading class="text-sm">{{ $this->statusLabel($history->to_status) }}</flux:heading><flux:text>{{ $history->note ? __($history->note) : '' }}</flux:text><flux:text dir="ltr">{{ $history->created_at->format('Y-m-d H:i') }}</flux:text></div></div>@endforeach</div></div>
 
+    <x-policy-links :pages="$order->payment_method === 'wallet' ? ['wallet', 'pickup', 'refund-cancellation'] : ['terms', 'pickup', 'refund-cancellation']" label="سياسات الدفع والاستلام" />
+
     <div class="flex flex-wrap gap-3">
         @if ($order->status->getValue() === OrderStatus::PendingPayment->value)
             @if ($order->payment_method === 'wallet')

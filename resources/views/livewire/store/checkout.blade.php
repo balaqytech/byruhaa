@@ -97,11 +97,7 @@
 
                     <div class="rounded-xl border border-[#007a52]/18 bg-[#e9f7f0] p-4 text-sm leading-7 text-[#006746] dark:border-[#6ee7b7]/20 dark:bg-[#0c2a20] dark:text-[#a7f3d0]">{{ $paymentMethod === 'wallet' ? 'سيُخصم المبلغ من محفظة حساب الابن بعد التحقق من الرصيد والمخزون.' : 'بعد تأكيد الطلب ستنتقل إلى بوابة ثواني للدفع الآمن. لا نحتفظ ببيانات بطاقتك.' }}</div>
 
-                    <p class="text-xs leading-6 text-[#315e52]/75 dark:text-[#d2e7df]/65">
-                        بمتابعة الطلب، يمكنك مراجعة
-                        <a href="{{ route('policies.show', ['page' => 'terms']) }}" class="font-bold text-[#007a52] underline underline-offset-2 dark:text-[#6ee7b7]">الشروط والأحكام</a>
-                        و<a href="{{ route('policies.show', ['page' => 'refund-cancellation']) }}" class="font-bold text-[#007a52] underline underline-offset-2 dark:text-[#6ee7b7]">سياسة الإلغاء والاسترداد</a>.
-                    </p>
+                    <x-policy-links :pages="$paymentMethod === 'wallet' ? ['terms', 'privacy', 'pickup', 'refund-cancellation', 'wallet'] : ['terms', 'privacy', 'pickup', 'refund-cancellation']" label="راجع السياسات قبل تأكيد الطلب" />
 
                     <button type="submit" wire:loading.attr="disabled" wire:target="placeOrder" @disabled(! $orderingEnabled || ! $quote) class="inline-flex min-h-14 items-center justify-center gap-2 rounded-xl bg-[#007a52] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#006746] disabled:cursor-wait disabled:opacity-55">
                         <span wire:loading.remove wire:target="placeOrder">{{ $paymentMethod === 'wallet' ? 'تأكيد الطلب والدفع من المحفظة' : 'تأكيد الطلب والمتابعة إلى الدفع' }}</span>

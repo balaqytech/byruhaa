@@ -40,6 +40,7 @@
             </div>
             <div class="rounded-2xl border border-emerald-900/10 bg-white p-6 dark:border-white/10 dark:bg-zinc-900">
                 <h2 class="text-lg font-semibold">آخر حركات المحفظة</h2>
+                <x-policy-links :pages="['wallet', 'refund-cancellation']" label="تعرف على استخدام رصيدك والاسترداد" class="mt-3" />
                 <div class="mt-4 max-h-72 overflow-y-auto divide-y divide-emerald-900/10 dark:divide-white/10">
                     @forelse ($wallet->movements as $movement)
                         <div class="flex items-center justify-between gap-3 py-3">

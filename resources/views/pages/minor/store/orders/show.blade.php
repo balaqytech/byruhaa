@@ -29,6 +29,7 @@
         </div>
         <aside class="rounded-2xl border border-emerald-900/10 bg-white p-6 dark:border-white/10 dark:bg-zinc-900">
             <h2 class="mb-3 text-lg font-semibold">{{ $order->status->getValue() === 'pending_payment' ? 'إتمام الدفع' : 'حالة الطلب' }}</h2>
+            <x-policy-links :pages="$order->payment_method === 'wallet' ? ['wallet', 'pickup', 'refund-cancellation'] : ['terms', 'pickup', 'refund-cancellation']" label="سياسات الدفع والاستلام" class="mb-4" />
             @if ($order->status->getValue() === 'pending_payment')
                 @if ($paymentBlockReason)
                     <p class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">{{ __($paymentBlockReason) }}</p>

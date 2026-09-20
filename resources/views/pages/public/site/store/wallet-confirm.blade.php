@@ -24,6 +24,7 @@
 
         <form method="POST" action="{{ route('customer.store.orders.wallet.confirm', $order->payment_token) }}">
             @csrf
+            <x-policy-links :pages="['wallet', 'refund-cancellation']" label="راجع قبل تأكيد الخصم" class="mb-4" />
             <button class="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white hover:bg-emerald-800">تأكيد الخصم والدفع</button>
         </form>
     </section>

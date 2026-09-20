@@ -28,6 +28,7 @@
                 <p class="mt-1 text-sm text-emerald-900/70 dark:text-white/70">سيتم تحويلك إلى صفحة الدفع الآمنة لإتمام الشحن.</p>
             </div>
             <flux:input name="amount_omr" :error:message="$errors->has('amount_omr') ? __($errors->first('amount_omr')) : null" label="المبلغ بالريال العماني" type="number" inputmode="decimal" required min="0.100" max="100000" step="0.001" :value="old('amount_omr', '1.000')" dir="ltr" />
+            <x-policy-links :pages="['wallet', 'refund-cancellation']" label="راجع شروط الشحن والاسترداد قبل الدفع" />
             <flux:button type="submit" variant="primary">متابعة الدفع عبر ثواني</flux:button>
         </form>
 
