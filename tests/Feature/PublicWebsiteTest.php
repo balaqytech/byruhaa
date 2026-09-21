@@ -12,6 +12,8 @@ use App\Modules\Events\Models\Discount;
 use App\Modules\Events\Models\Event;
 use App\Modules\Events\Models\EventPaymentPlan;
 use App\Modules\Events\Models\EventPaymentPlanInstallment;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\MinorProfile;
 use App\Support\EventLandingPageRegistry;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
@@ -91,23 +93,64 @@ test('public event cards show their editorial card content', function () {
 });
 
 test('coffee page renders the database-backed public storefront', function () {
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.minor_accounts.enabled' => true]);
+
     expect(config('coffee.groups'))->toHaveCount(4)
         ->and(config('coffee.currency'))->toBe('OMR');
 
     $this->assertFileExists(public_path('images/coffee-byruha-hero.webp'));
+    $this->assertFileExists(public_path('images/coffee-byruha-hero-mobile.webp'));
     $this->assertFileExists(public_path('images/coffee-byruha-menu.webp'));
 
     $this->get(route('coffee'))
         ->assertSuccessful()
         ->assertViewIs('pages.public.site.coffee')
-        ->assertSee('قهوة بيرحاء')
-        ->assertSee('اطلب مسبقًا')
+        ->assertSee('ليس مقهى، بل عالم')
+        ->assertSeeInOrder(['تصفّح القائمة', 'اختر من قائمتنا', 'مكان يجمع يوم الفتى', 'حساب واحد، ومحفظة لكل ابن', 'زرنا في بيرحاء'])
+        ->assertSee('id="menu"', false)
+        ->assertSee('id="family-wallets"', false)
+        ->assertSee('أنشئ حساب وليّ الأمر')
+        ->assertSee(route('register'), false)
         ->assertSee('wire:id=', false)
+        ->assertSee('data-coffee-hero', false)
+        ->assertSee('min-h-[calc(100dvh-5rem)]', false)
+        ->assertSee('data-coffee-hero-media', false)
         ->assertSee('images/coffee-byruha-hero.webp', false)
+        ->assertSee('images/coffee-byruha-hero-mobile.webp', false)
         ->assertSee('images/coffee-byruha-menu.webp', false)
         ->assertSee('https://wa.me/96874155123', false)
-        ->assertSee('relative z-10 mt-4 max-w-md', false)
-        ->assertDontSee('-mt-6', false);
+        ->assertSee('media="(max-width: 767px)"', false)
+        ->assertDontSee('الأكثر طلبًا');
+});
+
+test('coffee wallet call to action follows the signed in account', function (string $guard): void {
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.minor_accounts.enabled' => true]);
+
+    if ($guard === 'customer') {
+        $user = Customer::factory()->create();
+        $expectedUrl = route('customer.minor-profiles.index');
+        $expectedLabel = 'إدارة حسابات الأبناء';
+    } else {
+        $user = MinorProfile::factory()->create();
+        $expectedUrl = route('minor.orders.index').'#wallet';
+        $expectedLabel = 'اذهب إلى حسابي ومحفظتي';
+    }
+
+    $this->actingAs($user, $guard)
+        ->get(route('coffee'))
+        ->assertSuccessful()
+        ->assertSee($expectedUrl, false)
+        ->assertSee($expectedLabel);
+})->with(['customer', 'minor-profile']);
+
+test('coffee page hides wallet claims while the feature is disabled', function (): void {
+    config(['byruhaa.wallets.enabled' => false]);
+
+    $this->get(route('coffee'))
+        ->assertSuccessful()
+        ->assertDontSee('id="family-wallets"', false)
+        ->assertSee('تعرّف على المكان')
+        ->assertSee('لمتابعة الطلبات والفواتير');
 });
 
 test('umrah event is seeded with its canonical landing page data', function () {

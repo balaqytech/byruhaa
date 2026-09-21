@@ -19,6 +19,7 @@ class CategoryFactory extends Factory
 
         return [
             'name' => $name,
+            'short_name' => null,
             'slug' => Str::slug($name).'-'.Str::lower(Str::random(5)),
             'description' => fake()->optional()->sentence(),
             'sort_order' => fake()->numberBetween(0, 10),

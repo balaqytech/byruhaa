@@ -22,11 +22,16 @@ test('catalog migrations create the store tables and required columns', function
 
     expect(Schema::getColumnListing('store_categories'))
         ->toContain('name')
+        ->toContain('short_name')
         ->toContain('slug')
         ->toContain('is_active');
 
     expect(Schema::getColumnListing('store_products'))
         ->toContain('category_id')
+        ->toContain('source_name')
+        ->toContain('author_name')
+        ->toContain('display_tag')
+        ->toContain('allergens')
         ->toContain('featured_image_id')
         ->toContain('status');
 
@@ -150,7 +155,8 @@ test('the catalog exposes featured products in a separate tab without changing t
     Livewire::test(CoffeeStore::class)
         ->call('selectFeatured')
         ->assertSet('featuredOnly', true)
-        ->assertSee('الأكثر طلبًا')
+        ->assertSee('مختاراتنا')
+        ->assertSee('aria-pressed="true"', false)
         ->assertSee($featured->name)
         ->assertDontSee($regular->name)
         ->call('selectCategory', $category->id)
@@ -163,7 +169,7 @@ test('the featured tab is hidden when the catalog has no featured products', fun
     Product::factory()->active()->create(['category_id' => $category->id, 'is_featured' => false]);
 
     Livewire::test(CoffeeStore::class)
-        ->assertDontSee('الأكثر طلبًا')
+        ->assertDontSee('مختاراتنا')
         ->call('selectFeatured')
         ->assertSet('featuredOnly', false);
 });
@@ -181,6 +187,7 @@ test('the initial selector state uses the product default option', function (): 
     Livewire::test(CoffeeStore::class)
         ->assertSet('selectedOptions.'.$product->id, $default->id)
         ->assertSee($default->name)
+        ->assertSee('لا توجد صورة متاحة للمنتج')
         ->assertDontSee('wire:click="addToCart('.$alternative->id.')"', false);
 });
 

@@ -7,6 +7,7 @@ use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -62,7 +63,19 @@ class ProductForm
                             ->visible(fn (callable $get): bool => (bool) $get('is_featured')),
                     ]),
                 Section::make(__('admin.store.sections.content'))
+                    ->columns(2)
                     ->schema([
+                        TextInput::make('source_name')
+                            ->label(__('admin.fields.source_name'))
+                            ->maxLength(255),
+                        TextInput::make('author_name')
+                            ->label(__('admin.fields.author_name'))
+                            ->maxLength(255),
+                        TextInput::make('display_tag')
+                            ->label(__('admin.fields.display_tag'))
+                            ->maxLength(255),
+                        TagsInput::make('allergens')
+                            ->label(__('admin.fields.allergens')),
                         Textarea::make('description')
                             ->label(__('admin.fields.description'))
                             ->maxLength(500)

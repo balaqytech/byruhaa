@@ -19,15 +19,19 @@ use Slimani\MediaManager\Models\File;
  * @property int $id
  * @property int $category_id
  * @property string $name
+ * @property string|null $source_name
+ * @property string|null $author_name
+ * @property string|null $display_tag
  * @property string $slug
  * @property string|null $description
+ * @property array<int, string>|null $allergens
  * @property int|null $featured_image_id
  * @property ProductStatus $status
  * @property int $sort_order
  * @property bool $is_featured
  * @property int $featured_sort_order
  */
-#[Fillable(['category_id', 'name', 'slug', 'description', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
+#[Fillable(['category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'allergens', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
 class Product extends Model implements AuditableContract
 {
     protected $table = 'store_products';
@@ -41,8 +45,12 @@ class Product extends Model implements AuditableContract
     protected $auditInclude = [
         'category_id',
         'name',
+        'source_name',
+        'author_name',
+        'display_tag',
         'slug',
         'description',
+        'allergens',
         'featured_image_id',
         'status',
         'sort_order',
@@ -125,6 +133,7 @@ class Product extends Model implements AuditableContract
     {
         return [
             'status' => ProductStatus::class,
+            'allergens' => 'array',
             'sort_order' => 'integer',
             'is_featured' => 'boolean',
             'featured_sort_order' => 'integer',

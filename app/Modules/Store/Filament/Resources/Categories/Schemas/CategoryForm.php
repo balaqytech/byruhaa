@@ -20,6 +20,9 @@ class CategoryForm
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))),
+                TextInput::make('short_name')
+                    ->label(__('admin.fields.short_name'))
+                    ->maxLength(255),
                 TextInput::make('slug')
                     ->label(__('admin.fields.slug'))
                     ->required()

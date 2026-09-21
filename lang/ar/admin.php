@@ -273,6 +273,11 @@ return [
 
     'fields' => [
         'affiliate' => 'المسوق',
+        'allergens' => 'مسبّبات الحساسية',
+        'author_name' => 'اسم المؤلف',
+        'display_tag' => 'وسم العرض',
+        'short_name' => 'الاسم المختصر',
+        'source_name' => 'الاسم الأصلي',
         'affiliate_code' => 'رمز المسوق',
         'affiliate_link' => 'رابط المسوق',
         'affiliate_name' => 'اسم المسوق',

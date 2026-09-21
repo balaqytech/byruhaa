@@ -149,6 +149,11 @@ class CoffeeStore extends Component
     public function render(): View
     {
         $catalog = $this->browseCatalog->execute();
+
+        if (! $this->featuredOnly && ! $catalog->contains('id', $this->categoryId)) {
+            $this->categoryId = $catalog->first()?->getKey();
+        }
+
         $this->initializeSelectedOptions($catalog);
 
         $featuredCatalog = $catalog
@@ -169,9 +174,12 @@ class CoffeeStore extends Component
 
         if ($this->featuredOnly && $featuredCatalog->isEmpty()) {
             $this->featuredOnly = false;
+            $this->categoryId = $catalog->first()?->getKey();
         }
 
-        $displayCatalog = $this->featuredOnly ? $featuredCatalog : $catalog;
+        $displayCatalog = $this->featuredOnly
+            ? $featuredCatalog
+            : $catalog->where('id', $this->categoryId)->values();
         $cart = $this->loadCart();
         $quote = null;
 
@@ -191,7 +199,25 @@ class CoffeeStore extends Component
             'cart' => $cart,
             'quote' => $quote,
             'orderingEnabled' => $this->settings->ordering_enabled,
+            'categoryVisuals' => $this->categoryVisuals(),
         ]);
+    }
+
+    /** @return array<string, array{image: string, from: string, to: string}> */
+    private function categoryVisuals(): array
+    {
+        $imageQuery = '?auto=format&fit=crop&w=640&h=960&q=75';
+
+        return [
+            'fresh' => ['image' => 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd'.$imageQuery, 'from' => '#0E7C7B', 'to' => '#0B3F3E'],
+            'frozen' => ['image' => 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f'.$imageQuery, 'from' => '#2C5A7A', 'to' => '#10263A'],
+            'sweets' => ['image' => 'https://images.unsplash.com/photo-1578985545062-69928b1d9587'.$imageQuery, 'from' => '#7A3E2E', 'to' => '#2E150F'],
+            'cold' => ['image' => 'https://images.unsplash.com/photo-1461988091159-192b6df7054f'.$imageQuery, 'from' => '#1F3352', 'to' => '#0A1424'],
+            'hot' => ['image' => 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085'.$imageQuery, 'from' => '#5A3A1E', 'to' => '#24160A'],
+            'tools' => ['image' => 'https://images.unsplash.com/photo-1442512595331-e89e73853f31'.$imageQuery, 'from' => '#3B3F45', 'to' => '#15181C'],
+            'antiques' => ['image' => 'https://images.unsplash.com/photo-1519669556878-63bdad8a1a49'.$imageQuery, 'from' => '#6B5321', 'to' => '#2E2410'],
+            'books' => ['image' => 'https://images.unsplash.com/photo-1512820790803-83ca734da794'.$imageQuery, 'from' => '#16263F', 'to' => '#6B5321'],
+        ];
     }
 
     /** @param Collection<int, Category> $catalog */

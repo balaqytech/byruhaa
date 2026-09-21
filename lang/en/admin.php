@@ -279,6 +279,11 @@ return [
 
     'fields' => [
         'amount' => 'Amount',
+        'allergens' => 'Allergens',
+        'author_name' => 'Author name',
+        'display_tag' => 'Display tag',
+        'short_name' => 'Short name',
+        'source_name' => 'Source name',
         'additional_info' => 'Additional info',
         'address' => 'Address',
         'account_role' => 'Account role',

@@ -113,4 +113,8 @@ test('storefront disables checkout while ordering is disabled', function (): voi
         ->assertSee('disabled', false);
 
     Livewire::test(Checkout::class)->assertSee('disabled', false);
+
+    Livewire::test(CoffeeStore::class)
+        ->assertSee('متوقف مؤقتًا')
+        ->assertSee('disabled', false);
 });

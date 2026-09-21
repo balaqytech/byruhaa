@@ -14,12 +14,13 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $short_name
  * @property string $slug
  * @property string|null $description
  * @property int $sort_order
  * @property bool $is_active
  */
-#[Fillable(['name', 'slug', 'description', 'sort_order', 'is_active'])]
+#[Fillable(['name', 'short_name', 'slug', 'description', 'sort_order', 'is_active'])]
 class Category extends Model implements AuditableContract
 {
     protected $table = 'store_categories';
@@ -32,6 +33,7 @@ class Category extends Model implements AuditableContract
      */
     protected $auditInclude = [
         'name',
+        'short_name',
         'slug',
         'description',
         'sort_order',
