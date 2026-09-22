@@ -9,7 +9,7 @@
     $walletsEnabled = config('byruhaa.wallets.enabled', false) && config('byruhaa.minor_accounts.enabled', true);
 
     if (auth('minor-profile')->check()) {
-        $walletActionUrl = route('minor.orders.index').'#wallet';
+        $walletActionUrl = route('minor.dashboard').'#wallet';
         $walletActionLabel = 'اذهب إلى حسابي ومحفظتي';
     } elseif (auth('customer')->check()) {
         $walletActionUrl = route('customer.minor-profiles.index');

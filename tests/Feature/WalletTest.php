@@ -106,7 +106,7 @@ test('crediting a wallet notifies the minor with the amount and new balance', fu
 test('wallet top up web push requires guardian consent and includes the credited balance', function (): void {
     config(['byruhaa.minor_accounts.browser_notifications.enabled' => true]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
-    $notification = new MinorWalletTopUpNotification(5250, 7250, 'OMR', route('minor.orders.index').'#wallet');
+    $notification = new MinorWalletTopUpNotification(5250, 7250, 'OMR', route('minor.dashboard').'#wallet');
 
     expect($notification->via($profile))->toBe(['database']);
 

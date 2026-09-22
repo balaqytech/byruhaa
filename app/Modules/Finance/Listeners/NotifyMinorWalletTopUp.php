@@ -28,7 +28,7 @@ class NotifyMinorWalletTopUp
             $movement->credit_baisa,
             $movement->balance_after_baisa,
             $movement->wallet->currency,
-            route('minor.orders.index').'#wallet',
+            route('minor.dashboard').'#wallet',
         ));
     }
 }

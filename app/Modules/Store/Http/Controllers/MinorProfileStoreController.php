@@ -18,33 +18,43 @@ use RuntimeException;
 
 class MinorProfileStoreController
 {
-    public function dashboard(): RedirectResponse
-    {
-        return redirect()->route('minor.orders.index');
-    }
-
-    public function orders(WalletService $wallets): View
+    public function dashboard(WalletService $wallets): View
     {
         $profileId = (int) Auth::guard('minor-profile')->id();
+        /** @var MinorProfile $profile */
         $profile = Auth::guard('minor-profile')->user();
         $wallet = config('byruhaa.wallets.enabled', false) ? $wallets->walletForMinorProfile($profileId) : null;
-        $wallet?->load(['movements' => fn ($query) => $query->latest('id')->limit(10)]);
-        $reservedBalance = $wallet ? (int) $wallet->topUps()->sum('reserved_refund_baisa') : 0;
-        $hasBrowserNotificationConsent = $profile->consents()->where('purpose', 'browser_notifications')->exists();
+        $wallet?->load(['movements' => fn ($query) => $query->latest('id')->limit(5)]);
+        $activeStatuses = ['pending_payment', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup', 'refund_pending'];
+        $orders = Order::query()->where('minor_profile_id', $profileId);
 
-        return view('pages.minor.store.orders.index', [
+        return view('pages.minor.dashboard', [
             'profile' => $profile->loadMissing('familyMember.customer'),
             'wallet' => $wallet,
-            'reservedBalance' => $reservedBalance,
-            'orders' => Order::query()->where('minor_profile_id', $profileId)->latest('created_at')->latest('id')->paginate(10),
-            'notifications' => $profile->notifications()->latest()->limit(10)->get(),
-            'browserNotifications' => [
-                'enabled' => config('byruhaa.minor_accounts.browser_notifications.enabled', true),
-                'has_guardian_consent' => $hasBrowserNotificationConsent,
-                'vapid_public_key' => (string) config('webpush.vapid.public_key'),
-                'store_url' => route('minor.push-subscriptions.store'),
-                'destroy_url' => route('minor.push-subscriptions.destroy'),
-            ],
+            'reservedBalance' => $wallet ? (int) $wallet->topUps()->sum('reserved_refund_baisa') : 0,
+            'recentOrders' => (clone $orders)->latest('created_at')->latest('id')->limit(3)->get(),
+            'latestActiveOrder' => (clone $orders)->whereIn('status', $activeStatuses)->latest('created_at')->latest('id')->first(),
+            'ordersCount' => (clone $orders)->count(),
+            'activeOrdersCount' => (clone $orders)->whereIn('status', $activeStatuses)->count(),
+            'notifications' => $profile->notifications()->latest()->limit(3)->get(),
+            'unreadNotificationsCount' => $profile->unreadNotifications()->count(),
+            'browserNotifications' => $this->browserNotifications($profile),
+        ]);
+    }
+
+    public function orders(): View
+    {
+        $profileId = (int) Auth::guard('minor-profile')->id();
+        /** @var MinorProfile $profile */
+        $profile = Auth::guard('minor-profile')->user();
+        $orders = Order::query()->where('minor_profile_id', $profileId);
+
+        return view('pages.minor.store.orders.index', [
+            'profile' => $profile->loadMissing('familyMember'),
+            'orders' => (clone $orders)->latest('created_at')->latest('id')->paginate(12),
+            'ordersCount' => (clone $orders)->count(),
+            'activeOrdersCount' => (clone $orders)->whereIn('status', ['pending_payment', 'confirmed', 'accepted', 'preparing', 'ready_for_pickup', 'refund_pending'])->count(),
+            'completedOrdersCount' => (clone $orders)->where('status', 'completed')->count(),
         ]);
     }
 
@@ -55,6 +65,22 @@ class MinorProfileStoreController
         return view('pages.minor.store.orders.show', [
             'order' => $order->load(['items', 'statusHistory']),
             'paymentBlockReason' => $this->paymentBlockReason($order, Auth::guard('minor-profile')->user()),
+        ]);
+    }
+
+    public function walletMovements(WalletService $wallets): View
+    {
+        abort_unless(config('byruhaa.wallets.enabled', false), 404);
+
+        /** @var MinorProfile $profile */
+        $profile = Auth::guard('minor-profile')->user();
+        $wallet = $wallets->walletForMinorProfile((int) $profile->id);
+
+        return view('pages.minor.wallet.movements', [
+            'profile' => $profile->loadMissing('familyMember'),
+            'wallet' => $wallet,
+            'reservedBalance' => (int) $wallet->topUps()->sum('reserved_refund_baisa'),
+            'movements' => $wallet->movements()->latest('id')->cursorPaginate(20),
         ]);
     }
 
@@ -148,5 +174,17 @@ class MinorProfileStoreController
     private function owns(Order $order): bool
     {
         return (int) $order->getRawOriginal('minor_profile_id') === (int) Auth::guard('minor-profile')->id();
+    }
+
+    /** @return array{enabled: bool, has_guardian_consent: bool, vapid_public_key: string, store_url: string, destroy_url: string} */
+    private function browserNotifications(MinorProfile $profile): array
+    {
+        return [
+            'enabled' => config('byruhaa.minor_accounts.browser_notifications.enabled', true),
+            'has_guardian_consent' => $profile->consents()->where('purpose', 'browser_notifications')->exists(),
+            'vapid_public_key' => (string) config('webpush.vapid.public_key'),
+            'store_url' => route('minor.push-subscriptions.store'),
+            'destroy_url' => route('minor.push-subscriptions.destroy'),
+        ];
     }
 }

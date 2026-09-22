@@ -14,8 +14,12 @@ use Illuminate\Validation\ValidationException;
 
 class MinorProfileAuthController
 {
-    public function showLogin(): View
+    public function showLogin(): View|RedirectResponse
     {
+        if (Auth::guard('minor-profile')->check()) {
+            return redirect()->route('minor.dashboard');
+        }
+
         return view('pages.minor.auth.login');
     }
 

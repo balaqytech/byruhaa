@@ -135,7 +135,7 @@ test('coffee wallet call to action follows the signed in account', function (str
         $expectedLabel = 'إدارة حسابات الأبناء';
     } else {
         $user = MinorProfile::factory()->create();
-        $expectedUrl = route('minor.orders.index').'#wallet';
+        $expectedUrl = route('minor.dashboard').'#wallet';
         $expectedLabel = 'اذهب إلى حسابي ومحفظتي';
     }
 

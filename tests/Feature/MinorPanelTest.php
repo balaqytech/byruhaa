@@ -55,7 +55,7 @@ test('minor dashboard shows only its own wallet balance movements and orders', f
     $otherOrder = Order::factory()->create(['minor_profile_id' => $otherProfile->id]);
 
     $response = $this->actingAs($profile, 'minor-profile')
-        ->get(route('minor.orders.index', ['minor_profile_id' => $otherProfile->id]))
+        ->get(route('minor.dashboard', ['minor_profile_id' => $otherProfile->id]))
         ->assertOk()->assertSee('محفظتي')->assertSee('4.000')->assertSee('محجوز للاسترداد')
         ->assertSee('شحن المحفظة')->assertSee('بانتظار الدفع')->assertSee($ownOrder->reference)
         ->assertDontSee($otherOrder->reference)->assertDontSee('99.000');
@@ -67,14 +67,59 @@ test('minor dashboard shows only its own wallet balance movements and orders', f
 test('minor panel respects disabled wallets and spending permission', function (bool $enabled): void {
     config(['byruhaa.wallets.enabled' => $enabled]);
     $profile = MinorProfile::factory()->create(['wallet_spending_enabled' => false]);
-    $response = $this->actingAs($profile, 'minor-profile')->get(route('minor.orders.index'))->assertOk();
+    $response = $this->actingAs($profile, 'minor-profile')->get(route('minor.dashboard'))->assertOk();
     if ($enabled) {
         $response->assertSee('محفظتي')->assertSee('الدفع من المحفظة غير مفعّل')->assertSee('0.000');
     } else {
         $response->assertDontSee('id="wallet"', false);
+        $this->get(route('minor.wallet.movements.index'))->assertNotFound();
         expect(Wallet::query()->where('minor_profile_id', $profile->id)->exists())->toBeFalse();
     }
 })->with([true, false]);
+
+test('minor wallet movement history uses cursor pagination and excludes other wallets', function (): void {
+    config(['byruhaa.wallets.enabled' => true]);
+    $profile = MinorProfile::factory()->create();
+    $wallet = Wallet::query()->create(['minor_profile_id' => $profile->id, 'balance_baisa' => 25_000]);
+
+    foreach (range(1, 25) as $number) {
+        $wallet->movements()->create([
+            'operation_key' => 'cursor-movement-'.$number,
+            'type' => 'top_up',
+            'order_reference' => sprintf('MOVE-%02d', $number),
+            'credit_baisa' => 1000,
+            'debit_baisa' => 0,
+            'balance_after_baisa' => $number * 1000,
+        ]);
+    }
+
+    $otherProfile = MinorProfile::factory()->create();
+    $otherWallet = Wallet::query()->create(['minor_profile_id' => $otherProfile->id, 'balance_baisa' => 99_000]);
+    $otherWallet->movements()->create([
+        'operation_key' => 'other-wallet-movement',
+        'type' => 'top_up',
+        'order_reference' => 'PRIVATE-MOVEMENT',
+        'credit_baisa' => 99_000,
+        'debit_baisa' => 0,
+        'balance_after_baisa' => 99_000,
+    ]);
+
+    $response = $this->actingAs($profile, 'minor-profile')
+        ->get(route('minor.wallet.movements.index'))
+        ->assertOk()
+        ->assertSee('MOVE-25')
+        ->assertDontSee('MOVE-01')
+        ->assertDontSee('PRIVATE-MOVEMENT');
+
+    $movements = $response->viewData('movements');
+    expect($movements->count())->toBe(20)
+        ->and($movements->hasMorePages())->toBeTrue();
+
+    $this->get($movements->nextPageUrl())
+        ->assertOk()
+        ->assertSee('MOVE-01')
+        ->assertDontSee('PRIVATE-MOVEMENT');
+});
 
 test('guardian minor cards and wallet forms render accessible fields and Arabic messages', function (): void {
     app()->setLocale('ar');

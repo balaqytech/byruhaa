@@ -24,6 +24,8 @@
         @endif
     </header>
 
+    <x-minor-panel-nav class="mt-7" />
+
     @if (session('success'))
         <div role="status" class="mt-6 border-s-4 border-emerald-600 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:bg-emerald-300/10 dark:text-emerald-100">{{ session('success') }}</div>
     @endif

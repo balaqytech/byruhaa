@@ -4,7 +4,7 @@
 <section class="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 sm:py-12 lg:px-8" dir="rtl">
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-            <a href="{{ route('minor.orders.index') }}" class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">← العودة إلى حسابي</a>
+            <a href="{{ route('minor.orders.index') }}" class="text-sm font-semibold text-emerald-700 dark:text-emerald-300">← العودة إلى طلباتي</a>
             <h1 class="mt-3 font-heading text-3xl font-semibold">تفاصيل الطلب</h1>
             <p class="mt-2 text-sm text-emerald-900/70 dark:text-white/70"><bdi>{{ $order->reference }}</bdi></p>
         </div>
@@ -40,7 +40,7 @@
             @else
                 <p class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">يمكنك متابعة تغيّرات الحالة في سجل الطلب أدناه.</p>
             @endif
-            <a href="{{ route('minor.orders.index') }}#wallet" class="mt-5 block text-sm font-semibold text-emerald-700 underline dark:text-emerald-300">العودة إلى حسابي والمحفظة</a>
+            <a href="{{ route('minor.dashboard') }}#wallet" class="mt-5 block text-sm font-semibold text-emerald-700 underline dark:text-emerald-300">العودة إلى حسابي والمحفظة</a>
         </aside>
     </div>
     <section aria-labelledby="order-history-title" class="min-w-0 rounded-2xl border border-emerald-900/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-900 sm:p-6">

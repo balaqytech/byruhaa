@@ -214,6 +214,19 @@ test('minor login switches away from an active guardian session', function (): v
         ->and(auth('minor-profile')->id())->toBe($profile->id);
 });
 
+test('an authenticated minor is redirected from the minor login page to their dashboard', function (): void {
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+
+    $this->actingAs($profile, 'minor-profile')
+        ->get(route('minor.login'))
+        ->assertRedirect(route('minor.dashboard'));
+
+    $this->get(route('home'))
+        ->assertSuccessful()
+        ->assertSee('href="'.route('minor.dashboard').'"', false)
+        ->assertDontSee('href="'.route('minor.login').'"', false);
+});
+
 test('minor orders notify the minor profile only for meaningful status changes', function (): void {
     Notification::fake();
     $customer = Customer::factory()->create();
@@ -358,7 +371,7 @@ test('minor dashboard exposes browser controls only after guardian consent', fun
     $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
 
     $this->actingAs($profile, 'minor-profile')
-        ->get(route('minor.orders.index'))
+        ->get(route('minor.dashboard'))
         ->assertSuccessful()
         ->assertSee('لم تُسجّل موافقة وليّ الأمر')
         ->assertDontSee('data-minor-push-manager', false);
@@ -370,7 +383,7 @@ test('minor dashboard exposes browser controls only after guardian consent', fun
         'accepted_at' => now(),
     ]);
 
-    $this->get(route('minor.orders.index'))
+    $this->get(route('minor.dashboard'))
         ->assertSuccessful()
         ->assertSee('data-minor-push-manager', false)
         ->assertSee(route('minor.push-subscriptions.store'), false)
@@ -383,12 +396,12 @@ test('minor notification center shows unread notifications and marks them as rea
         5250,
         7250,
         'OMR',
-        route('minor.orders.index').'#wallet',
+        route('minor.dashboard').'#wallet',
     );
     $profile->notifyNow($notification, ['database']);
 
     $this->actingAs($profile, 'minor-profile')
-        ->get(route('minor.orders.index'))
+        ->get(route('minor.dashboard'))
         ->assertSuccessful()
         ->assertSee('href="'.route('minor.notifications.index').'"', false)
         ->assertSee('1 غير مقروءة');
