@@ -20,6 +20,9 @@ beforeEach(function (): void {
         'byruhaa.uchat.webhook_signing_secret' => 'signing-secret',
         'byruhaa.wallets.enabled' => true,
         'byruhaa.minor_accounts.enabled' => true,
+        'byruhaa.minor_accounts.policy_version' => 'minor-account-test-v1',
+        'byruhaa.minor_accounts.policy_text' => 'guardian-approved-minor-account',
+        'byruhaa.minor_accounts.consent_text' => 'Guardian minor account consent text.',
         'byruhaa.minor_accounts.browser_notifications.policy_version' => 'minor-notifications-test-v1',
         'byruhaa.minor_accounts.browser_notifications.policy_text' => 'guardian-approved-minor-notifications',
         'byruhaa.minor_accounts.browser_notifications.consent_text' => 'Guardian notification consent text.',
@@ -34,6 +37,10 @@ test('account discovery is guardian scoped and includes inactive profiles and ve
 
     $this->getJson('/api/v1/integrations/uchat/store/account')->assertOk()
         ->assertJsonPath('data.phone_verified', false)->assertJsonPath('data.phone_verification_required', false)
+        ->assertJsonPath('data.consent_policy_version', 'minor-account-test-v1')
+        ->assertJsonPath('data.consent_policy_text', 'guardian-approved-minor-account')
+        ->assertJsonPath('data.consent_policy_identifier', 'guardian-approved-minor-account')
+        ->assertJsonPath('data.consent_text', 'Guardian minor account consent text.')
         ->assertJsonPath('data.notifications_policy_version', 'minor-notifications-test-v1')
         ->assertJsonPath('data.notifications_policy_identifier', 'guardian-approved-minor-notifications')
         ->assertJsonPath('data.notifications_consent_text', 'Guardian notification consent text.');

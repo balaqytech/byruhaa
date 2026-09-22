@@ -40,6 +40,8 @@ class UchatAccountController extends Controller
             'manage_accounts_url' => route('customer.minor-profiles.index'),
             'consent_policy_version' => config('byruhaa.minor_accounts.policy_version', 'phase-2a'),
             'consent_policy_text' => config('byruhaa.minor_accounts.policy_text', 'minor-store-purchase'),
+            'consent_policy_identifier' => config('byruhaa.minor_accounts.policy_text', 'minor-store-purchase'),
+            'consent_text' => config('byruhaa.minor_accounts.consent_text'),
             'notifications_policy_version' => config('byruhaa.minor_accounts.browser_notifications.policy_version', 'minor-account-notifications-v2'),
             'notifications_policy_identifier' => config('byruhaa.minor_accounts.browser_notifications.policy_text', 'guardian-consent-minor-account-notifications'),
             'notifications_consent_text' => config('byruhaa.minor_accounts.browser_notifications.consent_text'),
