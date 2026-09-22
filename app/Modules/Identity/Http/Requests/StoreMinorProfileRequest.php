@@ -37,7 +37,7 @@ class StoreMinorProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'browser_notifications_consent.accepted' => 'يلزم تأكيد موافقتك على إتاحة إشعارات حالة الطلب للقاصر.',
+            'browser_notifications_consent.accepted' => 'يلزم تأكيد موافقتك على إتاحة إشعارات حساب القاصر.',
         ];
     }
 }

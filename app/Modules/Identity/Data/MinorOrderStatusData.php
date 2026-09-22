@@ -8,6 +8,8 @@ final readonly class MinorOrderStatusData
         public string $reference,
         public string $status,
         public string $statusLabel,
+        public int $totalBaisa,
+        public string $currency,
         public string $url,
     ) {}
 }

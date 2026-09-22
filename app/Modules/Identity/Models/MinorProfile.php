@@ -77,6 +77,14 @@ class MinorProfile extends Authenticatable
         return $this->status->isUsable();
     }
 
+    public function allowsBrowserNotifications(): bool
+    {
+        return config('byruhaa.minor_accounts.browser_notifications.enabled', true)
+            && $this->isActive()
+            && $this->consents()->where('purpose', 'browser_notifications')->exists()
+            && $this->pushSubscriptions()->exists();
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {

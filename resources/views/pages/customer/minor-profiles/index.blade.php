@@ -47,7 +47,7 @@
                     name="browser_notifications_consent"
                     value="1"
                     :checked="old('browser_notifications_consent')"
-                    label="أوافق على إتاحة إشعارات عامة للقاصر عند تغيّر حالة طلبه. لن تظهر تفاصيل الطلب أو المبلغ على شاشة القفل."
+                    label="أوافق على تلقي القاصر جميع الإشعارات المتعلقة بحسابه وخدماته، بما فيها الطلبات والمحفظة وأي أنواع تضاف مستقبلًا. قد تظهر تفاصيل الإشعار على شاشة القفل في جهازه."
                 />
                 @error('browser_notifications_consent')
                     <p class="text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p>

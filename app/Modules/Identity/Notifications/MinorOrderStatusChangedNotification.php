@@ -27,11 +27,7 @@ class MinorOrderStatusChangedNotification extends Notification implements Should
     {
         $channels = ['database'];
 
-        if ($notifiable instanceof MinorProfile
-            && config('byruhaa.minor_accounts.browser_notifications.enabled', true)
-            && $notifiable->isActive()
-            && $notifiable->consents()->where('purpose', 'browser_notifications')->exists()
-            && $notifiable->pushSubscriptions()->exists()) {
+        if ($notifiable instanceof MinorProfile && $notifiable->allowsBrowserNotifications()) {
             $channels[] = WebPushChannel::class;
         }
 
@@ -41,11 +37,16 @@ class MinorOrderStatusChangedNotification extends Notification implements Should
     /** @return array<string, mixed> */
     public function toDatabase(object $notifiable): array
     {
+        $message = $this->message();
+
         return [
             'type' => 'minor_order_status_changed',
             'reference' => $this->order->reference,
             'status' => $this->order->status,
             'status_label' => $this->order->statusLabel,
+            'total_baisa' => $this->order->totalBaisa,
+            'currency' => $this->order->currency,
+            'message' => $message,
             'url' => $this->order->url,
         ];
     }
@@ -58,20 +59,27 @@ class MinorOrderStatusChangedNotification extends Notification implements Should
     public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         return (new WebPushMessage)
-            ->title('بيرحاء')
-            ->body('تم تحديث حالة طلبك. افتح حسابك للاطلاع على التفاصيل.')
+            ->title('تحديث طلبك من بيرحاء')
+            ->body($this->message())
             ->icon('/android-chrome-192x192.png')
             ->badge('/favicon-32x32.png')
             ->dir('rtl')
             ->lang('ar')
-            ->tag('minor-order-status')
+            ->tag('minor-order-'.hash('xxh3', $this->order->reference))
             ->data(['url' => $this->order->url])
-            ->options(['TTL' => 3600, 'urgency' => 'normal', 'topic' => 'minor-order-status']);
+            ->options(['TTL' => 3600, 'urgency' => 'normal', 'topic' => 'minor-order-'.hash('xxh3', $this->order->reference)]);
     }
 
     /** @return array<int, int> */
     public function backoff(): array
     {
         return [10, 60, 300];
+    }
+
+    private function message(): string
+    {
+        $total = number_format($this->order->totalBaisa / 1000, 3);
+
+        return "الطلب {$this->order->reference}: {$this->order->statusLabel}. الإجمالي {$total} {$this->order->currency}.";
     }
 }

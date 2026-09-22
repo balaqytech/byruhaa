@@ -51,8 +51,8 @@ class CreateMinorProfile
             if ($browserNotificationsConsent) {
                 $profile->consents()->create([
                     'purpose' => 'browser_notifications',
-                    'policy_version' => (string) config('byruhaa.minor_accounts.browser_notifications.policy_version', 'browser-notifications-v1'),
-                    'policy_hash' => hash('sha256', (string) config('byruhaa.minor_accounts.browser_notifications.policy_text', 'guardian-consent-browser-order-status-notifications')),
+                    'policy_version' => (string) config('byruhaa.minor_accounts.browser_notifications.policy_version', 'minor-account-notifications-v2'),
+                    'policy_hash' => hash('sha256', (string) config('byruhaa.minor_accounts.browser_notifications.policy_text', 'guardian-consent-minor-account-notifications')),
                     'accepted_at' => now(),
                     'accepted_ip' => $ipAddress,
                 ]);

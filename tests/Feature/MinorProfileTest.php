@@ -213,7 +213,7 @@ test('minor login switches away from an active guardian session', function (): v
         ->and(auth('minor-profile')->id())->toBe($profile->id);
 });
 
-test('minor orders notify the minor profile when their status changes', function (): void {
+test('minor orders notify the minor profile only for meaningful status changes', function (): void {
     Notification::fake();
     $customer = Customer::factory()->create();
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
@@ -224,7 +224,29 @@ test('minor orders notify the minor profile when their status changes', function
 
     app(NotifyMinorProfileOrderStatus::class)->handle(new OrderStateChanged($order, 'pending_payment'));
 
+    Notification::assertNothingSent();
+
+    $order->status = Confirmed::class;
+    app(NotifyMinorProfileOrderStatus::class)->handle(new OrderStateChanged($order, 'pending_payment'));
+
     Notification::assertSentTo($profile, MinorOrderStatusChangedNotification::class);
+});
+
+test('the same order status notification is sent only once within the duplicate window', function (): void {
+    Notification::fake();
+    $customer = Customer::factory()->create();
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
+    $order = Order::factory()->create([
+        'customer_id' => $customer->id,
+        'minor_profile_id' => $profile->id,
+        'status' => Confirmed::class,
+    ]);
+    $event = new OrderStateChanged($order, 'pending_payment');
+
+    app(NotifyMinorProfileOrderStatus::class)->handle($event);
+    app(NotifyMinorProfileOrderStatus::class)->handle($event);
+
+    Notification::assertSentToTimes($profile, MinorOrderStatusChangedNotification::class, 1);
 });
 
 test('guardian must explicitly consent to browser notifications when creating a minor account', function (): void {
@@ -241,7 +263,7 @@ test('guardian must explicitly consent to browser notifications when creating a 
 test('guardian browser notification consent records its policy version hash and ip', function (): void {
     config([
         'byruhaa.minor_accounts.browser_notifications.policy_version' => 'browser-policy-test',
-        'byruhaa.minor_accounts.browser_notifications.policy_text' => 'guardian-approved-order-status-push',
+        'byruhaa.minor_accounts.browser_notifications.policy_text' => 'guardian-approved-all-minor-account-notifications',
     ]);
     $customer = Customer::factory()->create();
     $familyMember = FamilyMember::factory()->for($customer)->create();
@@ -257,7 +279,7 @@ test('guardian browser notification consent records its policy version hash and 
     $consent = MinorProfile::query()->firstOrFail()->consents()->where('purpose', 'browser_notifications')->firstOrFail();
 
     expect($consent->policy_version)->toBe('browser-policy-test')
-        ->and($consent->policy_hash)->toBe(hash('sha256', 'guardian-approved-order-status-push'))
+        ->and($consent->policy_hash)->toBe(hash('sha256', 'guardian-approved-all-minor-account-notifications'))
         ->and($consent->accepted_ip)->toBe('192.0.2.25');
 });
 
@@ -367,13 +389,15 @@ test('suspending or requesting deletion removes every browser subscription', fun
     'deletion request' => 'customer.minor-profiles.delete-request',
 ]);
 
-test('order status web push is consent aware and keeps lock screen content private', function (): void {
+test('order status web push is consent aware and includes useful order details', function (): void {
     config(['byruhaa.minor_accounts.browser_notifications.enabled' => true]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
     $notification = new MinorOrderStatusChangedNotification(new MinorOrderStatusData(
         'BRH-SECRET-REFERENCE',
         'confirmed',
         'مؤكد',
+        5250,
+        'OMR',
         'https://byruhaa.com/minor/orders/secret-token',
     ));
 
@@ -389,8 +413,9 @@ test('order status web push is consent aware and keeps lock screen content priva
 
     expect($notification->via($profile))->toContain('database', WebPushChannel::class);
     $payload = $notification->toWebPush($profile, $notification)->toArray();
-    expect($payload['body'])->not->toContain('BRH-SECRET-REFERENCE')
-        ->and($payload['body'])->not->toContain('مؤكد')
+    expect($payload['body'])->toContain('BRH-SECRET-REFERENCE')
+        ->and($payload['body'])->toContain('مؤكد')
+        ->and($payload['body'])->toContain('5.250 OMR')
         ->and(data_get($payload, 'data.url'))->toBe('https://byruhaa.com/minor/orders/secret-token');
 });
 

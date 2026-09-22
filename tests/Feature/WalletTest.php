@@ -12,6 +12,7 @@ use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\MinorProfile;
+use App\Modules\Identity\Notifications\MinorWalletTopUpNotification;
 use App\Modules\Store\Actions\ChangeOrderState;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\States\Order\Accepted;
@@ -24,8 +25,10 @@ use App\Modules\Store\States\Order\Refunded;
 use App\Modules\Store\States\Order\RefundPending;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
+use NotificationChannels\WebPush\WebPushChannel;
 
 beforeEach(function (): void {
     config([
@@ -64,6 +67,63 @@ test('a verified payment credits a child wallet exactly once', function (): void
         ->and($topUp->refresh()->refundable_baisa)->toBe(5000)
         ->and($wallet->movements()->count())->toBe(1)
         ->and($payment->ledgerTransaction()->exists())->toBeTrue();
+});
+
+test('crediting a wallet notifies the minor with the amount and new balance', function (): void {
+    Notification::fake();
+    $customer = Customer::factory()->create(['phone_verified_at' => now()]);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
+    $wallet = app(WalletService::class)->walletForMinorProfile($profile->id);
+    $topUp = WalletTopUp::query()->create([
+        'wallet_id' => $wallet->id,
+        'operation_key' => 'top-up-minor-notification',
+        'status' => 'pending',
+        'currency' => 'OMR',
+        'amount_baisa' => 5250,
+    ]);
+    $payment = Payment::query()->create([
+        'subject_type' => 'wallet_topup',
+        'subject_reference' => $topUp->reference,
+        'provider' => 'thawani',
+        'reference' => 'PAY-WALLET-MINOR-NOTIFICATION',
+        'amount_baisa' => 5250,
+        'currency' => 'OMR',
+        'state' => PaymentState::Paid,
+        'paid_at' => now(),
+    ]);
+
+    app(WalletService::class)->creditTopUp($payment);
+
+    Notification::assertSentTo($profile, MinorWalletTopUpNotification::class, function (MinorWalletTopUpNotification $notification) use ($profile): bool {
+        $data = $notification->toDatabase($profile);
+
+        return $data['amount_baisa'] === 5250
+            && $data['balance_baisa'] === 5250
+            && str_contains($data['message'], '5.250 OMR');
+    });
+});
+
+test('wallet top up web push requires guardian consent and includes the credited balance', function (): void {
+    config(['byruhaa.minor_accounts.browser_notifications.enabled' => true]);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $notification = new MinorWalletTopUpNotification(5250, 7250, 'OMR', route('minor.orders.index').'#wallet');
+
+    expect($notification->via($profile))->toBe(['database']);
+
+    $profile->consents()->create([
+        'purpose' => 'browser_notifications',
+        'policy_version' => 'minor-account-notifications-v2',
+        'policy_hash' => hash('sha256', 'test'),
+        'accepted_at' => now(),
+    ]);
+    $profile->updatePushSubscription('https://push.example.test/subscriptions/wallet-device', 'key', 'token', 'aes128gcm');
+
+    $payload = $notification->toWebPush($profile, $notification)->toArray();
+
+    expect($notification->via($profile))->toContain('database', WebPushChannel::class)
+        ->and($payload['body'])->toContain('5.250 OMR')
+        ->and($payload['body'])->toContain('7.250 OMR')
+        ->and(data_get($payload, 'data.url'))->toEndWith('#wallet');
 });
 
 test('wallet purchases consume credited top ups oldest first and are idempotent', function (): void {

@@ -15,8 +15,17 @@ return [
         'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase'),
         'browser_notifications' => [
             'enabled' => filter_var(env('MINOR_BROWSER_NOTIFICATIONS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
-            'policy_version' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_VERSION', 'browser-notifications-v1'),
-            'policy_text' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_TEXT', 'guardian-consent-browser-order-status-notifications'),
+            'policy_version' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_VERSION', 'minor-account-notifications-v2'),
+            'policy_text' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_TEXT', 'guardian-consent-minor-account-notifications'),
+            'order_statuses' => [
+                'confirmed',
+                'ready_for_pickup',
+                'completed',
+                'rejected',
+                'cancelled',
+                'refunded',
+            ],
+            'duplicate_window_hours' => (int) env('MINOR_BROWSER_NOTIFICATIONS_DUPLICATE_WINDOW_HOURS', 24),
         ],
     ],
 

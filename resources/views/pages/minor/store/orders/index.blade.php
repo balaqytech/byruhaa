@@ -27,13 +27,13 @@
         >
             <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div class="max-w-2xl">
-                    <h2 id="browser-notifications-title" class="font-semibold">إشعارات حالة الطلب</h2>
+                    <h2 id="browser-notifications-title" class="font-semibold">إشعارات حسابي</h2>
                     @if (! $browserNotifications['has_guardian_consent'])
                         <p class="mt-2 text-sm leading-7 text-amber-800 dark:text-amber-200">لم تُسجّل موافقة وليّ الأمر لهذا الحساب. لا يمكن تفعيل إشعارات الجهاز دون موافقته.</p>
                     @elseif (blank($browserNotifications['vapid_public_key']))
                         <p class="mt-2 text-sm leading-7 text-amber-800 dark:text-amber-200">إشعارات المتصفح غير مجهزة في هذه البيئة بعد.</p>
                     @else
-                        <p class="mt-2 text-sm leading-7 text-emerald-900/70 dark:text-white/70">فعّلها على هذا الجهاز لتصلك رسالة عامة عند تغيّر حالة طلبك. تفاصيل الطلب لا تظهر على شاشة القفل.</p>
+                        <p class="mt-2 text-sm leading-7 text-emerald-900/70 dark:text-white/70">فعّلها على هذا الجهاز لتصلك تحديثات الطلبات والمحفظة والخدمات المرتبطة بحسابك. قد تظهر تفاصيل الإشعار على شاشة القفل.</p>
                         <p data-push-status role="status" class="mt-2 text-xs leading-6 text-emerald-800 dark:text-emerald-200">جاري التحقق من دعم الجهاز…</p>
                         <p data-push-ios-help class="mt-2 hidden text-xs leading-6 text-amber-800 dark:text-amber-200">على iPhone وiPad، أضف بيرحاء إلى الشاشة الرئيسية أولًا، ثم افتحه من الأيقونة وفعّل الإشعارات.</p>
                     @endif
@@ -118,7 +118,7 @@
             <h2 class="font-semibold">آخر التنبيهات</h2>
             <div class="mt-3 grid gap-2">
                 @foreach ($notifications as $notification)
-                    <a href="{{ data_get($notification->data, 'url', route('minor.orders.index')) }}" class="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-900 dark:bg-emerald-300/10 dark:text-emerald-100"><bdi>{{ data_get($notification->data, 'reference') }}</bdi> — {{ __(data_get($notification->data, 'status_label', '')) }}</a>
+                    <a href="{{ data_get($notification->data, 'url', route('minor.orders.index')) }}" class="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-900 dark:bg-emerald-300/10 dark:text-emerald-100">{{ data_get($notification->data, 'message', data_get($notification->data, 'status_label', 'تنبيه جديد')) }}</a>
                 @endforeach
             </div>
         </section>
