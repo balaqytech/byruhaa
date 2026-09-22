@@ -41,10 +41,6 @@
             ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
         ];
 
-        if (config('byruhaa.minor_accounts.enabled', true)) {
-            $footerNavigationLinks[] = ['label' => 'دخول حساب القاصر', 'route' => 'minor.login', 'active' => 'minor.login', 'icon' => 'user-circle'];
-        }
-
         $accountRoute = auth('minor-profile')->check() ? 'minor.dashboard' : (auth('customer')->check() ? 'customer.dashboard' : 'login');
         $bottomNavigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
@@ -225,13 +221,9 @@
                     <a href="{{ route('register') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.auth.create_account') }}</a>
                 @endif
-                @if (Route::has('affiliate.login'))
-                    <a href="{{ route('affiliate.login') }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.login_title') }}</a>
-                @endif
-                @if (Route::has('affiliate.register'))
-                    <a href="{{ route('affiliate.register') }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
+                @if (config('byruhaa.minor_accounts.enabled', true) && Route::has('minor.login'))
+                    <a href="{{ route('minor.login') }}"
+                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">دخول حساب القاصر</a>
                 @endif
             </nav>
 
