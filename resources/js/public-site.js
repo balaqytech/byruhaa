@@ -53,6 +53,145 @@ document.addEventListener('click', (event) => {
 
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const pushManager = document.querySelector('[data-minor-push-manager]');
+
+if (pushManager) {
+    const enableButton = pushManager.querySelector('[data-push-enable]');
+    const disableButton = pushManager.querySelector('[data-push-disable]');
+    const status = pushManager.querySelector('[data-push-status]');
+    const iosHelp = pushManager.querySelector('[data-push-ios-help]');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    const setState = (subscribed, message) => {
+        status.textContent = message;
+        enableButton.classList.toggle('hidden', subscribed);
+        disableButton.classList.toggle('hidden', !subscribed);
+    };
+
+    const urlBase64ToUint8Array = (value) => {
+        const padding = '='.repeat((4 - (value.length % 4)) % 4);
+        const base64 = (value + padding).replaceAll('-', '+').replaceAll('_', '/');
+        const raw = window.atob(base64);
+
+        return Uint8Array.from([...raw].map((character) => character.charCodeAt(0)));
+    };
+
+    const subscriptionPayload = (subscription) => {
+        const json = subscription.toJSON();
+
+        return {
+            endpoint: json.endpoint,
+            keys: json.keys,
+            content_encoding: window.PushManager.supportedContentEncodings?.[0] ?? 'aes128gcm',
+        };
+    };
+
+    const sendSubscription = async (url, method, payload) => {
+        const response = await fetch(url, {
+            method,
+            credentials: 'same-origin',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Push subscription request failed with status ${response.status}`);
+        }
+    };
+
+    const initializePush = async () => {
+        if (!window.isSecureContext || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+            setState(false, 'هذا المتصفح أو الاتصال لا يدعم إشعارات الويب الآمنة.');
+            enableButton.disabled = true;
+            return;
+        }
+
+        if (isIos && !isStandalone) {
+            iosHelp.classList.remove('hidden');
+            setState(false, 'أضف الموقع إلى الشاشة الرئيسية قبل التفعيل على هذا الجهاز.');
+            enableButton.disabled = true;
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+        disableButton.addEventListener('click', async () => {
+            disableButton.disabled = true;
+
+            try {
+                const currentRegistration = await navigator.serviceWorker.ready;
+                const currentSubscription = await currentRegistration.pushManager.getSubscription();
+
+                if (currentSubscription) {
+                    await sendSubscription(pushManager.dataset.unsubscribeUrl, 'DELETE', { endpoint: currentSubscription.endpoint });
+                    await currentSubscription.unsubscribe();
+                }
+
+                setState(false, 'تم تعطيل الإشعارات على هذا الجهاز.');
+            } catch (error) {
+                console.error('Unable to disable browser notifications.', error);
+                status.textContent = 'تعذر تعطيل الإشعارات الآن. حاول مرة أخرى.';
+            } finally {
+                disableButton.disabled = false;
+            }
+        });
+
+        const subscription = await registration.pushManager.getSubscription();
+
+        if (subscription) {
+            await sendSubscription(pushManager.dataset.subscribeUrl, 'POST', subscriptionPayload(subscription));
+            setState(true, 'الإشعارات مفعّلة على هذا الجهاز.');
+            return;
+        }
+
+        if (Notification.permission === 'denied') {
+            setState(false, 'الإذن مرفوض من إعدادات المتصفح. غيّره من إعدادات الموقع ثم حاول مجددًا.');
+            enableButton.disabled = true;
+            return;
+        }
+
+        setState(false, 'الإشعارات غير مفعّلة على هذا الجهاز.');
+
+        enableButton.addEventListener('click', async () => {
+            enableButton.disabled = true;
+            status.textContent = 'جاري طلب إذن المتصفح…';
+
+            try {
+                const permission = await Notification.requestPermission();
+
+                if (permission !== 'granted') {
+                    setState(false, 'لم يتم منح إذن الإشعارات.');
+                    return;
+                }
+
+                const currentRegistration = await navigator.serviceWorker.ready;
+                const newSubscription = await currentRegistration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(pushManager.dataset.vapidPublicKey),
+                });
+                await sendSubscription(pushManager.dataset.subscribeUrl, 'POST', subscriptionPayload(newSubscription));
+                setState(true, 'تم تفعيل الإشعارات على هذا الجهاز.');
+            } catch (error) {
+                console.error('Unable to enable browser notifications.', error);
+                setState(false, 'تعذر تفعيل الإشعارات الآن. حاول مرة أخرى.');
+            } finally {
+                enableButton.disabled = false;
+            }
+        });
+
+    };
+
+    initializePush().catch((error) => {
+        console.error('Unable to initialize browser notifications.', error);
+        setState(false, 'تعذر التحقق من حالة الإشعارات الآن.');
+    });
+}
+
 const whatsappButton = document.querySelector('[data-whatsapp-floating-button]');
 const whatsappRevealSentinel = document.querySelector('[data-whatsapp-reveal-sentinel]');
 const publicFooter = document.querySelector('[data-public-footer]');

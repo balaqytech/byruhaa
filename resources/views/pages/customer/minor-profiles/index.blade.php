@@ -43,6 +43,15 @@
                 </div>
                 <p x-cloak x-show="familyMemberId" class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">سيُستخدم الاسم وتاريخ الميلاد المسجّلان لفرد الأسرة.</p>
                 <p class="text-xs leading-6 text-emerald-900/70 dark:text-white/70">بإنشاء الحساب، توافق على استخدام الابن للمتجر تحت إشرافك. تبقى صلاحيات الدفع متوقفة إلى أن تفعّلها.</p>
+                <flux:checkbox
+                    name="browser_notifications_consent"
+                    value="1"
+                    :checked="old('browser_notifications_consent')"
+                    label="أوافق على إتاحة إشعارات عامة للقاصر عند تغيّر حالة طلبه. لن تظهر تفاصيل الطلب أو المبلغ على شاشة القفل."
+                />
+                @error('browser_notifications_consent')
+                    <p class="text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p>
+                @enderror
                 <x-policy-links :pages="['student-accounts', 'privacy']" label="راجع قبل إنشاء حساب الابن" />
                 <flux:button type="submit" variant="primary" class="w-full">إنشاء الحساب</flux:button>
             </form>

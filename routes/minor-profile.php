@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AuthenticateMinorProfile;
 use App\Modules\Identity\Http\Controllers\MinorProfileAuthController;
+use App\Modules\Identity\Http\Controllers\PushSubscriptionController;
 use App\Modules\Store\Http\Controllers\MinorProfileStoreController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,5 +25,7 @@ Route::middleware(['auth:minor-profile', AuthenticateMinorProfile::class])
         Route::get('orders', [MinorProfileStoreController::class, 'orders'])->name('orders.index');
         Route::get('orders/{order:payment_token}', [MinorProfileStoreController::class, 'show'])->name('orders.show');
         Route::post('orders/{order:payment_token}/payment', [MinorProfileStoreController::class, 'pay'])->middleware('throttle:10,1')->name('orders.payment');
+        Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:10,1')->name('push-subscriptions.store');
+        Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->middleware('throttle:10,1')->name('push-subscriptions.destroy');
         Route::post('logout', [MinorProfileAuthController::class, 'logout'])->name('logout');
     });

@@ -101,7 +101,10 @@ test('guardian form displays translated domain errors inline as well as in the a
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create();
     $url = route('customer.minor-profiles.index');
     $this->actingAs($guardian, 'customer')->from($url)
-        ->post(route('customer.minor-profiles.store'), ['family_member_id' => $profile->family_member_id])
+        ->post(route('customer.minor-profiles.store'), [
+            'family_member_id' => $profile->family_member_id,
+            'browser_notifications_consent' => '1',
+        ])
         ->assertRedirect($url);
     $response = $this->get($url)->assertOk()
         ->assertSee('يوجد حساب قاصر لفرد الأسرة المحدد بالفعل.')

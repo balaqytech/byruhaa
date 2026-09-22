@@ -14,6 +14,40 @@
         </div>
     </header>
 
+    @if ($browserNotifications['enabled'])
+        <section
+            @if ($browserNotifications['has_guardian_consent'] && filled($browserNotifications['vapid_public_key']))
+                data-minor-push-manager
+                data-vapid-public-key="{{ $browserNotifications['vapid_public_key'] }}"
+                data-subscribe-url="{{ $browserNotifications['store_url'] }}"
+                data-unsubscribe-url="{{ $browserNotifications['destroy_url'] }}"
+            @endif
+            class="rounded-2xl border border-emerald-900/10 bg-white p-5 dark:border-white/10 dark:bg-zinc-900 sm:p-6"
+            aria-labelledby="browser-notifications-title"
+        >
+            <div class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div class="max-w-2xl">
+                    <h2 id="browser-notifications-title" class="font-semibold">إشعارات حالة الطلب</h2>
+                    @if (! $browserNotifications['has_guardian_consent'])
+                        <p class="mt-2 text-sm leading-7 text-amber-800 dark:text-amber-200">لم تُسجّل موافقة وليّ الأمر لهذا الحساب. لا يمكن تفعيل إشعارات الجهاز دون موافقته.</p>
+                    @elseif (blank($browserNotifications['vapid_public_key']))
+                        <p class="mt-2 text-sm leading-7 text-amber-800 dark:text-amber-200">إشعارات المتصفح غير مجهزة في هذه البيئة بعد.</p>
+                    @else
+                        <p class="mt-2 text-sm leading-7 text-emerald-900/70 dark:text-white/70">فعّلها على هذا الجهاز لتصلك رسالة عامة عند تغيّر حالة طلبك. تفاصيل الطلب لا تظهر على شاشة القفل.</p>
+                        <p data-push-status role="status" class="mt-2 text-xs leading-6 text-emerald-800 dark:text-emerald-200">جاري التحقق من دعم الجهاز…</p>
+                        <p data-push-ios-help class="mt-2 hidden text-xs leading-6 text-amber-800 dark:text-amber-200">على iPhone وiPad، أضف بيرحاء إلى الشاشة الرئيسية أولًا، ثم افتحه من الأيقونة وفعّل الإشعارات.</p>
+                    @endif
+                </div>
+                @if ($browserNotifications['has_guardian_consent'] && filled($browserNotifications['vapid_public_key']))
+                    <div class="flex shrink-0 flex-wrap gap-2">
+                        <flux:button type="button" variant="primary" data-push-enable>تفعيل على هذا الجهاز</flux:button>
+                        <flux:button type="button" data-push-disable class="hidden">تعطيل هذا الجهاز</flux:button>
+                    </div>
+                @endif
+            </div>
+        </section>
+    @endif
+
     @if ($wallet)
         <section id="wallet" aria-labelledby="wallet-title" class="grid gap-6 lg:grid-cols-2">
             <div class="rounded-2xl bg-emerald-900 p-6 text-white sm:p-8">

@@ -29,6 +29,7 @@ class MinorProfileStoreController
         $wallet = config('byruhaa.wallets.enabled', false) ? $wallets->walletForMinorProfile($profileId) : null;
         $wallet?->load(['movements' => fn ($query) => $query->latest('id')->limit(10)]);
         $reservedBalance = $wallet ? (int) $wallet->topUps()->sum('reserved_refund_baisa') : 0;
+        $hasBrowserNotificationConsent = $profile->consents()->where('purpose', 'browser_notifications')->exists();
 
         return view('pages.minor.store.orders.index', [
             'profile' => $profile->loadMissing('familyMember.customer'),
@@ -36,6 +37,13 @@ class MinorProfileStoreController
             'reservedBalance' => $reservedBalance,
             'orders' => Order::query()->where('minor_profile_id', $profileId)->latest('created_at')->latest('id')->paginate(10),
             'notifications' => $profile->notifications()->latest()->limit(10)->get(),
+            'browserNotifications' => [
+                'enabled' => config('byruhaa.minor_accounts.browser_notifications.enabled', true),
+                'has_guardian_consent' => $hasBrowserNotificationConsent,
+                'vapid_public_key' => (string) config('webpush.vapid.public_key'),
+                'store_url' => route('minor.push-subscriptions.store'),
+                'destroy_url' => route('minor.push-subscriptions.destroy'),
+            ],
         ]);
     }
 

@@ -35,7 +35,12 @@ class MinorProfileController
     {
         /** @var Customer $guardian */
         $guardian = $request->user('customer');
-        $result = $createMinorProfile->execute($guardian, $request->validated(), $request->ip());
+        $result = $createMinorProfile->execute(
+            $guardian,
+            $request->validated(),
+            $request->ip(),
+            $request->boolean('browser_notifications_consent'),
+        );
 
         return redirect()->route('customer.minor-profiles.index')->with([
             'success' => 'تم إنشاء الحساب. شارك رابط التفعيل مع الابن لاختيار كلمة مروره.',
@@ -79,10 +84,13 @@ class MinorProfileController
         $this->assertOwnedBy($request, $minorProfile);
         abort_unless($minorProfile->status === MinorProfileStatus::Active, 404);
 
-        $minorProfile->forceFill([
-            'status' => MinorProfileStatus::Suspended,
-            'suspended_at' => now(),
-        ])->save();
+        DB::transaction(function () use ($minorProfile): void {
+            $minorProfile->forceFill([
+                'status' => MinorProfileStatus::Suspended,
+                'suspended_at' => now(),
+            ])->save();
+            $minorProfile->pushSubscriptions()->delete();
+        });
 
         return back()->with('success', 'تم تعليق حساب القاصر.');
     }
@@ -160,6 +168,7 @@ class MinorProfileController
                 'status' => MinorProfileStatus::DeletionRequested,
                 'deletion_requested_at' => now(),
             ])->save();
+            $minorProfile->pushSubscriptions()->delete();
         });
 
         return back()->with('success', 'تم تسجيل طلب حذف الحساب، وسيتم التواصل معك عبر القنوات الرسمية.');

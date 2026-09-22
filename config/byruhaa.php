@@ -13,6 +13,11 @@ return [
         'otp_expiry_minutes' => (int) env('MINOR_ACCOUNT_OTP_EXPIRY_MINUTES', 10),
         'policy_version' => env('MINOR_ACCOUNT_POLICY_VERSION', 'phase-2a'),
         'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase'),
+        'browser_notifications' => [
+            'enabled' => filter_var(env('MINOR_BROWSER_NOTIFICATIONS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+            'policy_version' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_VERSION', 'browser-notifications-v1'),
+            'policy_text' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_TEXT', 'guardian-consent-browser-order-status-notifications'),
+        ],
     ],
 
     'wallets' => [

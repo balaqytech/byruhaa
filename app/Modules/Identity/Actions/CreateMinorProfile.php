@@ -20,13 +20,13 @@ class CreateMinorProfile
      * @param  array<string, mixed>  $data
      * @return array{profile: MinorProfile, activation_token: string}
      */
-    public function execute(Customer $guardian, array $data, ?string $ipAddress = null): array
+    public function execute(Customer $guardian, array $data, ?string $ipAddress = null, bool $browserNotificationsConsent = false): array
     {
         if (! config('byruhaa.minor_accounts.enabled', true)) {
             throw ValidationException::withMessages(['minor_accounts' => 'Minor accounts are currently disabled.']);
         }
 
-        return DB::transaction(function () use ($guardian, $data, $ipAddress): array {
+        return DB::transaction(function () use ($guardian, $data, $ipAddress, $browserNotificationsConsent): array {
             $familyMember = $this->resolveFamilyMember($guardian, $data);
 
             if ($familyMember->minorProfile()->exists()) {
@@ -47,6 +47,16 @@ class CreateMinorProfile
                 'password' => Hash::make(Str::random(48)),
                 'status' => MinorProfileStatus::PendingChildActivation,
             ]);
+
+            if ($browserNotificationsConsent) {
+                $profile->consents()->create([
+                    'purpose' => 'browser_notifications',
+                    'policy_version' => (string) config('byruhaa.minor_accounts.browser_notifications.policy_version', 'browser-notifications-v1'),
+                    'policy_hash' => hash('sha256', (string) config('byruhaa.minor_accounts.browser_notifications.policy_text', 'guardian-consent-browser-order-status-notifications')),
+                    'accepted_at' => now(),
+                    'accepted_ip' => $ipAddress,
+                ]);
+            }
 
             $activationToken = $this->issueActivation->execute($profile, $guardian->id, $ipAddress);
 

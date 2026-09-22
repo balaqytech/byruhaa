@@ -2,6 +2,7 @@
 
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Models\WalletTopUp;
+use App\Modules\Identity\Data\MinorOrderStatusData;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
@@ -18,6 +19,7 @@ use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
+use NotificationChannels\WebPush\WebPushChannel;
 
 use function Pest\Laravel\mock;
 
@@ -53,7 +55,10 @@ test('guardian can create and activate a minor profile linked to an existing fam
     mock(ByruhaaWebhookSender::class)->shouldNotReceive('sendUchatMinorVerificationCode');
 
     $this->actingAs($customer, 'customer')
-        ->post(route('customer.minor-profiles.store'), ['family_member_id' => $familyMember->id])
+        ->post(route('customer.minor-profiles.store'), [
+            'family_member_id' => $familyMember->id,
+            'browser_notifications_consent' => '1',
+        ])
         ->assertRedirect(route('customer.minor-profiles.index'));
 
     $profile = MinorProfile::query()->firstOrFail();
@@ -62,6 +67,7 @@ test('guardian can create and activate a minor profile linked to an existing fam
         ->and($profile->status)->toBe(MinorProfileStatus::PendingChildActivation)
         ->and($profile->verifications()->count())->toBe(0)
         ->and($profile->consents()->where('purpose', 'store_purchase')->exists())->toBeTrue()
+        ->and($profile->consents()->where('purpose', 'browser_notifications')->exists())->toBeTrue()
         ->and($activationUrl)->toBeString()
         ->and($customer->refresh()->hasVerifiedPhone())->toBeFalse();
 
@@ -87,6 +93,7 @@ test('existing family member ignores stale new-member fields', function (): void
             'family_member_id' => $familyMember->id,
             'name' => 'stale name',
             'birth_date' => 'not-a-date',
+            'browser_notifications_consent' => '1',
         ])
         ->assertRedirect(route('customer.minor-profiles.index'))
         ->assertSessionHasNoErrors();
@@ -137,7 +144,10 @@ test('the same family member cannot receive two minor profiles', function () {
     MinorProfile::factory()->for($familyMember)->create();
 
     $this->actingAs($customer, 'customer')
-        ->post(route('customer.minor-profiles.store'), ['family_member_id' => $familyMember->id])
+        ->post(route('customer.minor-profiles.store'), [
+            'family_member_id' => $familyMember->id,
+            'browser_notifications_consent' => '1',
+        ])
         ->assertSessionHasErrors('family_member_id');
 
     expect(MinorProfile::query()->count())->toBe(1);
@@ -215,6 +225,173 @@ test('minor orders notify the minor profile when their status changes', function
     app(NotifyMinorProfileOrderStatus::class)->handle(new OrderStateChanged($order, 'pending_payment'));
 
     Notification::assertSentTo($profile, MinorOrderStatusChangedNotification::class);
+});
+
+test('guardian must explicitly consent to browser notifications when creating a minor account', function (): void {
+    $customer = Customer::factory()->create();
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+
+    $this->actingAs($customer, 'customer')
+        ->post(route('customer.minor-profiles.store'), ['family_member_id' => $familyMember->id])
+        ->assertSessionHasErrors('browser_notifications_consent');
+
+    expect(MinorProfile::query()->count())->toBe(0);
+});
+
+test('guardian browser notification consent records its policy version hash and ip', function (): void {
+    config([
+        'byruhaa.minor_accounts.browser_notifications.policy_version' => 'browser-policy-test',
+        'byruhaa.minor_accounts.browser_notifications.policy_text' => 'guardian-approved-order-status-push',
+    ]);
+    $customer = Customer::factory()->create();
+    $familyMember = FamilyMember::factory()->for($customer)->create();
+
+    $this->actingAs($customer, 'customer')
+        ->withServerVariables(['REMOTE_ADDR' => '192.0.2.25'])
+        ->post(route('customer.minor-profiles.store'), [
+            'family_member_id' => $familyMember->id,
+            'browser_notifications_consent' => '1',
+        ])
+        ->assertRedirect(route('customer.minor-profiles.index'));
+
+    $consent = MinorProfile::query()->firstOrFail()->consents()->where('purpose', 'browser_notifications')->firstOrFail();
+
+    expect($consent->policy_version)->toBe('browser-policy-test')
+        ->and($consent->policy_hash)->toBe(hash('sha256', 'guardian-approved-order-status-push'))
+        ->and($consent->accepted_ip)->toBe('192.0.2.25');
+});
+
+test('minor can subscribe and disable only the current browser endpoint after guardian consent', function (): void {
+    config(['byruhaa.minor_accounts.browser_notifications.enabled' => true]);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $profile->consents()->create([
+        'purpose' => 'browser_notifications',
+        'policy_version' => 'v1',
+        'policy_hash' => hash('sha256', 'test'),
+        'accepted_at' => now(),
+    ]);
+    $payload = [
+        'endpoint' => 'https://push.example.test/subscriptions/device-one',
+        'keys' => ['p256dh' => 'public-key', 'auth' => 'auth-token'],
+        'content_encoding' => 'aes128gcm',
+    ];
+
+    $this->postJson(route('minor.push-subscriptions.store'), $payload)->assertRedirect(route('login'));
+    $this->actingAs($profile, 'minor-profile')
+        ->postJson(route('minor.push-subscriptions.store'), $payload)
+        ->assertSuccessful()
+        ->assertJson(['subscribed' => true]);
+    $this->postJson(route('minor.push-subscriptions.store'), $payload)->assertSuccessful();
+
+    expect($profile->pushSubscriptions()->count())->toBe(1);
+
+    $otherProfile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $otherProfile->consents()->create([
+        'purpose' => 'browser_notifications',
+        'policy_version' => 'v1',
+        'policy_hash' => hash('sha256', 'test'),
+        'accepted_at' => now(),
+    ]);
+    $this->actingAs($otherProfile, 'minor-profile')
+        ->deleteJson(route('minor.push-subscriptions.destroy'), ['endpoint' => $payload['endpoint']])
+        ->assertSuccessful();
+    expect($profile->pushSubscriptions()->count())->toBe(1);
+
+    $this->actingAs($profile, 'minor-profile')
+        ->deleteJson(route('minor.push-subscriptions.destroy'), ['endpoint' => $payload['endpoint']])
+        ->assertSuccessful()
+        ->assertJson(['subscribed' => false]);
+    expect($profile->pushSubscriptions()->count())->toBe(0);
+});
+
+test('browser subscription requires guardian consent and an enabled feature', function (): void {
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $payload = [
+        'endpoint' => 'https://push.example.test/subscriptions/device-two',
+        'keys' => ['p256dh' => 'public-key', 'auth' => 'auth-token'],
+        'content_encoding' => 'aes128gcm',
+    ];
+
+    $this->actingAs($profile, 'minor-profile')
+        ->postJson(route('minor.push-subscriptions.store'), $payload)
+        ->assertForbidden();
+
+    $profile->consents()->create([
+        'purpose' => 'browser_notifications',
+        'policy_version' => 'v1',
+        'policy_hash' => hash('sha256', 'test'),
+        'accepted_at' => now(),
+    ]);
+    config(['byruhaa.minor_accounts.browser_notifications.enabled' => false]);
+
+    $this->postJson(route('minor.push-subscriptions.store'), $payload)->assertNotFound();
+});
+
+test('minor dashboard exposes browser controls only after guardian consent', function (): void {
+    config([
+        'byruhaa.minor_accounts.browser_notifications.enabled' => true,
+        'webpush.vapid.public_key' => 'test-public-vapid-key',
+    ]);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+
+    $this->actingAs($profile, 'minor-profile')
+        ->get(route('minor.orders.index'))
+        ->assertSuccessful()
+        ->assertSee('لم تُسجّل موافقة وليّ الأمر')
+        ->assertDontSee('data-minor-push-manager', false);
+
+    $profile->consents()->create([
+        'purpose' => 'browser_notifications',
+        'policy_version' => 'v1',
+        'policy_hash' => hash('sha256', 'test'),
+        'accepted_at' => now(),
+    ]);
+
+    $this->get(route('minor.orders.index'))
+        ->assertSuccessful()
+        ->assertSee('data-minor-push-manager', false)
+        ->assertSee(route('minor.push-subscriptions.store'), false)
+        ->assertSee('تفعيل على هذا الجهاز');
+});
+
+test('suspending or requesting deletion removes every browser subscription', function (string $routeName): void {
+    $customer = Customer::factory()->create();
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
+    $profile->updatePushSubscription('https://push.example.test/subscriptions/device-three', 'key', 'token', 'aes128gcm');
+
+    $this->actingAs($customer, 'customer')->post(route($routeName, $profile))->assertRedirect();
+
+    expect($profile->pushSubscriptions()->count())->toBe(0);
+})->with([
+    'suspension' => 'customer.minor-profiles.suspend',
+    'deletion request' => 'customer.minor-profiles.delete-request',
+]);
+
+test('order status web push is consent aware and keeps lock screen content private', function (): void {
+    config(['byruhaa.minor_accounts.browser_notifications.enabled' => true]);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $notification = new MinorOrderStatusChangedNotification(new MinorOrderStatusData(
+        'BRH-SECRET-REFERENCE',
+        'confirmed',
+        'مؤكد',
+        'https://byruhaa.com/minor/orders/secret-token',
+    ));
+
+    expect($notification->via($profile))->toBe(['database']);
+
+    $profile->consents()->create([
+        'purpose' => 'browser_notifications',
+        'policy_version' => 'v1',
+        'policy_hash' => hash('sha256', 'test'),
+        'accepted_at' => now(),
+    ]);
+    $profile->updatePushSubscription('https://push.example.test/subscriptions/device-four', 'key', 'token', 'aes128gcm');
+
+    expect($notification->via($profile))->toContain('database', WebPushChannel::class);
+    $payload = $notification->toWebPush($profile, $notification)->toArray();
+    expect($payload['body'])->not->toContain('BRH-SECRET-REFERENCE')
+        ->and($payload['body'])->not->toContain('مؤكد')
+        ->and(data_get($payload, 'data.url'))->toBe('https://byruhaa.com/minor/orders/secret-token');
 });
 
 test('guardian payment is required until direct payment is explicitly enabled', function (): void {

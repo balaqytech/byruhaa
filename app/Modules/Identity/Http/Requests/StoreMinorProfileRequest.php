@@ -29,6 +29,15 @@ class StoreMinorProfileRequest extends FormRequest
             'school_name' => ['nullable', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:64'],
             'relationship_to_customer' => ['nullable', 'string', 'max:64'],
+            'browser_notifications_consent' => ['accepted'],
+        ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'browser_notifications_consent.accepted' => 'يلزم تأكيد موافقتك على إتاحة إشعارات حالة الطلب للقاصر.',
         ];
     }
 }
