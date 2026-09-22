@@ -7,6 +7,7 @@ use App\Http\Requests\UchatMinorProfileRequest;
 use App\Http\Requests\UchatVerificationRequest;
 use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Actions\IssueMinorProfileActivation;
+use App\Modules\Identity\Actions\RecordMinorNotificationConsent;
 use App\Modules\Identity\Actions\SendCustomerPhoneVerificationCode;
 use App\Modules\Identity\Actions\SendMinorProfileVerificationCode;
 use App\Modules\Identity\Actions\VerifyCustomerPhone;
@@ -39,6 +40,9 @@ class UchatAccountController extends Controller
             'manage_accounts_url' => route('customer.minor-profiles.index'),
             'consent_policy_version' => config('byruhaa.minor_accounts.policy_version', 'phase-2a'),
             'consent_policy_text' => config('byruhaa.minor_accounts.policy_text', 'minor-store-purchase'),
+            'notifications_policy_version' => config('byruhaa.minor_accounts.browser_notifications.policy_version', 'minor-account-notifications-v2'),
+            'notifications_policy_identifier' => config('byruhaa.minor_accounts.browser_notifications.policy_text', 'guardian-consent-minor-account-notifications'),
+            'notifications_consent_text' => config('byruhaa.minor_accounts.browser_notifications.consent_text'),
         ]]);
     }
 
@@ -49,22 +53,32 @@ class UchatAccountController extends Controller
         return response()->json(['data' => $profiles->map(fn (MinorProfile $profile): array => $this->profileData($profile))]);
     }
 
-    public function store(UchatMinorProfileRequest $request, CreateMinorProfile $create): JsonResponse
-    {
+    public function store(
+        UchatMinorProfileRequest $request,
+        CreateMinorProfile $create,
+        RecordMinorNotificationConsent $recordNotificationConsent,
+    ): JsonResponse {
         $guardian = $this->guardian($request);
         $this->requireMinorAccounts();
         $created = false;
         $activationToken = null;
-        $profile = DB::transaction(function () use ($guardian, $request, $create, &$created, &$activationToken): MinorProfile {
+        $profile = DB::transaction(function () use ($guardian, $request, $create, $recordNotificationConsent, &$created, &$activationToken): MinorProfile {
             $familyMember = $guardian->familyMembers()->whereKey($request->integer('family_member_id'))->lockForUpdate()->first();
             if ($familyMember === null) {
                 throw ValidationException::withMessages(['family_member_id' => 'The selected family member was not found.']);
             }
             $existing = $familyMember->minorProfile()->first();
             if ($existing !== null) {
+                $recordNotificationConsent->execute($existing, $request->ip());
+
                 return $existing;
             }
-            $result = $create->execute($guardian, ['family_member_id' => $familyMember->id], $request->ip());
+            $result = $create->execute(
+                $guardian,
+                ['family_member_id' => $familyMember->id],
+                $request->ip(),
+                $request->boolean('notifications_consent_accepted'),
+            );
             $activationToken = $result['activation_token'];
             $created = true;
 

@@ -26,6 +26,7 @@ class UchatMinorProfileRequest extends UchatRequest
             'uchat_phone' => $this->phoneRules(),
             'family_member_id' => ['required', 'integer'],
             'consent_accepted' => ['accepted'],
+            'notifications_consent_accepted' => ['accepted'],
         ];
     }
 }

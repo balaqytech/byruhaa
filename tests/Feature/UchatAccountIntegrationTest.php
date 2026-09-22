@@ -20,6 +20,9 @@ beforeEach(function (): void {
         'byruhaa.uchat.webhook_signing_secret' => 'signing-secret',
         'byruhaa.wallets.enabled' => true,
         'byruhaa.minor_accounts.enabled' => true,
+        'byruhaa.minor_accounts.browser_notifications.policy_version' => 'minor-notifications-test-v1',
+        'byruhaa.minor_accounts.browser_notifications.policy_text' => 'guardian-approved-minor-notifications',
+        'byruhaa.minor_accounts.browser_notifications.consent_text' => 'Guardian notification consent text.',
     ]);
     $this->withHeaders(['Authorization' => 'Bearer account-secret', 'X-WhatsApp-Phone' => '+96891234567', 'Accept-Language' => 'en']);
 });
@@ -30,7 +33,10 @@ test('account discovery is guardian scoped and includes inactive profiles and ve
     MinorProfile::factory()->create();
 
     $this->getJson('/api/v1/integrations/uchat/store/account')->assertOk()
-        ->assertJsonPath('data.phone_verified', false)->assertJsonPath('data.phone_verification_required', false);
+        ->assertJsonPath('data.phone_verified', false)->assertJsonPath('data.phone_verification_required', false)
+        ->assertJsonPath('data.notifications_policy_version', 'minor-notifications-test-v1')
+        ->assertJsonPath('data.notifications_policy_identifier', 'guardian-approved-minor-notifications')
+        ->assertJsonPath('data.notifications_consent_text', 'Guardian notification consent text.');
     $this->getJson('/api/v1/integrations/uchat/store/minor-profiles')->assertOk()->assertJsonCount(1, 'data')
         ->assertJsonPath('data.0.minor_profile_id', $profile->id)->assertJsonPath('data.0.status', 'suspended')
         ->assertJsonMissingPath('data.0.password');
@@ -42,14 +48,27 @@ test('minor onboarding reuses the family birthdate and safely retries creation b
     config(['byruhaa.uchat.webhook_url' => null]);
     $this->mock(ByruhaaWebhookSender::class)->shouldNotReceive('sendUchatMinorVerificationCode');
     $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $family->id])->assertUnprocessable();
-    $response = $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $family->id, 'consent_accepted' => true])
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', [
+        'family_member_id' => $family->id,
+        'consent_accepted' => true,
+    ])->assertUnprocessable()->assertJsonValidationErrors('notifications_consent_accepted');
+    $payload = [
+        'family_member_id' => $family->id,
+        'consent_accepted' => true,
+        'notifications_consent_accepted' => true,
+    ];
+    $response = $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', $payload)
         ->assertCreated()->assertJsonPath('data.status', 'pending_child_activation')->assertJsonMissingPath('code');
     $id = $response->json('data.minor_profile_id');
     $activationUrl = $response->json('activation_url');
-    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $family->id, 'consent_accepted' => true])->assertOk()
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', $payload)->assertOk()
         ->assertJsonPath('created', false)->assertJsonPath('data.minor_profile_id', $id)->assertJsonPath('activation_url', null);
     expect($activationUrl)->toContain('signature=');
-    expect(MinorProfile::findOrFail($id)->consents()->count())->toBe(1)
+    $profile = MinorProfile::findOrFail($id);
+    $notificationConsent = $profile->consents()->where('purpose', 'browser_notifications')->firstOrFail();
+    expect($profile->consents()->count())->toBe(2)
+        ->and($notificationConsent->policy_version)->toBe('minor-notifications-test-v1')
+        ->and($notificationConsent->policy_hash)->toBe(hash('sha256', 'guardian-approved-minor-notifications'))
         ->and(MinorProfile::findOrFail($id)->verifications()->count())->toBe(0);
     $this->get($activationUrl)->assertOk();
 
@@ -59,9 +78,10 @@ test('minor creation rejects other guardians family members and adults', functio
     $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
     $other = FamilyMember::factory()->create();
     $adult = FamilyMember::factory()->for($guardian)->create(['birth_date' => now()->subYears(25)]);
-    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $other->id, 'consent_accepted' => true])->assertUnprocessable()
+    $payload = ['consent_accepted' => true, 'notifications_consent_accepted' => true];
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $other->id, ...$payload])->assertUnprocessable()
         ->assertJsonPath('reasons.family_member_id.0', 'family_member_unavailable');
-    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $adult->id, 'consent_accepted' => true])->assertUnprocessable()
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $adult->id, ...$payload])->assertUnprocessable()
         ->assertJsonPath('reasons.birth_date.0', 'minor_age_invalid');
     expect(MinorProfile::count())->toBe(0);
 });

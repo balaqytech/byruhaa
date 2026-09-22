@@ -17,6 +17,7 @@ return [
             'enabled' => filter_var(env('MINOR_BROWSER_NOTIFICATIONS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
             'policy_version' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_VERSION', 'minor-account-notifications-v2'),
             'policy_text' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_TEXT', 'guardian-consent-minor-account-notifications'),
+            'consent_text' => 'أوافق على تلقي القاصر جميع الإشعارات المتعلقة بحسابه وخدماته، بما فيها الطلبات والمحفظة وأي أنواع تضاف مستقبلًا. قد تظهر تفاصيل الإشعار على شاشة القفل في جهازه.',
             'order_statuses' => [
                 'confirmed',
                 'ready_for_pickup',

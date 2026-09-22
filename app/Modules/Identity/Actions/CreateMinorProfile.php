@@ -14,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class CreateMinorProfile
 {
-    public function __construct(private IssueMinorProfileActivation $issueActivation) {}
+    public function __construct(
+        private IssueMinorProfileActivation $issueActivation,
+        private RecordMinorNotificationConsent $recordNotificationConsent,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
@@ -49,13 +52,7 @@ class CreateMinorProfile
             ]);
 
             if ($browserNotificationsConsent) {
-                $profile->consents()->create([
-                    'purpose' => 'browser_notifications',
-                    'policy_version' => (string) config('byruhaa.minor_accounts.browser_notifications.policy_version', 'minor-account-notifications-v2'),
-                    'policy_hash' => hash('sha256', (string) config('byruhaa.minor_accounts.browser_notifications.policy_text', 'guardian-consent-minor-account-notifications')),
-                    'accepted_at' => now(),
-                    'accepted_ip' => $ipAddress,
-                ]);
+                $this->recordNotificationConsent->execute($profile, $ipAddress);
             }
 
             $activationToken = $this->issueActivation->execute($profile, $guardian->id, $ipAddress);
