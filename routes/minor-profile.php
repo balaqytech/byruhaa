@@ -23,6 +23,9 @@ Route::middleware(['auth:minor-profile', AuthenticateMinorProfile::class])
     ->group(function (): void {
         Route::get('dashboard', [MinorProfileStoreController::class, 'dashboard'])->name('dashboard');
         Route::get('orders', [MinorProfileStoreController::class, 'orders'])->name('orders.index');
+        Route::get('notifications', [MinorProfileStoreController::class, 'notifications'])->name('notifications.index');
+        Route::post('notifications/read', [MinorProfileStoreController::class, 'markAllNotificationsAsRead'])->name('notifications.read-all');
+        Route::post('notifications/{notification}/open', [MinorProfileStoreController::class, 'openNotification'])->name('notifications.open');
         Route::get('orders/{order:payment_token}', [MinorProfileStoreController::class, 'show'])->name('orders.show');
         Route::post('orders/{order:payment_token}/payment', [MinorProfileStoreController::class, 'pay'])->middleware('throttle:10,1')->name('orders.payment');
         Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:10,1')->name('push-subscriptions.store');

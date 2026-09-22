@@ -115,7 +115,10 @@
     </section>
     @if ($notifications->isNotEmpty())
         <section class="rounded-2xl border border-emerald-900/10 bg-white p-6 dark:border-white/10 dark:bg-zinc-900">
-            <h2 class="font-semibold">آخر التنبيهات</h2>
+            <div class="flex items-center justify-between gap-3">
+                <h2 class="font-semibold">آخر التنبيهات</h2>
+                <a href="{{ route('minor.notifications.index') }}" class="text-sm font-semibold text-emerald-700 hover:underline dark:text-emerald-300">عرض الكل</a>
+            </div>
             <div class="mt-3 grid gap-2">
                 @foreach ($notifications as $notification)
                     <a href="{{ data_get($notification->data, 'url', route('minor.orders.index')) }}" class="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-900 dark:bg-emerald-300/10 dark:text-emerald-100">{{ data_get($notification->data, 'message', data_get($notification->data, 'status_label', 'تنبيه جديد')) }}</a>

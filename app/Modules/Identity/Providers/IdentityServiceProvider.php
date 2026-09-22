@@ -23,8 +23,10 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Laravel\Fortify\Fortify;
 use Spatie\Permission\Events\PermissionAttachedEvent;
 use Spatie\Permission\Events\PermissionDetachedEvent;
@@ -40,6 +42,7 @@ class IdentityServiceProvider extends ServiceProvider
     {
         Gate::policy(User::class, UserPolicy::class);
         $this->registerPermissionAuditListeners();
+        $this->registerMinorNotificationViewData();
 
         Relation::morphMap([
             'App\\Models\\Customer' => Customer::class,
@@ -100,5 +103,14 @@ class IdentityServiceProvider extends ServiceProvider
         ] as $event) {
             Event::listen($event, RecordPermissionChangeAudit::class);
         }
+    }
+
+    protected function registerMinorNotificationViewData(): void
+    {
+        ViewFacade::composer('layouts.public', function (View $view): void {
+            $profile = Auth::guard('minor-profile')->user();
+
+            $view->with('minorUnreadNotificationsCount', $profile?->unreadNotifications()->count() ?? 0);
+        });
     }
 }

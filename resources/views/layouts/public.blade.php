@@ -103,6 +103,18 @@
                     @endforeach
                 </div>
 
+                @auth('minor-profile')
+                    <a href="{{ route('minor.notifications.index') }}"
+                        class="relative inline-flex size-10 items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329]/68 transition hover:border-[#009060]/35 hover:bg-[#009060]/8 hover:text-[#009060] dark:border-white/10 dark:text-[#f7f1df]/68 dark:hover:bg-white/10 dark:hover:text-[#e0a800]"
+                        aria-label="الإشعارات{{ $minorUnreadNotificationsCount > 0 ? '، '.$minorUnreadNotificationsCount.' غير مقروءة' : '' }}"
+                        title="الإشعارات">
+                        <x-hugeicon name="notification-02" class="text-xl" />
+                        @if ($minorUnreadNotificationsCount > 0)
+                            <span class="absolute -end-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[#d89c00] px-1 text-[10px] font-bold leading-5 text-[#07120f] ring-2 ring-[#f6fbf8] dark:ring-[#07120f]">{{ $minorUnreadNotificationsCount > 99 ? '99+' : $minorUnreadNotificationsCount }}</span>
+                        @endif
+                    </a>
+                @endauth
+
                 @if (Route::has($accountRoute))
                     <a href="{{ route($accountRoute) }}"
                         class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-[#009060]/18 px-4 py-2 text-sm font-semibold text-[#009060] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-[#e0a800]/24 dark:text-[#e0a800] dark:hover:bg-[#e0a800]/10">
@@ -112,11 +124,23 @@
                 @endif
             </div>
 
-            <label for="public-navigation-toggle"
-                class="ms-auto inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 lg:hidden dark:border-white/10 dark:text-[#f7f1df] dark:hover:bg-white/10"
-                aria-label="فتح القائمة">
-                <x-hugeicon name="menu-01" class="text-2xl" />
-            </label>
+            <div class="ms-auto flex items-center gap-2 lg:hidden">
+                @auth('minor-profile')
+                    <a href="{{ route('minor.notifications.index') }}"
+                        class="relative inline-flex size-11 items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-white/10 dark:text-[#f7f1df] dark:hover:bg-white/10"
+                        aria-label="الإشعارات{{ $minorUnreadNotificationsCount > 0 ? '، '.$minorUnreadNotificationsCount.' غير مقروءة' : '' }}">
+                        <x-hugeicon name="notification-02" class="text-2xl" />
+                        @if ($minorUnreadNotificationsCount > 0)
+                            <span class="absolute -end-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[#d89c00] px-1 text-[10px] font-bold leading-5 text-[#07120f] ring-2 ring-[#f6fbf8] dark:ring-[#07120f]">{{ $minorUnreadNotificationsCount > 99 ? '99+' : $minorUnreadNotificationsCount }}</span>
+                        @endif
+                    </a>
+                @endauth
+                <label for="public-navigation-toggle"
+                    class="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-white/10 dark:text-[#f7f1df] dark:hover:bg-white/10"
+                    aria-label="فتح القائمة">
+                    <x-hugeicon name="menu-01" class="text-2xl" />
+                </label>
+            </div>
         </div>
 
         <nav class="hidden border-t border-[#009060]/12 bg-[#fbf9f1]/96 px-4 py-4 text-sm font-medium text-[#123329]/74 peer-checked:grid lg:peer-checked:hidden dark:border-white/10 dark:bg-[#07120f]/96 dark:text-[#f7f1df]/72"

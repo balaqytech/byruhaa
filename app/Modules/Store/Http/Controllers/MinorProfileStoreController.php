@@ -12,6 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -55,6 +56,39 @@ class MinorProfileStoreController
             'order' => $order->load(['items', 'statusHistory']),
             'paymentBlockReason' => $this->paymentBlockReason($order, Auth::guard('minor-profile')->user()),
         ]);
+    }
+
+    public function notifications(): View
+    {
+        /** @var MinorProfile $profile */
+        $profile = Auth::guard('minor-profile')->user();
+
+        return view('pages.minor.notifications.index', [
+            'profile' => $profile->loadMissing('familyMember'),
+            'notifications' => $profile->notifications()->latest()->paginate(20),
+            'unreadCount' => $profile->unreadNotifications()->count(),
+        ]);
+    }
+
+    public function markAllNotificationsAsRead(): RedirectResponse
+    {
+        /** @var MinorProfile $profile */
+        $profile = Auth::guard('minor-profile')->user();
+        $profile->unreadNotifications()->update(['read_at' => now()]);
+
+        return back()->with('success', 'تم تحديد جميع الإشعارات كمقروءة.');
+    }
+
+    public function openNotification(string $notification): RedirectResponse
+    {
+        /** @var MinorProfile $profile */
+        $profile = Auth::guard('minor-profile')->user();
+        $storedNotification = $profile->notifications()->findOrFail($notification);
+        $storedNotification->markAsRead();
+
+        $url = (string) data_get($storedNotification->data, 'url', route('minor.notifications.index'));
+
+        return redirect()->to(Str::startsWith($url, url('/')) ? $url : route('minor.notifications.index'));
     }
 
     public function pay(Request $request, Order $order, InitiateStorePayment $initiatePayment, ConfirmWalletOrder $confirmWalletOrder): RedirectResponse

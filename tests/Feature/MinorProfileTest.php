@@ -8,6 +8,7 @@ use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\MinorProfile;
 use App\Modules\Identity\Notifications\MinorOrderStatusChangedNotification;
+use App\Modules\Identity\Notifications\MinorWalletTopUpNotification;
 use App\Modules\Store\Actions\InitiateStorePayment;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Events\OrderStateChanged;
@@ -374,6 +375,51 @@ test('minor dashboard exposes browser controls only after guardian consent', fun
         ->assertSee('data-minor-push-manager', false)
         ->assertSee(route('minor.push-subscriptions.store'), false)
         ->assertSee('تفعيل على هذا الجهاز');
+});
+
+test('minor notification center shows unread notifications and marks them as read', function (): void {
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $notification = new MinorWalletTopUpNotification(
+        5250,
+        7250,
+        'OMR',
+        route('minor.orders.index').'#wallet',
+    );
+    $profile->notifyNow($notification, ['database']);
+
+    $this->actingAs($profile, 'minor-profile')
+        ->get(route('minor.orders.index'))
+        ->assertSuccessful()
+        ->assertSee('href="'.route('minor.notifications.index').'"', false)
+        ->assertSee('1 غير مقروءة');
+
+    $this->get(route('minor.notifications.index'))
+        ->assertSuccessful()
+        ->assertSee('الإشعارات')
+        ->assertSee('5.250 OMR')
+        ->assertSee('7.250 OMR')
+        ->assertSee('جديد');
+
+    $this->post(route('minor.notifications.read-all'))->assertRedirect();
+
+    expect($profile->unreadNotifications()->count())->toBe(0);
+});
+
+test('minor can open only their own notification and unsafe destinations are ignored', function (): void {
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $otherProfile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $notification = new MinorWalletTopUpNotification(1000, 1000, 'OMR', 'https://malicious.example/leave');
+    $profile->notifyNow($notification, ['database']);
+    $otherProfile->notifyNow($notification, ['database']);
+    $ownNotification = $profile->notifications()->firstOrFail();
+    $otherNotification = $otherProfile->notifications()->firstOrFail();
+
+    $this->actingAs($profile, 'minor-profile')
+        ->post(route('minor.notifications.open', $ownNotification->id))
+        ->assertRedirect(route('minor.notifications.index'));
+    expect($ownNotification->refresh()->read_at)->not->toBeNull();
+
+    $this->post(route('minor.notifications.open', $otherNotification->id))->assertNotFound();
 });
 
 test('suspending or requesting deletion removes every browser subscription', function (string $routeName): void {
