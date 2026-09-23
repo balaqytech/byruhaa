@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Models;
 use App\Models\WebhookDelivery;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\EventInterest;
+use App\Notifications\CustomerResetPasswordNotification;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -53,6 +54,11 @@ class Customer extends Authenticatable
                 $customer->phone_verified_at = null;
             }
         });
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new CustomerResetPasswordNotification($token));
     }
 
     /**
