@@ -126,19 +126,63 @@ test('activation links replace legacy OTP and cannot be reset by the old resend 
     $this->postJson("/api/v1/integrations/uchat/store/minor-profiles/{$other->id}/activation-link", ['consent_accepted' => true])->assertUnprocessable();
 });
 
-test('phone OTP flow never returns the code and records verification', function (): void {
+test('guardian phone OTP endpoints are removed from the UChat contract', function (): void {
+    Customer::factory()->create(['phone_number' => '+96891234567', 'phone_verified_at' => null]);
+    $this->mock(ByruhaaWebhookSender::class)->shouldNotReceive('sendUchatCustomerPhoneVerificationCode');
+
+    $this->postJson('/api/v1/integrations/uchat/store/phone-verification/send')->assertNotFound();
+    $this->postJson('/api/v1/integrations/uchat/store/phone-verification/verify', ['code' => '000000'])->assertNotFound();
+});
+
+test('guardian controls wallet spending and operational status independently without phone verification', function (): void {
     $guardian = Customer::factory()->create(['phone_number' => '+96891234567', 'phone_verified_at' => null]);
-    $code = null;
-    $this->mock(ByruhaaWebhookSender::class)->shouldReceive('sendUchatCustomerPhoneVerificationCode')->once()
-        ->andReturnUsing(function (Customer $customer, string $value, mixed ...$args) use (&$code): void {
-            $code = $value;
-        });
-    $this->postJson('/api/v1/integrations/uchat/store/phone-verification/send')->assertAccepted()->assertJsonMissingPath('code');
-    $this->postJson('/api/v1/integrations/uchat/store/phone-verification/send')->assertUnprocessable()->assertJsonPath('reasons.phone.0', 'verification_cooldown');
-    $this->postJson('/api/v1/integrations/uchat/store/phone-verification/verify', ['code' => '000000'])->assertUnprocessable();
-    expect($guardian->phoneVerifications()->firstOrFail()->attempts)->toBe(1);
-    $this->postJson('/api/v1/integrations/uchat/store/phone-verification/verify', ['code' => $code])->assertOk();
-    expect($guardian->refresh()->hasVerifiedPhone())->toBeTrue();
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create([
+        'status' => MinorProfileStatus::Active,
+        'wallet_spending_enabled' => false,
+    ]);
+
+    $statusUrl = "/api/v1/integrations/uchat/store/minor-profiles/{$profile->id}/wallet/status";
+    $spendingUrl = "/api/v1/integrations/uchat/store/minor-profiles/{$profile->id}/wallet-spending";
+    $walletUrl = "/api/v1/integrations/uchat/store/minor-profiles/{$profile->id}/wallet";
+
+    $this->getJson($statusUrl)->assertOk()
+        ->assertJsonPath('data.wallet_spending_enabled', false)
+        ->assertJsonPath('data.wallet_status', 'active')
+        ->assertJsonPath('data.can_spend', false)
+        ->assertJsonPath('data.can_top_up', true);
+
+    $this->postJson("{$spendingUrl}/enable")->assertOk()
+        ->assertJsonPath('data.wallet_spending_enabled', true)
+        ->assertJsonPath('data.can_spend', true);
+    $this->postJson("{$spendingUrl}/enable")->assertOk();
+    expect($profile->consents()->where('purpose', 'wallet_spending')->count())->toBe(1);
+
+    $this->postJson("{$walletUrl}/suspend")->assertOk()
+        ->assertJsonPath('data.wallet_status', 'suspended')
+        ->assertJsonPath('data.wallet_spending_enabled', true)
+        ->assertJsonPath('data.can_spend', false)
+        ->assertJsonPath('data.can_top_up', false);
+    $this->postJson("{$walletUrl}/suspend")->assertOk();
+
+    $this->postJson("{$walletUrl}/activate")->assertOk()
+        ->assertJsonPath('data.wallet_status', 'active')
+        ->assertJsonPath('data.can_spend', true)
+        ->assertJsonPath('data.can_top_up', true);
+    $this->postJson("{$spendingUrl}/disable")->assertOk()
+        ->assertJsonPath('data.wallet_spending_enabled', false)
+        ->assertJsonPath('data.can_spend', false)
+        ->assertJsonPath('data.can_top_up', true);
+
+    $profile->update(['status' => MinorProfileStatus::Suspended]);
+    $this->postJson("{$spendingUrl}/enable")->assertUnprocessable()
+        ->assertJsonPath('reasons.minor_profile_id.0', 'minor_account_inactive');
+    $this->postJson("{$walletUrl}/activate")->assertUnprocessable()
+        ->assertJsonPath('reasons.minor_profile_id.0', 'minor_account_inactive');
+
+    $profile->update(['status' => MinorProfileStatus::Active]);
+    Wallet::query()->where('minor_profile_id', $profile->id)->update(['status' => 'closed']);
+    $this->postJson("{$walletUrl}/activate")->assertUnprocessable()
+        ->assertJsonPath('reasons.wallet.0', 'wallet_closed');
 });
 
 test('UChat activation links cannot reactivate active or restricted profiles', function (MinorProfileStatus $status): void {
@@ -188,5 +232,5 @@ test('top up status distinguishes paid from credited and hides other wallets', f
     $this->getJson("/api/v1/integrations/uchat/store/wallet/movements?minor_profile_id={$profile->id}")->assertOk();
     $this->getJson("/api/v1/integrations/uchat/store/wallet?minor_profile_id={$profile->id}")->assertOk();
     config(['byruhaa.phone_verification.required' => true]);
-    $this->getJson("/api/v1/integrations/uchat/store/wallet/movements?minor_profile_id={$profile->id}")->assertUnprocessable()->assertJsonPath('reasons.phone.0', 'guardian_phone_unverified');
+    $this->getJson("/api/v1/integrations/uchat/store/wallet/movements?minor_profile_id={$profile->id}")->assertOk();
 });

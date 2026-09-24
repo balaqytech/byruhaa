@@ -58,7 +58,6 @@ class MinorProfilePurchaseService implements MinorProfilePurchasing
             $profile->member_code,
             $profile->direct_payment_enabled,
             $profile->wallet_spending_enabled,
-            $profile->familyMember->customer->hasVerifiedPhone(),
         );
     }
 }

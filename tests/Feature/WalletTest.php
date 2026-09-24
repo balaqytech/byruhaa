@@ -4,7 +4,9 @@ use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
 use App\Jobs\UchatWebhookJob;
 use App\Models\WebhookDelivery;
+use App\Modules\Finance\Actions\InitiateWalletTopUp;
 use App\Modules\Finance\Actions\RefundPayment;
+use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
@@ -35,6 +37,23 @@ beforeEach(function (): void {
         'byruhaa.wallets.enabled' => true,
         'byruhaa.wallets.top_up_refund_window_hours' => 24,
     ]);
+});
+
+test('a suspended wallet cannot start a new top up', function (): void {
+    $profile = MinorProfile::factory()->for(FamilyMember::factory())->create();
+    $wallet = app(WalletService::class)->walletForMinorProfile($profile->id);
+    $wallet->update(['status' => 'suspended']);
+    $this->mock(PaymentService::class)->shouldNotReceive('initiate');
+
+    expect(fn () => app(InitiateWalletTopUp::class)->execute(
+        $profile->id,
+        'suspended-wallet-top-up',
+        1000,
+        'https://example.test/success',
+        'https://example.test/cancel',
+    ))->toThrow(ValidationException::class, 'The wallet is not active.');
+
+    expect(WalletTopUp::query()->count())->toBe(0);
 });
 
 test('a verified payment credits a child wallet exactly once', function (): void {

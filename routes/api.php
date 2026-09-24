@@ -54,8 +54,11 @@ Route::prefix('v1')
                 Route::post('minor-profiles/{minorProfile}/activation-link', [UchatAccountController::class, 'activationLink'])->whereNumber('minorProfile')->middleware('throttle:5,1')->name('minor-profiles.activation-link');
                 Route::post('minor-profiles/{minorProfile}/verification/send', [UchatAccountController::class, 'resend'])->whereNumber('minorProfile')->middleware('throttle:5,1')->name('minor-profiles.resend');
                 Route::post('minor-profiles/{minorProfile}/verification/verify', [UchatAccountController::class, 'verify'])->whereNumber('minorProfile')->middleware('throttle:10,1')->name('minor-profiles.verify');
-                Route::post('phone-verification/send', [UchatAccountController::class, 'sendPhoneCode'])->middleware('throttle:5,1')->name('phone-verification.send');
-                Route::post('phone-verification/verify', [UchatAccountController::class, 'verifyPhone'])->middleware('throttle:10,1')->name('phone-verification.verify');
+                Route::get('minor-profiles/{minorProfile}/wallet/status', [UchatAccountController::class, 'walletStatus'])->whereNumber('minorProfile')->name('minor-profiles.wallet.status');
+                Route::post('minor-profiles/{minorProfile}/wallet-spending/enable', [UchatAccountController::class, 'enableWalletSpending'])->whereNumber('minorProfile')->name('minor-profiles.wallet-spending.enable');
+                Route::post('minor-profiles/{minorProfile}/wallet-spending/disable', [UchatAccountController::class, 'disableWalletSpending'])->whereNumber('minorProfile')->name('minor-profiles.wallet-spending.disable');
+                Route::post('minor-profiles/{minorProfile}/wallet/activate', [UchatAccountController::class, 'activateWallet'])->whereNumber('minorProfile')->name('minor-profiles.wallet.activate');
+                Route::post('minor-profiles/{minorProfile}/wallet/suspend', [UchatAccountController::class, 'suspendWallet'])->whereNumber('minorProfile')->name('minor-profiles.wallet.suspend');
                 Route::get('catalog', [UchatStoreController::class, 'catalog'])->name('catalog');
                 Route::get('products/{slug}', [UchatStoreController::class, 'product'])->name('products.show');
                 Route::get('cart', [UchatStoreController::class, 'cart'])->name('cart.show');

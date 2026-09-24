@@ -7,46 +7,36 @@ use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\MinorProfile;
 use Livewire\Livewire;
 
-test('phone verification prompts follow the configured requirement', function (bool $required): void {
-    config(['byruhaa.phone_verification.required' => $required]);
+test('customer profile no longer presents phone verification controls', function (): void {
+    config(['byruhaa.phone_verification.required' => true]);
     $customer = Customer::factory()->create(['phone_verified_at' => null]);
     $this->actingAs($customer, 'customer');
 
-    $component = Livewire::test('pages::customer.settings.profile');
-    if ($required) {
-        $component->assertSee('إرسال رمز التحقق');
-    } else {
-        $component->assertDontSee('إرسال رمز التحقق')->assertDontSee('رقم الهاتف موثّق');
-    }
-    expect($customer->refresh()->phone_verified_at)->toBeNull();
-})->with([false, true]);
+    Livewire::test('pages::customer.settings.profile')
+        ->assertDontSee('إرسال رمز التحقق')
+        ->assertDontSee('رقم الهاتف موثّق');
 
-test('guardian wallet permissions and top ups respect optional phone verification', function (bool $required, bool $verified): void {
-    config(['byruhaa.phone_verification.required' => $required, 'byruhaa.wallets.enabled' => true]);
-    $guardian = Customer::factory()->create(['phone_verified_at' => $verified ? now() : null]);
+    $this->post('/customer/phone-verification/send')->assertNotFound();
+    $this->post('/customer/phone-verification/verify', ['code' => '000000'])->assertNotFound();
+    expect($customer->refresh()->phone_verified_at)->toBeNull();
+});
+
+test('unverified guardians can manage spending and top up wallets', function (): void {
+    config(['byruhaa.phone_verification.required' => true, 'byruhaa.wallets.enabled' => true]);
+    $guardian = Customer::factory()->create(['phone_verified_at' => null]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create(['wallet_spending_enabled' => false]);
     $this->actingAs($guardian, 'customer');
-    $allowed = ! $required || $verified;
-    $topUp = $this->mock(InitiateWalletTopUp::class);
-    if ($allowed) {
-        $topUp->shouldReceive('execute')->once()->andReturn(new PaymentCheckoutData('PAY-TEST', 'pending', 'https://payment.test/checkout', 1000, 'OMR', 'test-session', null));
-    } else {
-        $topUp->shouldNotReceive('execute');
-    }
+    $this->mock(InitiateWalletTopUp::class)->shouldReceive('execute')->once()
+        ->andReturn(new PaymentCheckoutData('PAY-TEST', 'pending', 'https://payment.test/checkout', 1000, 'OMR', 'test-session', null));
 
     $permission = $this->post(route('customer.minor-profiles.wallet-spending', $profile));
     $funding = $this->post(route('customer.minor-profiles.wallet.top-up', $profile), ['amount_omr' => '1.000']);
-    if ($allowed) {
-        $permission->assertSessionHasNoErrors();
-        $funding->assertSessionHasNoErrors()->assertRedirect('https://payment.test/checkout');
-        expect($profile->consents()->where('purpose', 'wallet_spending')->exists())->toBeTrue();
-    } else {
-        $permission->assertSessionHasErrors('phone');
-        $funding->assertSessionHasErrors('phone');
-    }
-    expect($profile->refresh()->wallet_spending_enabled)->toBe($allowed)
-        ->and($guardian->refresh()->hasVerifiedPhone())->toBe($verified);
-})->with([[false, false], [true, false], [true, true]]);
+    $permission->assertSessionHasNoErrors();
+    $funding->assertSessionHasNoErrors()->assertRedirect('https://payment.test/checkout');
+    expect($profile->consents()->where('purpose', 'wallet_spending')->exists())->toBeTrue()
+        ->and($profile->refresh()->wallet_spending_enabled)->toBeTrue()
+        ->and($guardian->refresh()->hasVerifiedPhone())->toBeFalse();
+});
 
 test('new customers enter their account without a phone OTP or fabricated verification', function (): void {
     config(['byruhaa.phone_verification.required' => false]);
@@ -60,6 +50,5 @@ test('new customers enter their account without a phone OTP or fabricated verifi
     $this->assertAuthenticated('customer');
     $customer = Customer::query()->where('phone_number', '+96891234567')->sole();
     expect($customer->phone_verified_at)->toBeNull()
-        ->and($customer->phoneVerifications()->count())->toBe(0)
-        ->and($customer->requiresPhoneVerification())->toBeFalse();
+        ->and($customer->phoneVerifications()->count())->toBe(0);
 });

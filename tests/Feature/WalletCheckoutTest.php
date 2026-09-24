@@ -21,7 +21,7 @@ use Livewire\Livewire;
 
 beforeEach(function (): void {
     Queue::fake();
-    config(['byruhaa.wallets.enabled' => true, 'byruhaa.phone_verification.required' => false]);
+    config(['byruhaa.wallets.enabled' => true]);
     $settings = app(StoreSettings::class);
     $settings->ordering_enabled = true;
     $settings->save();
@@ -70,14 +70,13 @@ test('minor wallet checkout confirms orders with or without tracked stock exactl
     }
 })->with([true, false]);
 
-test('verification can be required again without marking unverified phones as verified', function (): void {
+test('legacy phone verification configuration cannot block wallet checkout', function (): void {
     config(['byruhaa.phone_verification.required' => true]);
-    Livewire::test(Checkout::class)->assertSet('walletPaymentAvailable', false)
-        ->set('paymentMethod', 'wallet')->call('placeOrder')->assertHasErrors();
+    Livewire::test(Checkout::class)->assertSet('walletPaymentAvailable', true)
+        ->set('paymentMethod', 'wallet')->call('placeOrder')->assertHasNoErrors();
 
     expect($this->guardian->refresh()->phone_verified_at)->toBeNull()
-        ->and($this->wallet->refresh()->balance_baisa)->toBe(5000)
-        ->and(Order::query()->count())->toBe(0);
+        ->and(Order::query()->count())->toBe(1);
 });
 
 test('insufficient wallet checkout keeps the cart and rolls back inventory so it can be retried', function (): void {

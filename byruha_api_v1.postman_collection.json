@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7e42a4fc-a492-4f4d-b59f-9c8313db1f2a",
     "name": "Byruha API v1",
-    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout. Includes child-account cart/order selection, wallet balance/history, wallet top-ups, and browser confirmation for wallet purchases.\nCustomer, family, booking, payment and assistant-interest endpoints now require the trusted server-side UChat bearer token. Public events remain readable without a token. Password updates via the customer API are prohibited. Linked minor accounts must use the account lifecycle workflow before parent/family deletion (409 minor_account_lifecycle_required).\nUChat onboarding: find/create a family member first; open its minor profile; deliver guardian OTP; obtain explicit consent and verify; send the signed activation link for the child to set a password on the website. Never use an outbound OTP to auto-verify without the guardian response.",
+    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout. Includes child-account cart/order selection, wallet balance/history, wallet top-ups, and browser confirmation for wallet purchases.\nCustomer, family, booking, payment and assistant-interest endpoints require the trusted server-side UChat bearer token. Public events remain readable without a token. Password updates via the customer API are prohibited. Linked minor accounts must use the account lifecycle workflow before parent/family deletion (409 minor_account_lifecycle_required).\nUChat onboarding: find or create a family member, open the minor profile after the guardian accepts both consent statements, then share activation_url so the child can set a password. Guardian phone OTP is not required and its public endpoints have been removed. Wallet spending permission and operational wallet status are managed independently through the Wallets requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -1977,7 +1977,7 @@
     },
     {
       "name": "UChat Store",
-      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server.\n\nWallet flow: set the guardian WhatsApp phone and store_minor_profile_id; the guardian must own the active child profile and have a verified phone. Enable WALLETS_ENABLED on the server. Read the wallet, initiate a Thawani top-up, and open checkout_url in the browser. Use the same minor_profile_id throughout cart and order requests. Create a wallet order and open payment.confirmation_url in the browser as the authenticated guardian to approve payment; UChat cannot debit directly. Pickup only; email is optional. Guardian phone OTP has optional endpoints: skip them unless GET account.phone_verification_required=true and phone_verified=false; wallet confirmation and refunds use the website. New minor accounts do not require a minor OTP. Show the two consent statements returned by GET account and obtain explicit guardian approval for each. Create with consent_accepted=true and notifications_consent_accepted=true, then share activation_url for password setup. Recover lost/expired links with the activation-link endpoint.\n\nUse a new idempotency key for each new order or top-up, retaining it for retries of that same operation. Do not reuse a key for another amount or child. All monetary response fields ending in _baisa are integer baisa (1000 = OMR 1).\nAccount onboarding and verification use the same trusted token and guardian X-WhatsApp-Phone. Accept-Language: ar or en. Errors retain code and add reasons[field] machine-readable codes when available.",
+      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server.\n\nWallet flow: set the guardian WhatsApp phone and store_minor_profile_id; the guardian must own the active child profile. Guardian phone verification is not part of this API contract. Enable WALLETS_ENABLED on the server. Use the wallet controls to manage spending permission independently from operational wallet status. A suspended wallet cannot be spent from or topped up. Read the wallet, initiate a Thawani top-up, and open checkout_url in the browser. Use the same minor_profile_id throughout cart and order requests. Create a wallet order and open payment.confirmation_url in the browser as the authenticated guardian to approve payment; UChat cannot debit directly. Pickup only; email is optional. Wallet confirmation and refunds use the website. New minor accounts do not require a minor OTP. Show the two consent statements returned by GET account and obtain explicit guardian approval for each. Create with consent_accepted=true and notifications_consent_accepted=true, then share activation_url for password setup. Recover lost/expired links with the activation-link endpoint.\n\nUse a new idempotency key for each new order or top-up, retaining it for retries of that same operation. Do not reuse a key for another amount or child. All monetary response fields ending in _baisa are integer baisa (1000 = OMR 1).\nAccount onboarding uses the same trusted token and guardian X-WhatsApp-Phone. Accept-Language: ar or en. Errors retain code and add reasons[field] machine-readable codes when available.",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -2493,7 +2493,7 @@
                 "account"
               ]
             },
-            "description": "200 data: customer_id, name, phone_verified, phone_verified_at, phone_verification_required, minor_accounts_enabled, wallets_enabled, manage_accounts_url, consent_policy_version, consent_policy_text (legacy identifier), consent_policy_identifier, consent_text, notifications_policy_version, notifications_policy_identifier and notifications_consent_text. Unknown guardian returns 422 guardian_account_required. phone_verification_required defaults to false; phone_verified remains the actual verification state and may be false without blocking wallets. Show consent_text and notifications_consent_text separately before requesting the guardian's explicit approval. Both *_policy_identifier values are internal identifiers, not display copy. consent_policy_text remains temporarily for backward compatibility and must not be shown to the guardian."
+            "description": "200 data: customer_id, name, phone_verified, phone_verified_at, phone_verification_required, minor_accounts_enabled, wallets_enabled, manage_accounts_url, consent_policy_version, consent_policy_text (legacy identifier), consent_policy_identifier, consent_text, notifications_policy_version, notifications_policy_identifier and notifications_consent_text. Unknown guardian returns 422 guardian_account_required. phone_verification_required is always false and no guardian phone OTP endpoints exist. phone_verified remains informational only and never blocks wallets. Show consent_text and notifications_consent_text separately before requesting the guardian's explicit approval. Both *_policy_identifier values are internal identifiers, not display copy. consent_policy_text remains temporarily for backward compatibility and must not be shown to the guardian."
           },
           "response": []
         },
@@ -2569,7 +2569,7 @@
                 "minor-profiles"
               ]
             },
-            "description": "First select/create a family member. Show GET account consent_text and notifications_consent_text as two separate approvals. Never display consent_policy_text or either *_policy_identifier; they are internal policy identifiers. Set consent_accepted=true and notifications_consent_accepted=true only after the guardian explicitly accepts both display texts. The notification consent covers all current and future minor-account notifications, including order and wallet notifications, and details may appear on the device lock screen. Reuses stored name/birthdate; under 18 only. Returns 201 {data:{minor_profile_id,family_member_id,name,member_code,status:\"pending_child_activation\",direct_payment_enabled:false,wallet_spending_enabled:false},created:true,activation_url:\"signed URL\",expires_at:\"ISO timestamp\"}. Share activation_url with the child to set a password within 24 hours; do not collect passwords in UChat. No minor OTP or outbound webhook is needed. Retry returns 200 same profile, created:false, activation_url:null and does not invalidate the previous link; it also safely records missing notification consent for an existing test profile. Recover missing links using Issue or renew minor activation link. Phone verification is optional by default. Only request an OTP when GET account returns phone_verification_required=true and phone_verified=false.",
+            "description": "First select/create a family member. Show GET account consent_text and notifications_consent_text as two separate approvals. Never display consent_policy_text or either *_policy_identifier; they are internal policy identifiers. Set consent_accepted=true and notifications_consent_accepted=true only after the guardian explicitly accepts both display texts. The notification consent covers all current and future minor-account notifications, including order and wallet notifications, and details may appear on the device lock screen. Reuses stored name/birthdate; under 18 only. Returns 201 {data:{minor_profile_id,family_member_id,name,member_code,status:\"pending_child_activation\",direct_payment_enabled:false,wallet_spending_enabled:false},created:true,activation_url:\"signed URL\",expires_at:\"ISO timestamp\"}. Share activation_url with the child to set a password within 24 hours; do not collect passwords in UChat. No minor OTP or outbound webhook is needed. Retry returns 200 same profile, created:false, activation_url:null and does not invalidate the previous link; it also safely records missing notification consent for an existing test profile. Recover missing links using Issue or renew minor activation link. Guardian phone verification is not required and no phone OTP call should be made.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"family_member_id\": \"{{family_member_id}}\",\n  \"consent_accepted\": true,\n  \"notifications_consent_accepted\": true\n}",
@@ -2656,106 +2656,6 @@
               }
             }
           ]
-        },
-        {
-          "name": "Send guardian phone OTP",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "X-WhatsApp-Phone",
-                "value": "{{uchat_phone}}"
-              },
-              {
-                "key": "Accept-Language",
-                "value": "{{uchat_language}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/integrations/uchat/store/phone-verification/send",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "integrations",
-                "uchat",
-                "store",
-                "phone-verification",
-                "send"
-              ]
-            },
-            "description": "202 status=verification_requested; 200 already_verified if verified. 60-second default resend cooldown; endpoint throttle 5/minute/IP in addition to integration throttle. OTP delivered through customer.phone.verification_code webhook; never returned by this API.",
-            "body": {
-              "mode": "raw",
-              "raw": "{}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Verify guardian phone OTP",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              },
-              {
-                "key": "X-WhatsApp-Phone",
-                "value": "{{uchat_phone}}"
-              },
-              {
-                "key": "Accept-Language",
-                "value": "{{uchat_language}}"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/integrations/uchat/store/phone-verification/verify",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "v1",
-                "integrations",
-                "uchat",
-                "store",
-                "phone-verification",
-                "verify"
-              ]
-            },
-            "description": "Send the six-digit code entered by the guardian as a string. 200 status=verified. Expiry defaults to 10 minutes, maximum 5 attempts. Wrong attempts persist; 422 reasons indicate incorrect, expired, or missing OTP. Throttle 10/minute/IP.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"code\": \"{{verification_code}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "response": []
         },
         {
           "name": "Legacy only - Resend minor guardian OTP",
@@ -2863,8 +2763,183 @@
         },
         {
           "name": "Wallets",
-          "description": "Wallet workflow: select an active minor account; check GET account.phone_verification_required before requesting any phone OTP. The requirement defaults to false. Then view balance, initiate top-up, track the top-up reference, browse movements, and create a wallet order. Requests inherit the UChat Store bearer token. Account setup and OTP requests remain in UChat Store; cart preparation uses its cart requests. Confirm wallet orders using the returned website confirmation link.",
+          "description": "Wallet workflow: select an active minor account. No guardian phone OTP is required. Read wallet status, manage spending permission independently from wallet activation/suspension, view balance, initiate top-up, track the top-up reference, browse movements, and create a wallet order. A suspended wallet blocks both spending and new top-ups; disabling spending blocks purchases only. Requests inherit the UChat Store bearer token. Cart preparation uses the parent folder requests. Confirm wallet orders using the returned website confirmation link.",
           "item": [
+            {
+              "name": "Show child wallet controls status",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-WhatsApp-Phone",
+                    "value": "{{uchat_phone}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/wallet/status",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "integrations",
+                    "uchat",
+                    "store",
+                    "minor-profiles",
+                    "{{store_minor_profile_id}}",
+                    "wallet",
+                    "status"
+                  ]
+                },
+                "description": "Returns the two independent wallet controls for the owned child: wallet_spending_enabled and wallet_status (active|suspended|closed), plus can_spend and can_top_up computed by the server. Guardian phone verification is not required."
+              },
+              "response": []
+            },
+            {
+              "name": "Enable child wallet spending",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-WhatsApp-Phone",
+                    "value": "{{uchat_phone}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/wallet-spending/enable",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "integrations",
+                    "uchat",
+                    "store",
+                    "minor-profiles",
+                    "{{store_minor_profile_id}}",
+                    "wallet-spending",
+                    "enable"
+                  ]
+                },
+                "description": "Allows wallet purchases for an active child. This does not activate a suspended wallet. Idempotent: repeated calls remain successful and do not duplicate consent records."
+              },
+              "response": []
+            },
+            {
+              "name": "Disable child wallet spending",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-WhatsApp-Phone",
+                    "value": "{{uchat_phone}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/wallet-spending/disable",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "integrations",
+                    "uchat",
+                    "store",
+                    "minor-profiles",
+                    "{{store_minor_profile_id}}",
+                    "wallet-spending",
+                    "disable"
+                  ]
+                },
+                "description": "Blocks wallet purchases while keeping an active wallet available for top-ups. This does not suspend the wallet. Idempotent."
+              },
+              "response": []
+            },
+            {
+              "name": "Activate child wallet",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-WhatsApp-Phone",
+                    "value": "{{uchat_phone}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/wallet/activate",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "integrations",
+                    "uchat",
+                    "store",
+                    "minor-profiles",
+                    "{{store_minor_profile_id}}",
+                    "wallet",
+                    "activate"
+                  ]
+                },
+                "description": "Activates the operational wallet for an active child. It restores top-ups, but purchases still require wallet_spending_enabled=true. Closed wallets cannot be reopened here. Idempotent."
+              },
+              "response": []
+            },
+            {
+              "name": "Suspend child wallet",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "X-WhatsApp-Phone",
+                    "value": "{{uchat_phone}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/wallet/suspend",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "integrations",
+                    "uchat",
+                    "store",
+                    "minor-profiles",
+                    "{{store_minor_profile_id}}",
+                    "wallet",
+                    "suspend"
+                  ]
+                },
+                "description": "Suspends the operational wallet and blocks both purchases and new top-ups without changing the saved spending permission or balance. Idempotent."
+              },
+              "response": []
+            },
             {
               "name": "Show child wallet and history",
               "request": {
@@ -2903,7 +2978,7 @@
                     }
                   ]
                 },
-                "description": "Requires an owned active minor_profile_id and guardian phone verification only when GET account.phone_verification_required=true. Returns 200 with wallet_id, minor_profile_id, balance_baisa, currency, status, and the latest 50 movements (id, type, order_reference, credit_baisa, debit_baisa, balance_after_baisa, created_at). Use GET wallet/movements for paginated history. Also returns available_balance_baisa (unreserved spendable funds, not spending permission), reserved_balance_baisa and eligible_refund_baisa (unused eligible funds within the refund deadline; not a refund promise). 404 wallet_unavailable when wallets are disabled; 422 validation_failed for invalid identity, ownership, profile or verification. Bearer authentication is inherited from this folder."
+                "description": "Requires an owned active minor_profile_id. Guardian phone verification is not required. Returns 200 with wallet_id, minor_profile_id, balance_baisa, currency, status, and the latest 50 movements (id, type, order_reference, credit_baisa, debit_baisa, balance_after_baisa, created_at). Use GET wallet/movements for paginated history. Also returns available_balance_baisa (unreserved spendable funds, not spending permission), reserved_balance_baisa and eligible_refund_baisa (unused eligible funds within the refund deadline; not a refund promise). 404 wallet_unavailable when wallets are disabled; 422 validation_failed for invalid identity, ownership, or profile. Bearer authentication is inherited from this folder."
               },
               "response": []
             },
@@ -2948,7 +3023,7 @@
                     "top-ups"
                   ]
                 },
-                "description": "Requires an owned active child and guardian phone verification only when GET account.phone_verification_required=true. amount_omr is an OMR decimal with at most 3 fractional digits, between 0.100 and 100000; configured server limits also apply. Returns 201 with top_up_reference, payment_reference, amount_baisa, currency, status, checkout_url and expires_at. Open checkout_url in the browser to pay through Thawani; wallet credit follows verified payment. Success/cancel callbacks are signed website URLs and require guardian login. Reusing the same key and amount for a pending checkout reuses the operation. Paid top-ups awaiting wallet credit, completed top-ups and mismatched key reuse are rejected. Returns 422 validation_failed, 404 wallet_unavailable when disabled, or 503 payment_unavailable for gateway failure.",
+                "description": "Requires an owned active child and an active wallet; guardian phone verification is not required. A suspended wallet returns 422 and cannot start a top-up. amount_omr is an OMR decimal with at most 3 fractional digits, between 0.100 and 100000; configured server limits also apply. Returns 201 with top_up_reference, payment_reference, amount_baisa, currency, status, checkout_url and expires_at. Open checkout_url in the browser to pay through Thawani; wallet credit follows verified payment. Success/cancel callbacks are signed website URLs and require guardian login. Reusing the same key and amount for a pending checkout reuses the operation. Paid top-ups awaiting wallet credit, completed top-ups and mismatched key reuse are rejected. Returns 422 validation_failed, 404 wallet_unavailable when disabled, or 503 payment_unavailable for gateway failure.",
                 "body": {
                   "mode": "raw",
                   "raw": "{\n  \"minor_profile_id\": \"{{store_minor_profile_id}}\",\n  \"amount_omr\": \"{{wallet_top_up_amount_omr}}\"\n}",
@@ -3063,7 +3138,7 @@
                     }
                   ]
                 },
-                "description": "200 data movement array newest first; meta current_page,last_page,per_page,total. per_page default 20, maximum 100. Requires owned active minor and guardian phone verification only when GET account.phone_verification_required=true."
+                "description": "200 data movement array newest first; meta current_page,last_page,per_page,total. per_page default 20, maximum 100. Requires an owned active minor; guardian phone verification is not required."
               },
               "response": []
             },

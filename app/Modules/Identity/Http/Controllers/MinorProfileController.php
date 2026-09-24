@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Http\Controllers;
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Actions\IssueMinorProfileActivation;
+use App\Modules\Identity\Actions\SetMinorWalletSpending;
 use App\Modules\Identity\Actions\VerifyMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Http\Requests\StoreMinorProfileRequest;
@@ -119,31 +120,14 @@ class MinorProfileController
         return back()->with('success', $minorProfile->direct_payment_enabled ? 'تم السماح بالدفع المباشر.' : 'تم إيقاف الدفع المباشر.');
     }
 
-    public function toggleWalletSpending(Request $request, MinorProfile $minorProfile): RedirectResponse
-    {
+    public function toggleWalletSpending(
+        Request $request,
+        MinorProfile $minorProfile,
+        SetMinorWalletSpending $setWalletSpending,
+    ): RedirectResponse {
         $this->assertOwnedBy($request, $minorProfile);
         abort_unless(config('byruhaa.wallets.enabled', false), 404);
-
-        abort_unless($minorProfile->status === MinorProfileStatus::Active, 404);
-
-        /** @var Customer $customer */
-        $customer = $request->user('customer');
-        if ($customer->requiresPhoneVerification()) {
-            throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before enabling wallet spending.']);
-        }
-
-        $enabling = ! $minorProfile->wallet_spending_enabled;
-        $minorProfile->forceFill(['wallet_spending_enabled' => $enabling])->save();
-
-        if ($enabling) {
-            $minorProfile->consents()->create([
-                'purpose' => 'wallet_spending',
-                'policy_version' => (string) config('byruhaa.wallets.consent_policy_version', 'wallet-spending-v1'),
-                'policy_hash' => hash('sha256', (string) config('byruhaa.wallets.consent_policy_text', 'guardian-consent-wallet-spending')),
-                'accepted_at' => now(),
-                'accepted_ip' => $request->ip(),
-            ]);
-        }
+        $minorProfile = $setWalletSpending->execute($minorProfile, ! $minorProfile->wallet_spending_enabled, $request->ip());
 
         return back()->with('success', $minorProfile->wallet_spending_enabled ? 'تم السماح بالدفع من المحفظة.' : 'تم إيقاف الدفع من المحفظة.');
     }

@@ -7,7 +7,6 @@ use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\WalletTopUp;
-use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\MinorProfile;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Contracts\View\View;
@@ -37,12 +36,6 @@ class WalletController
         $this->assertOwnedBy($request, $minorProfile);
         abort_unless(config('byruhaa.wallets.enabled', false), 404);
         abort_unless($minorProfile->isActive(), 404);
-
-        /** @var Customer $customer */
-        $customer = $request->user('customer');
-        if ($customer->requiresPhoneVerification()) {
-            return back()->withErrors(['phone' => 'Verify the guardian phone before adding wallet funds.']);
-        }
 
         $validated = $request->validate([
             'amount_omr' => ['required', 'numeric', 'min:0.100', 'max:100000'],

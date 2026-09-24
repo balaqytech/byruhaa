@@ -196,10 +196,7 @@ class UchatStoreController
                 throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account to view its wallet.']);
             }
 
-            $profile = $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
-            if ($profile->requiresGuardianPhoneVerification()) {
-                throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
-            }
+            $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
 
             $summary = $wallets->summary($minorProfileId);
             $wallet = $wallets->walletForMinorProfile($minorProfileId);
@@ -240,10 +237,7 @@ class UchatStoreController
                 throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account before adding wallet funds.']);
             }
 
-            $profile = $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
-            if ($profile->requiresGuardianPhoneVerification()) {
-                throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
-            }
+            $this->minorProfiles->forGuardian($minorProfileId, (int) $request->customerId());
 
             $operationKey = $request->string('idempotency_key')->toString();
             $amountBaisa = MoneyFactory::omrStringToBaisa((string) $request->validated('amount_omr'));
@@ -329,10 +323,7 @@ class UchatStoreController
         if ($profileId === null) {
             throw ValidationException::withMessages(['minor_profile_id' => 'Select a child account to view its wallet.']);
         }
-        $profile = $this->minorProfiles->forGuardian($profileId, (int) $request->customerId());
-        if ($profile->requiresGuardianPhoneVerification()) {
-            throw ValidationException::withMessages(['phone' => 'Verify the guardian phone before using wallets.']);
-        }
+        $this->minorProfiles->forGuardian($profileId, (int) $request->customerId());
 
         return $wallets->walletForMinorProfile($profileId);
     }

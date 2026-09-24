@@ -12,11 +12,5 @@ final readonly class MinorProfilePurchaseData
         public string $memberCode,
         public bool $directPaymentEnabled,
         public bool $walletSpendingEnabled,
-        public bool $guardianPhoneVerified,
     ) {}
-
-    public function requiresGuardianPhoneVerification(): bool
-    {
-        return (bool) config('byruhaa.phone_verification.required', false) && ! $this->guardianPhoneVerified;
-    }
 }

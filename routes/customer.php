@@ -1,7 +1,6 @@
 <?php
 
 use App\Modules\Finance\Http\Controllers\WalletController;
-use App\Modules\Identity\Http\Controllers\CustomerPhoneVerificationController;
 use App\Modules\Identity\Http\Controllers\MinorProfileController;
 use App\Modules\Store\Http\Controllers\CustomerOrderReceiptController;
 use App\Modules\Store\Http\Controllers\WalletOrderController;
@@ -33,8 +32,6 @@ Route::middleware(['auth:customer'])
             ->middleware('signed')
             ->name('minor-profiles.wallet.top-up.cancel');
         Route::post('minor-profiles/{minorProfile}/delete-request', [MinorProfileController::class, 'requestDeletion'])->name('minor-profiles.delete-request');
-        Route::post('phone-verification/send', [CustomerPhoneVerificationController::class, 'send'])->middleware('throttle:5,1')->name('phone-verification.send');
-        Route::post('phone-verification/verify', [CustomerPhoneVerificationController::class, 'verify'])->middleware('throttle:10,1')->name('phone-verification.verify');
         Route::livewire('bookings', 'pages::customer.bookings.index')->name('bookings.index');
         Route::livewire('bookings/{booking}/contracts/{contract}', 'pages::customer.bookings.contract')->name('bookings.contracts.show');
         Route::livewire('bookings/{booking}', 'pages::customer.bookings.show')->name('bookings.show');

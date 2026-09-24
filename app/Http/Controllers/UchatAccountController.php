@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UchatMinorActivationRequest;
 use App\Http\Requests\UchatMinorProfileRequest;
 use App\Http\Requests\UchatVerificationRequest;
+use App\Modules\Finance\Actions\SetMinorWalletStatus;
+use App\Modules\Finance\Contracts\WalletService;
+use App\Modules\Finance\Models\Wallet;
 use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Actions\IssueMinorProfileActivation;
 use App\Modules\Identity\Actions\RecordMinorNotificationConsent;
-use App\Modules\Identity\Actions\SendCustomerPhoneVerificationCode;
 use App\Modules\Identity\Actions\SendMinorProfileVerificationCode;
-use App\Modules\Identity\Actions\VerifyCustomerPhone;
+use App\Modules\Identity\Actions\SetMinorWalletSpending;
 use App\Modules\Identity\Actions\VerifyMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Models\Customer;
@@ -33,7 +35,7 @@ class UchatAccountController extends Controller
             'customer_id' => $guardian->id,
             'name' => $guardian->name,
             'phone_verified' => $guardian->hasVerifiedPhone(),
-            'phone_verification_required' => (bool) config('byruhaa.phone_verification.required', false),
+            'phone_verification_required' => false,
             'phone_verified_at' => $guardian->phone_verified_at?->toJSON(),
             'minor_accounts_enabled' => (bool) config('byruhaa.minor_accounts.enabled', true),
             'wallets_enabled' => (bool) config('byruhaa.wallets.enabled', false),
@@ -109,26 +111,93 @@ class UchatAccountController extends Controller
         ]);
     }
 
-    public function sendPhoneCode(UchatIdentityRequest $request, SendCustomerPhoneVerificationCode $send): JsonResponse
+    public function walletStatus(UchatIdentityRequest $request, int $minorProfile, WalletService $wallets): JsonResponse
     {
         $guardian = $this->guardian($request);
-        $this->requireDeliveryConfiguration();
-        if ($guardian->hasVerifiedPhone()) {
-            return response()->json(['status' => 'already_verified']);
-        }
-        DB::transaction(function () use ($guardian, $send): void {
-            $guardian = Customer::query()->lockForUpdate()->findOrFail($guardian->id);
-            $send->execute($guardian);
-        });
+        $profile = $this->ownedProfile($guardian, $minorProfile);
+        $this->requireWallets();
+        $wallet = $wallets->walletForMinorProfile($profile->id);
 
-        return response()->json(['status' => 'verification_requested'], 202);
+        return response()->json(['data' => $this->walletControlData($profile, $wallet)]);
     }
 
-    public function verifyPhone(UchatVerificationRequest $request, VerifyCustomerPhone $verify): JsonResponse
-    {
-        $verify->execute($this->guardian($request), (string) $request->validated('code'));
+    public function enableWalletSpending(
+        UchatIdentityRequest $request,
+        int $minorProfile,
+        SetMinorWalletSpending $setWalletSpending,
+        WalletService $wallets,
+    ): JsonResponse {
+        return $this->setWalletSpending($request, $minorProfile, true, $setWalletSpending, $wallets);
+    }
 
-        return response()->json(['status' => 'verified']);
+    public function disableWalletSpending(
+        UchatIdentityRequest $request,
+        int $minorProfile,
+        SetMinorWalletSpending $setWalletSpending,
+        WalletService $wallets,
+    ): JsonResponse {
+        return $this->setWalletSpending($request, $minorProfile, false, $setWalletSpending, $wallets);
+    }
+
+    public function activateWallet(
+        UchatIdentityRequest $request,
+        int $minorProfile,
+        SetMinorWalletStatus $setWalletStatus,
+    ): JsonResponse {
+        return $this->setWalletStatus($request, $minorProfile, 'active', $setWalletStatus);
+    }
+
+    public function suspendWallet(
+        UchatIdentityRequest $request,
+        int $minorProfile,
+        SetMinorWalletStatus $setWalletStatus,
+    ): JsonResponse {
+        return $this->setWalletStatus($request, $minorProfile, 'suspended', $setWalletStatus);
+    }
+
+    private function setWalletSpending(
+        UchatIdentityRequest $request,
+        int $minorProfile,
+        bool $enabled,
+        SetMinorWalletSpending $setWalletSpending,
+        WalletService $wallets,
+    ): JsonResponse {
+        $profile = $this->ownedProfile($this->guardian($request), $minorProfile);
+        $this->requireWallets();
+        $profile = $setWalletSpending->execute($profile, $enabled, $request->ip());
+        $wallet = $wallets->walletForMinorProfile($profile->id);
+
+        return response()->json(['data' => $this->walletControlData($profile, $wallet)]);
+    }
+
+    private function setWalletStatus(
+        UchatIdentityRequest $request,
+        int $minorProfile,
+        string $status,
+        SetMinorWalletStatus $setWalletStatus,
+    ): JsonResponse {
+        $profile = $this->ownedProfile($this->guardian($request), $minorProfile);
+        $this->requireWallets();
+        $wallet = $setWalletStatus->execute($profile, $status);
+
+        return response()->json(['data' => $this->walletControlData($profile->refresh(), $wallet)]);
+    }
+
+    /** @return array<string, mixed> */
+    private function walletControlData(MinorProfile $profile, Wallet $wallet): array
+    {
+        $profileIsActive = $profile->status === MinorProfileStatus::Active;
+        $walletIsActive = $wallet->status === 'active';
+
+        return [
+            'minor_profile_id' => $profile->id,
+            'minor_profile_status' => $profile->status->value,
+            'wallets_enabled' => (bool) config('byruhaa.wallets.enabled', false),
+            'wallet_spending_enabled' => (bool) $profile->wallet_spending_enabled,
+            'wallet_status' => $wallet->status,
+            'can_spend' => $profileIsActive && $walletIsActive && $profile->wallet_spending_enabled,
+            'can_top_up' => $profileIsActive && $walletIsActive,
+        ];
     }
 
     public function resend(UchatIdentityRequest $request, int $minorProfile, SendMinorProfileVerificationCode $send): JsonResponse
@@ -212,6 +281,13 @@ class UchatAccountController extends Controller
     {
         if (! config('byruhaa.minor_accounts.enabled', true)) {
             throw ValidationException::withMessages(['minor_profile_id' => 'Minor accounts are currently disabled.']);
+        }
+    }
+
+    private function requireWallets(): void
+    {
+        if (! config('byruhaa.wallets.enabled', false)) {
+            throw ValidationException::withMessages(['wallet' => 'Wallets are currently unavailable.']);
         }
     }
 

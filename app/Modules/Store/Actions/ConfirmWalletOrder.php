@@ -38,7 +38,7 @@ class ConfirmWalletOrder
             }
 
             $minorProfile = $this->minorProfiles->forGuardian($minorProfileId, $customerId);
-            if (! $minorProfile->walletSpendingEnabled || $minorProfile->requiresGuardianPhoneVerification()) {
+            if (! $minorProfile->walletSpendingEnabled) {
                 throw ValidationException::withMessages(['payment' => 'Wallet spending is not currently authorized.']);
             }
 

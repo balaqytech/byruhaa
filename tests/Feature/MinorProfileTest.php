@@ -493,7 +493,6 @@ test('guardian payment is required until direct payment is explicitly enabled', 
 });
 
 test('minor order payment controls respect the selected method and guardian permissions', function (string $method, bool $direct, bool $wallet, bool $verified, bool $enabled, ?string $reason, string $button): void {
-    config(['byruhaa.phone_verification.required' => true]);
     config(['byruhaa.wallets.enabled' => $enabled]);
     $customer = Customer::factory()->create(['phone_verified_at' => $verified ? now() : null]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create([
@@ -522,7 +521,7 @@ test('minor order payment controls respect the selected method and guardian perm
     'Thawani permission allows its button' => ['thawani', true, false, false, false, null, 'الدفع عبر ثواني'],
     'wallet does not need direct payment permission' => ['wallet', false, true, true, true, null, 'الدفع من المحفظة'],
     'wallet permission is required' => ['wallet', true, false, true, true, 'يلزم أن يفعّل وليّ الأمر «السماح بالدفع من المحفظة» من حسابه.', 'الدفع من المحفظة'],
-    'verified phone is required' => ['wallet', true, true, false, true, 'يلزم توثيق هاتف وليّ الأمر قبل الدفع من المحفظة.', 'الدفع من المحفظة'],
+    'unverified phone does not block wallet payment' => ['wallet', true, true, false, true, null, 'الدفع من المحفظة'],
     'wallet feature must be enabled' => ['wallet', true, true, true, false, 'الدفع بالمحفظة غير متاح حاليًا.', 'الدفع من المحفظة'],
 ]);
 

@@ -36,6 +36,11 @@ class InitiateWalletTopUp
         }
 
         $wallet = $this->wallets->walletForMinorProfile($minorProfileId);
+
+        if ($wallet->status !== 'active') {
+            throw ValidationException::withMessages(['wallet' => 'The wallet is not active.']);
+        }
+
         $topUp = DB::transaction(function () use ($wallet, $operationKey, $amountBaisa): WalletTopUp {
             $existing = WalletTopUp::query()->where('operation_key', $operationKey)->lockForUpdate()->first();
 

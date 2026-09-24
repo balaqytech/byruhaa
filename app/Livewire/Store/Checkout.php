@@ -82,8 +82,7 @@ class Checkout extends Component
             $this->customerEmail = (string) ($guardian->email ?? '');
             $this->recipientName = (string) $minorProfile->familyMember->name;
             $this->walletPaymentAvailable = (bool) config('byruhaa.wallets.enabled', false)
-                && (bool) $minorProfile->wallet_spending_enabled
-                && ! $guardian->requiresPhoneVerification();
+                && (bool) $minorProfile->wallet_spending_enabled;
         } elseif (($customer = auth('customer')->user()) !== null) {
             $this->customerName = (string) ($customer->name ?? '');
             $this->customerPhone = (string) ($customer->phone_number ?? '');
