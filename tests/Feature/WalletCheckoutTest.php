@@ -70,6 +70,25 @@ test('minor wallet checkout confirms orders with or without tracked stock exactl
     }
 })->with([true, false]);
 
+test('minor wallet checkout debits the saved member price', function (): void {
+    $this->option->update(['member_price_baisa' => 750]);
+
+    Livewire::test(Checkout::class)
+        ->set('paymentMethod', 'wallet')
+        ->call('placeOrder')
+        ->assertHasNoErrors();
+
+    $order = Order::query()->sole();
+    app(ConfirmWalletOrder::class)->execute($order, $this->guardian->id, $this->profile->id);
+
+    expect($order->refresh())
+        ->pricing_tier->toBe('member')
+        ->regular_total_baisa->toBe(1000)
+        ->discount_baisa->toBe(250)
+        ->total_baisa->toBe(750)
+        ->and($this->wallet->refresh()->balance_baisa)->toBe(4250);
+});
+
 test('legacy phone verification configuration cannot block wallet checkout', function (): void {
     config(['byruhaa.phone_verification.required' => true]);
     Livewire::test(Checkout::class)->assertSet('walletPaymentAvailable', true)

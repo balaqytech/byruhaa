@@ -16,6 +16,9 @@ use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Providers\StoreServiceProvider;
+use App\Modules\Store\Services\PricingContextResolver;
+use App\Modules\Store\Services\PricingRules\MemberPriceRule;
+use App\Modules\Store\Services\StorePricing;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 test('domain models live under their owning module namespaces', function (): void {
@@ -90,6 +93,35 @@ test('future commerce module is registered as an explicit application provider',
 
     expect($providers)
         ->toContain(StoreServiceProvider::class);
+});
+
+test('store pricing services remain owned by the store module', function (): void {
+    $storeModulePath = str_replace('\\', '/', base_path('app/Modules/Store'));
+
+    foreach ([StorePricing::class, PricingContextResolver::class, MemberPriceRule::class] as $service) {
+        $servicePath = str_replace('\\', '/', (new ReflectionClass($service))->getFileName());
+
+        expect($servicePath)->toStartWith($storeModulePath);
+    }
+});
+
+test('store pricing domain does not import identity or finance models', function (): void {
+    $pricingFiles = [
+        ...glob(base_path('app/Modules/Store/Contracts/*.php')) ?: [],
+        ...glob(base_path('app/Modules/Store/Data/*.php')) ?: [],
+        ...glob(base_path('app/Modules/Store/Enums/*.php')) ?: [],
+        ...glob(base_path('app/Modules/Store/Services/PricingRules/*.php')) ?: [],
+        base_path('app/Modules/Store/Services/PricingContextResolver.php'),
+        base_path('app/Modules/Store/Services/StorePricing.php'),
+    ];
+
+    foreach ($pricingFiles as $path) {
+        $contents = file_get_contents($path);
+
+        expect($contents)
+            ->not->toContain('use App\\Modules\\Identity\\Models\\')
+            ->not->toContain('use App\\Modules\\Finance\\Models\\');
+    }
 });
 
 test('content public pages keep their web and Filament entry points inside the module', function (): void {

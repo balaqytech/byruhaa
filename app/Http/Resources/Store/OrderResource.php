@@ -31,6 +31,9 @@ class OrderResource extends JsonResource
             'subtotal_baisa' => $this->subtotal_baisa,
             'vat_baisa' => $this->vat_baisa,
             'total_baisa' => $this->total_baisa,
+            'regular_total_baisa' => $this->regular_total_baisa,
+            'discount_baisa' => $this->discount_baisa,
+            'pricing_tier' => $this->pricing_tier,
             'items' => $this->when($this->relationLoaded('items'), fn (): mixed => OrderItemResource::collection($this->items)),
             'status_history' => $this->when($this->relationLoaded('statusHistory'), fn (): array => $this->statusHistory->map(fn (OrderStatusHistory $history): array => [
                 'from' => $history->from_status,

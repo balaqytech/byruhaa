@@ -3,6 +3,7 @@
 namespace App\Modules\Store\Providers;
 
 use App\Modules\Finance\Events\PaymentSucceeded;
+use App\Modules\Store\Contracts\ProductOptionPricingRule;
 use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Listeners\HandlePaymentSucceeded;
 use App\Modules\Store\Listeners\NotifyMinorProfileOrderStatus;
@@ -15,7 +16,11 @@ use App\Modules\Store\Policies\CategoryPolicy;
 use App\Modules\Store\Policies\OrderPolicy;
 use App\Modules\Store\Policies\ProductOptionPolicy;
 use App\Modules\Store\Policies\ProductPolicy;
+use App\Modules\Store\Services\PricingContextResolver;
+use App\Modules\Store\Services\PricingRules\MemberPriceRule;
+use App\Modules\Store\Services\StorePricing;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -25,6 +30,16 @@ use Illuminate\Support\ServiceProvider;
 
 class StoreServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        $this->app->tag([MemberPriceRule::class], ProductOptionPricingRule::class);
+
+        $this->app->singleton(StorePricing::class, fn (Application $app): StorePricing => new StorePricing(
+            contexts: $app->make(PricingContextResolver::class),
+            rules: $app->tagged(ProductOptionPricingRule::class),
+        ));
+    }
+
     public function boot(): void
     {
         Event::listen(PaymentSucceeded::class, HandlePaymentSucceeded::class);

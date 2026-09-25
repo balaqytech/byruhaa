@@ -30,6 +30,7 @@
 
                 <div class="mt-5 grid gap-4">
                     @foreach ($cart->items as $item)
+                        @php($quotedItem = collect($quote['items'] ?? [])->firstWhere('product_option_id', $item->product_option_id))
                         <div wire:key="floating-cart-item-{{ $item->id }}" class="border-b border-[#2a8069]/12 pb-4 last:border-0 dark:border-white/10">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0"><p class="truncate font-bold text-[#123329] dark:text-[#f7f1df]">{{ $item->productOption->product->name }}</p><p class="truncate text-xs text-[#315e52] dark:text-[#d2e7df]/65">{{ $item->productOption->name }}</p></div>
@@ -41,7 +42,10 @@
                                     <span class="min-w-8 text-center text-sm font-bold">{{ $item->quantity }}</span>
                                     <button type="button" wire:click="updateItem({{ $item->id }}, {{ min(99, $item->quantity + 1) }})" class="size-9 text-lg" aria-label="زيادة الكمية">+</button>
                                 </div>
-                                <p class="text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]"><x-money :amount-baisa="$item->productOption->price_baisa * $item->quantity" :currency="$item->productOption->currency" /></p>
+                                <div class="text-end text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]">
+                                    @if (($quotedItem['line_discount_baisa'] ?? 0) > 0)<p class="text-xs font-medium text-[#315e52]/60 line-through dark:text-[#d2e7df]/50"><x-money :amount-baisa="$quotedItem['regular_unit_price_baisa'] * $item->quantity" :currency="$item->productOption->currency" /></p>@endif
+                                    <p><x-money :amount-baisa="$quotedItem['line_total_baisa'] ?? ($item->productOption->price_baisa * $item->quantity)" :currency="$item->productOption->currency" /></p>
+                                </div>
                             </div>
                             <label class="mt-3 block text-xs font-semibold text-[#315e52] dark:text-[#d2e7df]/70">ملاحظة
                                 <input type="text" value="{{ $item->note }}" wire:blur="updateNote({{ $item->id }}, $event.target.value)" maxlength="5000" class="mt-1 min-h-10 w-full rounded-xl border border-[#2a8069]/16 bg-transparent px-3 text-sm focus:border-[#007a52] focus:outline-none focus:ring-2 focus:ring-[#007a52]/15 dark:border-white/12">
@@ -54,6 +58,7 @@
                     <dl class="mt-5 grid gap-2 border-t border-[#2a8069]/12 pt-4 text-sm dark:border-white/10">
                         <div class="flex justify-between"><dt>المجموع قبل الضريبة</dt><dd class="font-bold"><x-money :amount-baisa="$quote['subtotal_baisa']" currency="OMR" /></dd></div>
                         <div class="flex justify-between text-[#315e52] dark:text-[#d2e7df]/65"><dt>ضريبة القيمة المضافة (مضمنة)</dt><dd><x-money :amount-baisa="$quote['vat_baisa']" currency="OMR" /></dd></div>
+                        @if ($quote['discount_baisa'] > 0)<div class="flex justify-between font-bold text-[#8a6420] dark:text-[#f0c96a]"><dt>توفير أعضاء بيرحاء</dt><dd>− <x-money :amount-baisa="$quote['discount_baisa']" currency="OMR" /></dd></div>@endif
                         <div class="flex justify-between border-t border-[#2a8069]/12 pt-3 text-base font-bold dark:border-white/10"><dt>الإجمالي</dt><dd class="text-[#007a52] dark:text-[#6ee7b7]"><x-money :amount-baisa="$quote['total_baisa']" currency="OMR" /></dd></div>
                     </dl>
                 @endif

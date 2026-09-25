@@ -116,9 +116,13 @@
                     </div>
                     <div class="mt-5 grid gap-4">
                         @foreach ($cart->items as $item)
+                            @php($quotedItem = collect($quote['items'] ?? [])->firstWhere('product_option_id', $item->product_option_id))
                             <div class="flex items-start justify-between gap-4 border-b border-[#2a8069]/12 pb-4 last:border-0 dark:border-white/10">
                                 <div class="min-w-0"><p class="truncate font-bold text-[#123329] dark:text-[#f7f1df]">{{ $item->productOption->product->name }}</p><p class="mt-1 truncate text-xs text-[#315e52] dark:text-[#d2e7df]/65">{{ $item->productOption->name }} × {{ $item->quantity }}</p></div>
-                                <x-money :amount-baisa="$item->productOption->price_baisa * $item->quantity" :currency="$item->productOption->currency" />
+                                <div class="text-end">
+                                    @if (($quotedItem['line_discount_baisa'] ?? 0) > 0)<p class="text-xs text-[#315e52]/60 line-through dark:text-[#d2e7df]/50"><x-money :amount-baisa="$quotedItem['regular_unit_price_baisa'] * $item->quantity" :currency="$item->productOption->currency" /></p>@endif
+                                    <x-money :amount-baisa="$quotedItem['line_total_baisa'] ?? ($item->productOption->price_baisa * $item->quantity)" :currency="$item->productOption->currency" />
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -126,6 +130,7 @@
                         <dl class="mt-5 grid gap-2 border-t border-[#2a8069]/12 pt-4 text-sm dark:border-white/10">
                             <div class="flex justify-between"><dt>المجموع قبل الضريبة</dt><dd class="font-bold"><x-money :amount-baisa="$quote['subtotal_baisa']" currency="OMR" /></dd></div>
                             <div class="flex justify-between text-[#315e52] dark:text-[#d2e7df]/65"><dt>ضريبة القيمة المضافة (مضمنة)</dt><dd><x-money :amount-baisa="$quote['vat_baisa']" currency="OMR" /></dd></div>
+                            @if ($quote['discount_baisa'] > 0)<div class="flex justify-between font-bold text-[#8a6420] dark:text-[#f0c96a]"><dt>توفير أعضاء بيرحاء</dt><dd>− <x-money :amount-baisa="$quote['discount_baisa']" currency="OMR" /></dd></div>@endif
                             <div class="flex justify-between border-t border-[#2a8069]/12 pt-3 text-base font-bold dark:border-white/10"><dt>الإجمالي</dt><dd class="text-[#007a52] dark:text-[#6ee7b7]"><x-money :amount-baisa="$quote['total_baisa']" currency="OMR" /></dd></div>
                         </dl>
                     @endif

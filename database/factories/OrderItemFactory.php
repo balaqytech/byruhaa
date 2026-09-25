@@ -20,10 +20,13 @@ class OrderItemFactory extends Factory
             'option_name' => 'Standard',
             'sku' => 'TEST-SKU',
             'unit_price_baisa' => 1000,
+            'regular_unit_price_baisa' => 1000,
+            'unit_discount_baisa' => 0,
             'quantity' => 1,
             'vat_baisa' => 50,
             'line_subtotal_baisa' => 1000,
             'line_total_baisa' => 1050,
+            'line_discount_baisa' => 0,
             'note' => null,
         ];
     }

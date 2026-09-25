@@ -62,6 +62,7 @@ function uchatOption(array $attributes = []): ProductOption
 }
 
 test('UChat routes fail closed when the token is missing, invalid, or unconfigured', function (): void {
+    config(['byruhaa.uchat.api_token' => null, 'byruhaa.uchat.owner_key_secret' => null]);
     $response = $this->getJson('/api/v1/integrations/uchat/store/catalog');
     $response->assertStatus(503)->assertJsonPath('code', 'uchat_not_configured');
 
@@ -282,6 +283,9 @@ test('store state transitions queue one signed UChat webhook per state', functio
     expect($delivery->payload['delivery_id'])->toBe($delivery->id)
         ->and($queuedJob?->headers['Authorization'])->toBe('Bearer outbound-secret')
         ->and($queuedJob?->payload['data']['order']['reference'])->toBe($order->reference)
+        ->and($queuedJob?->payload['data']['order']['regular_total_baisa'])->toBe($order->regular_total_baisa)
+        ->and($queuedJob?->payload['data']['order']['discount_baisa'])->toBe($order->discount_baisa)
+        ->and($queuedJob?->payload['data']['order']['pricing_tier'])->toBe('standard')
         ->and($queuedJob?->payload)->not->toHaveKey('payment_token')
         ->and($queuedJob?->payload['data']['order'])->not->toHaveKey('id');
 });

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7e42a4fc-a492-4f4d-b59f-9c8313db1f2a",
     "name": "Byruha API v1",
-    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout. Includes child-account cart/order selection, wallet balance/history, wallet top-ups, and browser confirmation for wallet purchases.\nCustomer, family, booking, payment and assistant-interest endpoints require the trusted server-side UChat bearer token. Public events remain readable without a token. Password updates via the customer API are prohibited. Linked minor accounts must use the account lifecycle workflow before parent/family deletion (409 minor_account_lifecycle_required).\nUChat onboarding: find or create a family member, open the minor profile after the guardian accepts both consent statements, then share activation_url so the child can set a password. Guardian phone OTP is not required and its public endpoints have been removed. Wallet spending permission and operational wallet status are managed independently through the Wallets requests.",
+    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout. Includes child-account cart/order selection, wallet balance/history, wallet top-ups, and browser confirmation for wallet purchases.\nCustomer, family, booking, payment and assistant-interest endpoints require the trusted server-side UChat bearer token. Public events remain readable without a token. Password updates via the customer API are prohibited. Linked minor accounts must use the account lifecycle workflow before parent/family deletion (409 minor_account_lifecycle_required).\nUChat onboarding: find or create a family member, open the minor profile after the guardian accepts both consent statements, then share activation_url so the child can set a password. Guardian phone OTP is not required and its public endpoints have been removed. Wallet spending permission and operational wallet status are managed independently through the Wallets requests.\nStore member pricing: price_baisa remains the regular VAT-inclusive price for compatibility. Catalog options also expose regular_price_baisa and nullable member_price_baisa. Server quotes and orders expose pricing_tier, regular_total_baisa and discount_baisa plus per-line regular and discount snapshots. The server is always the final pricing authority.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -1977,7 +1977,7 @@
     },
     {
       "name": "UChat Store",
-      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server.\n\nWallet flow: set the guardian WhatsApp phone and store_minor_profile_id; the guardian must own the active child profile. Guardian phone verification is not part of this API contract. Enable WALLETS_ENABLED on the server. Use the wallet controls to manage spending permission independently from operational wallet status. A suspended wallet cannot be spent from or topped up. Read the wallet, initiate a Thawani top-up, and open checkout_url in the browser. Use the same minor_profile_id throughout cart and order requests. Create a wallet order and open payment.confirmation_url in the browser as the authenticated guardian to approve payment; UChat cannot debit directly. Pickup only; email is optional. Wallet confirmation and refunds use the website. New minor accounts do not require a minor OTP. Show the two consent statements returned by GET account and obtain explicit guardian approval for each. Create with consent_accepted=true and notifications_consent_accepted=true, then share activation_url for password setup. Recover lost/expired links with the activation-link endpoint.\n\nUse a new idempotency key for each new order or top-up, retaining it for retries of that same operation. Do not reuse a key for another amount or child. All monetary response fields ending in _baisa are integer baisa (1000 = OMR 1).\nAccount onboarding uses the same trusted token and guardian X-WhatsApp-Phone. Accept-Language: ar or en. Errors retain code and add reasons[field] machine-readable codes when available.",
+      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server. A phone matching a Byruhaa customer receives member pricing automatically; an unknown phone receives standard pricing. An owned active minor_profile_id also receives member pricing.\n\nMember-pricing contract: catalog price_baisa remains the regular VAT-inclusive price. regular_price_baisa is the explicit alias and member_price_baisa is nullable. Quotes and orders add pricing_tier (standard|member), regular_total_baisa and discount_baisa. Lines add regular_unit_price_baisa, unit_discount_baisa and line_discount_baisa while unit_price_baisa and line_total_baisa are the effective charged values. VAT is calculated from the effective price. store.order.* webhooks carry the same saved snapshots. Never submit or calculate a client-side price.\n\nWallet flow: set the guardian WhatsApp phone and store_minor_profile_id; the guardian must own the active child profile. Guardian phone verification is not part of this API contract. Enable WALLETS_ENABLED on the server. Use the wallet controls to manage spending permission independently from operational wallet status. A suspended wallet cannot be spent from or topped up. Read the wallet, initiate a Thawani top-up, and open checkout_url in the browser. Use the same minor_profile_id throughout cart and order requests. Create a wallet order and open payment.confirmation_url in the browser as the authenticated guardian to approve payment; UChat cannot debit directly. Pickup only; email is optional. Wallet confirmation and refunds use the website. New minor accounts do not require a minor OTP. Show the two consent statements returned by GET account and obtain explicit guardian approval for each. Create with consent_accepted=true and notifications_consent_accepted=true, then share activation_url for password setup. Recover lost/expired links with the activation-link endpoint.\n\nUse a new idempotency key for each new order or top-up, retaining it for retries of that same operation. Do not reuse a key for another amount or child. All monetary response fields ending in _baisa are integer baisa (1000 = OMR 1).\nAccount onboarding uses the same trusted token and guardian X-WhatsApp-Phone. Accept-Language: ar or en. Errors retain code and add reasons[field] machine-readable codes when available.",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -2021,9 +2021,19 @@
                 "catalog"
               ]
             },
-            "description": "Returns active categories with published products, available options, SKU, price in baisa, currency, and current availability. The phone header is not used for catalog ownership but is included for a consistent UChat request shape."
+            "description": "Returns active categories with published products, available options, SKU, currency, and current availability. price_baisa and regular_price_baisa are the regular VAT-inclusive price; member_price_baisa is nullable. The top-level pricing_tier is member when X-WhatsApp-Phone matches an account, otherwise standard. Both prices remain visible; the server quote decides the charged price."
           },
-          "response": []
+          "response": [
+            {
+              "name": "Catalog option with a member price",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "cookie": [],
+              "body": "{\n  \"data\": [{\n    \"name\": \"المشروبات الطازجة\",\n    \"slug\": \"fresh\",\n    \"products\": [{\n      \"name\": \"كركديه\",\n      \"slug\": \"fresh-09\",\n      \"options\": [{\n        \"name\": \"بدون إضافة\",\n        \"sku\": \"BYR-0009\",\n        \"price_baisa\": 1600,\n        \"regular_price_baisa\": 1600,\n        \"member_price_baisa\": 1100,\n        \"currency\": \"OMR\",\n        \"available\": true\n      }]\n    }]\n  }],\n  \"pricing_tier\": \"member\"\n}"
+            }
+          ]
         },
         {
           "name": "Show published product",
@@ -2058,7 +2068,7 @@
                 "{{store_product_slug}}"
               ]
             },
-            "description": "Returns one published product by slug, including category and purchasable options. Returns product_not_found when the product is missing or not public."
+            "description": "Returns one published product by slug, including category and purchasable options. Each option includes backward-compatible price_baisa, regular_price_baisa and nullable member_price_baisa. The top-level pricing_tier reflects whether the WhatsApp phone belongs to an account. Returns product_not_found when the product is missing or not public."
           },
           "response": []
         },
@@ -2102,7 +2112,7 @@
                 }
               ]
             },
-            "description": "Resolves the cart owned by the normalized WhatsApp phone and returns its items and current server quote. Optional minor_profile_id selects an owned active child account; enable the query parameter for child requests."
+            "description": "Resolves the cart owned by the normalized WhatsApp phone and returns its items and current server quote. quote includes pricing_tier, regular_total_baisa, discount_baisa, effective subtotal/VAT/total, and per-line regular/effective prices and discounts. Known customers and owned active minors receive member pricing; unknown phones receive standard pricing. Optional minor_profile_id selects an owned active child account."
           },
           "response": []
         },
@@ -2318,7 +2328,7 @@
                 "orders"
               ]
             },
-            "description": "Creates an order from the current cart, reserves tracked inventory, snapshots prices and VAT, and initiates Thawani checkout. Repeating the same Idempotency-Key for the same phone returns the same order. For scheduled pickup use pickup_type=scheduled and provide pickup_at. payment_method accepts thawani (default) or wallet. Set minor_profile_id to the child ID for child orders. Wallet orders return payment.method=wallet, payment.status=confirmation_required and payment.confirmation_url; no funds are debited by this endpoint. Thawani orders return payment.checkout_url. Order data includes payment_method and minor_profile_id. Email is optional."
+            "description": "Creates an order from the current cart, reserves tracked inventory, snapshots server-authoritative prices, member discount and VAT, and initiates Thawani checkout. Repeating the same Idempotency-Key for the same phone returns the same order. The response adds pricing_tier, regular_total_baisa and discount_baisa; each item adds regular_unit_price_baisa, unit_discount_baisa and line_discount_baisa. unit_price_baisa and total_baisa are the effective charged values. Later catalog-price changes never alter this order snapshot. For scheduled pickup use pickup_type=scheduled and provide pickup_at. payment_method accepts thawani (default) or wallet. Set minor_profile_id to the child ID for child orders. Wallet orders return payment.method=wallet, payment.status=confirmation_required and payment.confirmation_url; no funds are debited by this endpoint. Thawani orders return payment.checkout_url. Email is optional."
           },
           "response": []
         },
@@ -2412,7 +2422,7 @@
                 }
               ]
             },
-            "description": "Returns the newest phone-owned orders, paginated at 20 orders per page. Optional minor_profile_id selects an owned active child account; enable the query parameter for child requests. Order data includes payment_method (thawani or wallet) and minor_profile_id."
+            "description": "Returns the newest phone-owned orders, paginated at 20 orders per page. Optional minor_profile_id selects an owned active child account. Each order includes its saved pricing_tier, regular_total_baisa and discount_baisa plus saved item-level regular/effective prices and discounts."
           },
           "response": []
         },
@@ -2457,7 +2467,7 @@
                 }
               ]
             },
-            "description": "Returns one order only when its normalized customer phone matches X-WhatsApp-Phone. Optional minor_profile_id selects an owned active child account; enable the query parameter for child requests. Order data includes payment_method (thawani or wallet) and minor_profile_id."
+            "description": "Returns one order only when its normalized customer phone matches X-WhatsApp-Phone. Optional minor_profile_id selects an owned active child account. The response includes immutable saved pricing_tier, regular_total_baisa and discount_baisa plus item regular_unit_price_baisa, unit_discount_baisa and line_discount_baisa."
           },
           "response": []
         },
@@ -3191,7 +3201,7 @@
                     "orders"
                   ]
                 },
-                "description": "Creates an order from the current cart, reserves tracked inventory, snapshots prices and VAT, and initiates Thawani checkout. Repeating the same Idempotency-Key for the same phone returns the same order. For scheduled pickup use pickup_type=scheduled and provide pickup_at. payment_method accepts thawani (default) or wallet. Set minor_profile_id to the child ID for child orders. Wallet orders return payment.method=wallet, payment.status=confirmation_required and payment.confirmation_url; no funds are debited by this endpoint. Thawani orders return payment.checkout_url. Order data includes payment_method and minor_profile_id. Email is optional."
+                "description": "Creates a child wallet order from the current cart using the server-authoritative member price. The response saves pricing_tier, regular_total_baisa and discount_baisa plus per-item regular/effective price and discount snapshots. VAT is calculated from the effective price. Repeating the same Idempotency-Key for the same phone returns the same order. Set minor_profile_id to the owned active child ID and payment_method=wallet. The response returns payment.status=confirmation_required and payment.confirmation_url; no funds are debited by this endpoint."
               },
               "response": []
             }

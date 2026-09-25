@@ -9,9 +9,11 @@ use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductOptionsTable
 {
@@ -34,6 +36,10 @@ class ProductOptionsTable
                 TextColumn::make('price_baisa')
                     ->label(__('admin.fields.price'))
                     ->formatStateUsing(fn (int $state, ProductOption $record): string => MoneyFormatter::baisa($state, $record->currency))
+                    ->sortable(),
+                TextColumn::make('member_price_baisa')
+                    ->label(__('admin.fields.member_price'))
+                    ->formatStateUsing(fn (?int $state, ProductOption $record): string => $state === null ? '—' : MoneyFormatter::baisa($state, $record->currency))
                     ->sortable(),
                 TextColumn::make('is_available')
                     ->label(__('admin.fields.is_available'))
@@ -59,6 +65,9 @@ class ProductOptionsTable
                     ->label(__('admin.fields.is_available')),
                 TernaryFilter::make('is_default')
                     ->label(__('admin.fields.is_default')),
+                Filter::make('has_member_price')
+                    ->label(__('admin.filters.has_member_price'))
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('member_price_baisa')),
             ])
             ->defaultSort('sort_order')
             ->recordActions([

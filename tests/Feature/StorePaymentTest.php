@@ -34,7 +34,7 @@ beforeEach(function (): void {
     $settings->save();
 });
 
-function storePaymentOrder(bool $tracksInventory = true): Order
+function storePaymentOrder(bool $tracksInventory = true, ?Customer $customer = null, ?int $memberPriceBaisa = null): Order
 {
     $product = Product::factory()->create(['status' => 'active']);
     $option = $product->defaultOption()->firstOrFail();
@@ -42,16 +42,18 @@ function storePaymentOrder(bool $tracksInventory = true): Order
         'name' => 'Standard',
         'sku' => 'PAY-'.fake()->unique()->numerify('#####'),
         'price_baisa' => 1000,
+        'member_price_baisa' => $memberPriceBaisa,
         'is_available' => true,
         'tracks_inventory' => $tracksInventory,
         'stock_on_hand' => $tracksInventory ? 3 : 0,
     ])->save();
 
-    $cart = Cart::factory()->create();
+    $cart = Cart::factory()->create(['customer_id' => $customer?->id]);
     app(AddCartItem::class)->execute($cart, $option, 1);
 
     return app(CreateOrder::class)->execute($cart, [
         'idempotency_key' => 'payment-'.fake()->unique()->numerify('#####'),
+        'customer_id' => $customer?->id,
         'customer_name' => 'Mona Said',
         'customer_phone' => '+96891234567',
         'customer_email' => 'mona@example.com',
@@ -117,6 +119,24 @@ test('store order payment is initiated idempotently and paid return confirms the
 
     $this->getJson(URL::signedRoute('store.orders.payment.success', ['order' => $order->payment_token]))->assertOk();
     expect($order->refresh()->statusHistory()->where('to_status', 'confirmed')->count())->toBe(1);
+});
+
+test('Thawani charges the saved member price instead of the regular catalog price', function (): void {
+    Http::preventStrayRequests();
+    fakeStoreCheckout(amount: 800);
+    $customer = Customer::factory()->create();
+    $order = storePaymentOrder(customer: $customer, memberPriceBaisa: 800);
+
+    $this->actingAs($customer, 'customer')
+        ->postJson(route('store.orders.payment.store', ['order' => $order->payment_token]))
+        ->assertCreated();
+
+    expect($order->refresh())
+        ->pricing_tier->toBe('member')
+        ->regular_total_baisa->toBe(1000)
+        ->discount_baisa->toBe(200)
+        ->total_baisa->toBe(800)
+        ->and(Payment::query()->where('subject_reference', $order->reference)->sole()->amount_baisa)->toBe(800);
 });
 
 test('browser payment returns render a signed human-readable order status page', function (): void {

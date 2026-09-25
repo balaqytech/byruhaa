@@ -4,6 +4,9 @@
             <p class="text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]">اطلب مسبقًا واستلم من المكان</p>
             <h2 id="store-menu-title" class="mt-3 font-heading text-3xl font-bold text-[#123329] sm:text-4xl lg:text-5xl dark:text-[#f7f1df]">اختر من قائمتنا</h2>
             <p class="mt-4 max-w-[62ch] leading-8 text-[#315e52] dark:text-[#d2e7df]/76">تصفّح الأصناف المعتمدة، اختر المنتج وخياره، ثم أضفه إلى السلة. الأسعار تشمل ٥٪ ضريبة القيمة المضافة.</p>
+            @if ($hasMemberOffers && ! $memberPricingEligible)
+                <p class="mt-3 text-sm font-semibold text-[#6f5420] dark:text-[#ead8ac]">لديك حساب في بيرحاء؟ <a href="{{ route('login') }}" class="text-[#007a52] underline underline-offset-4 dark:text-[#6ee7b7]">سجّل الدخول لتحصل على سعر الأعضاء تلقائيًا</a>.</p>
+            @endif
         </div>
 
         @if (! $orderingEnabled)
@@ -122,7 +125,14 @@
                             <div class="flex flex-1 flex-col gap-3 p-3 sm:p-4">
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="text-xs font-bold text-[#8a6420] dark:text-[#f0c96a]">{{ $product->display_tag }}</span>
-                                    <span class="text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]"><x-money :amount-baisa="$selectedOption->price_baisa" :currency="$selectedOption->currency" /></span>
+                                    <span class="text-end text-sm font-bold text-[#007a52] dark:text-[#6ee7b7]">
+                                        @if ($selectedOption->member_price_baisa !== null)
+                                            <span class="block text-[0.68rem] font-medium text-[#315e52]/65 line-through dark:text-[#d2e7df]/55"><x-money :amount-baisa="$selectedOption->price_baisa" :currency="$selectedOption->currency" /></span>
+                                            <span class="block"><x-money :amount-baisa="$selectedOption->member_price_baisa" :currency="$selectedOption->currency" /> <small class="font-semibold">للأعضاء</small></span>
+                                        @else
+                                            <x-money :amount-baisa="$selectedOption->price_baisa" :currency="$selectedOption->currency" />
+                                        @endif
+                                    </span>
                                 </div>
 
                                 <p class="text-sm leading-6 text-[#6f5420] dark:text-[#ead8ac]">{{ $product->description }}</p>
@@ -143,7 +153,7 @@
                                             إضافة نكهة
                                             <select wire:model.live="selectedOptions.{{ $product->id }}" class="min-h-10 w-full rounded-lg border border-[#2a8069]/18 bg-[#f6fbf8] px-2 text-xs text-[#123329] outline-none focus:border-[#007a52] focus:ring-2 focus:ring-[#007a52]/15 dark:border-white/12 dark:bg-[#0c1e19] dark:text-[#f7f1df]">
                                                 @foreach ($product->options as $option)
-                                                    <option value="{{ $option->id }}">{{ $option->name }} - {{ \App\Support\MoneyFormatter::baisa($option->price_baisa, $option->currency) }}</option>
+                                                    <option value="{{ $option->id }}">{{ $option->name }} - {{ \App\Support\MoneyFormatter::baisa($option->member_price_baisa !== null ? ($memberPricingEligible ? $option->member_price_baisa : $option->price_baisa) : $option->price_baisa, $option->currency) }}{{ $option->member_price_baisa !== null && ! $memberPricingEligible ? ' (للأعضاء '.\App\Support\MoneyFormatter::baisa($option->member_price_baisa, $option->currency).')' : '' }}</option>
                                                 @endforeach
                                             </select>
                                         </label>

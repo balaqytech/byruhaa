@@ -8,10 +8,12 @@ use App\Modules\Store\Actions\QuoteCart;
 use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Actions\UpdateCartItem;
+use App\Modules\Store\Enums\PricingChannel;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
+use App\Modules\Store\Services\PricingContextResolver;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -28,6 +30,8 @@ class CoffeeStore extends Component
     protected BrowseCatalog $browseCatalog;
 
     protected QuoteCart $quoteCart;
+
+    protected PricingContextResolver $pricingContexts;
 
     protected ResolveCart $resolveCart;
 
@@ -48,12 +52,18 @@ class CoffeeStore extends Component
 
     public ?string $cartToken = null;
 
-    public function boot(BrowseCatalog $browseCatalog, QuoteCart $quoteCart, ResolveCart $resolveCart, StoreSettings $settings): void
-    {
+    public function boot(
+        BrowseCatalog $browseCatalog,
+        QuoteCart $quoteCart,
+        ResolveCart $resolveCart,
+        StoreSettings $settings,
+        PricingContextResolver $pricingContexts,
+    ): void {
         $this->browseCatalog = $browseCatalog;
         $this->quoteCart = $quoteCart;
         $this->resolveCart = $resolveCart;
         $this->settings = $settings;
+        $this->pricingContexts = $pricingContexts;
     }
 
     public function mount(): void
@@ -182,6 +192,11 @@ class CoffeeStore extends Component
             : $catalog->where('id', $this->categoryId)->values();
         $cart = $this->loadCart();
         $quote = null;
+        $pricingContext = $this->pricingContexts->forIdentity(
+            $this->customerId(),
+            $this->minorProfileId(),
+            PricingChannel::Storefront,
+        );
 
         if ($cart?->items->isNotEmpty()) {
             try {
@@ -200,6 +215,8 @@ class CoffeeStore extends Component
             'quote' => $quote,
             'orderingEnabled' => $this->settings->ordering_enabled,
             'categoryVisuals' => $this->categoryVisuals(),
+            'memberPricingEligible' => $pricingContext->isMember(),
+            'hasMemberOffers' => $catalog->flatMap->products->flatMap->options->contains(fn (ProductOption $option): bool => $option->member_price_baisa !== null),
         ]);
     }
 

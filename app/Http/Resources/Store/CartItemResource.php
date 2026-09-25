@@ -23,6 +23,8 @@ class CartItemResource extends JsonResource
                 'name' => $this->productOption?->name,
                 'sku' => $this->productOption?->sku,
                 'price_baisa' => $this->productOption?->price_baisa,
+                'regular_price_baisa' => $this->productOption?->price_baisa,
+                'member_price_baisa' => $this->productOption?->member_price_baisa,
                 'currency' => $this->productOption?->currency,
                 'product' => $this->when($this->productOption?->relationLoaded('product'), fn (): array => [
                     'name' => $this->productOption->product?->name,

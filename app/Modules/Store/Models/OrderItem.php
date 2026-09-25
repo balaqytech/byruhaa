@@ -10,8 +10,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/** @property-read Money $unit_price */
-#[Fillable(['order_id', 'product_option_id', 'product_name', 'option_name', 'sku', 'currency', 'unit_price', 'unit_price_baisa', 'quantity', 'vat', 'vat_baisa', 'line_subtotal', 'line_subtotal_baisa', 'line_total', 'line_total_baisa', 'note'])]
+/**
+ * @property-read Money $unit_price
+ * @property int $regular_unit_price_baisa
+ * @property int $unit_discount_baisa
+ * @property int $line_discount_baisa
+ */
+#[Fillable(['order_id', 'product_option_id', 'product_name', 'option_name', 'sku', 'currency', 'unit_price', 'unit_price_baisa', 'regular_unit_price_baisa', 'unit_discount_baisa', 'quantity', 'vat', 'vat_baisa', 'line_subtotal', 'line_subtotal_baisa', 'line_total', 'line_total_baisa', 'line_discount_baisa', 'note'])]
 class OrderItem extends Model
 {
     /** @use HasFactory<OrderItemFactory> */
@@ -41,6 +46,8 @@ class OrderItem extends Model
         return [
             'unit_price' => MoneyBaisaCast::of('unit_price_baisa'),
             'unit_price_baisa' => 'integer',
+            'regular_unit_price_baisa' => 'integer',
+            'unit_discount_baisa' => 'integer',
             'quantity' => 'integer',
             'vat' => MoneyBaisaCast::of('vat_baisa'),
             'vat_baisa' => 'integer',
@@ -48,6 +55,7 @@ class OrderItem extends Model
             'line_subtotal_baisa' => 'integer',
             'line_total' => MoneyBaisaCast::of('line_total_baisa'),
             'line_total_baisa' => 'integer',
+            'line_discount_baisa' => 'integer',
         ];
     }
 }

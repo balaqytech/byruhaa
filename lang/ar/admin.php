@@ -368,6 +368,10 @@ return [
         'phone_number' => 'رقم الهاتف',
         'percentage' => 'النسبة',
         'price' => 'السعر',
+        'member_price' => 'سعر أعضاء بيرحاء',
+        'regular_unit_price' => 'سعر الوحدة العادي',
+        'regular_total' => 'الإجمالي قبل خصم العضوية',
+        'pricing_tier' => 'فئة التسعير',
         'processed_at' => 'تاريخ المعالجة',
         'posts' => 'التدوينات',
         'provider' => 'مزود الدفع',
@@ -378,6 +382,7 @@ return [
         'provider_status' => 'حالة المزود',
         'pickup_at' => 'وقت الاستلام',
         'pickup_date' => 'تاريخ الاستلام',
+        'has_member_price' => 'لديه سعر أعضاء',
         'recipient' => 'المستلم',
         'recipient_phone' => 'هاتف المستلم',
         'reason' => 'السبب',
@@ -475,6 +480,8 @@ return [
     'store' => [
         'default_option_help' => 'يجب أن يحتفظ كل منتج بخيار افتراضي واحد فقط. حفظ خيار افتراضي جديد يستبدل الخيار الحالي.',
         'price_includes_vat_help' => 'السعر المدخل هو السعر النهائي شامل ضريبة القيمة المضافة ٥٪.',
+        'member_price_help' => 'اختياري. يجب أن يكون موجبًا وأقل من السعر العادي، ويشمل ضريبة القيمة المضافة.',
+        'member_price_must_be_lower' => 'يجب أن يكون سعر الأعضاء موجبًا وأقل من السعر العادي.',
         'featured_help' => 'يظهر المنتج في تبويب «الأكثر طلبًا» مع بقائه ضمن تصنيفه الأصلي.',
         'sections' => [
             'identity' => 'الهوية',
@@ -509,6 +516,10 @@ return [
         'pickup_types' => [
             'immediate' => 'فوري',
             'scheduled' => 'مجدول',
+        ],
+        'pricing_tiers' => [
+            'standard' => 'عادي',
+            'member' => 'عضو بيرحاء',
         ],
         'actions' => [
             'change_status' => 'تغيير الحالة',

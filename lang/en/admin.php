@@ -373,6 +373,10 @@ return [
         'percentage' => 'Percentage',
         'pending_payouts' => 'Pending payouts',
         'price' => 'Price',
+        'member_price' => 'Byruhaa member price',
+        'regular_unit_price' => 'Regular unit price',
+        'regular_total' => 'Total before member discount',
+        'pricing_tier' => 'Pricing tier',
         'processed_at' => 'Processed at',
         'posts' => 'Posts',
         'provider' => 'Provider',
@@ -383,6 +387,7 @@ return [
         'provider_status' => 'Provider status',
         'pickup_at' => 'Pickup time',
         'pickup_date' => 'Pickup date',
+        'has_member_price' => 'Has member price',
         'recipient' => 'Recipient',
         'recipient_phone' => 'Recipient phone',
         'reason' => 'Reason',
@@ -493,6 +498,8 @@ return [
     'store' => [
         'default_option_help' => 'Each product must keep exactly one default option. Saving a new default will replace the current one.',
         'price_includes_vat_help' => 'The entered price is the final customer price and includes 5% VAT.',
+        'member_price_help' => 'Optional. It must be positive and lower than the regular VAT-inclusive price.',
+        'member_price_must_be_lower' => 'The member price must be positive and lower than the regular price.',
         'featured_help' => 'Shows the product in the Best sellers tab while keeping it in its original category.',
         'sections' => [
             'identity' => 'Identity',
@@ -527,6 +534,10 @@ return [
         'pickup_types' => [
             'immediate' => 'Immediate',
             'scheduled' => 'Scheduled',
+        ],
+        'pricing_tiers' => [
+            'standard' => 'Standard',
+            'member' => 'Byruhaa member',
         ],
         'actions' => [
             'change_status' => 'Change status',

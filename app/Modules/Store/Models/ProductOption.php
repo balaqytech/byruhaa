@@ -21,6 +21,7 @@ use Slimani\MediaManager\Models\File;
  * @property string $name
  * @property string $sku
  * @property int $price_baisa
+ * @property int|null $member_price_baisa
  * @property string $currency
  * @property int|null $image_id
  * @property int $sort_order
@@ -29,8 +30,9 @@ use Slimani\MediaManager\Models\File;
  * @property bool $tracks_inventory
  * @property int $stock_on_hand
  * @property-read Money $price
+ * @property-read Money|null $member_price
  */
-#[Fillable(['product_id', 'name', 'sku', 'price', 'price_baisa', 'currency', 'image_id', 'sort_order', 'is_available', 'is_default', 'tracks_inventory', 'stock_on_hand'])]
+#[Fillable(['product_id', 'name', 'sku', 'price', 'price_baisa', 'member_price', 'member_price_baisa', 'currency', 'image_id', 'sort_order', 'is_available', 'is_default', 'tracks_inventory', 'stock_on_hand'])]
 class ProductOption extends Model implements AuditableContract
 {
     protected $table = 'store_product_options';
@@ -46,6 +48,7 @@ class ProductOption extends Model implements AuditableContract
         'name',
         'sku',
         'price_baisa',
+        'member_price_baisa',
         'currency',
         'image_id',
         'sort_order',
@@ -73,6 +76,13 @@ class ProductOption extends Model implements AuditableContract
     protected static function booted(): void
     {
         static::saving(function (ProductOption $option): void {
+            if ($option->member_price_baisa !== null
+                && ($option->member_price_baisa <= 0 || $option->member_price_baisa >= $option->price_baisa)) {
+                throw ValidationException::withMessages([
+                    'member_price' => __('admin.store.member_price_must_be_lower'),
+                ]);
+            }
+
             if (blank($option->product_id)) {
                 return;
             }
@@ -167,6 +177,8 @@ class ProductOption extends Model implements AuditableContract
         return [
             'price' => MoneyBaisaCast::of('price_baisa'),
             'price_baisa' => 'integer',
+            'member_price' => MoneyBaisaCast::of('member_price_baisa'),
+            'member_price_baisa' => 'integer',
             'sort_order' => 'integer',
             'is_available' => 'boolean',
             'is_default' => 'boolean',

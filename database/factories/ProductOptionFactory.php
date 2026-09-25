@@ -20,6 +20,7 @@ class ProductOptionFactory extends Factory
             'name' => 'Standard',
             'sku' => 'SKU-'.Str::upper(Str::random(10)),
             'price_baisa' => fake()->numberBetween(500, 5000),
+            'member_price_baisa' => null,
             'currency' => 'OMR',
             'image_id' => null,
             'sort_order' => 0,

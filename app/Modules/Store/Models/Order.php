@@ -28,8 +28,11 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $subtotal
  * @property-read Money $vat
  * @property-read Money $total
+ * @property int $regular_total_baisa
+ * @property int $discount_baisa
+ * @property string $pricing_tier
  */
-#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'minor_profile_id', 'status', 'payment_method', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
+#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'minor_profile_id', 'status', 'payment_method', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'regular_total_baisa', 'discount_baisa', 'pricing_tier', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
 class Order extends Model implements AuditableContract
 {
     /** @use HasFactory<OrderFactory> */
@@ -56,6 +59,9 @@ class Order extends Model implements AuditableContract
         'subtotal_baisa',
         'vat_baisa',
         'total_baisa',
+        'regular_total_baisa',
+        'discount_baisa',
+        'pricing_tier',
         'vat_rate_percentage',
         'paid_at',
         'payment_reference',
@@ -74,6 +80,9 @@ class Order extends Model implements AuditableContract
         'subtotal_baisa' => 0,
         'vat_baisa' => 0,
         'total_baisa' => 0,
+        'regular_total_baisa' => 0,
+        'discount_baisa' => 0,
+        'pricing_tier' => 'standard',
     ];
 
     protected static function booted(): void
@@ -119,6 +128,8 @@ class Order extends Model implements AuditableContract
             'vat_baisa' => 'integer',
             'total' => MoneyBaisaCast::of('total_baisa'),
             'total_baisa' => 'integer',
+            'regular_total_baisa' => 'integer',
+            'discount_baisa' => 'integer',
             'vat_rate_percentage' => 'integer',
             'paid_at' => 'datetime',
         ];

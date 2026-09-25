@@ -20,11 +20,12 @@
                 @foreach ($order->items as $item)
                     <div class="flex items-center justify-between gap-4 py-4">
                         <div class="min-w-0"><p class="font-medium">{{ $item->product_name }} · {{ $item->option_name }}</p><p class="mt-1 text-sm text-emerald-900/60 dark:text-white/60">الكمية: {{ $item->quantity }}</p></div>
-                        <span class="shrink-0"><x-money :amount-baisa="$item->line_total_baisa" :currency="$item->currency" /></span>
+                        <span class="shrink-0 text-end">@if ($item->line_discount_baisa > 0)<span class="block text-xs text-emerald-900/50 line-through dark:text-white/50"><x-money :amount-baisa="$item->regular_unit_price_baisa * $item->quantity" :currency="$item->currency" /></span>@endif<x-money :amount-baisa="$item->line_total_baisa" :currency="$item->currency" /></span>
                     </div>
                 @endforeach
             </div>
-            <div class="mt-4 flex items-center justify-between border-t border-emerald-900/10 pt-5 text-lg font-bold dark:border-white/10"><span>الإجمالي</span><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></div>
+            @if ($order->discount_baisa > 0)<div class="mt-4 flex items-center justify-between border-t border-emerald-900/10 pt-4 text-sm font-semibold text-amber-700 dark:border-white/10 dark:text-amber-300"><span>توفير أعضاء بيرحاء</span><span>− <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /></span></div>@endif
+            <div class="mt-3 flex items-center justify-between text-lg font-bold"><span>الإجمالي</span><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></div>
             <p class="mt-3 text-xs text-emerald-900/60 dark:text-white/60">الاستلام من المقهى · {{ $order->payment_method === 'wallet' ? 'الدفع من المحفظة' : 'الدفع عبر ثواني' }}</p>
         </div>
         <aside class="rounded-2xl border border-emerald-900/10 bg-white p-6 dark:border-white/10 dark:bg-zinc-900">

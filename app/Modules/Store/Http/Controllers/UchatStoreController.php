@@ -19,6 +19,7 @@ use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveUchatCart;
 use App\Modules\Store\Actions\ResolveUchatOrder;
 use App\Modules\Store\Actions\UpdateCartItem;
+use App\Modules\Store\Enums\PricingChannel;
 use App\Modules\Store\Http\Requests\UchatCartItemRequest;
 use App\Modules\Store\Http\Requests\UchatCartUpdateRequest;
 use App\Modules\Store\Http\Requests\UchatIdentityRequest;
@@ -32,6 +33,7 @@ use App\Modules\Store\Http\Resources\UchatProductResource;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\Models\ProductOption;
+use App\Modules\Store\Services\PricingContextResolver;
 use App\Modules\Store\Services\UchatOwnerKey;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -48,17 +50,24 @@ class UchatStoreController
         private UchatOwnerKey $ownerKey,
         private QuoteCart $quoteCart,
         private MinorProfilePurchasing $minorProfiles,
+        private PricingContextResolver $pricingContexts,
     ) {}
 
-    public function catalog(BrowseCatalog $browseCatalog): AnonymousResourceCollection
+    public function catalog(UchatIdentityRequest $request, BrowseCatalog $browseCatalog): AnonymousResourceCollection
     {
-        return UchatCatalogResource::collection($browseCatalog->execute());
+        $context = $this->pricingContexts->forIdentity($request->customerId(), channel: PricingChannel::Uchat);
+
+        return UchatCatalogResource::collection($browseCatalog->execute())
+            ->additional(['pricing_tier' => $context->tier->value]);
     }
 
-    public function product(string $slug, BrowseProduct $browseProduct): JsonResource|JsonResponse
+    public function product(string $slug, UchatIdentityRequest $request, BrowseProduct $browseProduct): JsonResource|JsonResponse
     {
         try {
-            return UchatProductResource::make($browseProduct->execute($slug));
+            $context = $this->pricingContexts->forIdentity($request->customerId(), channel: PricingChannel::Uchat);
+
+            return UchatProductResource::make($browseProduct->execute($slug))
+                ->additional(['pricing_tier' => $context->tier->value]);
         } catch (ModelNotFoundException) {
             return $this->error('product_not_found', 'The product was not found.', 404);
         }
@@ -396,16 +405,15 @@ class UchatStoreController
     /** @return array<string, mixed> */
     private function quote(Cart $cart, QuoteCart $quoteCart): array
     {
-        if (! $cart->items()->exists()) {
-            return ['subtotal_baisa' => 0, 'vat_baisa' => 0, 'total_baisa' => 0, 'currency' => 'OMR', 'items' => []];
-        }
-
-        $quote = $quoteCart->execute($cart);
+        $quote = $quoteCart->executeOrEmpty($cart, PricingChannel::Uchat);
 
         return [
             'subtotal_baisa' => $quote['subtotal_baisa'],
             'vat_baisa' => $quote['vat_baisa'],
             'total_baisa' => $quote['total_baisa'],
+            'regular_total_baisa' => $quote['regular_total_baisa'],
+            'discount_baisa' => $quote['discount_baisa'],
+            'pricing_tier' => $quote['pricing_tier'],
             'currency' => $quote['currency'],
             'items' => $quote['items'],
         ];

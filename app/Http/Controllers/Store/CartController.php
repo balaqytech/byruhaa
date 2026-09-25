@@ -8,9 +8,11 @@ use App\Http\Requests\Store\UpdateCartItemRequest;
 use App\Http\Resources\Store\CartItemResource;
 use App\Http\Resources\Store\CartResource;
 use App\Modules\Store\Actions\AddCartItem;
+use App\Modules\Store\Actions\QuoteCart;
 use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Actions\UpdateCartItem;
+use App\Modules\Store\Enums\PricingChannel;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\CartItem;
 use App\Modules\Store\Models\ProductOption;
@@ -19,12 +21,14 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    public function show(Request $request, ResolveCart $resolveCart): JsonResponse
+    public function show(Request $request, ResolveCart $resolveCart, QuoteCart $quoteCart): JsonResponse
     {
         ['customerId' => $customerId, 'minorProfileId' => $minorProfileId] = $this->storeIdentity($request);
         $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId, false, $minorProfileId);
 
-        return CartResource::make($cart->load('items.productOption.product'))->response();
+        $quote = $quoteCart->executeOrEmpty($cart, PricingChannel::Api);
+
+        return CartResource::make($cart->load('items.productOption.product'))->withQuote($quote)->response();
     }
 
     public function add(AddCartItemRequest $request, ResolveCart $resolveCart, AddCartItem $addCartItem): JsonResponse

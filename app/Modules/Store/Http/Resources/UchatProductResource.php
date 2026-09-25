@@ -21,6 +21,8 @@ class UchatProductResource extends JsonResource
                 'name' => $option->name,
                 'sku' => $option->sku,
                 'price_baisa' => $option->price_baisa,
+                'regular_price_baisa' => $option->price_baisa,
+                'member_price_baisa' => $option->member_price_baisa,
                 'currency' => $option->currency,
                 'available' => ! $option->tracks_inventory || ($option->availableQuantity() ?? 0) > 0,
             ])->values()->all(),

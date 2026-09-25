@@ -109,6 +109,12 @@ class ProductForm
                                     ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
                                     ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
                                     ->suffix('OMR'),
+                                TextInput::make('member_price')
+                                    ->label(__('admin.fields.member_price'))
+                                    ->helperText(__('admin.store.member_price_help'))
+                                    ->rules(['nullable', 'regex:/^\d+(\.\d{1,3})?$/'])
+                                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                                    ->suffix('OMR'),
                                 TextInput::make('currency')
                                     ->label(__('admin.fields.currency'))
                                     ->default('OMR')

@@ -30,6 +30,9 @@ class OrderInfolist
                 TextEntry::make('note')->label(__('admin.fields.note'))->placeholder('-')->columnSpanFull(),
             ]),
             Section::make(__('admin.store.sections.totals'))->columns(3)->schema([
+                TextEntry::make('pricing_tier')->label(__('admin.fields.pricing_tier'))->formatStateUsing(fn (string $state): string => __('admin.store.pricing_tiers.'.$state))->badge(),
+                TextEntry::make('regular_total_baisa')->label(__('admin.fields.regular_total'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->regular_total_baisa, 'OMR')),
+                TextEntry::make('discount_baisa')->label(__('admin.fields.discount_amount'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->discount_baisa, 'OMR')),
                 TextEntry::make('subtotal_baisa')->label(__('admin.fields.subtotal_before_vat'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->subtotal_baisa, 'OMR')),
                 TextEntry::make('vat_baisa')->label(__('admin.fields.vat_included'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->vat_baisa, 'OMR')),
                 TextEntry::make('total_baisa')->label(__('admin.fields.total_including_vat'))->state(fn (Order $record): string => MoneyFormatter::baisa($record->total_baisa, 'OMR')),
@@ -40,11 +43,17 @@ class OrderInfolist
                     TextEntry::make('option_name')->label(__('admin.fields.option')),
                     TextEntry::make('sku')->label(__('admin.fields.sku')),
                     TextEntry::make('quantity')->label(__('admin.fields.quantity')),
+                    TextEntry::make('regular_unit_price_baisa')
+                        ->label(__('admin.fields.regular_unit_price'))
+                        ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR')),
+                    TextEntry::make('unit_discount_baisa')
+                        ->label(__('admin.fields.discount_amount'))
+                        ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR')),
                     TextEntry::make('line_total_baisa')
                         ->label(__('admin.fields.total'))
                         ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR')),
                     TextEntry::make('note')->label(__('admin.fields.note'))->placeholder('-'),
-                ])->columns(3),
+                ])->columns(4),
             ]),
             Section::make(__('admin.store.sections.status_history'))->schema([
                 RepeatableEntry::make('statusHistory')->schema([

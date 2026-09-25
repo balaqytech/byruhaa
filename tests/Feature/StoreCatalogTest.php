@@ -38,6 +38,7 @@ test('catalog migrations create the store tables and required columns', function
     expect(Schema::getColumnListing('store_product_options'))
         ->toContain('sku')
         ->toContain('price_baisa')
+        ->toContain('member_price_baisa')
         ->toContain('image_id')
         ->toContain('is_default');
 });

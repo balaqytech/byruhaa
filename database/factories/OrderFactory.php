@@ -22,6 +22,9 @@ class OrderFactory extends Factory
             'subtotal_baisa' => 1000,
             'vat_baisa' => 50,
             'total_baisa' => 1050,
+            'regular_total_baisa' => 1050,
+            'discount_baisa' => 0,
+            'pricing_tier' => 'standard',
         ];
     }
 }
