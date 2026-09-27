@@ -4,6 +4,8 @@ namespace App\Modules\Store\Models;
 
 use App\Modules\Store\Enums\ProductStatus;
 use Database\Factories\ProductFactory;
+use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
+use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +26,7 @@ use Slimani\MediaManager\Models\File;
  * @property string|null $display_tag
  * @property string $slug
  * @property string|null $description
+ * @property string|null $long_description
  * @property array<int, string>|null $allergens
  * @property int|null $featured_image_id
  * @property ProductStatus $status
@@ -31,13 +34,18 @@ use Slimani\MediaManager\Models\File;
  * @property bool $is_featured
  * @property int $featured_sort_order
  */
-#[Fillable(['category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'allergens', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
-class Product extends Model implements AuditableContract
+#[Fillable(['category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'long_description', 'allergens', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
+class Product extends Model implements AuditableContract, HasRichContent
 {
     protected $table = 'store_products';
 
     /** @use HasFactory<ProductFactory> */
-    use AuditableTrait, HasFactory;
+    use AuditableTrait, HasFactory, InteractsWithRichContent;
+
+    public function setUpRichContent(): void
+    {
+        $this->registerRichContent('long_description');
+    }
 
     /**
      * @var array<int, string>
@@ -50,6 +58,7 @@ class Product extends Model implements AuditableContract
         'display_tag',
         'slug',
         'description',
+        'long_description',
         'allergens',
         'featured_image_id',
         'status',

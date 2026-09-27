@@ -6,6 +6,7 @@ use App\Modules\Store\Enums\ProductStatus;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
@@ -79,6 +80,9 @@ class ProductForm
                         Textarea::make('description')
                             ->label(__('admin.fields.description'))
                             ->maxLength(500)
+                            ->columnSpanFull(),
+                        RichEditor::make('long_description')
+                            ->label('الوصف الطويل')
                             ->columnSpanFull(),
                     ]),
                 Section::make(__('admin.store.sections.media'))

@@ -46,6 +46,8 @@ class CoffeeStore extends Component
 
     public ?int $selectedOptionId = null;
 
+    public ?int $detailsProductId = null;
+
     public ?string $feedback = null;
 
     public ?string $cartError = null;
@@ -84,6 +86,16 @@ class CoffeeStore extends Component
         $this->categoryId = null;
         $this->featuredOnly = true;
         $this->selectedOptionId = null;
+    }
+
+    public function openProductDetails(int $productId): void
+    {
+        $this->detailsProductId = $productId;
+    }
+
+    public function closeProductDetails(): void
+    {
+        $this->detailsProductId = null;
     }
 
     public function addToCart(int $optionId, AddCartItem $addCartItem, ResolveCart $resolveCart): void
@@ -217,6 +229,16 @@ class CoffeeStore extends Component
             'categoryVisuals' => $this->categoryVisuals(),
             'memberPricingEligible' => $pricingContext->isMember(),
             'hasMemberOffers' => $catalog->flatMap->products->flatMap->options->contains(fn (ProductOption $option): bool => $option->member_price_baisa !== null),
+            'detailsProduct' => $this->detailsProductId === null ? null : Product::query()
+                ->active()
+                ->whereKey($this->detailsProductId)
+                ->whereHas('category', fn ($query) => $query->active())
+                ->whereHas('options', fn ($query) => $query->where('is_available', true)->where('price_baisa', '>', 0))
+                ->with(['category', 'featuredImage', 'options' => fn ($query) => $query
+                    ->where('is_available', true)
+                    ->where('price_baisa', '>', 0)
+                    ->orderBy('sort_order')])
+                ->first(),
         ]);
     }
 
