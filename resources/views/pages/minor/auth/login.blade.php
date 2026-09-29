@@ -1,9 +1,9 @@
-@extends('layouts.public', ['title' => 'دخول حساب القاصر'])
+@extends('layouts.public', ['title' => 'دخول حساب القائد'])
 
 @section('content')
 <section class="mx-auto w-full max-w-md px-4 py-12 sm:py-16" dir="rtl">
     <header class="mb-8 text-center">
-        <h1 class="font-heading text-3xl font-semibold text-emerald-950 dark:text-white">دخول حساب القاصر</h1>
+        <h1 class="font-heading text-3xl font-semibold text-emerald-950 dark:text-white">دخول حساب القائد</h1>
         <p class="mt-3 text-sm leading-7 text-emerald-900/70 dark:text-white/70">طلباتك ومحفظتك في مكان واحد. استخدم رمز العضوية وكلمة المرور بعد تفعيل حسابك.</p>
     </header>
     <div class="rounded-2xl border border-emerald-900/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-zinc-900 sm:p-8">

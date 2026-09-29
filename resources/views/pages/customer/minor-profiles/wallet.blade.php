@@ -1,10 +1,10 @@
-<x-layouts::app title="محفظة القاصر">
+<x-layouts::app title="محفظة القائد">
 <section class="flex flex-col gap-6" dir="rtl">
     <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
             <a href="{{ route('customer.minor-profiles.index') }}" class="text-sm text-emerald-700 dark:text-emerald-300">العودة إلى الحسابات</a>
             <h1 class="mt-2 text-2xl font-semibold text-emerald-950 dark:text-white">محفظة {{ $minorProfile->familyMember->name }}</h1>
-            <p class="mt-2 text-sm text-emerald-900/70 dark:text-white/70">الرصيد المتاح للدفع من حساب القاصر.</p>
+            <p class="mt-2 text-sm text-emerald-900/70 dark:text-white/70">الرصيد المتاح للدفع من حساب القائد.</p>
         </div>
         <div class="rounded-2xl border border-emerald-900/10 bg-white px-6 py-4 text-left shadow-sm dark:border-white/10 dark:bg-white/5" dir="ltr">
             <p class="text-xs text-emerald-900/60 dark:text-white/60">الرصيد</p>

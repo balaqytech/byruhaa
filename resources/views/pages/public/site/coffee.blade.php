@@ -6,6 +6,7 @@
 
 @php
     $whatsappUrl = 'https://wa.me/'.config('coffee.whatsapp_number').'?text='.rawurlencode(config('coffee.whatsapp_message'));
+    $accountAssistantUrl = 'https://wa.me/'.config('coffee.whatsapp_number').'?text='.rawurlencode('أرغب بالتحدث مع المساعد الذكي لإنشاء حساب وليّ الأمر وحساب القائد.');
     $walletsEnabled = config('byruhaa.wallets.enabled', false) && config('byruhaa.minor_accounts.enabled', true);
 
     if (auth('minor-profile')->check()) {
@@ -116,10 +117,16 @@
                         <p class="text-sm font-bold text-[#f0c96a]">لوليّ الأمر</p>
                         <h2 id="wallets-title" class="mt-3 max-w-[13ch] font-heading text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">حساب واحد، ومحفظة لكل ابن</h2>
                         <p class="mt-5 max-w-[48ch] leading-8 text-[#d2e7df]/82">اشحن الرصيد عبر ثواني، وحدد صلاحية الدفع، وتابع الحركات من حسابك.</p>
-                        <a href="{{ $walletActionUrl }}" class="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#e0a800] px-6 py-3 text-sm font-bold text-[#123329] transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transform-none motion-reduce:transition-none">
-                            {{ $walletActionLabel }}
-                            <x-hugeicon name="arrow-left-02" class="text-lg" />
-                        </a>
+                        <div class="mt-7 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap">
+                            <a href="{{ $walletActionUrl }}" class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#e0a800] px-6 py-3 text-sm font-bold text-[#123329] transition hover:-translate-y-0.5 hover:bg-[#f0c96a] active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-white motion-reduce:transform-none motion-reduce:transition-none sm:w-auto">
+                                {{ $walletActionLabel }}
+                                <x-hugeicon name="arrow-left-02" class="text-lg" />
+                            </a>
+                            <a href="{{ $accountAssistantUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-[#d2e7df]/40 px-6 py-3 text-center text-sm font-bold text-white transition hover:-translate-y-0.5 hover:border-white hover:bg-white/10 active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f0c96a] motion-reduce:transform-none motion-reduce:transition-none sm:w-auto">
+                                راسل المساعد الذكي لإنشاء الحساب
+                                <x-hugeicon name="mail-01" class="text-lg" />
+                            </a>
+                        </div>
                         <x-policy-links :pages="['student-accounts', 'wallet', 'refund-cancellation']" label="سياسات حسابات الأبناء والمحفظة" class="mt-5 !text-[#d2e7df]/72 [&_a]:!text-[#a7f3d0] [&_a:hover]:!text-white" />
                     </div>
 
@@ -141,15 +148,18 @@
         @endif
 
         <section class="border-t border-[#2a8069]/12 bg-[#e9f7f0]/66 dark:border-white/10 dark:bg-white/[0.03]" aria-labelledby="visit-title">
-            <div class="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-14 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8 lg:py-16">
+            <div class="mx-auto grid w-full max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] lg:items-center lg:gap-12 lg:px-8 lg:py-16">
                 <div class="max-w-3xl">
                     <h2 id="visit-title" class="font-heading text-3xl font-bold text-[#123329] sm:text-4xl dark:text-[#f7f1df]">زرنا في بيرحاء</h2>
                     <p class="mt-4 max-w-[58ch] leading-8 text-[#315e52] dark:text-[#d2e7df]/76">{{ $coffee['location'] }}. للاستفسار عن الوصول أو توفر المنتجات، تواصل مع مساعدنا عبر واتساب.</p>
+                    <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#007a52] px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a800] motion-reduce:transform-none motion-reduce:transition-none">
+                        تواصل معنا
+                        <x-hugeicon name="mail-01" class="text-lg" />
+                    </a>
                 </div>
-                <a href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-12 items-center justify-center gap-2 rounded-sm bg-[#007a52] px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#006746] active:translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a800] motion-reduce:transform-none motion-reduce:transition-none">
-                    تواصل معنا
-                    <x-hugeicon name="mail-01" class="text-lg" />
-                </a>
+                <div class="public-card overflow-hidden rounded-sm border border-[#2a8069]/14 bg-white shadow-[0_18px_55px_rgba(18,51,41,0.10)] dark:border-white/10 dark:bg-white/5" data-coffee-location-map>
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3682.298346031572!2d58.529858499999996!3d22.642662400000003!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e902295a0e9d469%3A0x123dc2470ccbcf37!2z2KjZitix2K3Yp9ihINil2KjYsdin2KEg2YTZhNiz2YrYp9it2Kk!5e0!3m2!1sen!2s!4v1790690848515!5m2!1sen!2s" title="موقع بيرحاء في إبراء على خرائط Google" width="600" height="450" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen class="aspect-[4/3] h-auto w-full border-0"></iframe>
+                </div>
             </div>
         </section>
     </div>

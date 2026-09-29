@@ -33,7 +33,7 @@
                         </span>
                     </flux:navbar.item>
                     <flux:navbar.item :href="route('customer.minor-profiles.index')" :current="request()->routeIs('customer.minor-profiles.*')" wire:navigate>
-                        <span class="inline-flex items-center gap-2"><x-hugeicon name="user-group" class="text-lg" />حسابات القاصرين</span>
+                        <span class="inline-flex items-center gap-2"><x-hugeicon name="user-group" class="text-lg" />حسابات القادة</span>
                     </flux:navbar.item>
                     <flux:navbar.item :href="route('customer.bookings.index')" :current="request()->routeIs('customer.bookings.*')" wire:navigate>
                         <span class="inline-flex items-center gap-2">
@@ -79,7 +79,7 @@
                             </span>
                         </flux:menu.item>
                         <flux:menu.item :href="route('customer.minor-profiles.index')" wire:navigate>
-                            <span class="inline-flex items-center gap-2"><x-hugeicon name="user-group" class="text-lg" />حسابات القاصرين</span>
+                            <span class="inline-flex items-center gap-2"><x-hugeicon name="user-group" class="text-lg" />حسابات القادة</span>
                         </flux:menu.item>
                         <flux:menu.item :href="route('customer.bookings.index')" wire:navigate>
                             <span class="inline-flex items-center gap-2">

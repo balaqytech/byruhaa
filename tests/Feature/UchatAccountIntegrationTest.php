@@ -49,6 +49,27 @@ test('account discovery is guardian scoped and includes inactive profiles and ve
         ->assertJsonMissingPath('data.0.password');
 });
 
+test('account discovery exposes the leader consent wording without changing API identifiers', function (): void {
+    Customer::factory()->create(['phone_number' => '+96891234567']);
+    $accountCopy = require config_path('byruhaa.php');
+
+    config([
+        'byruhaa.minor_accounts.consent_text' => $accountCopy['minor_accounts']['consent_text'],
+        'byruhaa.minor_accounts.browser_notifications.consent_text' => $accountCopy['minor_accounts']['browser_notifications']['consent_text'],
+    ]);
+
+    $this->withHeader('Accept-Language', 'ar')
+        ->getJson('/api/v1/integrations/uchat/store/account')
+        ->assertOk()
+        ->assertJsonPath('data.consent_text', $accountCopy['minor_accounts']['consent_text'])
+        ->assertJsonPath('data.notifications_consent_text', $accountCopy['minor_accounts']['browser_notifications']['consent_text'])
+        ->assertJsonPath('data.consent_policy_identifier', 'guardian-approved-minor-account')
+        ->assertJsonPath('data.notifications_policy_identifier', 'guardian-approved-minor-notifications');
+
+    expect($accountCopy['minor_accounts']['consent_text'])->toContain('للقائد (الابن أو الطالب)')
+        ->and($accountCopy['minor_accounts']['browser_notifications']['consent_text'])->toContain('القائد');
+});
+
 test('minor onboarding reuses the family birthdate and safely retries creation before activation', function (): void {
     $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
     $family = FamilyMember::factory()->for($guardian)->create(['birth_date' => now()->subYears(12)]);
@@ -89,6 +110,11 @@ test('minor creation rejects other guardians family members and adults', functio
     $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $other->id, ...$payload])->assertUnprocessable()
         ->assertJsonPath('reasons.family_member_id.0', 'family_member_unavailable');
     $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $adult->id, ...$payload])->assertUnprocessable()
+        ->assertJsonPath('reasons.birth_date.0', 'minor_age_invalid');
+    $this->withHeader('Accept-Language', 'ar')
+        ->postJson('/api/v1/integrations/uchat/store/minor-profiles', ['family_member_id' => $adult->id, ...$payload])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.birth_date.0', 'يجب أن يكون عمر صاحب حساب القائد أقل من 18 سنة.')
         ->assertJsonPath('reasons.birth_date.0', 'minor_age_invalid');
     expect(MinorProfile::count())->toBe(0);
 });

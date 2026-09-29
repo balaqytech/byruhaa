@@ -9,12 +9,12 @@ return [
         'otp_expiry_minutes' => (int) env('MINOR_ACCOUNT_OTP_EXPIRY_MINUTES', 10),
         'policy_version' => env('MINOR_ACCOUNT_POLICY_VERSION', 'phase-2a'),
         'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase'),
-        'consent_text' => 'أوافق بصفتي ولي الأمر على إنشاء حساب للقاصر وربطه بحسابي، وعلى إتاحة استخدامه لمتجر بيرحاء والشراء وفق الصلاحيات والضوابط التي أحددها.',
+        'consent_text' => 'أوافق بصفتي ولي الأمر على إنشاء حساب للقائد (الابن أو الطالب) وربطه بحسابي، وعلى إتاحة استخدامه لمتجر بيرحاء والشراء وفق الصلاحيات والضوابط التي أحددها.',
         'browser_notifications' => [
             'enabled' => filter_var(env('MINOR_BROWSER_NOTIFICATIONS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
             'policy_version' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_VERSION', 'minor-account-notifications-v2'),
             'policy_text' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_TEXT', 'guardian-consent-minor-account-notifications'),
-            'consent_text' => 'أوافق على تلقي القاصر جميع الإشعارات المتعلقة بحسابه وخدماته، بما فيها الطلبات والمحفظة وأي أنواع تضاف مستقبلًا. قد تظهر تفاصيل الإشعار على شاشة القفل في جهازه.',
+            'consent_text' => 'أوافق على تلقي القائد جميع الإشعارات المتعلقة بحسابه وخدماته، بما فيها الطلبات والمحفظة وأي أنواع تضاف مستقبلًا. قد تظهر تفاصيل الإشعار على شاشة القفل في جهازه.',
             'order_statuses' => [
                 'confirmed',
                 'ready_for_pickup',

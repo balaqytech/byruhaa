@@ -112,6 +112,8 @@ test('coffee page renders the database-backed public storefront', function () {
         ->assertSeeInOrder(['تصفّح القائمة', 'اختر من قائمتنا', 'مكان يجمع يوم الفتى', 'حساب واحد، ومحفظة لكل ابن', 'زرنا في بيرحاء'])
         ->assertSee('id="menu"', false)
         ->assertSee('id="family-wallets"', false)
+        ->assertSee('راسل المساعد الذكي لإنشاء الحساب')
+        ->assertSee(rawurlencode('أرغب بالتحدث مع المساعد الذكي لإنشاء حساب وليّ الأمر وحساب القائد.'), false)
         ->assertSee('أنشئ حساب وليّ الأمر')
         ->assertSee(route('register'), false)
         ->assertSee('wire:id=', false)
@@ -122,6 +124,10 @@ test('coffee page renders the database-backed public storefront', function () {
         ->assertSee('images/coffee-byruha-hero-mobile.webp', false)
         ->assertSee('images/coffee-byruha-menu.webp', false)
         ->assertSee('https://wa.me/96874155123', false)
+        ->assertSee('data-coffee-location-map', false)
+        ->assertSee('www.google.com/maps/embed?pb=', false)
+        ->assertSee('title="موقع بيرحاء في إبراء على خرائط Google"', false)
+        ->assertSee('loading="lazy"', false)
         ->assertSee('media="(max-width: 767px)"', false)
         ->assertDontSee('الأكثر طلبًا');
 });
@@ -152,6 +158,8 @@ test('coffee page hides wallet claims while the feature is disabled', function (
     $this->get(route('coffee'))
         ->assertSuccessful()
         ->assertDontSee('id="family-wallets"', false)
+        ->assertDontSee('راسل المساعد الذكي لإنشاء الحساب')
+        ->assertSee('data-coffee-location-map', false)
         ->assertSee('تعرّف على المكان')
         ->assertSee('لمتابعة الطلبات والفواتير');
 });
@@ -190,7 +198,7 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->assertSee('ما الذي يبقى بعد أن تُطوى الحقائب؟')
         ->assertSee('ما يحمله القائد معه')
         ->assertSee('طواف الوداع بعد صلاة العصر')
-        ->assertSee('خصوصية القُصّر')
+        ->assertSee('خصوصية القادة')
         ->assertSee('الباقة الأولى')
         ->assertSee('380.000')
         ->assertSee('المتقدمة')

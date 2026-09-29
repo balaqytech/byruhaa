@@ -247,7 +247,7 @@
                 @endif
                 @if (config('byruhaa.minor_accounts.enabled', true) && Route::has('minor.login'))
                     <a href="{{ route(auth('minor-profile')->check() ? 'minor.dashboard' : 'minor.login') }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ auth('minor-profile')->check() ? 'لوحة حساب القاصر' : 'دخول حساب القاصر' }}</a>
+                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ auth('minor-profile')->check() ? 'لوحة حساب القائد' : 'دخول حساب القائد' }}</a>
                 @endif
             </nav>
 

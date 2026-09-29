@@ -1,9 +1,9 @@
-@extends('layouts.public', ['title' => 'تفعيل حساب القاصر'])
+@extends('layouts.public', ['title' => 'تفعيل حساب القائد'])
 
 @section('content')
 <section class="mx-auto w-full max-w-md px-4 py-12 sm:py-16" dir="rtl">
     <header class="mb-8 text-center">
-        <h1 class="font-heading text-3xl font-semibold text-emerald-950 dark:text-white">تفعيل حساب القاصر</h1>
+        <h1 class="font-heading text-3xl font-semibold text-emerald-950 dark:text-white">تفعيل حساب القائد</h1>
         <p class="mt-3 text-sm text-emerald-900/70 dark:text-white/70">مرحبًا {{ $minorProfile->familyMember->name }}، اختر كلمة مرور لحسابك.</p>
         <p class="mt-2 text-sm">رمز العضوية: <bdi class="font-mono font-semibold">{{ $minorProfile->member_code }}</bdi></p>
     </header>

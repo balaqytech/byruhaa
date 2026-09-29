@@ -152,9 +152,9 @@ test('guardian form displays translated domain errors inline as well as in the a
         ])
         ->assertRedirect($url);
     $response = $this->get($url)->assertOk()
-        ->assertSee('يوجد حساب قاصر لفرد الأسرة المحدد بالفعل.')
+        ->assertSee('يوجد حساب قائد لفرد الأسرة المحدد بالفعل.')
         ->assertDontSee('This family member already has a minor account.');
-    expect(substr_count($response->getContent(), 'يوجد حساب قاصر لفرد الأسرة المحدد بالفعل.'))->toBeGreaterThanOrEqual(2);
+    expect(substr_count($response->getContent(), 'يوجد حساب قائد لفرد الأسرة المحدد بالفعل.'))->toBeGreaterThanOrEqual(2);
 });
 
 test('minor order page translates existing payment errors', function (): void {

@@ -75,7 +75,7 @@ class MinorProfileController
         ]);
 
         return redirect()->route('customer.minor-profiles.index')->with([
-            'success' => 'تم توثيق وليّ الأمر. شارك رابط التفعيل مع القاصر.',
+            'success' => 'تم توثيق وليّ الأمر. شارك رابط التفعيل مع القائد.',
             'activation_url' => $activationUrl,
         ]);
     }
@@ -93,7 +93,7 @@ class MinorProfileController
             $minorProfile->pushSubscriptions()->delete();
         });
 
-        return back()->with('success', 'تم تعليق حساب القاصر.');
+        return back()->with('success', 'تم تعليق حساب القائد.');
     }
 
     public function resume(Request $request, MinorProfile $minorProfile): RedirectResponse
@@ -107,7 +107,7 @@ class MinorProfileController
             'suspended_at' => null,
         ])->save();
 
-        return back()->with('success', 'تمت إعادة تفعيل حساب القاصر.');
+        return back()->with('success', 'تمت إعادة تفعيل حساب القائد.');
     }
 
     public function toggleDirectPayment(Request $request, MinorProfile $minorProfile): RedirectResponse

@@ -59,7 +59,7 @@
         </div>
         @if (config('byruhaa.minor_accounts.enabled', true))
             <div class="text-center text-sm text-zinc-600 dark:text-zinc-400">
-                <a href="{{ route('minor.login') }}" class="font-semibold text-emerald-700 underline dark:text-emerald-300">دخول حساب القاصر</a>
+                <a href="{{ route('minor.login') }}" class="font-semibold text-emerald-700 underline dark:text-emerald-300">دخول حساب القائد</a>
                 <p class="mt-2">للدخول برمز العضوية وكلمة المرور بعد تفعيل الحساب.</p>
             </div>
         @endif

@@ -1,4 +1,4 @@
-<nav {{ $attributes->class('flex gap-1 overflow-x-auto border-b border-emerald-900/10 dark:border-white/10') }} aria-label="حساب القاصر">
+<nav {{ $attributes->class('flex gap-1 overflow-x-auto border-b border-emerald-900/10 dark:border-white/10') }} aria-label="حساب القائد">
     @foreach ([
         ['label' => 'نظرة عامة', 'route' => 'minor.dashboard', 'active' => 'minor.dashboard', 'icon' => 'home-01'],
         ['label' => 'طلباتي', 'route' => 'minor.orders.index', 'active' => 'minor.orders.*', 'icon' => 'invoice-03'],

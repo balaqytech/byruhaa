@@ -1,10 +1,10 @@
 <?php
 
 return [
-    'label' => 'حساب قاصر',
-    'plural_label' => 'حسابات القاصرين',
+    'label' => 'حساب قائد',
+    'plural_label' => 'حسابات القادة',
     'member_code' => 'رمز العضو',
-    'name' => 'اسم القاصر',
+    'name' => 'اسم القائد',
     'birth_date' => 'تاريخ الميلاد',
     'guardian' => 'ولي الأمر',
     'guardian_phone' => 'هاتف ولي الأمر',
@@ -20,7 +20,7 @@ return [
     'view_wallet' => 'عرض المحفظة',
     'statuses' => [
         'pending_guardian_verification' => 'بانتظار تحقق ولي الأمر',
-        'pending_child_activation' => 'بانتظار تفعيل القاصر',
+        'pending_child_activation' => 'بانتظار تفعيل القائد',
         'active' => 'نشط',
         'suspended' => 'موقوف',
         'invalidated' => 'مبطل',

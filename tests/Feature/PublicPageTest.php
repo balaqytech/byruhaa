@@ -53,11 +53,31 @@ test('wallet and minor policies are published and discoverable from the public f
 
     $this->get(route('policies.show', ['page' => 'student-accounts']))
         ->assertOk()
-        ->assertSee('لا توجد خطوة رمز تحقق منفصلة لإنشاء حساب القاصر');
+        ->assertSee('لا توجد خطوة رمز تحقق منفصلة لإنشاء حساب القائد')
+        ->assertDontSee('حساب القاصر');
 
     $this->get(route('home'))->assertOk()
         ->assertSee(route('policies.show', ['page' => 'wallet']), false)
         ->assertSee(route('policies.show', ['page' => 'student-accounts']), false);
+});
+
+test('existing policy pages receive only the leader terminology update', function (): void {
+    $privacy = PublicPage::factory()->published()->create([
+        'key' => 'privacy',
+        'content' => '<p>ينشئ وليّ الأمر حساب الابن المرتبط بأحد أفراد أسرته. أهلية إنشاء حساب القاصر.</p><p>إضافة تحريرية</p>',
+    ]);
+    $accounts = PublicPage::factory()->published()->create([
+        'key' => 'student-accounts',
+        'content' => '<p>لا توجد خطوة رمز تحقق منفصلة لإنشاء حساب القاصر.</p>',
+    ]);
+
+    $migration = require database_path('migrations/2026_09_29_141419_update_minor_account_display_name_in_public_pages.php');
+    $migration->up();
+
+    expect($privacy->refresh()->content)->toContain('حساب القائد (الابن أو الطالب) المرتبط')
+        ->toContain('أهلية إنشاء حساب القائد لمن هم دون 18 سنة.')
+        ->toContain('إضافة تحريرية')
+        ->and($accounts->refresh()->content)->toContain('لا توجد خطوة رمز تحقق منفصلة لإنشاء حساب القائد.');
 });
 
 test('refund policy uses the configured window without promising bank settlement within it', function (): void {

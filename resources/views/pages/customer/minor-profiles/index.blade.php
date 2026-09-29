@@ -1,13 +1,13 @@
-<x-layouts::app title="حسابات القاصرين">
+<x-layouts::app title="حسابات القادة">
 <section class="mx-auto w-full max-w-7xl space-y-6" dir="rtl">
     <header class="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
             <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">الأسرة والحسابات</p>
-            <h1 class="mt-2 text-3xl font-semibold text-emerald-950 dark:text-white">حسابات القاصرين</h1>
-            <p class="mt-3 max-w-2xl text-sm leading-7 text-emerald-900/70 dark:text-white/70">أنشئ حسابًا لأحد أفراد الأسرة، ثم تحكّم في صلاحيات الدفع وتابع محفظته من هنا.</p>
+            <h1 class="mt-2 text-3xl font-semibold text-emerald-950 dark:text-white">حسابات القادة</h1>
+            <p class="mt-3 max-w-2xl text-sm leading-7 text-emerald-900/70 dark:text-white/70">أنشئ حسابًا للقائد (الابن أو الطالب) من أفراد الأسرة، ثم تحكّم في صلاحيات الدفع وتابع محفظته من هنا.</p>
         </div>
         @if (config('byruhaa.minor_accounts.enabled', true))
-            <flux:button :href="route('minor.login')">دخول حساب القاصر</flux:button>
+            <flux:button :href="route('minor.login')">دخول حساب القائد</flux:button>
         @endif
     </header>
 
@@ -38,7 +38,7 @@
                     @endforeach
                 </flux:select>
                 <div x-cloak x-show="! familyMemberId" class="grid gap-5">
-                    <flux:input name="name" :error:message="$errors->has('name') ? __($errors->first('name')) : null" label="اسم القاصر" :value="old('name')" x-bind:required="! familyMemberId" x-bind:disabled="!! familyMemberId" />
+                    <flux:input name="name" :error:message="$errors->has('name') ? __($errors->first('name')) : null" label="اسم القائد" :value="old('name')" x-bind:required="! familyMemberId" x-bind:disabled="!! familyMemberId" />
                     <flux:input name="birth_date" :error:message="$errors->has('birth_date') ? __($errors->first('birth_date')) : null" label="تاريخ الميلاد" type="date" :value="old('birth_date')" x-bind:required="! familyMemberId" x-bind:disabled="!! familyMemberId" dir="ltr" />
                 </div>
                 <p x-cloak x-show="familyMemberId" class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">سيُستخدم الاسم وتاريخ الميلاد المسجّلان لفرد الأسرة.</p>
@@ -108,7 +108,7 @@
                     </div>
                 </article>
             @empty
-                <div class="rounded-2xl border border-dashed border-emerald-900/20 p-10 text-center dark:border-white/10"><h3 class="font-semibold">لا توجد حسابات قاصرين بعد</h3><p class="mt-3 text-sm leading-7 text-emerald-900/70 dark:text-white/70">ابدأ بإنشاء حساب لأحد أفراد الأسرة. ستظهر هنا حالته وصلاحيات الدفع الخاصة به.</p></div>
+                <div class="rounded-2xl border border-dashed border-emerald-900/20 p-10 text-center dark:border-white/10"><h3 class="font-semibold">لا توجد حسابات للقادة بعد</h3><p class="mt-3 text-sm leading-7 text-emerald-900/70 dark:text-white/70">ابدأ بإنشاء حساب لأحد أفراد الأسرة. ستظهر هنا حالته وصلاحيات الدفع الخاصة به.</p></div>
             @endforelse
         </div>
     </div>
