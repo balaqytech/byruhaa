@@ -131,7 +131,8 @@ class DatabaseWalletService implements WalletService
             throw ValidationException::withMessages(['payment' => 'The wallet payment amount is invalid.']);
         }
 
-        $spend = DB::transaction(function () use ($minorProfileId, $orderReference, $amountBaisa, $currency): WalletSpendData {
+        $postedMovement = null;
+        $spend = DB::transaction(function () use ($minorProfileId, $orderReference, $amountBaisa, $currency, &$postedMovement): WalletSpendData {
             $wallet = Wallet::query()->where('minor_profile_id', $minorProfileId)->lockForUpdate()->first();
 
             if (! $wallet instanceof Wallet || $wallet->status !== 'active') {
@@ -198,11 +199,14 @@ class DatabaseWalletService implements WalletService
                 'balance_after_baisa' => $balance,
                 'metadata' => ['idempotency_key' => Str::uuid()->toString()],
             ]);
+            $postedMovement = $movement;
 
             return new WalletSpendData($wallet->id, $movement->id, $amountBaisa, $balance, $currency);
         });
 
-        WalletMovementPosted::dispatch(WalletMovement::query()->findOrFail($spend->movementId));
+        if ($postedMovement instanceof WalletMovement) {
+            WalletMovementPosted::dispatch($postedMovement);
+        }
 
         return $spend;
     }

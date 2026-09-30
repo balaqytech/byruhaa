@@ -153,9 +153,7 @@ class ByruhaaWebhookSender
                         'payment_url' => $freshOrder->status->getValue() === 'pending_payment' && $freshOrder->payment_method === 'thawani'
                             ? URL::temporarySignedRoute('store.orders.payment.store', now()->addHours(12), ['order' => $freshOrder->payment_token])
                             : null,
-                        'wallet_confirmation_url' => $freshOrder->status->getValue() === 'pending_payment' && $freshOrder->payment_method === 'wallet'
-                            ? URL::temporarySignedRoute('store.orders.wallet.confirm.link', now()->addHours(12), ['order' => $freshOrder->payment_token])
-                            : null,
+                        'wallet_confirmation_url' => null,
                     ],
                 ],
             ];

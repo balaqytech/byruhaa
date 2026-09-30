@@ -7,9 +7,9 @@ return [
     'minor_accounts' => [
         'enabled' => filter_var(env('MINOR_ACCOUNTS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
         'otp_expiry_minutes' => (int) env('MINOR_ACCOUNT_OTP_EXPIRY_MINUTES', 10),
-        'policy_version' => env('MINOR_ACCOUNT_POLICY_VERSION', 'phase-2a'),
-        'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase'),
-        'consent_text' => 'أوافق بصفتي ولي الأمر على إنشاء حساب للقائد (الابن أو الطالب) وربطه بحسابي، وعلى إتاحة استخدامه لمتجر بيرحاء والشراء وفق الصلاحيات والضوابط التي أحددها.',
+        'policy_version' => env('MINOR_ACCOUNT_POLICY_VERSION', 'phase-2b'),
+        'policy_text' => env('MINOR_ACCOUNT_POLICY_TEXT', 'guardian-consent-store-purchase-wallet-default'),
+        'consent_text' => 'أوافق بصفتي ولي الأمر على إنشاء حساب للقائد (الابن أو الطالب) وربطه بحسابي، وعلى إتاحة استخدامه لمتجر بيرحاء. يُفعّل الدفع من محفظته تلقائيًا بعد تفعيل الحساب ويمكنني إيقافه أو تعليق المحفظة في أي وقت.',
         'browser_notifications' => [
             'enabled' => filter_var(env('MINOR_BROWSER_NOTIFICATIONS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
             'policy_version' => env('MINOR_BROWSER_NOTIFICATIONS_POLICY_VERSION', 'minor-account-notifications-v2'),

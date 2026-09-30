@@ -18,7 +18,7 @@ class MinorProfileFactory extends Factory
     {
         return [
             'family_member_id' => FamilyMember::factory(),
-            'member_code' => 'BRH-'.strtoupper(fake()->unique()->bothify('######??')),
+            'member_code' => strtoupper(fake()->unique()->bothify('??###')),
             'password' => Hash::make('password'),
             'status' => MinorProfileStatus::Active,
             'direct_payment_enabled' => false,

@@ -12,6 +12,7 @@ use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Store\Actions\AddCartItem;
 use App\Modules\Store\Actions\BrowseCatalog;
 use App\Modules\Store\Actions\BrowseProduct;
+use App\Modules\Store\Actions\ConfirmWalletOrder;
 use App\Modules\Store\Actions\CreateOrder;
 use App\Modules\Store\Actions\InitiateStorePayment;
 use App\Modules\Store\Actions\QuoteCart;
@@ -40,6 +41,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -153,17 +155,24 @@ class UchatStoreController
         return $this->cartResponse($request, $resolveCart, $this->quoteCart);
     }
 
-    public function createOrder(UchatOrderRequest $request, ResolveUchatCart $resolveCart, CreateOrder $createOrder, InitiateStorePayment $initiatePayment): JsonResponse
+    public function createOrder(UchatOrderRequest $request, ResolveUchatCart $resolveCart, CreateOrder $createOrder, ConfirmWalletOrder $confirmWalletOrder, InitiateStorePayment $initiatePayment): JsonResponse
     {
         try {
             $minorProfileId = $this->selectedMinorProfileId($request);
             $cart = $resolveCart->execute($this->ownerKey->forPhone($request->phone()), $request->customerId(), false, $minorProfileId);
-            $order = $createOrder->execute($cart, [
+            $orderData = [
                 ...$request->validated(),
                 'customer_id' => $request->customerId(),
                 'customer_phone' => $request->phone(),
                 'minor_profile_id' => $minorProfileId,
-            ]);
+            ];
+            $order = $request->input('payment_method') === 'wallet'
+                ? DB::transaction(function () use ($createOrder, $confirmWalletOrder, $cart, $orderData, $request, $minorProfileId): Order {
+                    $createdOrder = $createOrder->execute($cart, $orderData);
+
+                    return $confirmWalletOrder->execute($createdOrder, (int) $request->customerId(), $minorProfileId);
+                })
+                : $createOrder->execute($cart, $orderData);
             $checkout = $order->payment_method === 'wallet'
                 ? null
                 : $initiatePayment->execute($order, $request->customerId());
@@ -176,10 +185,13 @@ class UchatStoreController
         return $this->orderResponse($order, $checkout, 201);
     }
 
-    public function initiatePayment(string $reference, UchatIdentityRequest $request, ResolveUchatOrder $resolveOrder, InitiateStorePayment $initiatePayment): JsonResponse
+    public function initiatePayment(string $reference, UchatIdentityRequest $request, ResolveUchatOrder $resolveOrder, ConfirmWalletOrder $confirmWalletOrder, InitiateStorePayment $initiatePayment): JsonResponse
     {
         try {
             $order = $resolveOrder->execute($reference, $request->phone(), $this->selectedMinorProfileId($request));
+            if ($order->payment_method === 'wallet') {
+                $order = $confirmWalletOrder->execute($order, (int) $request->customerId(), (int) $order->minor_profile_id);
+            }
             $checkout = $order->payment_method === 'wallet'
                 ? null
                 : $initiatePayment->execute($order, $request->customerId());
@@ -441,8 +453,7 @@ class UchatStoreController
         $payment = $checkout === null
             ? [
                 'method' => 'wallet',
-                'status' => 'confirmation_required',
-                'confirmation_url' => URL::temporarySignedRoute('store.orders.wallet.confirm.link', now()->addHours(12), ['order' => $order->payment_token]),
+                'status' => $order->paid_at === null ? 'pending' : 'paid',
             ]
             : [
                 'method' => 'thawani',

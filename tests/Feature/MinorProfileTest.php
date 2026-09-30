@@ -2,6 +2,7 @@
 
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Models\WalletTopUp;
+use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Data\MinorOrderStatusData;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Models\Customer;
@@ -68,7 +69,10 @@ test('guardian can create and activate a minor profile linked to an existing fam
         ->and($profile->status)->toBe(MinorProfileStatus::PendingChildActivation)
         ->and($profile->verifications()->count())->toBe(0)
         ->and($profile->consents()->where('purpose', 'store_purchase')->exists())->toBeTrue()
+        ->and($profile->consents()->where('purpose', 'wallet_spending')->exists())->toBeTrue()
         ->and($profile->consents()->where('purpose', 'browser_notifications')->exists())->toBeTrue()
+        ->and($profile->wallet_spending_enabled)->toBeTrue()
+        ->and($profile->member_code)->toMatch('/^[A-Z]{2}[0-9]{3}$/')
         ->and($activationUrl)->toBeString()
         ->and($customer->refresh()->hasVerifiedPhone())->toBeFalse();
 
@@ -211,6 +215,24 @@ test('minor login switches away from an active guardian session', function (): v
         ->assertRedirect(route('minor.dashboard'));
 
     expect(auth('customer')->check())->toBeFalse()
+        ->and(auth('minor-profile')->id())->toBe($profile->id);
+});
+
+test('new minor membership codes are case insensitive at login', function (): void {
+    $customer = Customer::factory()->create();
+    $result = app(CreateMinorProfile::class)->execute($customer, [
+        'name' => 'Minor Code Test',
+        'birth_date' => now()->subYears(12)->toDateString(),
+    ]);
+    $profile = $result['profile'];
+    $profile->forceFill(['status' => MinorProfileStatus::Active, 'password' => 'minor-password'])->save();
+
+    $this->post(route('minor.login.store'), [
+        'member_code' => strtolower($profile->member_code),
+        'password' => 'minor-password',
+    ])->assertRedirect(route('minor.dashboard'));
+
+    expect($profile->member_code)->toMatch('/^[A-Z]{2}[0-9]{3}$/')
         ->and(auth('minor-profile')->id())->toBe($profile->id);
 });
 

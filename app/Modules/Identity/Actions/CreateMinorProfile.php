@@ -2,6 +2,7 @@
 
 namespace App\Modules\Identity\Actions;
 
+use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
@@ -17,6 +18,7 @@ class CreateMinorProfile
     public function __construct(
         private IssueMinorProfileActivation $issueActivation,
         private RecordMinorNotificationConsent $recordNotificationConsent,
+        private WalletService $wallets,
     ) {}
 
     /**
@@ -49,6 +51,7 @@ class CreateMinorProfile
                 'member_code' => $this->uniqueMemberCode(),
                 'password' => Hash::make(Str::random(48)),
                 'status' => MinorProfileStatus::PendingChildActivation,
+                'wallet_spending_enabled' => true,
             ]);
 
             if ($browserNotificationsConsent) {
@@ -56,6 +59,16 @@ class CreateMinorProfile
             }
 
             $activationToken = $this->issueActivation->execute($profile, $guardian->id, $ipAddress);
+            $profile->consents()->create([
+                'purpose' => 'wallet_spending',
+                'policy_version' => (string) config('byruhaa.wallets.consent_policy_version', 'wallet-spending-v1'),
+                'policy_hash' => hash('sha256', (string) config('byruhaa.wallets.consent_policy_text', 'guardian-consent-wallet-spending')),
+                'accepted_at' => now(),
+                'accepted_ip' => $ipAddress,
+            ]);
+            if (config('byruhaa.wallets.enabled', false)) {
+                $this->wallets->walletForMinorProfile($profile->id);
+            }
 
             return ['profile' => $profile->refresh(), 'activation_token' => $activationToken];
         });
@@ -89,7 +102,7 @@ class CreateMinorProfile
     private function uniqueMemberCode(): string
     {
         do {
-            $code = 'BRH-'.Str::upper(Str::random(8));
+            $code = chr(random_int(65, 90)).chr(random_int(65, 90)).sprintf('%03d', random_int(0, 999));
         } while (MinorProfile::query()->where('member_code', $code)->exists());
 
         return $code;

@@ -94,7 +94,10 @@ test('minor onboarding reuses the family birthdate and safely retries creation b
     expect($activationUrl)->toContain('signature=');
     $profile = MinorProfile::findOrFail($id);
     $notificationConsent = $profile->consents()->where('purpose', 'browser_notifications')->firstOrFail();
-    expect($profile->consents()->count())->toBe(2)
+    expect($profile->consents()->count())->toBe(3)
+        ->and($profile->wallet_spending_enabled)->toBeTrue()
+        ->and($profile->member_code)->toMatch('/^[A-Z]{2}[0-9]{3}$/')
+        ->and(Wallet::query()->where('minor_profile_id', $id)->where('status', 'active')->exists())->toBeTrue()
         ->and($notificationConsent->policy_version)->toBe('minor-notifications-test-v1')
         ->and($notificationConsent->policy_hash)->toBe(hash('sha256', 'guardian-approved-minor-notifications'))
         ->and(MinorProfile::findOrFail($id)->verifications()->count())->toBe(0);
