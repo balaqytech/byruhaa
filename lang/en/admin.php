@@ -496,6 +496,20 @@ return [
     ],
 
     'store' => [
+        'admin_order' => [
+            'minor_profile' => 'Minor account',
+            'minor_optional_help' => 'Leave empty for a customer order. Wallet payment is available only for a minor.',
+            'payment_method' => 'Payment method',
+            'direct_payment' => 'Direct payment (Thawani link)',
+            'minor_wallet' => 'Minor wallet',
+            'pickup_type' => 'Pickup type',
+            'wallet_requires_minor' => 'Select a minor account to pay with its wallet.',
+            'create_order' => 'Create order',
+            'confirmation' => 'Wallet orders are charged and confirmed immediately. Direct-payment orders wait for payment through the link shown on the order page.',
+            'payment_link' => 'Payment link',
+            'payment_link_unavailable' => 'No active payment link. The order may have expired or already been paid.',
+            'payment_window' => 'Direct-payment orders expire after :minutes minutes unless paid. Share the link promptly.',
+        ],
         'default_option_help' => 'Each product must keep exactly one default option. Saving a new default will replace the current one.',
         'price_includes_vat_help' => 'The entered price is the final customer price and includes 5% VAT.',
         'member_price_help' => 'Optional. It must be positive and lower than the regular VAT-inclusive price.',

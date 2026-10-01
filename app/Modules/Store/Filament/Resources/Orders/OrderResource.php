@@ -2,8 +2,10 @@
 
 namespace App\Modules\Store\Filament\Resources\Orders;
 
+use App\Modules\Store\Filament\Resources\Orders\Pages\CreateOrder;
 use App\Modules\Store\Filament\Resources\Orders\Pages\ListOrders;
 use App\Modules\Store\Filament\Resources\Orders\Pages\ViewOrder;
+use App\Modules\Store\Filament\Resources\Orders\Schemas\OrderForm;
 use App\Modules\Store\Filament\Resources\Orders\Schemas\OrderInfolist;
 use App\Modules\Store\Filament\Resources\Orders\Tables\OrdersTable;
 use App\Modules\Store\Models\Order;
@@ -24,6 +26,11 @@ class OrderResource extends Resource
     public static function table(Table $table): Table
     {
         return OrdersTable::configure($table);
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return OrderForm::configure($schema);
     }
 
     public static function infolist(Schema $schema): Schema
@@ -62,6 +69,7 @@ class OrderResource extends Resource
     {
         return [
             'index' => ListOrders::route('/'),
+            'create' => CreateOrder::route('/create'),
             'view' => ViewOrder::route('/{record}'),
         ];
     }

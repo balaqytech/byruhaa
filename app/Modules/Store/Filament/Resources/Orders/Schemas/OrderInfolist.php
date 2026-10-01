@@ -3,12 +3,14 @@
 namespace App\Modules\Store\Filament\Resources\Orders\Schemas;
 
 use App\Modules\Store\Models\Order;
+use App\Modules\Store\Settings\StoreSettings;
 use App\Modules\Store\States\Order\OrderState;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\URL;
 
 class OrderInfolist
 {
@@ -25,8 +27,33 @@ class OrderInfolist
                 TextEntry::make('customer_name')->label(__('admin.fields.customer')),
                 TextEntry::make('customer_phone')->label(__('admin.fields.phone_number')),
                 TextEntry::make('customer_email')->label(__('admin.fields.email_address'))->placeholder('-'),
+                TextEntry::make('payment_method')
+                    ->label(__('admin.store.admin_order.payment_method'))
+                    ->formatStateUsing(fn (string $state): string => $state === 'wallet'
+                        ? __('admin.store.admin_order.minor_wallet')
+                        : __('admin.store.admin_order.direct_payment')),
                 TextEntry::make('recipient_name')->label(__('admin.fields.recipient')),
                 TextEntry::make('recipient_phone')->label(__('admin.fields.recipient_phone')),
+                TextEntry::make('payment_link')
+                    ->label(__('admin.store.admin_order.payment_link'))
+                    ->state(function (Order $record): ?string {
+                        if ($record->payment_method !== 'thawani' || $record->status->getValue() !== 'pending_payment') {
+                            return null;
+                        }
+
+                        $expiresAt = $record->created_at?->copy()->addMinutes(max(1, app(StoreSettings::class)->reservation_duration_minutes));
+
+                        if ($expiresAt === null || $expiresAt->isPast()) {
+                            return null;
+                        }
+
+                        return URL::temporarySignedRoute('store.orders.payment.link', $expiresAt, ['order' => $record->payment_token]);
+                    })
+                    ->copyable()
+                    ->url(fn (?string $state): ?string => $state)
+                    ->openUrlInNewTab()
+                    ->placeholder(__('admin.store.admin_order.payment_link_unavailable'))
+                    ->columnSpanFull(),
                 TextEntry::make('note')->label(__('admin.fields.note'))->placeholder('-')->columnSpanFull(),
             ]),
             Section::make(__('admin.store.sections.totals'))->columns(3)->schema([
