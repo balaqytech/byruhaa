@@ -92,6 +92,23 @@ class ProductForm
                             ->relationship('featuredImage')
                             ->acceptedFileTypes(['image/*'])
                             ->image(),
+                        MediaPicker::make('video_id')
+                            ->label(__('admin.store.product_media.video'))
+                            ->helperText(__('admin.store.product_media.video_help'))
+                            ->relationship('video')
+                            ->directory('store/products/videos')
+                            ->acceptedFileTypes(['video/mp4', 'video/webm'])
+                            ->maxSize(51200),
+                        MediaPicker::make('gallery_image_ids')
+                            ->label(__('admin.store.product_media.gallery'))
+                            ->helperText(__('admin.store.product_media.gallery_help'))
+                            ->directory('store/products/gallery')
+                            ->acceptedFileTypes(['image/*'])
+                            ->image()
+                            ->multiple()
+                            ->maxSize(10240)
+                            ->maxFiles(8)
+                            ->reorderable(),
                     ]),
                 Section::make(__('admin.resources.store_product_options.plural_label'))
                     ->schema([

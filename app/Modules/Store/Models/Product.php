@@ -29,12 +29,14 @@ use Slimani\MediaManager\Models\File;
  * @property string|null $long_description
  * @property array<int, string>|null $allergens
  * @property int|null $featured_image_id
+ * @property int|null $video_id
+ * @property array<int, int|string>|null $gallery_image_ids
  * @property ProductStatus $status
  * @property int $sort_order
  * @property bool $is_featured
  * @property int $featured_sort_order
  */
-#[Fillable(['category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'long_description', 'allergens', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
+#[Fillable(['category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'long_description', 'allergens', 'featured_image_id', 'video_id', 'gallery_image_ids', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
 class Product extends Model implements AuditableContract, HasRichContent
 {
     protected $table = 'store_products';
@@ -61,6 +63,8 @@ class Product extends Model implements AuditableContract, HasRichContent
         'long_description',
         'allergens',
         'featured_image_id',
+        'video_id',
+        'gallery_image_ids',
         'status',
         'sort_order',
         'is_featured',
@@ -104,6 +108,12 @@ class Product extends Model implements AuditableContract, HasRichContent
         return $this->belongsTo(File::class, 'featured_image_id');
     }
 
+    /** @return BelongsTo<File, $this> */
+    public function video(): BelongsTo
+    {
+        return $this->belongsTo(File::class, 'video_id');
+    }
+
     public function isPublishable(): bool
     {
         $this->loadMissing(['category', 'options']);
@@ -143,6 +153,7 @@ class Product extends Model implements AuditableContract, HasRichContent
         return [
             'status' => ProductStatus::class,
             'allergens' => 'array',
+            'gallery_image_ids' => 'array',
             'sort_order' => 'integer',
             'is_featured' => 'boolean',
             'featured_sort_order' => 'integer',

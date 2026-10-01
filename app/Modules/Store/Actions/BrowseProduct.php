@@ -16,7 +16,8 @@ class BrowseProduct
             ->whereHas('category', fn ($query) => $query->where('is_active', true))
             ->with([
                 'category',
-                'featuredImage',
+                'featuredImage.media',
+                'video.media',
                 'options' => fn ($query) => $query
                     ->where('is_available', true)
                     ->where('price_baisa', '>', 0)

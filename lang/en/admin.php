@@ -496,6 +496,14 @@ return [
     ],
 
     'store' => [
+        'product_media' => [
+            'video' => 'Product video',
+            'video_help' => 'Optional. MP4 or WebM, up to 50 MB. It appears before the featured image in the catalog and product page.',
+            'gallery' => 'Product image gallery',
+            'gallery_help' => 'Up to 8 images, 10 MB each. Drag to set their display order.',
+            'invalid_video' => 'Select an MP4 or WebM video no larger than 50 MB.',
+            'invalid_image' => 'Select an image no larger than 10 MB.',
+        ],
         'admin_order' => [
             'minor_profile' => 'Minor account',
             'minor_optional_help' => 'Leave empty for a customer order. Wallet payment is available only for a minor.',

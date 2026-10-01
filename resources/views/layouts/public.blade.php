@@ -32,7 +32,7 @@
         $navigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
-            ['label' => 'قهوة بيرحاء', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
+            ['label' => 'قهوة بيرحاء', 'route' => 'coffee', 'active' => 'coffee*', 'icon' => 'sparkles'],
             ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
             ['label' => 'عن بِيرُحاء', 'route' => 'about', 'active' => 'about', 'icon' => 'information-circle'],
         ];
@@ -45,7 +45,7 @@
         $bottomNavigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
-            ['label' => 'القهوة', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
+            ['label' => 'القهوة', 'route' => 'coffee', 'active' => 'coffee*', 'icon' => 'sparkles'],
             ['label' => 'حسابي', 'route' => $accountRoute, 'active' => auth('minor-profile')->check() ? 'minor.*' : 'customer.*', 'icon' => 'user-circle'],
         ];
 

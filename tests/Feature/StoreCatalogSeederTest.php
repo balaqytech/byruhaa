@@ -1,6 +1,8 @@
 <?php
 
 use App\Livewire\Store\CoffeeStore;
+use App\Livewire\Store\ProductDetail;
+use App\Modules\Store\Actions\BrowseProduct;
 use App\Modules\Store\Enums\ProductStatus;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Category;
@@ -100,7 +102,7 @@ test('confirmed catalogue renders as a category card carousel with one departmen
         ->assertDontSee('المنعش الفوّار بالباشن');
 });
 
-test('product details drawer renders formatted long description and never exposes draft proposals', function (): void {
+test('product page renders formatted long description and never exposes draft proposals', function (): void {
     $this->seed(StoreCatalogSeeder::class);
 
     $product = Product::query()->where('slug', 'fresh-01')->firstOrFail();
@@ -108,30 +110,25 @@ test('product details drawer renders formatted long description and never expose
     $iceCream = Product::query()->where('slug', 'frozen-01')->firstOrFail();
     $karkadeh = Product::query()->where('slug', 'fresh-09')->firstOrFail();
 
-    Livewire::test(CoffeeStore::class)
-        ->call('openProductDetails', $product->id)
-        ->assertSee('product-details-title', false)
+    $this->get(route('coffee.product', ['slug' => $product->slug]))
+        ->assertSuccessful()
+        ->assertSee('product-title', false)
         ->assertSee('للباشن حموضةٌ عطرية')
-        ->assertSee('<h3>للفتى</h3>', false)
-        ->call('closeProductDetails')
-        ->assertDontSee('product-details-title', false)
-        ->call('openProductDetails', $iceCream->id)
+        ->assertSee('<h3>للفتى</h3>', false);
+
+    $this->get(route('coffee.product', ['slug' => $iceCream->slug]))
         ->assertSee('مسبّبات الحساسية')
         ->assertSee('حليب')
-        ->assertDontSee('خيارات المنتج')
-        ->call('openProductDetails', $karkadeh->id)
-        ->assertSee('خيارات المنتج')
-        ->assertSee('FR-009-01')
-        ->assertSee('FR-009-05')
-        ->assertSee('سعر الزائر')
-        ->assertSee('سعر العضو')
-        ->assertSee('اختر النكهة أو الخيار')
-        ->assertSee('الطلب متوقف مؤقتًا')
-        ->call('openProductDetails', $proposal->id)
-        ->assertDontSee('product-details-title', false);
+        ->assertSee('الطلب متوقف مؤقتًا');
+
+    $this->get(route('coffee.product', ['slug' => $karkadeh->slug]))
+        ->assertSee('اختر الخيار')
+        ->assertSee('كركديه');
+
+    $this->get(route('coffee.product', ['slug' => $proposal->slug]))->assertNotFound();
 });
 
-test('drawer can add the selected product option to the cart', function (): void {
+test('product page can add the selected product option to the cart', function (): void {
     $this->seed(StoreCatalogSeeder::class);
 
     $settings = app(StoreSettings::class);
@@ -141,11 +138,10 @@ test('drawer can add the selected product option to the cart', function (): void
     $product = Product::query()->where('slug', 'fresh-09')->firstOrFail();
     $berryOption = $product->options()->where('sku', 'FR-009-01')->firstOrFail();
 
-    Livewire::test(CoffeeStore::class)
-        ->call('openProductDetails', $product->id)
-        ->set('selectedOptions.'.$product->id, $berryOption->id)
-        ->assertSee('wire:click="addToCart('.$berryOption->id.')"', false)
-        ->call('addToCart', $berryOption->id)
+    Livewire::test(ProductDetail::class, ['product' => app(BrowseProduct::class)->execute($product->slug)])
+        ->set('selectedOptionId', $berryOption->id)
+        ->assertSee($berryOption->name)
+        ->call('addToCart')
         ->assertSet('feedback', 'أضيف المنتج إلى السلة.');
 
     expect(Cart::query()->firstOrFail()->items()->firstOrFail()->product_option_id)->toBe($berryOption->id);

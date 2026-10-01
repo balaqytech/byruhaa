@@ -4,6 +4,7 @@ namespace App\Modules\Store\Filament\Resources\Products\Pages;
 
 use App\Modules\Store\Actions\EnsureDefaultProductOption;
 use App\Modules\Store\Actions\PublishProduct;
+use App\Modules\Store\Actions\ValidateProductMedia;
 use App\Modules\Store\Enums\ProductStatus;
 use App\Modules\Store\Filament\Resources\Products\ProductResource;
 use App\Modules\Store\Models\Product;
@@ -12,6 +13,15 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateProduct extends CreateRecord
 {
     protected static string $resource = ProductResource::class;
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return app(ValidateProductMedia::class)->execute($data);
+    }
 
     protected function afterCreate(): void
     {

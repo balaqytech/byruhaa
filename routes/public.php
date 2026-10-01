@@ -13,6 +13,7 @@ Route::get('sitemap.xml', SitemapController::class)->name('sitemap');
 Route::middleware(CaptureAffiliateReferral::class)->group(function (): void {
     Route::get('/', [PublicSiteController::class, 'home'])->name('home');
     Route::get('coffee', [PublicSiteController::class, 'coffee'])->name('coffee');
+    Route::get('coffee/{slug}', [PublicSiteController::class, 'coffeeProduct'])->name('coffee.product');
     Route::get('events', [PublicSiteController::class, 'events'])->name('events.index');
     Route::get('events/{event:slug}', [PublicSiteController::class, 'event'])->name('events.show');
     Route::post('events/{event:slug}/interest', PublicEventInterestController::class)

@@ -19,10 +19,11 @@ class BrowseCatalog
             ->when($categoryId !== null, fn ($query) => $query->whereKey($categoryId))
             ->with([
                 'products' => fn ($query) => $query
-                    ->select(['id', 'category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'allergens', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])
+                    ->select(['id', 'category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'allergens', 'featured_image_id', 'video_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])
                     ->active()
                     ->with([
-                        'featuredImage',
+                        'featuredImage.media',
+                        'video.media',
                         'options' => fn ($optionQuery) => $optionQuery
                             ->where('is_available', true)
                             ->where('price_baisa', '>', 0)

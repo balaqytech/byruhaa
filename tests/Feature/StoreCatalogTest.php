@@ -270,8 +270,10 @@ test('catalog image relationships use the existing media file model', function (
     $option = $product->defaultOption()->firstOrFail();
 
     expect($product->featuredImage())->toBeInstanceOf(BelongsTo::class)
+        ->and($product->video())->toBeInstanceOf(BelongsTo::class)
         ->and($option->image())->toBeInstanceOf(BelongsTo::class)
         ->and($product->featuredImage()->getRelated())->toBeInstanceOf(File::class)
+        ->and($product->video()->getRelated())->toBeInstanceOf(File::class)
         ->and($option->image()->getRelated())->toBeInstanceOf(File::class);
 });
 
