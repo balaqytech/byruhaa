@@ -7,14 +7,14 @@ use App\Filament\Resources\Coupons\Pages\EditCoupon;
 use App\Filament\Resources\Coupons\Pages\ListCoupons;
 use App\Filament\Resources\Coupons\Schemas\CouponForm;
 use App\Filament\Resources\Coupons\Tables\CouponsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Events\Models\Coupon;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class CouponResource extends Resource
+class CouponResource extends ShieldResource
 {
     protected static ?string $model = Coupon::class;
 

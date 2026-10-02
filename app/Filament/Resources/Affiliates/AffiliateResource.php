@@ -12,16 +12,16 @@ use App\Filament\Resources\Affiliates\RelationManagers\ReferralsRelationManager;
 use App\Filament\Resources\Affiliates\Schemas\AffiliateForm;
 use App\Filament\Resources\Affiliates\Schemas\AffiliateInfolist;
 use App\Filament\Resources\Affiliates\Tables\AffiliatesTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Affiliates\Models\Affiliate;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 use UnitEnum;
 
-class AffiliateResource extends Resource
+class AffiliateResource extends ShieldResource
 {
     protected static ?string $model = Affiliate::class;
 

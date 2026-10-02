@@ -2,6 +2,7 @@
 
 namespace App\Modules\Store\Filament\Resources\Orders\Pages;
 
+use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -22,16 +23,15 @@ class ListOrders extends ListRecords
     /** @return array<string, Tab> */
     public function getTabs(): array
     {
-        return [
+        $tabs = [
             'all' => Tab::make(__('admin.store.order_list_tabs.all')),
-            'pending_payment' => Tab::make(__('admin.store.order_list_tabs.pending_payment'))
-                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', 'pending_payment')),
-            'in_progress' => Tab::make(__('admin.store.order_list_tabs.in_progress'))
-                ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereIn('status', ['confirmed', 'accepted', 'preparing', 'ready_for_pickup'])),
-            'completed' => Tab::make(__('admin.store.order_list_tabs.completed'))
-                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', 'completed')),
-            'exceptions' => Tab::make(__('admin.store.order_list_tabs.exceptions'))
-                ->modifyQueryUsing(fn (Builder $query): Builder => $query->whereIn('status', ['rejected', 'cancelled', 'expired', 'refund_pending', 'refunded'])),
         ];
+
+        foreach (OrderStatus::cases() as $status) {
+            $tabs[$status->value] = Tab::make(__('admin.store.order_statuses.'.$status->value))
+                ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('status', $status->value));
+        }
+
+        return $tabs;
     }
 }

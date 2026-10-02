@@ -14,15 +14,15 @@ use App\Filament\Resources\Events\RelationManagers\PaymentPlansRelationManager;
 use App\Filament\Resources\Events\Schemas\EventForm;
 use App\Filament\Resources\Events\Schemas\EventInfolist;
 use App\Filament\Resources\Events\Tables\EventsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Events\Models\Event;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 
-class EventResource extends Resource
+class EventResource extends ShieldResource
 {
     protected static ?string $model = Event::class;
 

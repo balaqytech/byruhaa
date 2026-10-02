@@ -10,11 +10,11 @@ use App\Filament\Resources\Bookings\RelationManagers\FamilyMembersRelationManage
 use App\Filament\Resources\Bookings\RelationManagers\InstallmentsRelationManager;
 use App\Filament\Resources\Bookings\Schemas\BookingForm;
 use App\Filament\Resources\Bookings\Tables\BookingsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Events\Models\Booking;
 use App\Support\MoneyFormatter;
 use BackedEnum;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -23,7 +23,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 
-class BookingResource extends Resource
+class BookingResource extends ShieldResource
 {
     protected static ?string $model = Booking::class;
 

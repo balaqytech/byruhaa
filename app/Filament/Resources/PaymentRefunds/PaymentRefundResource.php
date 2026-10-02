@@ -6,15 +6,15 @@ use App\Filament\Resources\PaymentRefunds\Pages\ListPaymentRefunds;
 use App\Filament\Resources\PaymentRefunds\Pages\ViewPaymentRefund;
 use App\Filament\Resources\PaymentRefunds\Schemas\PaymentRefundInfolist;
 use App\Filament\Resources\PaymentRefunds\Tables\PaymentRefundsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Finance\Models\PaymentRefund;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class PaymentRefundResource extends Resource
+class PaymentRefundResource extends ShieldResource
 {
     protected static ?string $model = PaymentRefund::class;
 

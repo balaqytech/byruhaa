@@ -7,15 +7,15 @@ use App\Filament\Resources\Payments\Pages\ViewPayment;
 use App\Filament\Resources\Payments\RelationManagers\RefundsRelationManager;
 use App\Filament\Resources\Payments\Schemas\PaymentInfolist;
 use App\Filament\Resources\Payments\Tables\PaymentsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Finance\Models\Payment;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class PaymentResource extends Resource
+class PaymentResource extends ShieldResource
 {
     protected static ?string $model = Payment::class;
 

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\MediaManager;
 use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
 use App\Modules\Store\Filament\Pages\ManageStoreSettings;
 use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
@@ -59,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugin(
                 MediaManagerPlugin::make()
+                    ->mediaManagerPage(MediaManager::class)
                     ->navigationGroup(__('admin.navigation.content')),
             )
             ->middleware([

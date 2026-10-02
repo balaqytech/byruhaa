@@ -7,15 +7,15 @@ use App\Filament\Resources\LedgerTransactions\Pages\ViewLedgerTransaction;
 use App\Filament\Resources\LedgerTransactions\RelationManagers\EntriesRelationManager;
 use App\Filament\Resources\LedgerTransactions\Schemas\LedgerTransactionInfolist;
 use App\Filament\Resources\LedgerTransactions\Tables\LedgerTransactionsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Finance\Models\LedgerTransaction;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class LedgerTransactionResource extends Resource
+class LedgerTransactionResource extends ShieldResource
 {
     protected static ?string $model = LedgerTransaction::class;
 

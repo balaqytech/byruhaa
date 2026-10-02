@@ -116,10 +116,12 @@ class ProductForm
                                             ->acceptedFileTypes(['image/*'])
                                             ->image()
                                             ->multiple()
+                                            ->panelLayout('grid')
                                             ->maxSize(10240)
                                             ->maxFiles(8)
                                             ->reorderable(),
-                                    ]),
+                                    ])
+                                    ->columns(2),
                             ]),
                         Tab::make(__('admin.store.product_tabs.options'))
                             ->schema([

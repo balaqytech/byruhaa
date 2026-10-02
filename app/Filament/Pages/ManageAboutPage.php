@@ -7,7 +7,6 @@ use BackedEnum;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Pages\SettingsPage;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -15,7 +14,7 @@ use Illuminate\Validation\ValidationException;
 use Slimani\MediaManager\Form\MediaPicker;
 use UnitEnum;
 
-class ManageAboutPage extends SettingsPage
+class ManageAboutPage extends ShieldSettingsPage
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
 
