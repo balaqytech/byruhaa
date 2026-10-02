@@ -42,7 +42,6 @@ class PostAffiliateCommissionLedgerTransaction
             );
 
             $transaction = $commission->ledgerTransaction()->create([
-                'reference' => 'LED-AFC-'.$commission->id,
                 'description' => 'Affiliate commission '.$commission->affiliate->code.' for '.$commission->payment->reference,
                 'occurred_at' => $commission->earned_at,
                 'currency' => $commission->currency,

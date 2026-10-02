@@ -5,6 +5,7 @@ namespace App\Modules\Store\Models;
 use App\Casts\MoneyBaisaCast;
 use App\Models\WebhookDelivery;
 use App\Modules\Store\States\Order\OrderState;
+use App\Support\HumanReference;
 use Brick\Money\Money;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -88,7 +89,7 @@ class Order extends Model implements AuditableContract
     protected static function booted(): void
     {
         static::creating(function (Order $order): void {
-            $order->reference ??= 'BRH-ORD-'.Str::upper(Str::random(10));
+            $order->reference ??= HumanReference::next('order');
             $order->payment_token ??= (string) Str::uuid();
         });
     }

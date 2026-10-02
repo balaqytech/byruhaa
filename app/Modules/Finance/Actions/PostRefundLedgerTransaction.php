@@ -48,7 +48,6 @@ class PostRefundLedgerTransaction
             );
 
             $transaction = $paymentRefund->ledgerTransaction()->create([
-                'reference' => 'LED-'.$paymentRefund->reference,
                 'description' => 'Thawani refund '.$paymentRefund->reference,
                 'occurred_at' => $paymentRefund->processed_at ?? now(),
                 'currency' => $paymentRefund->currency,

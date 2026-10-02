@@ -10,6 +10,7 @@ use App\Models\WebhookDelivery;
 use App\Modules\Affiliates\Models\AffiliateCommission;
 use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Events\Models\BookingSeatAllocation;
+use App\Support\HumanReference;
 use App\Support\Money\MoneyFactory;
 use Brick\Money\Money;
 use Database\Factories\PaymentFactory;
@@ -22,7 +23,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -69,7 +69,7 @@ class Payment extends Model
     protected static function booted(): void
     {
         static::creating(function (Payment $payment): void {
-            $payment->reference ??= 'PAY-'.Str::upper(Str::random(12));
+            $payment->reference ??= HumanReference::next('payment');
         });
     }
 

@@ -35,7 +35,6 @@ class ReverseAffiliateCommission
             $liability = $this->account(LedgerAccount::AFFILIATE_COMMISSION_LIABILITY_CODE, 'Affiliate commission liability', LedgerAccountType::Liability, $commission->currency);
             $expense = $this->account(LedgerAccount::AFFILIATE_COMMISSION_EXPENSE_CODE, 'Affiliate commission expense', LedgerAccountType::Expense, $commission->currency);
             $transaction = $reversal->ledgerTransaction()->create([
-                'reference' => 'LED-AFCR-'.$reversal->id,
                 'description' => 'Affiliate commission reversal for cancelled event',
                 'occurred_at' => $reversal->reversed_at,
                 'currency' => $reversal->currency,

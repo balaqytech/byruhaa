@@ -14,6 +14,7 @@ use App\Modules\Events\States\Contract\Signed;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\User;
 use App\Services\Webhooks\ByruhaaWebhookSender;
+use App\Support\HumanReference;
 use Brick\Money\Money;
 use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,7 +27,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\ModelStates\HasStates;
@@ -106,7 +106,7 @@ class Booking extends Model implements AuditableContract
     protected static function booted(): void
     {
         static::creating(function (Booking $booking): void {
-            $booking->reference ??= 'BRH-'.Str::upper(Str::random(8));
+            $booking->reference ??= HumanReference::next('booking');
         });
 
         static::updated(function (Booking $booking): void {

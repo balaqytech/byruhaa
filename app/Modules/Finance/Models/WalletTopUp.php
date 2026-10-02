@@ -3,13 +3,13 @@
 namespace App\Modules\Finance\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Support\HumanReference;
 use Brick\Money\Money;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -36,7 +36,7 @@ class WalletTopUp extends Model
     protected static function booted(): void
     {
         static::creating(function (WalletTopUp $topUp): void {
-            $topUp->reference ??= 'WAL-'.Str::upper(Str::random(12));
+            $topUp->reference ??= HumanReference::next('wallet_top_up');
         });
     }
 

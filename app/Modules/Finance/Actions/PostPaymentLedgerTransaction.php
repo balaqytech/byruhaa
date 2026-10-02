@@ -48,7 +48,6 @@ class PostPaymentLedgerTransaction
             );
 
             $transaction = $payment->ledgerTransaction()->create([
-                'reference' => 'LED-'.$payment->reference,
                 'description' => 'Thawani payment '.$payment->reference,
                 'occurred_at' => $payment->paid_at ?? now(),
                 'currency' => $payment->currency,

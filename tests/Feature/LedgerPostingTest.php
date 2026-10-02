@@ -30,7 +30,7 @@ test('paid payment posts a balanced double entry ledger transaction', function (
     $entries = $ledgerTransaction->entries()->with('ledgerAccount')->get();
 
     expect($ledgerTransaction)
-        ->reference->toBe('LED-'.$payment->reference)
+        ->reference->toMatch('/^[0-9]{8}$/')
         ->total_baisa->toBe(9001)
         ->and($entries)->toHaveCount(2)
         ->and($entries->sum('debit_baisa'))->toBe(9001)
