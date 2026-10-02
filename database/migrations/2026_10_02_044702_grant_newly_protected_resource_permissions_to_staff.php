@@ -6,6 +6,20 @@ use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
+    private const RESOURCE_NAMES = [
+        'AffiliateCommission', 'AffiliatePayoutRequest', 'Affiliate',
+        'BlogPostCategory', 'BlogPost', 'Booking', 'Coupon', 'Customer',
+        'Discount', 'EventPaymentPlan', 'Event', 'LedgerAccount',
+        'LedgerTransaction', 'PaymentRefund', 'Payment',
+    ];
+
+    private const RESOURCE_ACTIONS = ['ViewAny', 'View', 'Create', 'Update', 'Delete'];
+
+    private const PAGE_PERMISSIONS = [
+        'View:ManageAboutPage', 'View:ManageContactPage', 'View:ManageGeneralSettings',
+        'View:ManageStoreSettings', 'View:MediaManager',
+    ];
+
     /**
      * Run the migrations.
      */
@@ -20,7 +34,15 @@ return new class extends Migration
             return;
         }
 
-        foreach (config('filament-shield.staff_permissions') as $permissionName) {
+        $permissionNames = self::PAGE_PERMISSIONS;
+
+        foreach (self::RESOURCE_NAMES as $resourceName) {
+            foreach (self::RESOURCE_ACTIONS as $action) {
+                $permissionNames[] = "{$action}:{$resourceName}";
+            }
+        }
+
+        foreach ($permissionNames as $permissionName) {
             DB::table('permissions')->insertOrIgnore([
                 'name' => $permissionName,
                 'guard_name' => 'web',

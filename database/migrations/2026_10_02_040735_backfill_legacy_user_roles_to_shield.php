@@ -7,13 +7,22 @@ use Spatie\Permission\PermissionRegistrar;
 
 return new class extends Migration
 {
+    private const STAFF_PERMISSIONS = [
+        'ViewAny:Category', 'View:Category', 'Create:Category', 'Update:Category',
+        'ViewAny:Product', 'View:Product', 'Create:Product', 'Update:Product',
+        'ViewAny:ProductOption', 'View:ProductOption', 'Create:ProductOption', 'Update:ProductOption',
+        'ViewAny:Order', 'View:Order', 'Create:Order', 'Update:Order',
+        'ViewAny:PublicPage', 'View:PublicPage', 'Update:PublicPage',
+        'ViewAny:Wallet', 'ViewAny:MinorProfile',
+    ];
+
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         $roleIds = [];
-        $superAdministratorRoleName = config('filament-shield.super_admin.name');
+        $superAdministratorRoleName = 'super_admin';
         $userMorphClass = (new User)->getMorphClass();
 
         foreach (['staff', $superAdministratorRoleName] as $roleName) {
@@ -30,7 +39,7 @@ return new class extends Migration
                 ->value('id');
         }
 
-        foreach (config('filament-shield.staff_permissions') as $permissionName) {
+        foreach (self::STAFF_PERMISSIONS as $permissionName) {
             DB::table('permissions')->insertOrIgnore([
                 'name' => $permissionName,
                 'guard_name' => 'web',

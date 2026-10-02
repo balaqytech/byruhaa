@@ -67,8 +67,13 @@ test('the compatibility migration preserves staff access without granting custom
     $customRole = Role::findOrCreate('limited_operator', 'web');
     $staffRole->revokePermissionTo('ViewAny:Booking');
 
+    $staffPermissions = config('filament-shield.staff_permissions');
+    config(['filament-shield.staff_permissions' => null]);
+
     $migration = require database_path('migrations/2026_10_02_044702_grant_newly_protected_resource_permissions_to_staff.php');
     $migration->up();
+
+    config(['filament-shield.staff_permissions' => $staffPermissions]);
 
     expect($staffRole->fresh()->hasPermissionTo('ViewAny:Booking'))->toBeTrue()
         ->and($customRole->fresh()->hasPermissionTo('ViewAny:Booking'))->toBeFalse();
