@@ -4,6 +4,7 @@ use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\OrderController;
 use App\Http\Controllers\Store\PaymentController;
+use App\Http\Controllers\Store\TrackOrderController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
 use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,8 @@ require __DIR__.'/minor-profile.php';
 
 Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(function (): void {
     Route::get('checkout', [PublicSiteController::class, 'checkout'])->name('checkout');
+    Route::get('track-order', [TrackOrderController::class, 'show'])->name('orders.track');
+    Route::post('track-order', [TrackOrderController::class, 'lookup'])->middleware('throttle:5,1,store-tracking:')->name('orders.track.lookup');
     Route::get('cart', [CartController::class, 'show'])->name('cart.show');
     Route::post('cart/items', [CartController::class, 'add'])->name('cart.items.store');
     Route::scopeBindings()->patch('cart/{cart:token}/items/{item}', [CartController::class, 'update'])->name('cart.items.update');

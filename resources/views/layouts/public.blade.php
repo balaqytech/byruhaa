@@ -14,6 +14,9 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="theme-color" content="#dff6ef">
+    @isset($robots)
+        <meta name="robots" content="{{ $robots }}">
+    @endisset
 
     @isset($metaImage)
         <meta property="og:image" content="{{ $metaImage }}">
@@ -38,6 +41,7 @@
         ];
         $footerNavigationLinks = [
             ...$navigationLinks,
+            ['label' => 'تتبع طلبك', 'route' => 'store.orders.track', 'active' => 'store.orders.track*', 'icon' => 'check-list'],
             ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
         ];
 
