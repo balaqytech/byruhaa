@@ -45,7 +45,8 @@
                     @endif
                     @foreach ($catalog as $category)
                         @php
-                            $visual = $categoryVisuals[$category->slug] ?? ['image' => null, 'from' => '#0E7C7B', 'to' => '#16263F'];
+                            $visual = $categoryVisuals[$category->slug] ?? ['from' => '#0E7C7B', 'to' => '#16263F'];
+                            $categoryImageUrl = $category->image?->getUrl();
                         @endphp
                         <button
                             type="button"
@@ -54,9 +55,9 @@
                             wire:click="selectCategory({{ $category->id }})"
                             class="group snap-start text-start focus:outline-none"
                         >
-                            <span class="relative block aspect-[9/14] overflow-hidden rounded-xl bg-[#123329] ring-offset-2 ring-offset-[#f6fbf8] transition duration-200 group-hover:-translate-y-0.5 group-focus-visible:ring-2 group-focus-visible:ring-[#007a52] dark:ring-offset-[#07120f] {{ $categoryId === $category->id ? 'ring-2 ring-[#d2a53a]' : 'ring-1 ring-[#2a8069]/14 dark:ring-white/10' }}">
-                                @if ($visual['image'])
-                                    <img src="{{ $visual['image'] }}" alt="" loading="lazy" class="absolute inset-0 h-full w-full object-cover" />
+                            <span class="relative block aspect-[9/14] overflow-hidden rounded-xl bg-[#123329] ring-offset-2 ring-offset-[#f6fbf8] transition duration-200 group-hover:-translate-y-0.5 group-focus-visible:ring-2 group-focus-visible:ring-[#007a52] dark:ring-offset-[#07120f] {{ $categoryId === $category->id ? 'ring-2 ring-[#d2a53a]' : 'ring-1 ring-[#2a8069]/14 dark:ring-white/10' }}" style="background: linear-gradient(160deg, {{ $visual['from'] }}, {{ $visual['to'] }});">
+                                @if ($categoryImageUrl)
+                                    <img src="{{ $categoryImageUrl }}" alt="" loading="lazy" decoding="async" class="absolute inset-0 h-full w-full object-cover" />
                                 @endif
                                 <span class="absolute inset-0 bg-gradient-to-t from-[#07120f]/95 via-[#07120f]/35 to-transparent"></span>
                                 <span class="absolute inset-x-0 bottom-0 p-2 text-white">
@@ -90,7 +91,7 @@
             <div id="store-products" wire:loading.remove wire:target="selectCategory" class="mt-8 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5 xl:grid-cols-4" aria-live="polite">
                 @foreach ($displayCatalog as $category)
                     @php
-                        $visual = $categoryVisuals[$category->slug] ?? ['image' => null, 'from' => '#0E7C7B', 'to' => '#16263F'];
+                        $visual = $categoryVisuals[$category->slug] ?? ['from' => '#0E7C7B', 'to' => '#16263F'];
                         $showsAllergenInfo = in_array($category->slug, ['fresh', 'frozen', 'sweets', 'cold', 'hot'], true);
                     @endphp
 

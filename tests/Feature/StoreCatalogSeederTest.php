@@ -12,6 +12,7 @@ use App\Modules\Store\Settings\StoreSettings;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\StoreCatalogSeeder;
 use Livewire\Livewire;
+use Slimani\MediaManager\Models\File;
 
 test('store catalogue seeder retains the previously active products and prices', function (): void {
     $this->seed(StoreCatalogSeeder::class);
@@ -152,6 +153,13 @@ test('rerunning the catalog seeder refreshes source content while preserving mer
 
     $product = Product::query()->where('slug', 'fresh-01')->firstOrFail();
     $replacementCategory = Category::query()->where('slug', 'books')->firstOrFail();
+    $categoryImage = File::query()->create([
+        'name' => 'books.webp',
+        'mime_type' => 'image/webp',
+        'size' => 1024,
+        'extension' => 'webp',
+    ]);
+    $replacementCategory->update(['image_id' => $categoryImage->id]);
     $option = $product->defaultOption()->firstOrFail();
 
     $product->update([
@@ -173,6 +181,7 @@ test('rerunning the catalog seeder refreshes source content while preserving mer
     $option->refresh();
 
     expect($product->category_id)->not->toBe($replacementCategory->id)
+        ->and($replacementCategory->fresh()->image_id)->toBe($categoryImage->id)
         ->and($product->name)->toBe('المنعش الفوّار بالباشن')
         ->and($product->status)->toBe(ProductStatus::Active)
         ->and($product->is_featured)->toBeTrue()

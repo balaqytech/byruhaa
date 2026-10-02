@@ -24,6 +24,7 @@ test('catalog migrations create the store tables and required columns', function
         ->toContain('name')
         ->toContain('short_name')
         ->toContain('slug')
+        ->toContain('image_id')
         ->toContain('is_active');
 
     expect(Schema::getColumnListing('store_products'))
@@ -290,12 +291,9 @@ test('store Filament resources expose create and edit routes without delete acti
         ->toContain('filament.admin.resources.products.index')
         ->toContain('filament.admin.resources.products.create')
         ->toContain('filament.admin.resources.products.edit')
-        ->toContain('filament.admin.resources.options.product-options.index')
-        ->toContain('filament.admin.resources.options.product-options.create')
-        ->toContain('filament.admin.resources.options.product-options.edit');
+        ->not->toContain('filament.admin.resources.options.product-options.index');
 
     expect($routeNames->filter(fn (string $name): bool => str_contains($name, 'filament.admin.resources.categories.delete')
-        || str_contains($name, 'filament.admin.resources.products.delete')
-        || str_contains($name, 'filament.admin.resources.options.product-options.delete'))->all())
+        || str_contains($name, 'filament.admin.resources.products.delete'))->all())
         ->toBeEmpty();
 });

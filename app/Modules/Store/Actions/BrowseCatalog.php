@@ -18,6 +18,7 @@ class BrowseCatalog
             ->active()
             ->when($categoryId !== null, fn ($query) => $query->whereKey($categoryId))
             ->with([
+                'image.media',
                 'products' => fn ($query) => $query
                     ->select(['id', 'category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'allergens', 'featured_image_id', 'video_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])
                     ->active()

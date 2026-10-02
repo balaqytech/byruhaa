@@ -7,6 +7,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
+use Slimani\MediaManager\Form\MediaPicker;
 
 class CategoryForm
 {
@@ -31,6 +32,15 @@ class CategoryForm
                 Textarea::make('description')
                     ->label(__('admin.fields.description'))
                     ->maxLength(500)
+                    ->columnSpanFull(),
+                MediaPicker::make('image_id')
+                    ->label(__('admin.store.category_media.image'))
+                    ->helperText(__('admin.store.category_media.image_help'))
+                    ->relationship('image')
+                    ->directory('store/categories')
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->image()
+                    ->maxSize(5120)
                     ->columnSpanFull(),
                 TextInput::make('sort_order')
                     ->label(__('admin.fields.sort_order'))
