@@ -5,6 +5,8 @@ namespace App\Modules\Store\Filament\Resources\Products;
 use App\Modules\Store\Filament\Resources\Products\Pages\CreateProduct;
 use App\Modules\Store\Filament\Resources\Products\Pages\EditProduct;
 use App\Modules\Store\Filament\Resources\Products\Pages\ListProducts;
+use App\Modules\Store\Filament\Resources\Products\RelationManagers\InventoryMovementsRelationManager;
+use App\Modules\Store\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
 use App\Modules\Store\Filament\Resources\Products\Schemas\ProductForm;
 use App\Modules\Store\Filament\Resources\Products\Tables\ProductsTable;
 use App\Modules\Store\Models\Product;
@@ -55,6 +57,8 @@ class ProductResource extends Resource
     public static function getRelations(): array
     {
         return [
+            OptionsRelationManager::class,
+            InventoryMovementsRelationManager::class,
             AuditsRelationManager::class,
         ];
     }

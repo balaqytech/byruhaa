@@ -286,7 +286,6 @@ return [
         'source_name' => 'Source name',
         'additional_info' => 'Additional info',
         'address' => 'Address',
-        'account_role' => 'Account role',
         'area' => 'Area',
         'affiliate' => 'Affiliate',
         'affiliate_code' => 'Affiliate code',
@@ -456,6 +455,9 @@ return [
         'help' => [
             'permission_roles' => 'Assign Shield roles to control this user’s Filament permissions.',
         ],
+        'errors' => [
+            'last_super_admin' => 'The last super administrator cannot lose this role.',
+        ],
     ],
 
     'filters' => [
@@ -496,6 +498,21 @@ return [
     ],
 
     'store' => [
+        'product_tabs' => [
+            'details' => 'Details and description',
+            'media' => 'Photos and video',
+            'options' => 'Options and prices',
+        ],
+        'product_list_tabs' => [
+            'all' => 'All products',
+            'featured' => 'Featured',
+            'options_count' => 'Options',
+        ],
+        'category_media' => [
+            'image' => 'Category image',
+            'image_help' => 'Recommended: 900 × 1400 px (9:14). WebP preferred; JPEG or PNG also accepted, up to 5 MB.',
+            'invalid_image' => 'Choose a JPEG, PNG, or WebP image no larger than 5 MB.',
+        ],
         'product_media' => [
             'video' => 'Product video',
             'video_help' => 'Optional. MP4 or WebM, up to 50 MB. It appears before the featured image in the catalog and product page.',
@@ -517,6 +534,19 @@ return [
             'payment_link' => 'Payment link',
             'payment_link_unavailable' => 'No active payment link. The order may have expired or already been paid.',
             'payment_window' => 'Direct-payment orders expire after :minutes minutes unless paid. Share the link promptly.',
+            'paid_at' => 'Paid at',
+            'payment_reference' => 'Payment reference',
+        ],
+        'order_tabs' => [
+            'customer_payment' => 'Customer & payment',
+            'pickup_notes' => 'Pickup & notes',
+        ],
+        'order_list_tabs' => [
+            'all' => 'All orders',
+            'pending_payment' => 'Awaiting payment',
+            'in_progress' => 'In progress',
+            'completed' => 'Completed',
+            'exceptions' => 'Exceptions & refunds',
         ],
         'default_option_help' => 'Each product must keep exactly one default option. Saving a new default will replace the current one.',
         'price_includes_vat_help' => 'The entered price is the final customer price and includes 5% VAT.',
@@ -524,6 +554,7 @@ return [
         'member_price_must_be_lower' => 'The member price must be positive and lower than the regular price.',
         'featured_help' => 'Shows the product in the Best sellers tab while keeping it in its original category.',
         'sections' => [
+            'customer_payment' => 'Customer & payment',
             'identity' => 'Identity',
             'content' => 'Content',
             'media' => 'Media',
@@ -585,6 +616,8 @@ return [
         ],
         'inventory' => [
             'history' => 'Inventory history',
+            'options_overview' => 'Options and inventory',
+            'options_overview_help' => 'Edit options and prices in the tab above. Adjust stock here and review every movement in the Inventory history tab.',
         ],
     ],
 

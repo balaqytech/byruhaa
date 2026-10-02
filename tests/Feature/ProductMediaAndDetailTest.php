@@ -154,3 +154,21 @@ test('product edit form exposes video upload and reorderable gallery', function 
     expect($product->fresh()->video_id)->toBe($video->id)
         ->and($product->fresh()->gallery_image_ids)->toBe([(string) $galleryImage->id]);
 });
+
+test('editing a product keeps its existing option prices without re-entry', function (): void {
+    $product = Product::factory()->create();
+    $option = $product->defaultOption()->firstOrFail();
+    $option->update(['price_baisa' => 1600, 'member_price_baisa' => 1200]);
+    $this->actingAs(User::factory()->create(), 'web');
+
+    $component = Livewire::test(EditProduct::class, ['record' => $product->getRouteKey()]);
+    $optionState = $component->get('data')['options']['record-'.$option->id];
+
+    expect($optionState['price'])->toBe('1.600')
+        ->and($optionState['member_price'])->toBe('1.200');
+
+    $component->call('save')->assertHasNoFormErrors();
+
+    expect($option->fresh()->price_baisa)->toBe(1600)
+        ->and($option->fresh()->member_price_baisa)->toBe(1200);
+});

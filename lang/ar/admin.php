@@ -6,6 +6,7 @@ return [
         'customer_management' => 'إدارة العملاء',
         'finance' => 'المالية',
         'store' => 'المتجر',
+        'user_management' => 'إدارة المستخدمين',
     ],
 
     'resources' => [
@@ -53,6 +54,11 @@ return [
             'label' => 'عميل',
             'plural_label' => 'العملاء',
             'navigation_label' => 'العملاء',
+        ],
+        'users' => [
+            'label' => 'مستخدم',
+            'plural_label' => 'المستخدمون',
+            'navigation_label' => 'المستخدمون',
         ],
         'discounts' => [
             'label' => 'خصم',
@@ -334,6 +340,7 @@ return [
         'due_date' => 'تاريخ الاستحقاق',
         'email_address' => 'البريد الإلكتروني',
         'email_verified_at' => 'تاريخ التحقق من البريد',
+        'permission_roles' => 'أدوار الصلاحيات',
         'ends_at' => 'ينتهي في',
         'entries' => 'القيود',
         'event' => 'الفعالية',
@@ -440,6 +447,19 @@ return [
         'wilaya' => 'الولاية',
     ],
 
+    'user_form' => [
+        'sections' => [
+            'account' => 'بيانات الحساب',
+            'permissions' => 'الأدوار والصلاحيات',
+        ],
+        'help' => [
+            'permission_roles' => 'تتحكم أدوار Shield في صلاحيات هذا المستخدم داخل لوحة الإدارة.',
+        ],
+        'errors' => [
+            'last_super_admin' => 'لا يمكن إزالة دور المدير الأعلى من آخر مستخدم يحمله.',
+        ],
+    ],
+
     'filters' => [
         'refundable' => 'قابل للاسترداد',
         'pickup_date' => 'تاريخ الاستلام',
@@ -478,6 +498,21 @@ return [
     ],
 
     'store' => [
+        'product_tabs' => [
+            'details' => 'البيانات والوصف',
+            'media' => 'الصور والفيديو',
+            'options' => 'الخيارات والأسعار',
+        ],
+        'product_list_tabs' => [
+            'all' => 'كل المنتجات',
+            'featured' => 'المميزة',
+            'options_count' => 'عدد الخيارات',
+        ],
+        'category_media' => [
+            'image' => 'صورة التصنيف',
+            'image_help' => 'المقاس الموصى به ٩٠٠ × ١٤٠٠ بكسل (بنسبة ٩:١٤). يفضّل WebP، ويمكن استخدام JPEG أو PNG، حتى ٥ ميغابايت.',
+            'invalid_image' => 'اختر صورة JPEG أو PNG أو WebP لا تتجاوز ٥ ميغابايت.',
+        ],
         'product_media' => [
             'video' => 'فيديو المنتج',
             'video_help' => 'اختياري. MP4 أو WebM حتى ٥٠ ميغابايت. يظهر قبل الصورة الرئيسية في القائمة وصفحة المنتج.',
@@ -499,6 +534,19 @@ return [
             'payment_link' => 'رابط الدفع',
             'payment_link_unavailable' => 'لا يوجد رابط دفع نشط. ربما انتهت مهلة الطلب أو دُفع بالفعل.',
             'payment_window' => 'تنتهي مهلة الطلب بالدفع المباشر بعد :minutes دقيقة إذا لم يُدفع. شارك الرابط سريعًا.',
+            'paid_at' => 'تاريخ الدفع',
+            'payment_reference' => 'مرجع الدفع',
+        ],
+        'order_tabs' => [
+            'customer_payment' => 'العميل والدفع',
+            'pickup_notes' => 'الاستلام والملاحظات',
+        ],
+        'order_list_tabs' => [
+            'all' => 'كل الطلبات',
+            'pending_payment' => 'بانتظار الدفع',
+            'in_progress' => 'قيد التنفيذ',
+            'completed' => 'مكتملة',
+            'exceptions' => 'الاستثناءات والاستردادات',
         ],
         'default_option_help' => 'يجب أن يحتفظ كل منتج بخيار افتراضي واحد فقط. حفظ خيار افتراضي جديد يستبدل الخيار الحالي.',
         'price_includes_vat_help' => 'السعر المدخل هو السعر النهائي شامل ضريبة القيمة المضافة ٥٪.',
@@ -506,6 +554,7 @@ return [
         'member_price_must_be_lower' => 'يجب أن يكون سعر الأعضاء موجبًا وأقل من السعر العادي.',
         'featured_help' => 'يظهر المنتج في تبويب «الأكثر طلبًا» مع بقائه ضمن تصنيفه الأصلي.',
         'sections' => [
+            'customer_payment' => 'بيانات العميل والدفع',
             'identity' => 'الهوية',
             'content' => 'المحتوى',
             'media' => 'الوسائط',
@@ -567,6 +616,8 @@ return [
         ],
         'inventory' => [
             'history' => 'سجل المخزون',
+            'options_overview' => 'الخيارات والمخزون',
+            'options_overview_help' => 'عدّل الخيارات وأسعارها من تبويب «الخيارات والأسعار» أعلاه، واستخدم هذه القائمة لضبط المخزون. جميع الحركات في تبويب سجل المخزون.',
         ],
     ],
 

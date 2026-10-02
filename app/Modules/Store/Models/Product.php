@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
@@ -94,6 +95,12 @@ class Product extends Model implements AuditableContract, HasRichContent
     public function options(): HasMany
     {
         return $this->hasMany(ProductOption::class)->orderBy('sort_order');
+    }
+
+    /** @return HasManyThrough<InventoryMovement, ProductOption, $this> */
+    public function inventoryMovements(): HasManyThrough
+    {
+        return $this->hasManyThrough(InventoryMovement::class, ProductOption::class);
     }
 
     /** @return HasOne<ProductOption, $this> */

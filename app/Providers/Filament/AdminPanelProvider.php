@@ -5,7 +5,6 @@ namespace App\Providers\Filament;
 use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
 use App\Modules\Store\Filament\Pages\ManageStoreSettings;
 use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
-use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Filament\Resources\Products\ProductResource;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
@@ -45,7 +44,6 @@ class AdminPanelProvider extends PanelProvider
             ->resources([
                 CategoryResource::class,
                 ProductResource::class,
-                ProductOptionResource::class,
                 OrderResource::class,
                 PublicPageResource::class,
             ])
@@ -75,7 +73,8 @@ class AdminPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
             ->plugins([
-                FilamentShieldPlugin::make(),
+                FilamentShieldPlugin::make()
+                    ->navigationGroup(__('admin.navigation.user_management')),
                 FilamentAuditingPlugin::make(),
             ])
             ->authMiddleware([

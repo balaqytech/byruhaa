@@ -13,6 +13,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 use Slimani\MediaManager\Form\MediaPicker;
@@ -23,152 +25,174 @@ class ProductForm
     {
         return $schema
             ->components([
-                Section::make(__('admin.store.sections.identity'))
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('name')
-                            ->label(__('admin.fields.name'))
-                            ->required()
-                            ->maxLength(255)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))),
-                        TextInput::make('slug')
-                            ->label(__('admin.fields.slug'))
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(255),
-                        Select::make('category_id')
-                            ->label(__('admin.fields.category'))
-                            ->relationship('category', 'name')
-                            ->searchable()
-                            ->preload()
-                            ->required(),
-                        Select::make('status')
-                            ->label(__('admin.fields.status'))
-                            ->options(ProductStatus::class)
-                            ->default(ProductStatus::Draft->value)
-                            ->required(),
-                        TextInput::make('sort_order')
-                            ->label(__('admin.fields.sort_order'))
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0),
-                        Toggle::make('is_featured')
-                            ->label(__('admin.fields.is_featured'))
-                            ->helperText(__('admin.store.featured_help')),
-                        TextInput::make('featured_sort_order')
-                            ->label(__('admin.fields.featured_sort_order'))
-                            ->numeric()
-                            ->minValue(0)
-                            ->default(0)
-                            ->visible(fn (callable $get): bool => (bool) $get('is_featured')),
-                    ]),
-                Section::make(__('admin.store.sections.content'))
-                    ->columns(2)
-                    ->schema([
-                        TextInput::make('source_name')
-                            ->label(__('admin.fields.source_name'))
-                            ->maxLength(255),
-                        TextInput::make('author_name')
-                            ->label(__('admin.fields.author_name'))
-                            ->maxLength(255),
-                        TextInput::make('display_tag')
-                            ->label(__('admin.fields.display_tag'))
-                            ->maxLength(255),
-                        TagsInput::make('allergens')
-                            ->label(__('admin.fields.allergens')),
-                        Textarea::make('description')
-                            ->label(__('admin.fields.description'))
-                            ->maxLength(500)
-                            ->columnSpanFull(),
-                        RichEditor::make('long_description')
-                            ->label('الوصف الطويل')
-                            ->columnSpanFull(),
-                    ]),
-                Section::make(__('admin.store.sections.media'))
-                    ->schema([
-                        MediaPicker::make('featured_image_id')
-                            ->label(__('admin.fields.featured_image'))
-                            ->relationship('featuredImage')
-                            ->acceptedFileTypes(['image/*'])
-                            ->image(),
-                        MediaPicker::make('video_id')
-                            ->label(__('admin.store.product_media.video'))
-                            ->helperText(__('admin.store.product_media.video_help'))
-                            ->relationship('video')
-                            ->directory('store/products/videos')
-                            ->acceptedFileTypes(['video/mp4', 'video/webm'])
-                            ->maxSize(51200),
-                        MediaPicker::make('gallery_image_ids')
-                            ->label(__('admin.store.product_media.gallery'))
-                            ->helperText(__('admin.store.product_media.gallery_help'))
-                            ->directory('store/products/gallery')
-                            ->acceptedFileTypes(['image/*'])
-                            ->image()
-                            ->multiple()
-                            ->maxSize(10240)
-                            ->maxFiles(8)
-                            ->reorderable(),
-                    ]),
-                Section::make(__('admin.resources.store_product_options.plural_label'))
-                    ->schema([
-                        Repeater::make('options')
-                            ->relationship('options')
+                Tabs::make('product_editor')
+                    ->columnSpanFull()
+                    ->tabs([
+                        Tab::make(__('admin.store.product_tabs.details'))
                             ->schema([
-                                TextInput::make('name')
-                                    ->label(__('admin.fields.name'))
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('sku')
-                                    ->label(__('admin.fields.sku'))
-                                    ->required()
-                                    ->maxLength(255),
-                                TextInput::make('price')
-                                    ->label(__('admin.fields.price'))
-                                    ->helperText(__('admin.store.price_includes_vat_help'))
-                                    ->required()
-                                    ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
-                                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
-                                    ->suffix('OMR'),
-                                TextInput::make('member_price')
-                                    ->label(__('admin.fields.member_price'))
-                                    ->helperText(__('admin.store.member_price_help'))
-                                    ->rules(['nullable', 'regex:/^\d+(\.\d{1,3})?$/'])
-                                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
-                                    ->suffix('OMR'),
-                                TextInput::make('currency')
-                                    ->label(__('admin.fields.currency'))
-                                    ->default('OMR')
-                                    ->required()
-                                    ->maxLength(3)
-                                    ->minLength(3),
-                                TextInput::make('sort_order')
-                                    ->label(__('admin.fields.sort_order'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->default(0),
-                                Toggle::make('is_available')
-                                    ->label(__('admin.fields.is_available'))
-                                    ->default(true),
-                                Toggle::make('tracks_inventory')
-                                    ->label(__('admin.fields.tracks_inventory'))
-                                    ->default(false),
-                                TextInput::make('stock_on_hand')
-                                    ->label(__('admin.fields.stock_on_hand'))
-                                    ->numeric()
-                                    ->minValue(0)
-                                    ->default(0)
-                                    ->disabled()
-                                    ->dehydrated(false)
-                                    ->visible(fn (callable $get): bool => (bool) $get('tracks_inventory')),
-                                Toggle::make('is_default')
-                                    ->label(__('admin.fields.is_default'))
-                                    ->default(true),
-                            ])
-                            ->defaultItems(1)
-                            ->minItems(1)
-                            ->required()
-                            ->columns(3),
+                                Section::make(__('admin.store.sections.identity'))
+                                    ->columns(2)
+                                    ->schema([
+                                        TextInput::make('name')
+                                            ->label(__('admin.fields.name'))
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(fn (string $state, callable $set) => $set('slug', Str::slug($state))),
+                                        TextInput::make('slug')
+                                            ->label(__('admin.fields.slug'))
+                                            ->required()
+                                            ->unique(ignoreRecord: true)
+                                            ->maxLength(255),
+                                        Select::make('category_id')
+                                            ->label(__('admin.fields.category'))
+                                            ->relationship('category', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->required(),
+                                        Select::make('status')
+                                            ->label(__('admin.fields.status'))
+                                            ->options(ProductStatus::class)
+                                            ->default(ProductStatus::Draft->value)
+                                            ->required(),
+                                        TextInput::make('sort_order')
+                                            ->label(__('admin.fields.sort_order'))
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->default(0),
+                                        Toggle::make('is_featured')
+                                            ->label(__('admin.fields.is_featured'))
+                                            ->helperText(__('admin.store.featured_help')),
+                                        TextInput::make('featured_sort_order')
+                                            ->label(__('admin.fields.featured_sort_order'))
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->default(0)
+                                            ->visible(fn (callable $get): bool => (bool) $get('is_featured')),
+                                    ]),
+                                Section::make(__('admin.store.sections.content'))
+                                    ->columns(2)
+                                    ->schema([
+                                        TextInput::make('source_name')
+                                            ->label(__('admin.fields.source_name'))
+                                            ->maxLength(255),
+                                        TextInput::make('author_name')
+                                            ->label(__('admin.fields.author_name'))
+                                            ->maxLength(255),
+                                        TextInput::make('display_tag')
+                                            ->label(__('admin.fields.display_tag'))
+                                            ->maxLength(255),
+                                        TagsInput::make('allergens')
+                                            ->label(__('admin.fields.allergens')),
+                                        Textarea::make('description')
+                                            ->label(__('admin.fields.description'))
+                                            ->maxLength(500)
+                                            ->columnSpanFull(),
+                                        RichEditor::make('long_description')
+                                            ->label('الوصف الطويل')
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+                        Tab::make(__('admin.store.product_tabs.media'))
+                            ->schema([
+                                Section::make(__('admin.store.sections.media'))
+                                    ->schema([
+                                        MediaPicker::make('featured_image_id')
+                                            ->label(__('admin.fields.featured_image'))
+                                            ->relationship('featuredImage')
+                                            ->acceptedFileTypes(['image/*'])
+                                            ->image(),
+                                        MediaPicker::make('video_id')
+                                            ->label(__('admin.store.product_media.video'))
+                                            ->helperText(__('admin.store.product_media.video_help'))
+                                            ->relationship('video')
+                                            ->directory('store/products/videos')
+                                            ->acceptedFileTypes(['video/mp4', 'video/webm'])
+                                            ->maxSize(51200),
+                                        MediaPicker::make('gallery_image_ids')
+                                            ->label(__('admin.store.product_media.gallery'))
+                                            ->helperText(__('admin.store.product_media.gallery_help'))
+                                            ->directory('store/products/gallery')
+                                            ->acceptedFileTypes(['image/*'])
+                                            ->image()
+                                            ->multiple()
+                                            ->maxSize(10240)
+                                            ->maxFiles(8)
+                                            ->reorderable(),
+                                    ]),
+                            ]),
+                        Tab::make(__('admin.store.product_tabs.options'))
+                            ->schema([
+                                Section::make(__('admin.resources.store_product_options.plural_label'))
+                                    ->schema([
+                                        Repeater::make('options')
+                                            ->relationship('options')
+                                            ->mutateRelationshipDataBeforeFillUsing(function (array $data): array {
+                                                $currency = (string) ($data['currency'] ?? 'OMR');
+                                                $data['price'] = self::minorUnitsToInputState($data['price_baisa'] ?? null, $currency);
+                                                $data['member_price'] = self::minorUnitsToInputState($data['member_price_baisa'] ?? null, $currency);
+
+                                                return $data;
+                                            })
+                                            ->schema([
+                                                TextInput::make('name')
+                                                    ->label(__('admin.fields.name'))
+                                                    ->required()
+                                                    ->maxLength(255),
+                                                TextInput::make('sku')
+                                                    ->label(__('admin.fields.sku'))
+                                                    ->required()
+                                                    ->maxLength(255),
+                                                TextInput::make('price')
+                                                    ->label(__('admin.fields.price'))
+                                                    ->helperText(__('admin.store.price_includes_vat_help'))
+                                                    ->required()
+                                                    ->rules(['regex:/^\d+(\.\d{1,3})?$/'])
+                                                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                                                    ->suffix('OMR'),
+                                                TextInput::make('member_price')
+                                                    ->label(__('admin.fields.member_price'))
+                                                    ->helperText(__('admin.store.member_price_help'))
+                                                    ->rules(['nullable', 'regex:/^\d+(\.\d{1,3})?$/'])
+                                                    ->formatStateUsing(fn (mixed $state): ?string => self::moneyInputState($state))
+                                                    ->suffix('OMR'),
+                                                TextInput::make('currency')
+                                                    ->label(__('admin.fields.currency'))
+                                                    ->default('OMR')
+                                                    ->required()
+                                                    ->maxLength(3)
+                                                    ->minLength(3),
+                                                TextInput::make('sort_order')
+                                                    ->label(__('admin.fields.sort_order'))
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->default(0),
+                                                Toggle::make('is_available')
+                                                    ->label(__('admin.fields.is_available'))
+                                                    ->default(true),
+                                                Toggle::make('tracks_inventory')
+                                                    ->label(__('admin.fields.tracks_inventory'))
+                                                    ->default(false),
+                                                TextInput::make('stock_on_hand')
+                                                    ->label(__('admin.fields.stock_on_hand'))
+                                                    ->numeric()
+                                                    ->minValue(0)
+                                                    ->default(0)
+                                                    ->disabled()
+                                                    ->dehydrated(false)
+                                                    ->visible(fn (callable $get): bool => (bool) $get('tracks_inventory')),
+                                                Toggle::make('is_default')
+                                                    ->label(__('admin.fields.is_default'))
+                                                    ->default(true),
+                                            ])
+                                            ->defaultItems(1)
+                                            ->minItems(1)
+                                            ->required()
+                                            ->itemLabel(fn (array $state): ?string => filled($state['name'] ?? null) ? (string) $state['name'] : null)
+                                            ->collapsible()
+                                            ->columns(3),
+                                    ]),
+                            ]),
                     ]),
             ]);
     }
@@ -180,5 +204,12 @@ class ProductForm
         }
 
         return blank($state) ? null : (string) $state;
+    }
+
+    private static function minorUnitsToInputState(mixed $amount, string $currency): ?string
+    {
+        return $amount === null
+            ? null
+            : MoneyFactory::formatMoneyAmount(MoneyFactory::fromMinor((int) $amount, $currency));
     }
 }
