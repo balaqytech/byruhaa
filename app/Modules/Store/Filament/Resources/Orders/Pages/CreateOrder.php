@@ -4,13 +4,18 @@ namespace App\Modules\Store\Filament\Resources\Orders\Pages;
 
 use App\Modules\Store\Actions\CreateAdminOrder;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
+use App\Modules\Store\Filament\Resources\Orders\Schemas\OrderForm;
 use Filament\Actions\Action;
+use Filament\Resources\Pages\Concerns\HasWizard;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Schemas\Components\Wizard\Step;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class CreateOrder extends CreateRecord
 {
+    use HasWizard;
+
     protected static string $resource = OrderResource::class;
 
     protected static bool $canCreateAnother = false;
@@ -22,6 +27,12 @@ class CreateOrder extends CreateRecord
         $this->orderAttemptKey = (string) Str::uuid();
 
         parent::mount();
+    }
+
+    /** @return array<Step> */
+    public function getSteps(): array
+    {
+        return OrderForm::steps();
     }
 
     /** @param array<string, mixed> $data */

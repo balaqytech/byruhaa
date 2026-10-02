@@ -6,9 +6,10 @@ use App\Modules\Store\Filament\Resources\Orders\Pages\ListOrders;
 use App\Modules\Store\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\Models\OrderItem;
+use Filament\Schemas\Components\Wizard;
 use Livewire\Livewire;
 
-test('order list tabs group orders by operational status', function (): void {
+test('order list tabs filter each operational status', function (): void {
     $this->actingAs(User::factory()->create(), 'web');
 
     $pending = Order::factory()->create(['status' => 'pending_payment']);
@@ -23,12 +24,12 @@ test('order list tabs group orders by operational status', function (): void {
         ->assertCanNotSeeTableRecords([$confirmed, $completed, $refunded]);
 
     Livewire::test(ListOrders::class)
-        ->set('activeTab', 'in_progress')
+        ->set('activeTab', 'confirmed')
         ->assertCanSeeTableRecords([$confirmed])
         ->assertCanNotSeeTableRecords([$pending, $completed, $refunded]);
 
     Livewire::test(ListOrders::class)
-        ->set('activeTab', 'exceptions')
+        ->set('activeTab', 'refunded')
         ->assertCanSeeTableRecords([$refunded])
         ->assertCanNotSeeTableRecords([$pending, $confirmed, $completed]);
 });
@@ -51,18 +52,21 @@ test('order list can filter by payment and pickup method', function (): void {
         ->assertCanNotSeeTableRecords([$directPickup]);
 });
 
-test('admin order forms and details group information into clear tabs', function (): void {
+test('admin order creation uses a wizard while order details remain grouped', function (): void {
     $this->actingAs(User::factory()->create(), 'web');
     $order = Order::factory()->create();
     OrderItem::factory()->for($order)->create(['note' => 'No sugar']);
 
-    Livewire::test(CreateOrder::class)
+    $createPage = Livewire::test(CreateOrder::class)
         ->assertSuccessful()
         ->assertSee(__('admin.store.order_tabs.customer_payment'))
         ->assertSee(__('admin.store.sections.items'))
         ->assertSee(__('admin.store.order_tabs.pickup_notes'))
         ->assertFormFieldExists('customer_id')
         ->assertFormFieldExists('items');
+
+    expect($createPage->instance()->getWizardComponent())->toBeInstanceOf(Wizard::class)
+        ->and($createPage->instance()->getSteps())->toHaveCount(3);
 
     Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
         ->assertSuccessful()
