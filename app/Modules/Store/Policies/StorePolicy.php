@@ -2,41 +2,41 @@
 
 namespace App\Modules\Store\Policies;
 
-use BackedEnum;
-use Illuminate\Contracts\Auth\Authenticatable;
+use App\Modules\Identity\Models\User;
 
 class StorePolicy
 {
-    public function viewAny(Authenticatable $user): bool
+    public function viewAny(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'ViewAny');
     }
 
-    public function view(Authenticatable $user): bool
+    public function view(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'View');
     }
 
-    public function create(Authenticatable $user): bool
+    public function create(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'Create');
     }
 
-    public function update(Authenticatable $user): bool
+    public function update(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'Update');
     }
 
-    public function delete(Authenticatable $user): bool
+    public function delete(User $user): bool
     {
         return false;
     }
 
-    private function allows(Authenticatable $user): bool
+    private function allows(User $user, string $ability): bool
     {
-        $role = $user->getAttribute('role');
-        $roleValue = $role instanceof BackedEnum ? $role->value : $role;
+        $resource = class_basename(static::class);
+        $resource = substr($resource, 0, -strlen('Policy'));
 
-        return in_array($roleValue, ['staff', 'admin'], true);
+        return $user->isPanelAdministrator()
+            || $user->can("{$ability}:{$resource}");
     }
 }

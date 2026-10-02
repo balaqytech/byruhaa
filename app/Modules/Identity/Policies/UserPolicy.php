@@ -2,7 +2,7 @@
 
 namespace App\Modules\Identity\Policies;
 
-use App\Enums\UserRole;
+use App\Modules\Identity\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -22,47 +22,50 @@ class UserPolicy
 
     public function create(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'Create:User');
+        return $this->isAdministrator($authUser);
     }
 
-    public function update(AuthUser $authUser): bool
+    public function update(AuthUser $authUser, ?User $user = null): bool
     {
-        return $this->allows($authUser, 'Update:User');
+        return $this->isAdministrator($authUser);
     }
 
-    public function delete(AuthUser $authUser): bool
+    public function delete(AuthUser $authUser, ?User $user = null): bool
     {
-        return $this->allows($authUser, 'Delete:User');
+        return $this->isAdministrator($authUser)
+            && $user !== null
+            && $authUser->getKey() !== $user->getKey()
+            && (! $user->isPanelAdministrator() || User::role(config('filament-shield.super_admin.name'))->count() > 1);
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'DeleteAny:User');
+        return false;
     }
 
     public function restore(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'Restore:User');
+        return false;
     }
 
     public function forceDelete(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'ForceDelete:User');
+        return false;
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'ForceDeleteAny:User');
+        return false;
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'RestoreAny:User');
+        return false;
     }
 
     public function replicate(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'Replicate:User');
+        return false;
     }
 
     public function reorder(AuthUser $authUser): bool
@@ -72,7 +75,12 @@ class UserPolicy
 
     private function allows(AuthUser $authUser, string $permission): bool
     {
-        return $authUser->getAttribute('role') === UserRole::Admin
+        return $this->isAdministrator($authUser)
             || $authUser->can($permission);
+    }
+
+    private function isAdministrator(AuthUser $authUser): bool
+    {
+        return $authUser instanceof User && $authUser->isPanelAdministrator();
     }
 }

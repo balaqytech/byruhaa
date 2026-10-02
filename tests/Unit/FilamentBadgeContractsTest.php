@@ -7,7 +7,6 @@ use App\Enums\LedgerAccountType;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
-use App\Enums\UserRole;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\EventContract;
 use App\Modules\Events\States\Booking\Approved;
@@ -49,8 +48,6 @@ test('badge backed enums implement filament label and color contracts', function
         [LedgerAccountType::Equity, __('admin.ledger_account_types.equity'), 'gray'],
         [LedgerAccountType::Income, __('admin.ledger_account_types.income'), 'success'],
         [LedgerAccountType::Expense, __('admin.ledger_account_types.expense'), 'danger'],
-        [UserRole::Staff, 'Staff', 'gray'],
-        [UserRole::Admin, 'Admin', 'primary'],
         [PaymentProvider::Thawani, 'Thawani', 'info'],
         [PaymentProvider::Manual, 'Manual', 'gray'],
     ];

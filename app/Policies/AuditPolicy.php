@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Modules\Identity\Models\User;
 use Tapp\FilamentAuditing\Models\Audit;
 
@@ -66,7 +65,7 @@ class AuditPolicy
 
     private function allows(User $user, string $permission): bool
     {
-        return $user->role === UserRole::Admin
+        return $user->isPanelAdministrator()
             || $user->can($permission);
     }
 }

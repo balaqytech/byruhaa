@@ -3,6 +3,7 @@
 namespace App\Modules\Identity\Actions;
 
 use App\Modules\Identity\Models\User;
+use Illuminate\Validation\ValidationException;
 
 final class SyncUserRoles
 {
@@ -30,6 +31,18 @@ final class SyncUserRoles
             ->sort()
             ->values()
             ->all();
+
+        $superAdministratorRoleId = $roles
+            ->where('name', config('filament-shield.super_admin.name'))
+            ->value('id');
+
+        if ($superAdministratorRoleId !== null
+            && ! in_array((string) $superAdministratorRoleId, $newRoleIds, true)
+            && User::role(config('filament-shield.super_admin.name'))->count() <= 1) {
+            throw ValidationException::withMessages([
+                'roles' => __('admin.user_form.errors.last_super_admin'),
+            ]);
+        }
 
         if ($currentRoleIds === $newRoleIds) {
             return;

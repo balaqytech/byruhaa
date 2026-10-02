@@ -43,7 +43,7 @@ test('user role synchronization creates a custom audit', function () {
         'name' => 'content_manager',
         'guard_name' => 'web',
     ]);
-    $user->assignRole($oldRole);
+    $user->syncRoles($oldRole);
     $user->audits()->delete();
 
     $this->actingAs($actor, 'web');
@@ -72,10 +72,7 @@ test('role permission assignments create custom audits', function () {
         'name' => 'catalog_manager',
         'guard_name' => 'web',
     ]);
-    $permission = Permission::create([
-        'name' => 'View:Product',
-        'guard_name' => 'web',
-    ]);
+    $permission = Permission::findOrCreate('View:Product', 'web');
     $role->audits()->delete();
 
     $this->actingAs($actor, 'web');

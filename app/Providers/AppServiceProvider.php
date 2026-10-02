@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Enums\UserRole;
 use App\Listeners\UpdateWebhookDeliveryStatus;
 use App\Modules\Identity\Models\User;
 use App\Policies\AuditPolicy;
@@ -49,8 +48,7 @@ class AppServiceProvider extends ServiceProvider
     protected function registerLogViewerAuthorization(): void
     {
         Gate::define('viewLogViewer', static function (?User $user): bool {
-            return $user?->role === UserRole::Admin
-                || $user?->hasRole('super_admin')
+            return $user?->isPanelAdministrator()
                 || $user?->can('View:LogViewer');
         });
     }
@@ -60,12 +58,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Audit::class, AuditPolicy::class);
 
         Gate::define('audit', static function (?User $user): bool {
-            return $user?->role === UserRole::Admin
+            return $user?->isPanelAdministrator()
                 || $user?->can('View:Audit');
         });
 
         Gate::define('restoreAudit', static function (?User $user): bool {
-            return $user?->role === UserRole::Admin
+            return $user?->isPanelAdministrator()
                 || $user?->can('Restore:Audit');
         });
     }
@@ -82,12 +80,12 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(
-            fn(): ?Password => app()->isProduction()
+            fn (): ?Password => app()->isProduction()
                 ? Password::min(8)
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
+                    ->letters()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised()
                 : null,
         );
     }

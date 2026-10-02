@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
-use App\Enums\UserRole;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -24,10 +23,6 @@ class UsersTable
                     ->label(__('admin.fields.email_address'))
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('role')
-                    ->label(__('admin.fields.account_role'))
-                    ->badge()
-                    ->sortable(),
                 TextColumn::make('roles.name')
                     ->label(__('admin.fields.permission_roles'))
                     ->badge()
@@ -43,9 +38,9 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('role')
-                    ->label(__('admin.fields.account_role'))
-                    ->options(UserRole::options()),
+                SelectFilter::make('roles')
+                    ->label(__('admin.fields.permission_roles'))
+                    ->relationship('roles', 'name'),
             ])
             ->recordActions([
                 EditAction::make(),

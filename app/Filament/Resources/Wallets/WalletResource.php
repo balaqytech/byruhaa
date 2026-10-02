@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Wallets;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\Wallets\Pages\ListWallets;
 use App\Filament\Resources\Wallets\Pages\ViewWallet;
 use App\Filament\Resources\Wallets\RelationManagers\MovementsRelationManager;
@@ -47,7 +46,8 @@ class WalletResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        return $user instanceof User && in_array($user->role, [UserRole::Admin, UserRole::Staff], true);
+        return $user instanceof User
+            && ($user->isPanelAdministrator() || $user->can('ViewAny:Wallet'));
     }
 
     public static function canView(Model $record): bool

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Modules\Identity\Models\Role;
+use App\Modules\Identity\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Foundation\Auth\User as AuthUser;
 
@@ -25,47 +25,47 @@ class RolePolicy
 
     public function create(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'Create:Role');
+        return $this->isAdministrator($authUser);
     }
 
     public function update(AuthUser $authUser, Role $role): bool
     {
-        return $this->allows($authUser, 'Update:Role');
+        return $this->isAdministrator($authUser) && $role->name !== config('filament-shield.super_admin.name');
     }
 
     public function delete(AuthUser $authUser, Role $role): bool
     {
-        return $this->allows($authUser, 'Delete:Role');
+        return $this->isAdministrator($authUser) && $role->name !== config('filament-shield.super_admin.name');
     }
 
     public function deleteAny(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'DeleteAny:Role');
+        return false;
     }
 
     public function restore(AuthUser $authUser, Role $role): bool
     {
-        return $this->allows($authUser, 'Restore:Role');
+        return false;
     }
 
     public function forceDelete(AuthUser $authUser, Role $role): bool
     {
-        return $this->allows($authUser, 'ForceDelete:Role');
+        return false;
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'ForceDeleteAny:Role');
+        return false;
     }
 
     public function restoreAny(AuthUser $authUser): bool
     {
-        return $this->allows($authUser, 'RestoreAny:Role');
+        return false;
     }
 
     public function replicate(AuthUser $authUser, Role $role): bool
     {
-        return $this->allows($authUser, 'Replicate:Role');
+        return false;
     }
 
     public function reorder(AuthUser $authUser): bool
@@ -75,7 +75,12 @@ class RolePolicy
 
     private function allows(AuthUser $authUser, string $permission): bool
     {
-        return $authUser->getAttribute('role') === UserRole::Admin
+        return $this->isAdministrator($authUser)
             || $authUser->can($permission);
+    }
+
+    private function isAdministrator(AuthUser $authUser): bool
+    {
+        return $authUser instanceof User && $authUser->isPanelAdministrator();
     }
 }

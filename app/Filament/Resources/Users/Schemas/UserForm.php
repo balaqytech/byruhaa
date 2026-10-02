@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use App\Enums\UserRole;
 use App\Modules\Identity\Actions\SyncUserRoles;
 use App\Modules\Identity\Models\User;
 use Filament\Forms\Components\DateTimePicker;
@@ -41,10 +40,6 @@ class UserForm
                             ->dehydrated(fn (?string $state): bool => filled($state)),
                         DateTimePicker::make('email_verified_at')
                             ->label(__('admin.fields.email_verified_at')),
-                        Select::make('role')
-                            ->label(__('admin.fields.account_role'))
-                            ->options(UserRole::options())
-                            ->required(),
                     ]),
                 Section::make(__('admin.user_form.sections.permissions'))
                     ->schema([
@@ -61,6 +56,7 @@ class UserForm
                                 $syncUserRoles->execute($record, Arr::wrap($component->getState()));
                             })
                             ->multiple()
+                            ->required()
                             ->preload()
                             ->searchable()
                             ->helperText(__('admin.user_form.help.permission_roles')),

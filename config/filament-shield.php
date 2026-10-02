@@ -91,6 +91,15 @@ return [
         'name' => 'panel_user',
     ],
 
+    'staff_permissions' => [
+        'ViewAny:Category', 'View:Category', 'Create:Category', 'Update:Category',
+        'ViewAny:Product', 'View:Product', 'Create:Product', 'Update:Product',
+        'ViewAny:ProductOption', 'View:ProductOption', 'Create:ProductOption', 'Update:ProductOption',
+        'ViewAny:Order', 'View:Order', 'Create:Order', 'Update:Order',
+        'ViewAny:PublicPage', 'View:PublicPage', 'Update:PublicPage',
+        'ViewAny:Wallet', 'ViewAny:MinorProfile',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Permission Builder

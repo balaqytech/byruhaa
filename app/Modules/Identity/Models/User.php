@@ -2,7 +2,6 @@
 
 namespace App\Modules\Identity\Models;
 
-use App\Enums\UserRole;
 use App\Modules\Identity\Concerns\RecordsCustomAudits;
 use App\Modules\Identity\Contracts\AuditsIdentityRelations;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -24,7 +23,6 @@ use Spatie\Permission\Traits\HasRoles;
  * @property int $id
  * @property string $name
  * @property string $email
- * @property UserRole $role
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -34,7 +32,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'role', 'password'])]
+#[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements AuditableContract, AuditsIdentityRelations, FilamentUser
 {
@@ -47,7 +45,6 @@ class User extends Authenticatable implements AuditableContract, AuditsIdentityR
     protected $auditInclude = [
         'name',
         'email',
-        'role',
         'email_verified_at',
     ];
 
@@ -64,7 +61,6 @@ class User extends Authenticatable implements AuditableContract, AuditsIdentityR
     protected function casts(): array
     {
         return [
-            'role' => UserRole::class,
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
@@ -72,7 +68,13 @@ class User extends Authenticatable implements AuditableContract, AuditsIdentityR
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return in_array($this->role, [UserRole::Staff, UserRole::Admin], true);
+        return $this->roles()->where('guard_name', $panel->getAuthGuard())->exists()
+            || $this->permissions()->where('guard_name', $panel->getAuthGuard())->exists();
+    }
+
+    public function isPanelAdministrator(): bool
+    {
+        return $this->hasRole(config('filament-shield.super_admin.name'));
     }
 
     /**

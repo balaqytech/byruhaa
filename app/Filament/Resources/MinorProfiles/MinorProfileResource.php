@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\MinorProfiles;
 
-use App\Enums\UserRole;
 use App\Filament\Resources\MinorProfiles\Pages\ListMinorProfiles;
 use App\Filament\Resources\MinorProfiles\Pages\ViewMinorProfile;
 use App\Filament\Resources\MinorProfiles\Schemas\MinorProfileInfolist;
@@ -47,7 +46,8 @@ class MinorProfileResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        return $user instanceof User && in_array($user->role, [UserRole::Admin, UserRole::Staff], true);
+        return $user instanceof User
+            && ($user->isPanelAdministrator() || $user->can('ViewAny:MinorProfile'));
     }
 
     public static function canView(Model $record): bool

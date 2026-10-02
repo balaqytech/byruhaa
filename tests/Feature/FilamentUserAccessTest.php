@@ -1,12 +1,17 @@
 <?php
 
-use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
+use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
+use App\Modules\Identity\Actions\SyncUserRoles;
 use App\Modules\Identity\Models\Role;
 use App\Modules\Identity\Models\User;
+use App\Modules\Store\Models\Product;
+use BezhanSalleh\FilamentShield\Resources\Roles\Pages\ListRoles;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
+use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Tapp\FilamentAuditing\Filament\Resources\Audits\AuditResource;
@@ -34,7 +39,6 @@ test('administrators can create users and assign Shield roles', function () {
             'name' => 'Content Manager',
             'email' => 'content.manager@example.test',
             'password' => 'password',
-            'role' => UserRole::Staff->value,
             'roles' => [$role->getKey()],
         ])
         ->call('create')
@@ -45,9 +49,7 @@ test('administrators can create users and assign Shield roles', function () {
         ->where('email', 'content.manager@example.test')
         ->firstOrFail();
 
-    expect($managedUser->role)
-        ->toBe(UserRole::Staff)
-        ->and(Hash::check('password', $managedUser->password))->toBeTrue()
+    expect(Hash::check('password', $managedUser->password))->toBeTrue()
         ->and($managedUser->hasRole($role))->toBeTrue();
 });
 
@@ -84,7 +86,7 @@ test('audit detail access follows audit permissions', function () {
         ->assertForbidden();
 });
 
-test('Shield permissions can grant user management without the legacy admin role', function () {
+test('Shield permissions can grant user management without the super admin role', function () {
     $staff = User::factory()->create();
     $role = Role::create([
         'name' => 'user_viewer',
@@ -103,4 +105,87 @@ test('Shield permissions can grant user management without the legacy admin role
 
     $this->get(UserResource::getUrl('create'))
         ->assertForbidden();
+});
+
+test('delegated Shield permissions cannot grant administrator access or manage roles', function () {
+    $staff = User::factory()->create();
+    foreach (['Create:User', 'Update:User', 'Delete:User', 'Create:Role', 'Update:Role', 'Delete:Role'] as $name) {
+        $staff->givePermissionTo(Permission::findOrCreate($name, 'web'));
+    }
+
+    $administrator = User::factory()->admin()->create();
+    $role = Role::create(['name' => 'operator', 'guard_name' => 'web']);
+
+    expect($staff->can('create', User::class))->toBeFalse()
+        ->and($staff->can('update', $administrator))->toBeFalse()
+        ->and($staff->can('delete', $administrator))->toBeFalse()
+        ->and($staff->can('create', Role::class))->toBeFalse()
+        ->and($staff->can('update', $role))->toBeFalse()
+        ->and($staff->can('delete', $role))->toBeFalse();
+
+    $this->actingAs($staff, 'web')
+        ->get(UserResource::getUrl('create'))
+        ->assertForbidden();
+});
+
+test('an administrator cannot delete themselves or the protected super admin role', function () {
+    $administrator = User::factory()->admin()->create();
+    $superAdminRole = Role::findOrCreate('super_admin', 'web');
+
+    expect($administrator->can('delete', $administrator))->toBeFalse()
+        ->and($administrator->can('delete', $superAdminRole))->toBeFalse();
+});
+
+test('super administrators see user and role create actions', function () {
+    $superAdministrator = User::factory()->create();
+    $superAdministrator->assignRole(Role::findOrCreate('super_admin', 'web'));
+
+    $this->actingAs($superAdministrator, 'web');
+
+    Livewire::test(ListUsers::class)
+        ->assertActionVisible('create');
+
+    Livewire::test(ListRoles::class)
+        ->assertActionVisible('create');
+});
+
+test('user resource labels are translated into Arabic', function () {
+    app()->setLocale('ar');
+
+    expect(UserResource::getNavigationGroup())->toBe('إدارة المستخدمين')
+        ->and(UserResource::getPluralModelLabel())->toBe('المستخدمون');
+});
+
+test('panel access requires a Shield role or direct permission', function () {
+    $user = User::factory()->create();
+
+    expect($user->canAccessPanel(Filament::getPanel('admin')))->toBeTrue();
+
+    $user->syncRoles([]);
+
+    expect($user->canAccessPanel(Filament::getPanel('admin')))->toBeFalse();
+
+    $user->givePermissionTo(Permission::findOrCreate('ViewAny:User', 'web'));
+
+    expect($user->canAccessPanel(Filament::getPanel('admin')))->toBeTrue();
+});
+
+test('staff store access follows permissions assigned in Shield', function () {
+    $staff = User::factory()->create();
+
+    expect($staff->can('viewAny', Product::class))->toBeTrue();
+
+    $staff->roles()->firstOrFail()->revokePermissionTo('ViewAny:Product');
+
+    expect($staff->fresh()->can('viewAny', Product::class))->toBeFalse();
+});
+
+test('the last super administrator cannot remove their own Shield role', function () {
+    $administrator = User::factory()->admin()->create();
+    $staffRole = Role::findOrCreate('staff', 'web');
+
+    expect(fn () => (new SyncUserRoles)->execute($administrator, [$staffRole->getKey()]))
+        ->toThrow(ValidationException::class);
+
+    expect($administrator->fresh()->isPanelAdministrator())->toBeTrue();
 });
