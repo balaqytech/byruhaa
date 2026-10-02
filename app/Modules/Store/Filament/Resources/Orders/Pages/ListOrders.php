@@ -4,6 +4,7 @@ namespace App\Modules\Store\Filament\Resources\Orders\Pages;
 
 use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -17,6 +18,10 @@ class ListOrders extends ListRecords
     {
         return [
             CreateAction::make(),
+            Action::make('create_guest')
+                ->label(__('admin.store.admin_order.create_guest_order'))
+                ->url(OrderResource::getUrl('create-guest'))
+                ->visible(fn (): bool => OrderResource::canCreate()),
         ];
     }
 

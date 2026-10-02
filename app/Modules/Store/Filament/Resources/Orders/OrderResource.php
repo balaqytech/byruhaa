@@ -2,6 +2,7 @@
 
 namespace App\Modules\Store\Filament\Resources\Orders;
 
+use App\Modules\Store\Filament\Resources\Orders\Pages\CreateGuestOrder;
 use App\Modules\Store\Filament\Resources\Orders\Pages\CreateOrder;
 use App\Modules\Store\Filament\Resources\Orders\Pages\ListOrders;
 use App\Modules\Store\Filament\Resources\Orders\Pages\ViewOrder;
@@ -70,6 +71,7 @@ class OrderResource extends Resource
         return [
             'index' => ListOrders::route('/'),
             'create' => CreateOrder::route('/create'),
+            'create-guest' => CreateGuestOrder::route('/create-guest'),
             'view' => ViewOrder::route('/{record}'),
         ];
     }

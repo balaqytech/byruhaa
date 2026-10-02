@@ -3,6 +3,7 @@
 namespace App\Modules\Store\Filament\Resources\Orders\Tables;
 
 use App\Modules\Store\Enums\OrderStatus;
+use App\Modules\Store\Models\Order;
 use App\Modules\Store\States\Order\OrderState;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
@@ -20,7 +21,10 @@ class OrdersTable
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->latest('id'))
             ->columns([
                 TextColumn::make('reference')->label(__('admin.fields.reference'))->searchable()->sortable()->copyable(),
-                TextColumn::make('customer_name')->label(__('admin.fields.customer'))->searchable(),
+                TextColumn::make('customer_name')
+                    ->label(__('admin.fields.customer'))
+                    ->description(fn (Order $record): ?string => $record->customer_id === null ? __('admin.store.admin_order.guest') : null)
+                    ->searchable(),
                 TextColumn::make('customer_phone')->label(__('admin.fields.phone_number'))->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label(__('admin.fields.status'))

@@ -2,21 +2,36 @@
 
 namespace App\Modules\Store\Filament\Resources\Orders\Schemas;
 
+use App\Filament\Resources\Customers\CustomerResource;
+use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\MinorProfile;
+use App\Modules\Identity\Models\User;
+use App\Modules\Identity\Services\PhoneNumberNormalizer;
+use App\Modules\Store\Filament\Resources\Orders\Pages\CreateOrder;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Settings\StoreSettings;
+use Closure;
+use Filament\Actions\Action;
+use Filament\Facades\Filament;
+use Filament\Forms\Components\Checkbox;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class OrderForm
 {
@@ -57,10 +72,101 @@ class OrderForm
                                     $set('minor_profile_id', null);
                                     $set('payment_method', 'thawani');
                                 })
+                                ->createOptionForm([
+                                    TextInput::make('name')
+                                        ->label(__('admin.fields.name'))
+                                        ->required()
+                                        ->maxLength(255),
+                                    TextInput::make('phone_number')
+                                        ->label(__('admin.fields.phone_number'))
+                                        ->tel()
+                                        ->required()
+                                        ->rules(['phone:INTERNATIONAL,OM'])
+                                        ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                                            $normalizedPhone = app(PhoneNumberNormalizer::class)->normalize((string) $value);
+
+                                            if (Customer::query()->where('phone_number', $normalizedPhone)->exists()) {
+                                                $fail(__('validation.unique', ['attribute' => __('admin.fields.phone_number')]));
+                                            }
+                                        }),
+                                    TextInput::make('email')
+                                        ->label(__('admin.fields.email_address'))
+                                        ->email()
+                                        ->maxLength(255),
+                                    TextInput::make('password')
+                                        ->label(__('admin.fields.password'))
+                                        ->password()
+                                        ->revealable()
+                                        ->required()
+                                        ->rule(Password::defaults()),
+                                ])
+                                ->createOptionAction(fn (Action $action): Action => $action
+                                    ->label(__('admin.store.admin_order.quick_create_customer'))
+                                    ->modalHeading(__('admin.store.admin_order.quick_create_customer'))
+                                    ->visible(fn (): bool => CustomerResource::canCreate()))
+                                ->createOptionUsing(function (array $data): int {
+                                    abort_unless(CustomerResource::canCreate(), 403);
+
+                                    $data['phone_number'] = app(PhoneNumberNormalizer::class)->normalize($data['phone_number']);
+                                    $data['email'] = blank($data['email'] ?? null) ? null : $data['email'];
+
+                                    Validator::make($data, [
+                                        'phone_number' => ['required', 'phone:INTERNATIONAL,OM', Rule::unique(Customer::class)],
+                                        'email' => ['nullable', 'email', Rule::unique(Customer::class)],
+                                    ])->validate();
+
+                                    return Customer::query()->create([
+                                        'name' => $data['name'],
+                                        'phone_number' => $data['phone_number'],
+                                        'email' => $data['email'],
+                                        'password' => $data['password'],
+                                    ])->getKey();
+                                })
                                 ->required(),
                             Select::make('minor_profile_id')
                                 ->label(__('admin.store.admin_order.minor_profile'))
                                 ->helperText(__('admin.store.admin_order.minor_optional_help'))
+                                ->hintAction(Action::make('quickCreateMinor')
+                                    ->label(__('admin.store.admin_order.quick_create_minor'))
+                                    ->visible(fn (callable $get): bool => filled($get('customer_id')) && self::canCreateMinor())
+                                    ->schema([
+                                        TextInput::make('name')
+                                            ->label(__('admin.fields.name'))
+                                            ->required()
+                                            ->maxLength(255),
+                                        DatePicker::make('birth_date')
+                                            ->label(__('admin.store.admin_order.birth_date'))
+                                            ->required()
+                                            ->rules(['before:today']),
+                                        TextInput::make('school_name')
+                                            ->label(__('admin.store.admin_order.school_name'))
+                                            ->maxLength(255),
+                                        TextInput::make('grade')
+                                            ->label(__('admin.store.admin_order.grade'))
+                                            ->maxLength(64),
+                                        Checkbox::make('guardian_consent_confirmed')
+                                            ->label(__('admin.store.admin_order.guardian_consent_confirmed'))
+                                            ->accepted()
+                                            ->required(),
+                                    ])
+                                    ->action(function (array $data, CreateOrder $livewire): void {
+                                        abort_unless(self::canCreateMinor(), 403);
+
+                                        $guardian = Customer::query()->findOrFail((int) ($livewire->data['customer_id'] ?? 0));
+                                        $result = app(CreateMinorProfile::class)->execute($guardian, $data, request()->ip());
+                                        $profile = $result['profile'];
+                                        $activationUrl = URL::temporarySignedRoute('minor.activate', $profile->activation_token_expires_at, [
+                                            'minorProfile' => $profile->id,
+                                            'token' => $result['activation_token'],
+                                        ]);
+
+                                        Notification::make()
+                                            ->title(__('admin.store.admin_order.minor_created_pending'))
+                                            ->body(__('admin.store.admin_order.activation_link').': '.$activationUrl)
+                                            ->success()
+                                            ->persistent()
+                                            ->send();
+                                    }))
                                 ->options(fn (callable $get): array => filled($get('customer_id'))
                                     ? MinorProfile::query()
                                         ->with('familyMember:id,name')
@@ -123,6 +229,11 @@ class OrderForm
                                         ->maxValue(99)
                                         ->default(1)
                                         ->required(),
+                                    Textarea::make('note')
+                                        ->label(__('admin.fields.note'))
+                                        ->maxLength(500)
+                                        ->rows(2)
+                                        ->columnSpanFull(),
                                 ])
                                 ->columns(2)
                                 ->defaultItems(1)
@@ -159,9 +270,47 @@ class OrderForm
         ];
     }
 
+    /** @return array<Step> */
+    public static function guestSteps(): array
+    {
+        $steps = self::steps();
+
+        $steps[0] = Step::make(__('admin.store.admin_order.guest_details'))
+            ->schema([
+                Section::make(__('admin.store.admin_order.guest_details'))
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('customer_name')
+                            ->label(__('admin.fields.name'))
+                            ->required()
+                            ->maxLength(255),
+                        TextInput::make('customer_phone')
+                            ->label(__('admin.fields.phone_number'))
+                            ->tel()
+                            ->required()
+                            ->rules(['phone:INTERNATIONAL,OM'])
+                            ->maxLength(32),
+                        TextInput::make('customer_email')
+                            ->label(__('admin.fields.email_address'))
+                            ->email()
+                            ->maxLength(255),
+                    ]),
+            ]);
+
+        return $steps;
+    }
+
     private static function customerLabel(Customer $customer): string
     {
         return $customer->name.' ('.$customer->phone_number.')';
+    }
+
+    private static function canCreateMinor(): bool
+    {
+        $user = Filament::auth()->user();
+
+        return $user instanceof User
+            && ($user->isPanelAdministrator() || $user->can('Create:MinorProfile'));
     }
 
     private static function optionLabel(ProductOption $option): string
