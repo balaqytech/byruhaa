@@ -29,6 +29,8 @@ class ShowComingSoonPage
 
     private function shouldRemainAvailable(Request $request): bool
     {
-        return $request->is('admin', 'admin/*', 'livewire-*');
+        return $request->is('admin', 'admin/*', 'livewire-*')
+            || $request->routeIs('coffee.waitlist.store')
+            || $request->is('policies/privacy');
     }
 }

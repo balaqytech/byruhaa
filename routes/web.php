@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CoffeeWaitlistController;
 use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\OrderController;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/public.php';
 require __DIR__.'/affiliate.php';
+
+Route::post('coffee-waitlist', CoffeeWaitlistController::class)
+    ->middleware('throttle:10,1')
+    ->name('coffee.waitlist.store');
 
 Route::middleware('signed')->group(function () {
     Route::get('payments/thawani/{payment}/success', [ThawaniPaymentReturnController::class, 'success'])->name('payments.thawani.success');
