@@ -8,9 +8,9 @@
 <meta name="description" content="قهوة بِيرُحاء في إبراء: ليس مقهى، بل عالم لفتياننا من الصف السابع إلى الثاني عشر. سجّل لتعرف موعد الافتتاح أولًا.">
 <meta property="og:title" content="قهوة بِيرُحاء… تُفتح قريبًا">
 <meta property="og:description" content="عبادة، علم، عمل، لعب، نموّ — في مكان واحد. سجّل لتكون أول من يعلم.">
-<meta property="og:image" content="{{ asset('images/coffee-byruha-hero.webp') }}">
+<meta property="og:image" content="{{ asset('images/coffee-teaser-poster.webp') }}">
 <meta name="theme-color" content="#0f3d33">
-<link rel="preload" as="image" href="{{ asset('images/coffee-byruha-hero.webp') }}">
+<link rel="preload" as="image" href="{{ asset('images/coffee-teaser-poster.webp') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Kufi+Arabic:wght@600;800&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@ header img{height:40px}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo-light{display:none}:root:not([data-theme="light"]) .logo-dark{display:block}}
 
 /* الفيديو بمقاس الريل 9:16 */
-.reel{position:relative;width:100%;max-width:400px;margin:0 auto;aspect-ratio:9/16;border-radius:24px;overflow:hidden;background:#0a1a16 url('{{ asset('images/coffee-byruha-hero.webp') }}') center/cover no-repeat;box-shadow:0 20px 50px -20px rgba(15,61,51,.55)}
+.reel{position:relative;width:100%;max-width:400px;margin:0 auto;aspect-ratio:9/16;border-radius:24px;overflow:hidden;background:#0a1a16 url('{{ asset('images/coffee-teaser-poster.webp') }}') center/cover no-repeat;box-shadow:0 20px 50px -20px rgba(15,61,51,.55)}
 .reel-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .reel video{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;display:block;opacity:0;transition:opacity .25s ease}
 .reel video.is-ready{opacity:1}
@@ -111,9 +111,9 @@ footer a{color:inherit}
 
   <!-- الفيديو (ريل 9:16) -->
   <section class="reel">
-    <img class="reel-poster" src="{{ asset('images/coffee-byruha-hero.webp') }}" alt="" aria-hidden="true" fetchpriority="high">
+    <img class="reel-poster" src="{{ asset('images/coffee-teaser-poster.webp') }}" alt="" aria-hidden="true" fetchpriority="high">
     <video id="teaser" autoplay muted loop playsinline preload="metadata"
-           poster="{{ asset('images/coffee-byruha-hero.webp') }}">
+           poster="{{ asset('images/coffee-teaser-poster.webp') }}">
       <source src="{{ asset('The-introductory-video-for-Byruhaa-Coffee.mp4') }}" type="video/mp4">
     </video>
     <div class="badge"><i></i>قريبًا في إبراء</div>
