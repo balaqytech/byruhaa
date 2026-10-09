@@ -7,176 +7,411 @@
 
 @push('head')
 <style>
+  .rabbaniyeen-landing {
+    --forest: #123329;
+    --forest-deep: #0b241d;
+    --green: #007a52;
+    --green-hover: #006746;
+    --mint: #f6fbf8;
+    --paper: #fffdf7;
+    --gold: #b7892b;
+    --hibr-2: #4b665c;
+    --waraq-2: #ffffff;
+    --hd: #dce9e1;
+    background: var(--mint);
+    color: var(--forest);
+    font-family: var(--font-sans);
+    font-size: 17px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
 
-/* ═══════════════════════════════════════════════════════════
-   هوية بِيرُحاء البصرية — لا تُخالَف
-   ═══════════════════════════════════════════════════════════ */
-:root{
-  --kohli:#16263F;        /* كحلي — الأساس */
-  --kohli-2:#22374F;
-  --fayrouzi:#0E7C7B;     /* فيروزي — الفعل والروابط */
-  --fayrouzi-d:#0A5F5E;
-  --thahabi:#B7892B;      /* ذهبي — نادر، للتمييز فقط */
-  --waraq:#F5F6F4;        /* أرضية الصفحة */
-  --waraq-2:#FFFFFF;
-  --hibr:#1D2A38;
-  --hibr-2:#516071;
-  --hd:#E2E6E4;
-  --r:14px;
-  --wide:1080px;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{animation:none!important;transition:none!important}}
-body{
-  margin:0;background:var(--waraq);color:var(--hibr);
-  font-family:"Noto Naskh Arabic",serif;font-size:17px;line-height:2;
-  -webkit-font-smoothing:antialiased;
-}
-h1,h2,h3,.kufi{font-family:"Reem Kufi","Noto Naskh Arabic",sans-serif;line-height:1.55;font-weight:600}
-p{margin:0 0 1em}
-a{color:var(--fayrouzi-d)}
-.wrap{max-width:var(--wide);margin-inline:auto;padding-inline:22px}
-:focus-visible{outline:3px solid var(--thahabi);outline-offset:3px;border-radius:6px}
+  .rabbaniyeen-landing * { box-sizing: border-box; }
+  .rabbaniyeen-landing :is(h1, h2, h3, h4) {
+    font-family: var(--font-heading);
+    font-weight: 900;
+    line-height: 1.25;
+  }
+  .rabbaniyeen-landing p { margin: 0 0 1em; }
+  .rabbaniyeen-landing a { color: var(--green); }
+  .rabbaniyeen-landing .wrap { width: min(100% - 48px, 1220px); margin-inline: auto; }
+  .rabbaniyeen-landing :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+  .rabbaniyeen-landing :is(section, #sajjil) { scroll-margin-top: 90px; }
 
-/* ── الترويسة ─────────────────────────────────────────── */
-header{background:var(--kohli);color:#fff;position:sticky;top:0;z-index:40}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}
-.brand{font-family:"Reem Kufi",sans-serif;font-size:19px;font-weight:600;letter-spacing:.2px}
-.brand span{display:block;font-size:12.5px;font-weight:400;opacity:.72;font-family:"Noto Naskh Arabic",serif}
-.nav{display:flex;gap:22px;font-size:15px}
-.nav a{color:#D6DEE6;text-decoration:none}
-.nav a:hover{color:#fff}
-@media(max-width:760px){.nav{display:none}}
+  .rabbaniyeen-landing header {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 40;
+    background: rgb(246 251 248 / 96%);
+    border-block-end: 1px solid var(--hd);
+    backdrop-filter: blur(12px);
+  }
+  .rabbaniyeen-landing .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    min-height: 82px;
+    padding-block: 10px;
+  }
+  .rabbaniyeen-landing .brand {
+    color: var(--forest);
+    font-family: var(--font-heading);
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  .rabbaniyeen-landing .brand span {
+    display: block;
+    margin-block-start: 3px;
+    color: var(--hibr-2);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 400;
+  }
+  .rabbaniyeen-landing .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 28px; }
+  .rabbaniyeen-landing .nav a {
+    color: var(--forest);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color .18s ease;
+  }
+  .rabbaniyeen-landing .nav a:hover { color: var(--green); }
+  .rabbaniyeen-landing .nav a:last-child {
+    padding: 9px 16px;
+    border: 1px solid rgb(0 122 82 / 25%);
+    border-radius: 3px;
+    color: var(--green);
+  }
+  .rabbaniyeen-landing .nav a:last-child:hover { background: rgb(0 122 82 / 7%); }
 
-/* ── البطل ────────────────────────────────────────────── */
-.hero{background:var(--kohli);color:#fff;padding:56px 0 70px;position:relative;overflow:hidden}
-.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:52px;align-items:center}
-@media(max-width:880px){.hero-grid{grid-template-columns:1fr;gap:36px}}
-.hero h1{font-size:clamp(30px,5.4vw,46px);margin:0 0 18px;font-weight:700}
-.hero .lede{font-size:19px;color:#CBD6DF;max-width:52ch;margin-bottom:8px}
-.aya{color:var(--thahabi);font-size:15.5px;margin-bottom:22px}
-.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:26px}
-.btn{
-  display:inline-block;background:var(--fayrouzi);color:#fff;text-decoration:none;
-  padding:15px 32px;border-radius:var(--r);font-family:"Reem Kufi",sans-serif;font-size:17px;
-  border:0;cursor:pointer;transition:background .18s
-}
-.btn:hover{background:var(--fayrouzi-d)}
-.btn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff}
-.btn-ghost:hover{background:rgba(255,255,255,.09)}
-.no-commit{font-size:14.5px;color:#9FB0BF;margin-top:14px}
+  .rabbaniyeen-landing .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(64px, 7vw, 112px) clamp(76px, 8vw, 124px);
+    background: radial-gradient(circle at 15% 10%, rgb(213 239 223 / 70%), transparent 38%), var(--mint);
+  }
+  .rabbaniyeen-landing .hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, .92fr);
+    align-items: center;
+    gap: clamp(44px, 6vw, 96px);
+  }
+  .rabbaniyeen-landing .hero h1 {
+    max-width: 12ch;
+    margin: 0 0 24px;
+    color: var(--forest);
+    font-size: clamp(42px, 4.8vw, 68px);
+  }
+  .rabbaniyeen-landing .hero .lede {
+    max-width: 54ch;
+    margin-block-end: 18px;
+    color: #36594c;
+    font-size: clamp(17px, 1.6vw, 21px);
+    line-height: 1.9;
+  }
+  .rabbaniyeen-landing .aya {
+    max-width: 58ch;
+    margin-block-end: 0;
+    color: #87631d;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .rabbaniyeen-landing .cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-block-start: 32px;
+  }
+  .rabbaniyeen-landing .btn {
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 25px;
+    border: 1px solid var(--green);
+    border-radius: 3px;
+    background: var(--green);
+    color: #fff;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+  }
+  .rabbaniyeen-landing .btn:hover { transform: translateY(-2px); background: var(--green-hover); border-color: var(--green-hover); }
+  .rabbaniyeen-landing .btn-ghost {
+    border-color: rgb(18 51 41 / 22%);
+    background: rgb(255 255 255 / 68%);
+    color: var(--forest);
+  }
+  .rabbaniyeen-landing .btn-ghost:hover { background: #fff; border-color: var(--green); }
+  .rabbaniyeen-landing .no-commit {
+    margin-block: 15px 0;
+    color: var(--hibr-2);
+    font-size: 13px;
+  }
+  .rabbaniyeen-landing .mushaf {
+    position: relative;
+    margin: 0;
+    padding: clamp(22px, 3vw, 40px);
+    border: 6px solid #eaf4ed;
+    border-radius: 4px;
+    background: var(--paper);
+    box-shadow: 20px 22px 0 rgb(18 51 41 / 9%), 0 22px 60px rgb(18 51 41 / 9%);
+  }
+  .rabbaniyeen-landing .mushaf svg { display: block; width: 100%; height: auto; }
+  .rabbaniyeen-landing .mushaf figcaption {
+    margin-block-start: 22px;
+    padding-block-start: 16px;
+    border-block-start: 1px solid #e7e6d8;
+    color: var(--forest);
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .rabbaniyeen-landing .mushaf b { color: #87631d; }
 
-/* لوح المصحف — رمز الوِرد */
-.mushaf{background:#F8F7F2;border-radius:18px;padding:26px 22px 20px;box-shadow:0 18px 44px rgba(0,0,0,.28)}
-.mushaf svg{width:100%;height:auto;display:block}
-.mushaf figcaption{
-  font-family:"Reem Kufi",sans-serif;font-size:14.5px;color:var(--kohli);
-  text-align:center;margin-top:14px;padding-top:12px;border-top:1px solid #E4E0D2
-}
-.mushaf b{color:var(--thahabi)}
+  .rabbaniyeen-landing section { padding-block: clamp(72px, 8vw, 120px); }
+  .rabbaniyeen-landing .sec-t {
+    max-width: 22ch;
+    margin: 0 0 16px;
+    color: var(--forest);
+    font-size: clamp(30px, 3.3vw, 45px);
+  }
+  .rabbaniyeen-landing .sec-s {
+    max-width: 65ch;
+    margin: 0 0 44px;
+    color: var(--hibr-2);
+    font-size: 17px;
+  }
 
-/* ── الأقسام ──────────────────────────────────────────── */
-section{padding:64px 0}
-.sec-t{font-size:clamp(23px,3.6vw,30px);color:var(--kohli);margin:0 0 12px}
-.sec-s{color:var(--hibr-2);max-width:60ch;margin:0 0 34px}
+  .rabbaniyeen-landing .time { border-block: 1px solid var(--hd); background: #fff; }
+  .rabbaniyeen-landing .time-grid {
+    display: grid;
+    grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+    align-items: start;
+    gap: clamp(40px, 8vw, 120px);
+    margin-block-start: 52px;
+  }
+  .rabbaniyeen-landing .bignum {
+    color: var(--green);
+    font-family: var(--font-heading);
+    font-size: clamp(90px, 12vw, 168px);
+    font-weight: 900;
+    line-height: .95;
+  }
+  .rabbaniyeen-landing .bignum small {
+    display: block;
+    max-width: 18ch;
+    margin-block-start: 18px;
+    color: var(--forest);
+    font-family: var(--font-sans);
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+  .rabbaniyeen-landing .ledger {
+    max-width: none;
+    margin: 0 0 30px;
+    padding: 0;
+    color: var(--hibr-2);
+    font-size: 16px;
+    list-style: none;
+  }
+  .rabbaniyeen-landing .ledger li {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding-block: 13px;
+    border-block-end: 1px solid var(--hd);
+  }
+  .rabbaniyeen-landing .ledger li span:last-child { white-space: nowrap; }
+  .rabbaniyeen-landing .ledger li:last-child { color: var(--forest); font-weight: 700; }
+  .rabbaniyeen-landing .time-grid p { color: var(--hibr-2); }
 
-/* الوقت */
-.time{background:var(--waraq-2);border-block:1px solid var(--hd)}
-.time-grid{display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:center}
-@media(max-width:760px){.time-grid{grid-template-columns:1fr;gap:22px}}
-.bignum{font-family:"Reem Kufi",sans-serif;font-size:clamp(64px,13vw,104px);color:var(--fayrouzi);line-height:1;font-weight:700}
-.bignum small{display:block;font-size:16px;color:var(--hibr-2);font-weight:400;margin-top:10px;font-family:"Noto Naskh Arabic",serif}
-.ledger{list-style:none;margin:18px 0 0;padding:0;font-size:15.5px;color:var(--hibr-2);max-width:44ch}
-.ledger li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--hd)}
-.ledger li:last-child{border:0;color:var(--kohli);font-weight:600}
+  .rabbaniyeen-landing #masarat { background: var(--mint); }
+  .rabbaniyeen-landing .tracks {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 15px;
+  }
+  .rabbaniyeen-landing .track {
+    padding: clamp(24px, 2.6vw, 38px);
+    border: 1px solid var(--hd);
+    border-radius: 3px;
+    background: #fff;
+  }
+  .rabbaniyeen-landing .track:first-child { border-color: #a6d5bb; background: #e9f5ed; }
+  .rabbaniyeen-landing .track h3 { margin: 0 0 6px; color: var(--forest); font-size: 28px; }
+  .rabbaniyeen-landing .track .wird {
+    min-height: 34px;
+    margin: 0 0 22px;
+    color: var(--green);
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .rabbaniyeen-landing .track dl { display: grid; grid-template-columns: 1fr auto; margin: 0; font-size: 15px; }
+  .rabbaniyeen-landing .track dt, .rabbaniyeen-landing .track dd { margin: 0; padding-block: 10px; border-block-start: 1px solid rgb(18 51 41 / 12%); }
+  .rabbaniyeen-landing .track dt { color: var(--hibr-2); }
+  .rabbaniyeen-landing .track dd { color: var(--forest); font-weight: 700; text-align: end; }
+  .rabbaniyeen-landing .track:nth-child(3) { border-block-start: 3px solid var(--gold); }
+  .rabbaniyeen-landing #masarat .tracks + p { font-size: 16px; }
 
-/* المسارات */
-.tracks{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-@media(max-width:820px){.tracks{grid-template-columns:1fr}}
-.track{background:var(--waraq-2);border:1px solid var(--hd);border-radius:var(--r);padding:26px 24px}
-.track h3{margin:0 0 4px;font-size:22px;color:var(--kohli)}
-.track .wird{color:var(--fayrouzi);font-family:"Reem Kufi",sans-serif;font-size:16px;margin-bottom:16px}
-.track dl{margin:0;font-size:15.5px}
-.track dt{color:var(--hibr-2);font-size:14px}
-.track dd{margin:0 0 12px;color:var(--kohli);font-weight:600}
-.track:nth-child(3){border-color:var(--thahabi)}
+  .rabbaniyeen-landing .feat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 50px 72px; }
+  .rabbaniyeen-landing .f { padding-block-start: 25px; border-block-start: 2px solid #acd5bb; }
+  .rabbaniyeen-landing .f h3 { margin: 0 0 14px; color: var(--forest); font-size: 26px; }
+  .rabbaniyeen-landing .f p { margin: 0; color: var(--hibr-2); font-size: 16px; line-height: 1.95; }
 
-/* المميزات */
-.feat{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
-@media(max-width:760px){.feat{grid-template-columns:1fr}}
-.f{background:var(--waraq-2);border:1px solid var(--hd);border-radius:var(--r);padding:24px}
-.f h3{margin:0 0 8px;font-size:19px;color:var(--kohli)}
-.f p{margin:0;font-size:16px;color:var(--hibr-2)}
+  .rabbaniyeen-landing #asila { background: var(--mint); }
+  .rabbaniyeen-landing details { margin-block-end: 10px; border: 1px solid var(--hd); border-radius: 3px; background: #fff; }
+  .rabbaniyeen-landing details[open] { border-color: #acd5bb; box-shadow: 0 10px 30px rgb(18 51 41 / 4%); }
+  .rabbaniyeen-landing summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 19px 22px;
+    color: var(--forest);
+    font-size: 17px;
+    font-weight: 700;
+    list-style: none;
+    cursor: pointer;
+  }
+  .rabbaniyeen-landing summary::-webkit-details-marker { display: none; }
+  .rabbaniyeen-landing summary::after { content: "+"; flex: none; color: var(--green); font-size: 25px; line-height: 1; }
+  .rabbaniyeen-landing details[open] summary::after { content: "–"; }
+  .rabbaniyeen-landing details .body { padding: 0 22px 23px; color: var(--hibr-2); font-size: 16px; line-height: 1.95; }
 
-/* الأسئلة */
-details{background:var(--waraq-2);border:1px solid var(--hd);border-radius:var(--r);margin-bottom:10px;overflow:hidden}
-summary{
-  cursor:pointer;padding:18px 22px;font-family:"Reem Kufi",sans-serif;font-size:17.5px;
-  color:var(--kohli);list-style:none;display:flex;justify-content:space-between;gap:14px;align-items:center
-}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";color:var(--fayrouzi);font-size:24px;line-height:1}
-details[open] summary::after{content:"–"}
-details .body{padding:0 22px 20px;color:var(--hibr-2);font-size:16px}
+  .rabbaniyeen-landing .form-sec { background: var(--forest); color: #fff; }
+  .rabbaniyeen-landing .form-sec > .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr);
+    align-items: start;
+    column-gap: clamp(48px, 7vw, 112px);
+  }
+  .rabbaniyeen-landing .form-sec .sec-t { grid-column: 1; grid-row: 1; margin-block-start: 32px; color: #fff; }
+  .rabbaniyeen-landing .form-sec .sec-s { grid-column: 1; grid-row: 2; color: #c4dbcd; }
+  .rabbaniyeen-landing .card {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    width: 100%;
+    max-width: none;
+    padding: clamp(24px, 3.2vw, 46px);
+    border-radius: 4px;
+    background: #fff;
+    color: var(--forest);
+    box-shadow: 0 24px 70px rgb(0 0 0 / 13%);
+  }
+  .rabbaniyeen-landing .pledge {
+    margin-block-end: 28px;
+    padding: 15px 18px;
+    border-inline-start: 3px solid var(--green);
+    background: var(--mint);
+    color: var(--forest);
+    font-size: 14px;
+    line-height: 1.8;
+  }
+  .rabbaniyeen-landing .field { margin-block-end: 20px; }
+  .rabbaniyeen-landing label { display: block; margin-block-end: 7px; color: var(--forest); font-size: 15px; font-weight: 700; }
+  .rabbaniyeen-landing .req { color: #b0392e; }
+  .rabbaniyeen-landing :is(input, select, textarea) {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 13px;
+    border: 1px solid #cbdcd1;
+    border-radius: 3px;
+    background: #fff;
+    color: var(--forest);
+    font-family: var(--font-sans);
+    font-size: 15px;
+  }
+  .rabbaniyeen-landing :is(input, select, textarea):focus {
+    border-color: var(--green);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(0 122 82 / 14%);
+  }
+  .rabbaniyeen-landing textarea { min-height: 106px; resize: vertical; }
+  .rabbaniyeen-landing .hint { margin-block-start: 5px; color: var(--hibr-2); font-size: 13px; }
+  .rabbaniyeen-landing .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .rabbaniyeen-landing .check { display: flex; align-items: flex-start; gap: 11px; color: var(--hibr-2); font-size: 14px; font-weight: 400; line-height: 1.8; }
+  .rabbaniyeen-landing .check input { flex: none; width: 19px; min-height: 19px; height: 19px; margin-block-start: 5px; accent-color: var(--green); }
+  .rabbaniyeen-landing .submit { width: 100%; margin-block-start: 7px; font-size: 17px; }
+  .rabbaniyeen-landing .submit[disabled] { opacity: .55; cursor: not-allowed; }
+  .rabbaniyeen-landing .err { display: none; margin-block-start: 8px; color: #b0392e; font-size: 14px; }
+  .rabbaniyeen-landing .done { display: none; padding-block: 16px; text-align: center; }
+  .rabbaniyeen-landing .done h3 { margin: 0 0 10px; color: var(--green); font-size: 28px; }
+  .rabbaniyeen-landing .done p { color: var(--hibr-2); }
+  .rabbaniyeen-landing .wa {
+    display: inline-flex;
+    min-height: 48px;
+    align-items: center;
+    margin-block-start: 12px;
+    padding: 10px 25px;
+    border-radius: 3px;
+    background: #1f9e52;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+  }
 
-/* الاستمارة */
-.form-sec{background:var(--kohli);color:#fff}
-.form-sec .sec-t{color:#fff}
-.form-sec .sec-s{color:#A9BAC8}
-.card{background:var(--waraq-2);border-radius:18px;padding:34px 30px;color:var(--hibr);max-width:660px}
-@media(max-width:600px){.card{padding:26px 20px}}
-.pledge{
-  background:#EAF3F2;border-inline-start:4px solid var(--fayrouzi);
-  border-radius:10px;padding:14px 18px;font-size:15.5px;color:#12403F;margin-bottom:26px
-}
-.field{margin-bottom:18px}
-label{display:block;font-family:"Reem Kufi",sans-serif;font-size:15.5px;margin-bottom:7px;color:var(--kohli)}
-.req{color:#B03A2E}
-input,select,textarea{
-  width:100%;padding:13px 15px;border:1.5px solid var(--hd);border-radius:10px;
-  font-family:inherit;font-size:16px;background:#FCFCFB;color:var(--hibr)
-}
-input:focus,select:focus,textarea:focus{border-color:var(--fayrouzi);outline:none;box-shadow:0 0 0 3px rgba(14,124,123,.13)}
-textarea{min-height:86px;resize:vertical}
-.hint{font-size:13.5px;color:var(--hibr-2);margin-top:5px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:560px){.two{grid-template-columns:1fr}}
-.check{display:flex;gap:11px;align-items:flex-start;font-size:15px;color:var(--hibr-2);line-height:1.75}
-.check input{width:19px;height:19px;flex:none;margin-top:6px;accent-color:var(--fayrouzi)}
-.submit{width:100%;margin-top:8px;font-size:18px;padding:16px}
-.submit[disabled]{opacity:.55;cursor:not-allowed}
-.err{color:#B03A2E;font-size:14.5px;margin-top:10px;display:none}
-.done{display:none;text-align:center;padding:14px 0}
-.done h3{color:var(--fayrouzi-d);font-size:24px;margin:0 0 10px}
-.done p{color:var(--hibr-2)}
-.wa{display:inline-block;background:#1F9E52;color:#fff;text-decoration:none;padding:14px 28px;border-radius:var(--r);font-family:"Reem Kufi",sans-serif;margin-top:12px}
+  .rabbaniyeen-landing footer { padding-block: 64px 30px; background: var(--forest-deep); color: #b3c8bb; font-size: 14px; }
+  .rabbaniyeen-landing footer a { display: block; padding-block: 3px; color: #cbdcd1; text-decoration: none; }
+  .rabbaniyeen-landing footer a:hover { color: #fff; text-decoration: underline; }
+  .rabbaniyeen-landing .fgrid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 48px; }
+  .rabbaniyeen-landing .fgrid h4 { margin: 0 0 16px; color: #fff; font-size: 20px; }
+  .rabbaniyeen-landing .fine { margin-block: 54px 0; padding-block-start: 22px; border-block-start: 1px solid rgb(255 255 255 / 15%); color: #9ab2a3; font-size: 13px; }
 
-/* إشعار الفتح */
-.notice{
-  position:fixed;inset-inline:16px;bottom:16px;z-index:60;max-width:430px;margin-inline:auto;
-  background:var(--waraq-2);border:1px solid var(--hd);border-inline-start:5px solid var(--thahabi);
-  border-radius:var(--r);padding:18px 20px;box-shadow:0 16px 42px rgba(22,38,63,.22);
-  transform:translateY(140%);transition:transform .4s cubic-bezier(.2,.8,.2,1)
-}
-.notice.in{transform:none}
-.notice p{font-size:15.5px;margin:0 0 12px;color:var(--hibr)}
-.notice strong{color:var(--kohli)}
-.notice button{
-  background:none;border:0;color:var(--fayrouzi-d);font-family:"Reem Kufi",sans-serif;
-  font-size:15.5px;cursor:pointer;padding:0;text-decoration:underline
-}
-@media(prefers-reduced-motion:reduce){.notice{transition:none}}
-
-/* التذييل */
-footer{background:#101D30;color:#93A5B5;padding:46px 0 34px;font-size:15px}
-footer a{color:#C7D4DE;text-decoration:none;display:block;padding:4px 0}
-footer a:hover{color:#fff;text-decoration:underline}
-.fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:34px}
-@media(max-width:760px){.fgrid{grid-template-columns:1fr;gap:26px}}
-.fgrid h4{font-family:"Reem Kufi",sans-serif;color:#fff;font-size:16px;margin:0 0 10px;font-weight:500}
-.fine{border-top:1px solid #223449;margin-top:32px;padding-top:20px;font-size:13.5px;color:#7D8FA0}
-
+  @media (max-width: 980px) {
+    .rabbaniyeen-landing .nav { gap: 10px 16px; }
+    .rabbaniyeen-landing .hero-grid { gap: 40px; }
+    .rabbaniyeen-landing .tracks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .rabbaniyeen-landing .track:first-child { grid-column: 1 / -1; }
+    .rabbaniyeen-landing .track { padding: 22px; }
+  }
+  @media (max-width: 760px) {
+    .rabbaniyeen-landing .wrap { width: min(100% - 36px, 1220px); }
+    .rabbaniyeen-landing .bar { min-height: 68px; }
+    .rabbaniyeen-landing .brand { font-size: 22px; }
+    .rabbaniyeen-landing .nav { display: none; }
+    .rabbaniyeen-landing .hero-grid, .rabbaniyeen-landing .time-grid { grid-template-columns: 1fr; }
+    .rabbaniyeen-landing .hero h1 { max-width: 16ch; font-size: clamp(37px, 8vw, 52px); }
+    .rabbaniyeen-landing .mushaf { max-width: 570px; }
+    .rabbaniyeen-landing .time-grid { margin-block-start: 30px; gap: 36px; }
+    .rabbaniyeen-landing .bignum { font-size: clamp(90px, 20vw, 130px); }
+    .rabbaniyeen-landing .tracks { grid-template-columns: 1fr; }
+    .rabbaniyeen-landing .track:first-child { grid-column: auto; }
+    .rabbaniyeen-landing .track .wird { min-height: 0; }
+    .rabbaniyeen-landing .feat { grid-template-columns: 1fr; gap: 34px; }
+    .rabbaniyeen-landing .form-sec > .wrap { display: block; }
+    .rabbaniyeen-landing .form-sec .sec-t { margin-block-start: 0; }
+    .rabbaniyeen-landing .form-sec .sec-s { margin-block-end: 30px; }
+    .rabbaniyeen-landing .fgrid { grid-template-columns: 1fr 1fr; gap: 30px; }
+    .rabbaniyeen-landing .fgrid > div:first-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 520px) {
+    .rabbaniyeen-landing .wrap { width: min(100% - 32px, 1220px); }
+    .rabbaniyeen-landing .hero { padding-block: 58px 76px; }
+    .rabbaniyeen-landing .hero h1 { font-size: 39px; }
+    .rabbaniyeen-landing .cta-row { align-items: stretch; }
+    .rabbaniyeen-landing .cta-row .btn { flex: 1 1 100%; }
+    .rabbaniyeen-landing .mushaf { padding: 18px; box-shadow: 10px 12px 0 rgb(18 51 41 / 9%); }
+    .rabbaniyeen-landing .ledger { font-size: 14px; }
+    .rabbaniyeen-landing .two { grid-template-columns: 1fr; gap: 0; }
+    .rabbaniyeen-landing .card { padding: 22px 18px; }
+    .rabbaniyeen-landing .fgrid { grid-template-columns: 1fr; }
+    .rabbaniyeen-landing .fgrid > div:first-child { grid-column: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rabbaniyeen-landing :is(.btn, .nav a) { transition: none; }
+    .rabbaniyeen-landing .btn:hover { transform: none; }
+  }
 </style>
 @endpush
 
