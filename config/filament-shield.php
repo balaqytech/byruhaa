@@ -1,10 +1,23 @@
 <?php
 
 declare(strict_types=1);
+use App\Filament\Resources\AffiliateCommissions\AffiliateCommissionResource;
+use App\Filament\Resources\AffiliatePayoutRequests\AffiliatePayoutRequestResource;
+use App\Filament\Resources\LedgerAccounts\LedgerAccountResource;
+use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
+use App\Filament\Resources\MinorProfiles\MinorProfileResource;
+use App\Filament\Resources\PaymentRefunds\PaymentRefundResource;
+use App\Filament\Resources\Payments\PaymentResource;
+use App\Filament\Resources\Wallets\WalletResource;
+use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
+use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
+use App\Modules\Store\Filament\Resources\Orders\OrderResource;
+use App\Modules\Store\Filament\Resources\Products\ProductResource;
 use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Pages\Dashboard;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
+use Tapp\FilamentAuditing\Filament\Resources\Audits\AuditResource;
 
 return [
 
@@ -27,7 +40,7 @@ return [
             'pages' => true,
             'widgets' => true,
             'resources' => true,
-            'custom_permissions' => false,
+            'custom_permissions' => true,
         ],
     ],
 
@@ -92,14 +105,13 @@ return [
     ],
 
     'staff_permissions' => [
-        'ViewAny:Category', 'View:Category', 'Create:Category', 'Update:Category',
-        'ViewAny:Product', 'View:Product', 'Create:Product', 'Update:Product',
-        'ViewAny:ProductOption', 'View:ProductOption', 'Create:ProductOption', 'Update:ProductOption',
+        'ViewAny:Category', 'Create:Category', 'Update:Category',
+        'ViewAny:Product', 'Create:Product', 'Update:Product', 'Adjust:ProductStock',
         'ViewAny:Order', 'View:Order', 'Create:Order', 'Update:Order',
-        'ViewAny:PublicPage', 'View:PublicPage', 'Update:PublicPage',
+        'ViewAny:PublicPage', 'Update:PublicPage',
         'ViewAny:Wallet', 'ViewAny:MinorProfile',
-        'ViewAny:AffiliateCommission', 'View:AffiliateCommission', 'Create:AffiliateCommission', 'Update:AffiliateCommission', 'Delete:AffiliateCommission',
-        'ViewAny:AffiliatePayoutRequest', 'View:AffiliatePayoutRequest', 'Create:AffiliatePayoutRequest', 'Update:AffiliatePayoutRequest', 'Delete:AffiliatePayoutRequest',
+        'ViewAny:AffiliateCommission', 'View:AffiliateCommission',
+        'ViewAny:AffiliatePayoutRequest', 'View:AffiliatePayoutRequest', 'Update:AffiliatePayoutRequest',
         'ViewAny:Affiliate', 'View:Affiliate', 'Create:Affiliate', 'Update:Affiliate', 'Delete:Affiliate',
         'ViewAny:BlogPostCategory', 'View:BlogPostCategory', 'Create:BlogPostCategory', 'Update:BlogPostCategory', 'Delete:BlogPostCategory',
         'ViewAny:BlogPost', 'View:BlogPost', 'Create:BlogPost', 'Update:BlogPost', 'Delete:BlogPost',
@@ -145,7 +157,7 @@ return [
         'separator' => ':',
         'case' => 'pascal',
         'generate' => true,
-        'format_custom_permission_keys' => true,
+        'format_custom_permission_keys' => false,
     ],
 
     /*
@@ -165,19 +177,14 @@ return [
 
     'policies' => [
         'path' => app_path('Policies'),
-        'merge' => true,
+        'merge' => false,
         'generate' => true,
         'methods' => [
-            'viewAny', 'view', 'create', 'update', 'delete', 'deleteAny', 'restore',
-            'forceDelete', 'forceDeleteAny', 'restoreAny', 'replicate', 'reorder',
+            'viewAny', 'view', 'create', 'update', 'delete',
         ],
         'single_parameter_methods' => [
             'viewAny',
             'create',
-            'deleteAny',
-            'forceDeleteAny',
-            'restoreAny',
-            'reorder',
         ],
     ],
 
@@ -218,6 +225,19 @@ return [
                 'update',
                 'delete',
             ],
+            AuditResource::class => ['viewAny', 'view'],
+            AffiliateCommissionResource::class => ['viewAny', 'view'],
+            AffiliatePayoutRequestResource::class => ['viewAny', 'view', 'update'],
+            LedgerAccountResource::class => ['viewAny', 'view'],
+            LedgerTransactionResource::class => ['viewAny', 'view'],
+            MinorProfileResource::class => ['viewAny', 'view', 'create'],
+            PaymentRefundResource::class => ['viewAny', 'view'],
+            PaymentResource::class => ['viewAny', 'view'],
+            WalletResource::class => ['viewAny', 'view'],
+            PublicPageResource::class => ['viewAny', 'update'],
+            CategoryResource::class => ['viewAny', 'create', 'update'],
+            OrderResource::class => ['viewAny', 'view', 'create', 'update'],
+            ProductResource::class => ['viewAny', 'create', 'update'],
         ],
         'exclude' => [
             //
@@ -279,6 +299,16 @@ return [
 
     'custom_permissions' => [
         'View:LogViewer' => 'View Log Viewer',
+        'Sell:Pos' => 'Sell at cashier',
+        'Reprint:PosReceipts' => 'Reprint POS receipts',
+        'View:BaristaBoard' => 'View barista orders',
+        'Prepare:BaristaOrders' => 'Update barista preparation',
+        'View:PickupBoard' => 'View pickup orders',
+        'Complete:PickupOrders' => 'Complete pickup orders',
+        'Manage:PosCards' => 'Manage POS cards (legacy)',
+        'Issue:PosCards' => 'Issue minor QR cards',
+        'Print:PosCards' => 'Print minor QR cards',
+        'Adjust:ProductStock' => 'Adjust product stock',
     ],
 
     /*
@@ -293,9 +323,9 @@ return [
     */
 
     'discovery' => [
-        'discover_all_resources' => false,
-        'discover_all_widgets' => false,
-        'discover_all_pages' => false,
+        'discover_all_resources' => true,
+        'discover_all_widgets' => true,
+        'discover_all_pages' => true,
     ],
 
     /*
