@@ -10,6 +10,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -70,13 +71,20 @@ class User extends Authenticatable implements AuditableContract, AuditsIdentityR
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->roles()
-            ->where('guard_name', $panel->getAuthGuard())
-            ->whereNotIn('name', ['pos_cashier', 'pos_barista', 'pos_pickup_attendant'])
-            ->exists()
+        $workspacePermissions = [
+            'Sell:Pos', 'Reprint:PosReceipts', 'View:BaristaBoard',
+            'Prepare:BaristaOrders', 'View:PickupBoard', 'Complete:PickupOrders',
+        ];
+
+        return $this->isPanelAdministrator()
+            || $this->hasRole(config('filament-shield.panel_user.name'))
             || $this->permissions()
                 ->where('guard_name', $panel->getAuthGuard())
-                ->whereNotIn('name', ['Sell:Pos', 'Reprint:PosReceipts', 'View:BaristaBoard', 'Prepare:BaristaOrders', 'View:PickupBoard', 'Complete:PickupOrders'])
+                ->whereNotIn('name', $workspacePermissions)
+                ->exists()
+            || $this->roles()
+                ->where('guard_name', $panel->getAuthGuard())
+                ->whereHas('permissions', fn (Builder $query): Builder => $query->whereNotIn('name', $workspacePermissions))
                 ->exists();
     }
 

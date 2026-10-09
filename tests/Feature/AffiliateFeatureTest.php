@@ -25,6 +25,7 @@ use App\Modules\Finance\Models\LedgerEntry;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
+use App\Modules\Identity\Models\Role;
 use App\Modules\Identity\Models\User;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Carbon;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 beforeEach(function () {
     config([
@@ -376,6 +378,31 @@ test('staff can manage affiliate statuses and payout requests in filament', func
         ->status->toBe(AffiliatePayoutRequestStatus::Paid)
         ->paid_by_user_id->toBe($staff->id)
         ->and($payout->ledgerTransaction()->exists())->toBeTrue();
+});
+
+test('affiliate status actions require update permission', function (): void {
+    $viewer = User::factory()->create();
+    $viewer->syncRoles(Role::findOrCreate('affiliate_viewer', 'web'));
+    foreach (['ViewAny:Affiliate', 'View:Affiliate', 'ViewAny:AffiliatePayoutRequest', 'View:AffiliatePayoutRequest'] as $name) {
+        $viewer->givePermissionTo(Permission::findOrCreate($name, 'web'));
+    }
+
+    $affiliate = Affiliate::factory()->pending()->create();
+    $payout = AffiliatePayoutRequest::factory()->for($affiliate)->create(['amount_baisa' => 20000]);
+
+    $this->actingAs($viewer, 'web');
+    Livewire::test(ListAffiliates::class)
+        ->assertActionHidden(TestAction::make('approve')->table($affiliate));
+    Livewire::test(ListAffiliatePayoutRequests::class)
+        ->assertActionHidden(TestAction::make('approve')->table($payout));
+
+    $viewer->givePermissionTo(Permission::findOrCreate('Update:Affiliate', 'web'));
+    $viewer->givePermissionTo(Permission::findOrCreate('Update:AffiliatePayoutRequest', 'web'));
+
+    Livewire::test(ListAffiliates::class)
+        ->assertActionVisible(TestAction::make('approve')->table($affiliate));
+    Livewire::test(ListAffiliatePayoutRequests::class)
+        ->assertActionVisible(TestAction::make('approve')->table($payout));
 });
 
 /**

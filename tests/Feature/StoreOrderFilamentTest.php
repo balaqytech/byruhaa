@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Identity\Models\Role;
 use App\Modules\Identity\Models\User;
 use App\Modules\Store\Filament\Pages\ManageStoreSettings;
 use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
@@ -14,7 +15,9 @@ use App\Modules\Store\Models\Order;
 use App\Modules\Store\Models\OrderItem;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
+use Filament\Actions\Testing\TestAction;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
 
 test('staff can view store orders in filament', function (): void {
     $staff = User::factory()->create();
@@ -70,6 +73,24 @@ test('staff manage product options and inventory from the product page', functio
         ->assertSee('Admin count');
 
     $this->get('/admin/product-options')->assertNotFound();
+});
+
+test('stock adjustment requires its custom permission in addition to product access', function (): void {
+    $operator = User::factory()->create();
+    $operator->syncRoles(Role::findOrCreate('product_operator', 'web'));
+    $operator->givePermissionTo(Permission::findOrCreate('ViewAny:Product', 'web'));
+    $operator->givePermissionTo(Permission::findOrCreate('Update:Product', 'web'));
+    $product = Product::factory()->create();
+    $option = $product->defaultOption()->firstOrFail();
+    $option->update(['tracks_inventory' => true]);
+
+    $this->actingAs($operator, 'web');
+    Livewire::test(OptionsRelationManager::class, ['ownerRecord' => $product, 'pageClass' => EditProduct::class])
+        ->assertActionHidden(TestAction::make('adjust-stock')->table($option));
+
+    $operator->givePermissionTo(Permission::findOrCreate('Adjust:ProductStock', 'web'));
+    Livewire::test(OptionsRelationManager::class, ['ownerRecord' => $product, 'pageClass' => EditProduct::class])
+        ->assertActionVisible(TestAction::make('adjust-stock')->table($option));
 });
 
 test('staff can filter the product list with status tabs', function (): void {

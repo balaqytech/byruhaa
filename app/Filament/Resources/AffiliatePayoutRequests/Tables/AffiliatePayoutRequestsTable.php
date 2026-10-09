@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AffiliatePayoutRequests\Tables;
 
 use App\Enums\AffiliatePayoutRequestStatus;
+use App\Filament\Resources\AffiliatePayoutRequests\AffiliatePayoutRequestResource;
 use App\Filament\Resources\Affiliates\AffiliateResource;
 use App\Modules\Affiliates\Actions\PostAffiliatePayoutLedgerTransaction;
 use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
@@ -69,9 +70,10 @@ class AffiliatePayoutRequestsTable
         return Action::make('approve')
             ->label(__('admin.actions.approve'))
             ->color('success')
-            ->visible(fn (AffiliatePayoutRequest $record): bool => $record->status === AffiliatePayoutRequestStatus::Pending)
+            ->visible(fn (AffiliatePayoutRequest $record): bool => $record->status === AffiliatePayoutRequestStatus::Pending && AffiliatePayoutRequestResource::canEdit($record))
             ->requiresConfirmation()
             ->action(function (AffiliatePayoutRequest $record): void {
+                abort_unless(AffiliatePayoutRequestResource::canEdit($record), 403);
                 $record->forceFill([
                     'status' => AffiliatePayoutRequestStatus::Approved,
                     'approved_by_user_id' => auth()->id(),
@@ -89,9 +91,10 @@ class AffiliatePayoutRequestsTable
         return Action::make('reject')
             ->label(__('admin.actions.reject'))
             ->color('danger')
-            ->visible(fn (AffiliatePayoutRequest $record): bool => $record->status === AffiliatePayoutRequestStatus::Pending)
+            ->visible(fn (AffiliatePayoutRequest $record): bool => $record->status === AffiliatePayoutRequestStatus::Pending && AffiliatePayoutRequestResource::canEdit($record))
             ->requiresConfirmation()
             ->action(function (AffiliatePayoutRequest $record): void {
+                abort_unless(AffiliatePayoutRequestResource::canEdit($record), 403);
                 $record->forceFill([
                     'status' => AffiliatePayoutRequestStatus::Rejected,
                     'rejected_by_user_id' => auth()->id(),
@@ -107,9 +110,10 @@ class AffiliatePayoutRequestsTable
         return Action::make('mark_paid')
             ->label(__('admin.actions.mark_paid'))
             ->color('success')
-            ->visible(fn (AffiliatePayoutRequest $record): bool => $record->status === AffiliatePayoutRequestStatus::Approved)
+            ->visible(fn (AffiliatePayoutRequest $record): bool => $record->status === AffiliatePayoutRequestStatus::Approved && AffiliatePayoutRequestResource::canEdit($record))
             ->requiresConfirmation()
             ->action(function (AffiliatePayoutRequest $record, PostAffiliatePayoutLedgerTransaction $postLedgerTransaction): void {
+                abort_unless(AffiliatePayoutRequestResource::canEdit($record), 403);
                 $record->forceFill([
                     'status' => AffiliatePayoutRequestStatus::Paid,
                     'paid_by_user_id' => auth()->id(),

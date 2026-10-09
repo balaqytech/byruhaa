@@ -304,6 +304,28 @@ test('only card managers can issue and print a card from the minors resource', f
     $this->actingAs($manager, 'web')->get(route('staff.pos-cards.print', $this->minor))->assertNotFound();
 });
 
+test('QR issuance and printing can be granted independently', function (): void {
+    $issuer = User::factory()->create();
+    $issuer->syncRoles(Role::findOrCreate('qr_issuer', 'web'));
+    $issuer->givePermissionTo(Permission::findOrCreate('Issue:PosCards', 'web'));
+
+    $this->actingAs($issuer, 'web');
+    Livewire::test(ListMinorProfiles::class)
+        ->assertActionVisible(TestAction::make('issuePosCard')->table($this->minor))
+        ->assertActionHidden(TestAction::make('printPosCard')->table($this->minor));
+    $this->get(route('staff.pos-cards.print', $this->minor))->assertForbidden();
+
+    $printer = User::factory()->create();
+    $printer->syncRoles(Role::findOrCreate('qr_printer', 'web'));
+    $printer->givePermissionTo(Permission::findOrCreate('Print:PosCards', 'web'));
+
+    $this->actingAs($printer, 'web');
+    Livewire::test(ListMinorProfiles::class)
+        ->assertActionHidden(TestAction::make('issuePosCard')->table($this->minor))
+        ->assertActionVisible(TestAction::make('printPosCard')->table($this->minor));
+    $this->get(route('staff.pos-cards.print', $this->minor))->assertSuccessful();
+});
+
 test('guardian can immediately revoke only their own leader card', function (): void {
     $otherGuardian = Customer::factory()->create();
     $route = route('customer.minor-profiles.pos-card.revoke', $this->minor);

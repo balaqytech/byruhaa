@@ -47,7 +47,9 @@ class MinorProfileResource extends Resource
         $user = Filament::auth()->user();
 
         return $user instanceof User
-            && ($user->isPanelAdministrator() || $user->can('ViewAny:MinorProfile') || $user->can('Manage:PosCards'));
+            && ($user->isPanelAdministrator()
+                || $user->can('ViewAny:MinorProfile')
+                || $user->canAny(['Manage:PosCards', 'Issue:PosCards', 'Print:PosCards']));
     }
 
     public static function canView(Model $record): bool

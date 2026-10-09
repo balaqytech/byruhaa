@@ -38,27 +38,27 @@ class MinorProfilesTable
                 ViewAction::make(),
                 Action::make('issuePosCard')
                     ->label('إصدار بطاقة QR')
-                    ->visible(fn (MinorProfile $record): bool => self::canManageCards() && $record->status === MinorProfileStatus::Active)
+                    ->visible(fn (MinorProfile $record): bool => self::canUseCardAction('Issue:PosCards') && $record->status === MinorProfileStatus::Active)
                     ->requiresConfirmation()
                     ->modalDescription('الإصدار الجديد يبطل البطاقة السابقة فورًا. سلّم البطاقة المطبوعة للقائد فقط.')
                     ->action(function (MinorProfile $record, ManageMinorPosCredential $credentials): void {
-                        abort_unless(self::canManageCards(), 403);
+                        abort_unless(self::canUseCardAction('Issue:PosCards'), 403);
                         abort_unless($record->fresh()?->status === MinorProfileStatus::Active, 422);
                         $credentials->issue($record);
                         Notification::make()->title('تم إصدار بطاقة QR. استخدم زر الطباعة لتسليمها.')->success()->send();
                     }),
                 Action::make('printPosCard')
                     ->label('طباعة QR')
-                    ->visible(fn (MinorProfile $record): bool => self::canManageCards() && $record->posCredential?->token_ciphertext !== null && $record->posCredential->card_revoked_at === null)
+                    ->visible(fn (MinorProfile $record): bool => self::canUseCardAction('Print:PosCards') && $record->status === MinorProfileStatus::Active && $record->posCredential?->token_ciphertext !== null && $record->posCredential->card_revoked_at === null)
                     ->url(fn (MinorProfile $record): string => route('staff.pos-cards.print', $record))
                     ->openUrlInNewTab(),
             ]);
     }
 
-    private static function canManageCards(): bool
+    private static function canUseCardAction(string $permission): bool
     {
         $user = Filament::auth()->user();
 
-        return $user instanceof User && ($user->isPanelAdministrator() || $user->can('Manage:PosCards'));
+        return $user instanceof User && ($user->isPanelAdministrator() || $user->canAny([$permission, 'Manage:PosCards']));
     }
 }

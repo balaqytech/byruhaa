@@ -200,6 +200,15 @@ test('pickup-only staff cannot access the Filament admin panel', function () {
     $this->actingAs($attendant, 'web')->get(route('filament.admin.pages.dashboard'))->assertForbidden();
 });
 
+test('a custom role with only workspace permissions cannot enter Filament', function (): void {
+    $operator = User::factory()->create();
+    $operator->syncRoles(Role::findOrCreate('tablet_operator', 'web'));
+    $operator->givePermissionTo(Permission::findOrCreate('View:BaristaBoard', 'web'));
+
+    expect($operator->canAccessPanel(Filament::getPanel('admin')))->toBeFalse();
+    $this->actingAs($operator, 'web')->get(route('filament.admin.pages.dashboard'))->assertForbidden();
+});
+
 test('staff store access follows permissions assigned in Shield', function () {
     $staff = User::factory()->create();
 

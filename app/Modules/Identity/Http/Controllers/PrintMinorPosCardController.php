@@ -17,7 +17,7 @@ class PrintMinorPosCardController
     public function __invoke(Request $request, MinorProfile $minorProfile): Response
     {
         $user = $request->user('web');
-        abort_unless($user instanceof User && ($user->isPanelAdministrator() || $user->can('Manage:PosCards')), 403);
+        abort_unless($user instanceof User && ($user->isPanelAdministrator() || $user->canAny(['Print:PosCards', 'Manage:PosCards'])), 403);
 
         $minorProfile->load('posCredential');
         $credential = $minorProfile->posCredential;

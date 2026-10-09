@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Affiliates\Tables;
 
 use App\Enums\AffiliateStatus;
+use App\Filament\Resources\Affiliates\AffiliateResource;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;
@@ -78,7 +79,7 @@ class AffiliatesTable
         return Action::make('approve')
             ->label(__('admin.actions.approve'))
             ->color('success')
-            ->visible(fn (Affiliate $record): bool => $record->status === AffiliateStatus::Pending)
+            ->visible(fn (Affiliate $record): bool => $record->status === AffiliateStatus::Pending && AffiliateResource::canEdit($record))
             ->requiresConfirmation()
             ->action(fn (Affiliate $record): Affiliate => self::setStatus($record, AffiliateStatus::Approved));
     }
@@ -88,7 +89,7 @@ class AffiliatesTable
         return Action::make('reject')
             ->label(__('admin.actions.reject'))
             ->color('danger')
-            ->visible(fn (Affiliate $record): bool => $record->status === AffiliateStatus::Pending)
+            ->visible(fn (Affiliate $record): bool => $record->status === AffiliateStatus::Pending && AffiliateResource::canEdit($record))
             ->requiresConfirmation()
             ->action(fn (Affiliate $record): Affiliate => self::setStatus($record, AffiliateStatus::Rejected));
     }
@@ -98,7 +99,7 @@ class AffiliatesTable
         return Action::make('suspend')
             ->label(__('admin.actions.suspend'))
             ->color('warning')
-            ->visible(fn (Affiliate $record): bool => $record->status === AffiliateStatus::Approved)
+            ->visible(fn (Affiliate $record): bool => $record->status === AffiliateStatus::Approved && AffiliateResource::canEdit($record))
             ->requiresConfirmation()
             ->action(fn (Affiliate $record): Affiliate => self::setStatus($record, AffiliateStatus::Suspended));
     }
@@ -108,13 +109,14 @@ class AffiliatesTable
         return Action::make('reactivate')
             ->label(__('admin.actions.reactivate'))
             ->color('success')
-            ->visible(fn (Affiliate $record): bool => in_array($record->status, [AffiliateStatus::Rejected, AffiliateStatus::Suspended], true))
+            ->visible(fn (Affiliate $record): bool => in_array($record->status, [AffiliateStatus::Rejected, AffiliateStatus::Suspended], true) && AffiliateResource::canEdit($record))
             ->requiresConfirmation()
             ->action(fn (Affiliate $record): Affiliate => self::setStatus($record, AffiliateStatus::Approved));
     }
 
     private static function setStatus(Affiliate $affiliate, AffiliateStatus $status): Affiliate
     {
+        abort_unless(AffiliateResource::canEdit($affiliate), 403);
         $affiliate->forceFill([
             'status' => $status,
             'reviewed_by_user_id' => auth()->id(),

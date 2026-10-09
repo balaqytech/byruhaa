@@ -2,10 +2,12 @@
 
 namespace App\Modules\Store\Filament\Resources\Products\RelationManagers;
 
+use App\Modules\Identity\Models\User;
 use App\Modules\Store\Actions\AdjustStock;
 use App\Modules\Store\Models\ProductOption;
 use App\Support\MoneyFormatter;
 use Filament\Actions\Action;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -51,7 +53,7 @@ class OptionsRelationManager extends RelationManager
             ->recordActions([
                 Action::make('adjust-stock')
                     ->label(__('admin.store.actions.adjust_stock'))
-                    ->visible(fn (ProductOption $record): bool => $record->tracks_inventory)
+                    ->visible(fn (ProductOption $record): bool => $record->tracks_inventory && self::canAdjustStock())
                     ->schema([
                         TextInput::make('quantity_change')
                             ->label(__('admin.fields.quantity_change'))
@@ -64,6 +66,7 @@ class OptionsRelationManager extends RelationManager
                             ->maxLength(255),
                     ])
                     ->action(function (ProductOption $record, array $data, AdjustStock $adjustStock): void {
+                        abort_unless(self::canAdjustStock(), 403);
                         $actorId = auth()->id();
                         $adjustStock->execute(
                             $record,
@@ -73,5 +76,12 @@ class OptionsRelationManager extends RelationManager
                         );
                     }),
             ]);
+    }
+
+    private static function canAdjustStock(): bool
+    {
+        $user = Filament::auth()->user();
+
+        return $user instanceof User && ($user->isPanelAdministrator() || $user->can('Adjust:ProductStock'));
     }
 }
