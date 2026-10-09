@@ -20,9 +20,9 @@ class ConfirmWalletOrder
         private ChangeOrderState $changeOrderState,
     ) {}
 
-    public function execute(Order $order, int $customerId, ?int $minorProfileId = null): Order
+    public function execute(Order $order, int $customerId, ?int $minorProfileId = null, ?int $actorUserId = null): Order
     {
-        return DB::transaction(function () use ($order, $customerId, $minorProfileId): Order {
+        return DB::transaction(function () use ($order, $customerId, $minorProfileId, $actorUserId): Order {
             $order = Order::query()
                 ->with('inventoryReservation.reservation')
                 ->whereKey($order->getKey())
@@ -65,7 +65,7 @@ class ConfirmWalletOrder
                 'payment_reference' => 'WALLET-'.$spend->movementId,
             ])->save();
 
-            return $this->changeOrderState->execute($order, Confirmed::class, note: 'Wallet payment confirmed.');
+            return $this->changeOrderState->execute($order, Confirmed::class, $actorUserId, 'Wallet payment confirmed.');
         });
     }
 }

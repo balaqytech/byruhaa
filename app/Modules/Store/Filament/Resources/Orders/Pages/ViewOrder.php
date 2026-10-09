@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Facades\Gate;
 
 class ViewOrder extends ViewRecord
 {
@@ -23,6 +24,7 @@ class ViewOrder extends ViewRecord
         return [
             Action::make('change_status')
                 ->label(__('admin.store.actions.change_status'))
+                ->visible(fn (Order $record): bool => OrderResource::canEdit($record))
                 ->form([
                     Select::make('status')
                         ->options(fn (Order $record): array => collect($record->status->transitionableStateInstances())
@@ -33,6 +35,7 @@ class ViewOrder extends ViewRecord
                     Textarea::make('note')->label(__('admin.fields.note'))->maxLength(500),
                 ])
                 ->action(function (Order $record, array $data, ChangeOrderState $changeOrderState): void {
+                    Gate::authorize('update', $record);
                     $target = (string) $data['status'];
                     if (! is_a($target, OrderState::class, true)) {
                         return;

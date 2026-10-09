@@ -7,6 +7,7 @@ use App\Models\WebhookDelivery;
 use App\Modules\Store\States\Order\OrderState;
 use App\Support\HumanReference;
 use Brick\Money\Money;
+use Carbon\CarbonInterface;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,9 +34,11 @@ use Spatie\ModelStates\HasStates;
  * @property int $discount_baisa
  * @property string $pricing_tier
  */
-#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'minor_profile_id', 'status', 'payment_method', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'regular_total_baisa', 'discount_baisa', 'pricing_tier', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
+#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'minor_profile_id', 'status', 'payment_method', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'regular_total_baisa', 'discount_baisa', 'pricing_tier', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice', 'cash_received_baisa', 'cash_change_baisa', 'pos_cashier_user_id', 'pos_request_hash'])]
 class Order extends Model implements AuditableContract
 {
+    public const SCHEDULED_PREPARATION_LEAD_MINUTES = 45;
+
     /** @use HasFactory<OrderFactory> */
     use AuditableTrait, HasFactory, HasStates;
 
@@ -66,6 +69,8 @@ class Order extends Model implements AuditableContract
         'vat_rate_percentage',
         'paid_at',
         'payment_reference',
+        'cash_received_baisa',
+        'cash_change_baisa',
     ];
 
     protected $table = 'store_orders';
@@ -132,7 +137,29 @@ class Order extends Model implements AuditableContract
             'regular_total_baisa' => 'integer',
             'discount_baisa' => 'integer',
             'vat_rate_percentage' => 'integer',
+            'cash_received_baisa' => 'integer',
+            'cash_change_baisa' => 'integer',
             'paid_at' => 'datetime',
         ];
+    }
+
+    public function preparationOpensAt(): ?CarbonInterface
+    {
+        if ($this->pickup_type !== 'scheduled') {
+            return null;
+        }
+
+        return $this->pickup_at?->copy()->subMinutes(self::SCHEDULED_PREPARATION_LEAD_MINUTES);
+    }
+
+    public function canStartScheduledPreparation(): bool
+    {
+        if ($this->pickup_type !== 'scheduled') {
+            return true;
+        }
+
+        $opensAt = $this->preparationOpensAt();
+
+        return $opensAt !== null && now()->greaterThanOrEqualTo($opensAt);
     }
 }

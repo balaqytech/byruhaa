@@ -23,7 +23,7 @@ class OrdersTable
                 TextColumn::make('reference')->label(__('admin.fields.reference'))->searchable()->sortable()->copyable(),
                 TextColumn::make('customer_name')
                     ->label(__('admin.fields.customer'))
-                    ->description(fn (Order $record): ?string => $record->customer_id === null ? __('admin.store.admin_order.guest') : null)
+                    ->description(fn (Order $record): ?string => $record->customer_id === null ? 'ضيف' : null)
                     ->searchable(),
                 TextColumn::make('customer_phone')->label(__('admin.fields.phone_number'))->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
@@ -35,7 +35,7 @@ class OrdersTable
                     ->label(__('admin.store.admin_order.payment_method'))
                     ->formatStateUsing(fn (string $state): string => $state === 'wallet'
                         ? __('admin.store.admin_order.minor_wallet')
-                        : __('admin.store.admin_order.direct_payment'))
+                        : ($state === 'cash' ? 'نقدًا' : __('admin.store.admin_order.direct_payment')))
                     ->badge(),
                 TextColumn::make('pickup_type')
                     ->label(__('admin.store.admin_order.pickup_type'))
@@ -54,6 +54,7 @@ class OrdersTable
                     ->options([
                         'thawani' => __('admin.store.admin_order.direct_payment'),
                         'wallet' => __('admin.store.admin_order.minor_wallet'),
+                        'cash' => 'نقدًا',
                     ]),
                 SelectFilter::make('pickup_type')
                     ->label(__('admin.store.admin_order.pickup_type'))

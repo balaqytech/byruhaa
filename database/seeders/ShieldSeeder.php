@@ -20,6 +20,8 @@ class ShieldSeeder extends Seeder
         static::makeRolesWithPermissions($rolesWithPermissions);
         static::makeDirectPermissions($directPermissions);
 
+        $this->call(StaffWorkspaceRolesSeeder::class);
+
         $this->command->info('Shield Seeding Completed.');
     }
 

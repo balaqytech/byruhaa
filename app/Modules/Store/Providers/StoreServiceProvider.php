@@ -3,6 +3,8 @@
 namespace App\Modules\Store\Providers;
 
 use App\Modules\Finance\Events\PaymentSucceeded;
+use App\Modules\Store\Actions\CreateAdminOrder;
+use App\Modules\Store\Contracts\PosOrderCheckout;
 use App\Modules\Store\Contracts\ProductOptionPricingRule;
 use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Listeners\HandlePaymentSucceeded;
@@ -32,6 +34,7 @@ class StoreServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(PosOrderCheckout::class, CreateAdminOrder::class);
         $this->app->tag([MemberPriceRule::class], ProductOptionPricingRule::class);
 
         $this->app->singleton(StorePricing::class, fn (Application $app): StorePricing => new StorePricing(

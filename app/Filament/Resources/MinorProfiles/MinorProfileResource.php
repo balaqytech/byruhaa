@@ -47,12 +47,15 @@ class MinorProfileResource extends Resource
         $user = Filament::auth()->user();
 
         return $user instanceof User
-            && ($user->isPanelAdministrator() || $user->can('ViewAny:MinorProfile'));
+            && ($user->isPanelAdministrator() || $user->can('ViewAny:MinorProfile') || $user->can('Manage:PosCards'));
     }
 
     public static function canView(Model $record): bool
     {
-        return static::canViewAny();
+        $user = Filament::auth()->user();
+
+        return $user instanceof User
+            && ($user->isPanelAdministrator() || $user->can('ViewAny:MinorProfile'));
     }
 
     public static function canCreate(): bool
@@ -78,7 +81,7 @@ class MinorProfileResource extends Resource
     /** @return Builder<MinorProfile> */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('familyMember.customer');
+        return parent::getEloquentQuery()->with(['familyMember.customer', 'posCredential']);
     }
 
     public static function infolist(Schema $schema): Schema

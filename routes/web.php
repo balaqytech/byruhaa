@@ -6,6 +6,7 @@ use App\Http\Controllers\Store\OrderController;
 use App\Http\Controllers\Store\PaymentController;
 use App\Http\Controllers\Store\TrackOrderController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
+use App\Modules\Identity\Http\Controllers\PrintMinorPosCardController;
 use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,11 @@ Route::middleware('signed')->group(function () {
 
 require __DIR__.'/customer.php';
 require __DIR__.'/minor-profile.php';
+require __DIR__.'/staff-workspaces.php';
+
+Route::get('staff/pos-cards/{minorProfile}/print', PrintMinorPosCardController::class)
+    ->middleware('auth:web')
+    ->name('staff.pos-cards.print');
 
 Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(function (): void {
     Route::get('checkout', [PublicSiteController::class, 'checkout'])->name('checkout');

@@ -89,6 +89,15 @@
                                         </div>
                                     </div>
                                 @endif
+                                @if ($profile->posCredential?->token_hash)
+                                    <div class="flex flex-wrap items-center justify-between gap-3 py-4">
+                                        <p class="text-sm">بطاقة QR مفعّلة وتكفي للشراء عند الكاشير. عند فقدانها يمكنك إبطالها فورًا.</p>
+                                        <form method="POST" action="{{ route('customer.minor-profiles.pos-card.revoke', $profile) }}">
+                                            @csrf
+                                            <flux:button type="submit" size="sm" variant="danger">إبطال البطاقة المفقودة</flux:button>
+                                        </form>
+                                    </div>
+                                @endif
                                 <div class="flex flex-wrap items-center justify-between gap-3 pt-4">
                                     <div><h4 class="text-sm font-semibold">الدفع المباشر عبر ثواني</h4><p class="mt-1 text-xs text-emerald-900/60 dark:text-white/60">{{ $profile->direct_payment_enabled ? 'مسموح للابن بالدفع عبر بوابة ثواني.' : 'يتولى وليّ الأمر دفع هذه الطلبات.' }}</p></div>
                                     <form method="POST" action="{{ route('customer.minor-profiles.direct-payment', $profile) }}">@csrf<flux:button size="sm" type="submit">{{ $profile->direct_payment_enabled ? 'إيقاف الدفع المباشر' : 'السماح بالدفع المباشر' }}</flux:button></form>

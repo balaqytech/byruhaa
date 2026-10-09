@@ -22,6 +22,9 @@ test('coming soon mode closes web pages but keeps admin api and health routes av
     }
 
     $this->get('/admin/login')->assertSuccessful();
+    $this->get(route('cashier.login'))->assertSuccessful();
+    $this->get(route('barista.login'))->assertSuccessful();
+    $this->get(route('pickup.login'))->assertSuccessful();
     $this->getJson('/api/v1/events')->assertSuccessful();
     $this->get('/up')->assertSuccessful();
 });

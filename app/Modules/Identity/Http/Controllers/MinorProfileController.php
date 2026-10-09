@@ -5,6 +5,7 @@ namespace App\Modules\Identity\Http\Controllers;
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Actions\IssueMinorProfileActivation;
+use App\Modules\Identity\Actions\ManageMinorPosCredential;
 use App\Modules\Identity\Actions\SetMinorWalletSpending;
 use App\Modules\Identity\Actions\VerifyMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
@@ -27,7 +28,7 @@ class MinorProfileController
         $guardian = $request->user('customer');
 
         return view('pages.customer.minor-profiles.index', [
-            'profiles' => $guardian->minorProfiles()->with('familyMember')->latest('minor_profiles.id')->get(),
+            'profiles' => $guardian->minorProfiles()->with(['familyMember', 'posCredential'])->latest('minor_profiles.id')->get(),
             'familyMembers' => $guardian->familyMembers()->with('minorProfile')->orderBy('name')->get(),
         ]);
     }
@@ -130,6 +131,14 @@ class MinorProfileController
         $minorProfile = $setWalletSpending->execute($minorProfile, ! $minorProfile->wallet_spending_enabled, $request->ip());
 
         return back()->with('success', $minorProfile->wallet_spending_enabled ? 'تم السماح بالدفع من المحفظة.' : 'تم إيقاف الدفع من المحفظة.');
+    }
+
+    public function revokePosCard(Request $request, MinorProfile $minorProfile, ManageMinorPosCredential $credentials): RedirectResponse
+    {
+        $this->assertOwnedBy($request, $minorProfile);
+        $credentials->revoke($minorProfile);
+
+        return back()->with('success', 'أُبطلت بطاقة الشراء. اطلب إصدار بطاقة بديلة من مسؤول بيرحاء.');
     }
 
     public function requestDeletion(Request $request, MinorProfile $minorProfile, WalletService $wallets): RedirectResponse

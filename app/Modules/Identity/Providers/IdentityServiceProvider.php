@@ -4,9 +4,11 @@ namespace App\Modules\Identity\Providers;
 
 use App\Modules\Identity\Actions\Fortify\CreateNewUser;
 use App\Modules\Identity\Actions\Fortify\ResetUserPassword;
+use App\Modules\Identity\Actions\ManageMinorPosCredential;
 use App\Modules\Identity\Contracts\CustomerIdentityResolver;
 use App\Modules\Identity\Contracts\MinorProfileOrderNotifier;
 use App\Modules\Identity\Contracts\MinorProfilePurchasing;
+use App\Modules\Identity\Contracts\PosPurchasing;
 use App\Modules\Identity\Listeners\RecordPermissionChangeAudit;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\User;
@@ -90,6 +92,7 @@ class IdentityServiceProvider extends ServiceProvider
     {
         $this->app->bind(CustomerIdentityResolver::class, PhoneCustomerIdentityResolver::class);
         $this->app->bind(MinorProfilePurchasing::class, MinorProfilePurchaseService::class);
+        $this->app->bind(PosPurchasing::class, ManageMinorPosCredential::class);
         $this->app->bind(MinorProfileOrderNotifier::class, MinorProfileOrderNotifierService::class);
     }
 

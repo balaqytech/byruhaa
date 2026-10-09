@@ -8,13 +8,18 @@
     @if (! $forPdf)
         @vite(['resources/css/app.css'])
         <style> @media print { .receipt-actions { display: none !important; } body { background: white !important; } } </style>
+        @if ($forCashier ?? false)
+            <script>window.addEventListener('load', () => window.print(), { once: true });</script>
+        @endif
     @endif
 </head>
 <body class="bg-zinc-100 p-4 text-zinc-900 sm:p-8">
     @unless ($forPdf)
         <div class="receipt-actions mx-auto mb-4 flex max-w-3xl justify-end gap-2">
             <button type="button" onclick="window.print()" class="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white">طباعة</button>
-            <a href="{{ route('customer.store.orders.receipt.pdf', $order->payment_token) }}" class="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold">تحميل PDF</a>
+            @unless ($forCashier ?? false)
+                <a href="{{ route('customer.store.orders.receipt.pdf', $order->payment_token) }}" class="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold">تحميل PDF</a>
+            @endunless
         </div>
     @endunless
     <main class="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow-sm sm:p-10">
@@ -33,7 +38,7 @@
             </div>
         </header>
         <section class="mt-6 grid gap-4 rounded-lg bg-zinc-50 p-4 text-sm sm:grid-cols-2">
-            <div><strong>العميل:</strong> {{ $order->customer_name }}<br><span dir="ltr">{{ $order->customer_phone }}</span></div>
+            <div><strong>العميل:</strong> {{ $order->customer_name }}@if ($order->customer_phone)<br><span dir="ltr">{{ $order->customer_phone }}</span>@endif</div>
             <div><strong>الاستلام:</strong> {{ $order->pickup_type === 'scheduled' ? 'مجدول' : 'فوري' }}@if ($order->pickup_at)<br><span dir="ltr">{{ $order->pickup_at->format('Y-m-d H:i') }}</span>@endif</div>
         </section>
         <table class="mt-6 w-full border-collapse text-sm">
@@ -44,7 +49,7 @@
                 @endforeach
             </tbody>
         </table>
-        <dl class="mt-6 ms-auto grid max-w-sm gap-2 text-sm">@if ($order->discount_baisa > 0)<div class="flex justify-between"><dt>الإجمالي قبل خصم العضوية</dt><dd><x-money :amount-baisa="$order->regular_total_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between font-bold text-emerald-800"><dt>توفير أعضاء بيرحاء</dt><dd>− <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /></dd></div>@endif<div class="flex justify-between"><dt>المجموع قبل الضريبة</dt><dd><x-money :amount-baisa="$order->subtotal_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between"><dt>الضريبة المضمنة ({{ $receiptSettings['vat_rate_percentage'] }}٪)</dt><dd><x-money :amount-baisa="$order->vat_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between border-t border-zinc-300 pt-2 text-base font-bold"><dt>الإجمالي شامل الضريبة</dt><dd><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></dd></div></dl>
+        <dl class="mt-6 ms-auto grid max-w-sm gap-2 text-sm">@if ($order->discount_baisa > 0)<div class="flex justify-between"><dt>الإجمالي قبل خصم العضوية</dt><dd><x-money :amount-baisa="$order->regular_total_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between font-bold text-emerald-800"><dt>توفير أعضاء بيرحاء</dt><dd>− <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /></dd></div>@endif<div class="flex justify-between"><dt>المجموع قبل الضريبة</dt><dd><x-money :amount-baisa="$order->subtotal_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between"><dt>الضريبة المضمنة ({{ $receiptSettings['vat_rate_percentage'] }}٪)</dt><dd><x-money :amount-baisa="$order->vat_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between border-t border-zinc-300 pt-2 text-base font-bold"><dt>الإجمالي شامل الضريبة</dt><dd><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></dd></div>@if ($order->payment_method === 'cash')<div class="flex justify-between"><dt>النقد المستلم</dt><dd><x-money :amount-baisa="$order->cash_received_baisa" :currency="$order->currency" /></dd></div><div class="flex justify-between"><dt>الباقي</dt><dd><x-money :amount-baisa="$order->cash_change_baisa" :currency="$order->currency" /></dd></div>@endif</dl>
         @if ($order->payment_reference || $order->provider_invoice)<div class="mt-6 border-t border-zinc-200 pt-4 text-sm">@if ($order->payment_reference)<p>مرجع الدفع: <span dir="ltr">{{ $order->payment_reference }}</span></p>@endif @if ($order->provider_invoice)<p class="mt-1">فاتورة مزود الدفع: <span dir="ltr">{{ $order->provider_invoice }}</span></p>@endif</div>@endif
         @if (in_array($order->status->getValue(), ['refund_pending', 'refunded'], true))<p class="mt-6 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">حالة الاسترداد: {{ $order->status->getValue() === 'refunded' ? 'تم استرداد المبلغ' : 'قيد الاسترداد' }}</p>@endif
         @if ($receiptSettings['receipt_footer'])<footer class="mt-8 border-t border-zinc-200 pt-4 text-center text-sm text-zinc-600">{{ $receiptSettings['receipt_footer'] }}</footer>@endif

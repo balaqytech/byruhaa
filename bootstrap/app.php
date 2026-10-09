@@ -15,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('web', ShowComingSoonPage::class);
+        $middleware->redirectGuestsTo(fn (Request $request): string => match (true) {
+            $request->is('cashier', 'cashier/*') => route('cashier.login'),
+            $request->is('barista', 'barista/*') => route('barista.login'),
+            $request->is('pickup', 'pickup/*') => route('pickup.login'),
+            default => route('login'),
+        });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

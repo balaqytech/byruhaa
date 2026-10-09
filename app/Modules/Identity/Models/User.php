@@ -39,6 +39,8 @@ class User extends Authenticatable implements AuditableContract, AuditsIdentityR
     /** @use HasFactory<UserFactory> */
     use AuditableTrait, HasFactory, HasRoles, Notifiable, RecordsCustomAudits;
 
+    protected string $guard_name = 'web';
+
     /**
      * @var array<int, string>
      */
@@ -68,8 +70,14 @@ class User extends Authenticatable implements AuditableContract, AuditsIdentityR
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->roles()->where('guard_name', $panel->getAuthGuard())->exists()
-            || $this->permissions()->where('guard_name', $panel->getAuthGuard())->exists();
+        return $this->roles()
+            ->where('guard_name', $panel->getAuthGuard())
+            ->whereNotIn('name', ['pos_cashier', 'pos_barista', 'pos_pickup_attendant'])
+            ->exists()
+            || $this->permissions()
+                ->where('guard_name', $panel->getAuthGuard())
+                ->whereNotIn('name', ['Sell:Pos', 'Reprint:PosReceipts', 'View:BaristaBoard', 'Prepare:BaristaOrders', 'View:PickupBoard', 'Complete:PickupOrders'])
+                ->exists();
     }
 
     public function isPanelAdministrator(): bool

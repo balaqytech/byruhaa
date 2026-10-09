@@ -37,7 +37,10 @@ class CreateOrder
             $minorProfileId = filled($data['minor_profile_id'] ?? null) ? (int) $data['minor_profile_id'] : null;
             $paymentMethod = (string) ($data['payment_method'] ?? 'thawani');
 
-            if (! in_array($paymentMethod, ['thawani', 'wallet'], true)) {
+            if (! in_array($paymentMethod, ['thawani', 'wallet'], true)
+                && ! ($paymentMethod === 'cash'
+                    && filled($data['pos_cashier_user_id'] ?? null)
+                    && filled($data['pos_request_hash'] ?? null))) {
                 throw ValidationException::withMessages(['payment_method' => 'This payment method is not supported.']);
             }
 
@@ -77,7 +80,9 @@ class CreateOrder
                 if (($data['customer_id'] ?? null) !== $existing->customer_id
                     || $existing->customer_phone !== $data['customer_phone']
                     || (int) ($existing->minor_profile_id ?? 0) !== (int) ($minorProfileId ?? 0)
-                    || $existing->payment_method !== $paymentMethod) {
+                    || $existing->payment_method !== $paymentMethod
+                    || $existing->pos_cashier_user_id !== ($data['pos_cashier_user_id'] ?? null)
+                    || $existing->pos_request_hash !== ($data['pos_request_hash'] ?? null)) {
                     throw ValidationException::withMessages(['idempotency_key' => 'This idempotency key belongs to another order.']);
                 }
 
@@ -96,6 +101,8 @@ class CreateOrder
                 'customer_id' => $data['customer_id'] ?? null,
                 'minor_profile_id' => $minorProfileId,
                 'payment_method' => $paymentMethod,
+                'pos_cashier_user_id' => $data['pos_cashier_user_id'] ?? null,
+                'pos_request_hash' => $data['pos_request_hash'] ?? null,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,

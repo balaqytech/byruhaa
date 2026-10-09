@@ -2,8 +2,14 @@
 
 namespace App\Filament\Resources\MinorProfiles\Tables;
 
+use App\Modules\Identity\Actions\ManageMinorPosCredential;
 use App\Modules\Identity\Enums\MinorProfileStatus;
+use App\Modules\Identity\Models\MinorProfile;
+use App\Modules\Identity\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -28,6 +34,31 @@ class MinorProfilesTable
                 SelectFilter::make('status')->label(__('admin_minors.status'))->options(__('admin_minors.statuses')),
             ])
             ->defaultSort('id', 'desc')
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([
+                ViewAction::make(),
+                Action::make('issuePosCard')
+                    ->label('إصدار بطاقة QR')
+                    ->visible(fn (MinorProfile $record): bool => self::canManageCards() && $record->status === MinorProfileStatus::Active)
+                    ->requiresConfirmation()
+                    ->modalDescription('الإصدار الجديد يبطل البطاقة السابقة فورًا. سلّم البطاقة المطبوعة للقائد فقط.')
+                    ->action(function (MinorProfile $record, ManageMinorPosCredential $credentials): void {
+                        abort_unless(self::canManageCards(), 403);
+                        abort_unless($record->fresh()?->status === MinorProfileStatus::Active, 422);
+                        $credentials->issue($record);
+                        Notification::make()->title('تم إصدار بطاقة QR. استخدم زر الطباعة لتسليمها.')->success()->send();
+                    }),
+                Action::make('printPosCard')
+                    ->label('طباعة QR')
+                    ->visible(fn (MinorProfile $record): bool => self::canManageCards() && $record->posCredential?->token_ciphertext !== null && $record->posCredential->card_revoked_at === null)
+                    ->url(fn (MinorProfile $record): string => route('staff.pos-cards.print', $record))
+                    ->openUrlInNewTab(),
+            ]);
+    }
+
+    private static function canManageCards(): bool
+    {
+        $user = Filament::auth()->user();
+
+        return $user instanceof User && ($user->isPanelAdministrator() || $user->can('Manage:PosCards'));
     }
 }

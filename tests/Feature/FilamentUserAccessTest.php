@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
@@ -168,6 +169,35 @@ test('panel access requires a Shield role or direct permission', function () {
     $user->givePermissionTo(Permission::findOrCreate('ViewAny:User', 'web'));
 
     expect($user->canAccessPanel(Filament::getPanel('admin')))->toBeTrue();
+});
+
+test('admin dashboard links to the three separate staff workspaces', function () {
+    $administrator = User::factory()->admin()->create();
+
+    $this->actingAs($administrator, 'web')
+        ->get(route('filament.admin.pages.dashboard'))
+        ->assertSuccessful()
+        ->assertSee('نقطة البيع')
+        ->assertSee('شاشة الباريستا')
+        ->assertSee('نقطة التسليم')
+        ->assertSee(route('cashier.login'), false)
+        ->assertSee(route('barista.login'), false)
+        ->assertSee(route('pickup.login'), false);
+
+    Livewire::test(Dashboard::class)
+        ->assertActionExists('cashierWorkspace')
+        ->assertActionExists('baristaWorkspace')
+        ->assertActionExists('pickupWorkspace');
+});
+
+test('pickup-only staff cannot access the Filament admin panel', function () {
+    $attendant = User::factory()->create();
+    $attendant->syncRoles(Role::findOrCreate('pos_pickup_attendant', 'web'));
+    $attendant->givePermissionTo(Permission::findOrCreate('View:PickupBoard', 'web'));
+    $attendant->givePermissionTo(Permission::findOrCreate('Complete:PickupOrders', 'web'));
+
+    expect($attendant->canAccessPanel(Filament::getPanel('admin')))->toBeFalse();
+    $this->actingAs($attendant, 'web')->get(route('filament.admin.pages.dashboard'))->assertForbidden();
 });
 
 test('staff store access follows permissions assigned in Shield', function () {

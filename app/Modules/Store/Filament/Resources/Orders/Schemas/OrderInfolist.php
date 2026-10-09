@@ -32,11 +32,12 @@ class OrderInfolist
                         ->label(__('admin.fields.total_including_vat'))
                         ->state(fn (Order $record): string => MoneyFormatter::baisa($record->total_baisa, 'OMR')),
                     TextEntry::make('customer_name')->label(__('admin.fields.customer')),
+                    TextEntry::make('pos_cashier_user_id')->label('معرّف كاشير نقطة البيع')->visible(fn (Order $record): bool => $record->pos_cashier_user_id !== null),
                     TextEntry::make('payment_method')
                         ->label(__('admin.store.admin_order.payment_method'))
                         ->formatStateUsing(fn (string $state): string => $state === 'wallet'
                             ? __('admin.store.admin_order.minor_wallet')
-                            : __('admin.store.admin_order.direct_payment')),
+                            : ($state === 'cash' ? 'نقدًا' : __('admin.store.admin_order.direct_payment'))),
                     TextEntry::make('pickup_at')
                         ->label(__('admin.fields.pickup_at'))
                         ->dateTime()
@@ -129,7 +130,15 @@ class OrderInfolist
                     ->label(__('admin.store.admin_order.payment_method'))
                     ->formatStateUsing(fn (string $state): string => $state === 'wallet'
                         ? __('admin.store.admin_order.minor_wallet')
-                        : __('admin.store.admin_order.direct_payment')),
+                        : ($state === 'cash' ? 'نقدًا' : __('admin.store.admin_order.direct_payment'))),
+                TextEntry::make('cash_received_baisa')
+                    ->label('المبلغ النقدي المستلم')
+                    ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR'))
+                    ->visible(fn (Order $record): bool => $record->payment_method === 'cash'),
+                TextEntry::make('cash_change_baisa')
+                    ->label('الباقي النقدي')
+                    ->formatStateUsing(fn (int $state): string => MoneyFormatter::baisa($state, 'OMR'))
+                    ->visible(fn (Order $record): bool => $record->payment_method === 'cash'),
                 TextEntry::make('payment_reference')->label(__('admin.store.admin_order.payment_reference'))->placeholder('-')->copyable(),
                 TextEntry::make('paid_at')->label(__('admin.store.admin_order.paid_at'))->dateTime()->placeholder('-'),
             ]);

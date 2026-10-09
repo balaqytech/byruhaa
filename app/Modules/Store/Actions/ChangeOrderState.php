@@ -26,8 +26,14 @@ class ChangeOrderState
             $order = Order::query()->whereKey($order->getKey())->lockForUpdate()->firstOrFail();
             $current = $order->status->getValue();
 
-            if ($current === 'confirmed' && $order->pickup_type === 'scheduled' && $targetState === Preparing::class) {
-                throw ValidationException::withMessages(['status' => 'Scheduled orders must be accepted before preparation.']);
+            if ($order->pickup_type === 'scheduled' && $targetState === Preparing::class) {
+                if ($current !== 'accepted') {
+                    throw ValidationException::withMessages(['status' => 'Scheduled orders must be accepted before preparation.']);
+                }
+
+                if (! $order->canStartScheduledPreparation()) {
+                    throw ValidationException::withMessages(['status' => 'Scheduled preparation is not open yet.']);
+                }
             }
 
             try {

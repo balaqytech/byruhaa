@@ -46,6 +46,21 @@ return [
             'provider' => 'users',
         ],
 
+        'cashier' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'barista' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'pickup' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
         'customer' => [
             'driver' => 'session',
             'provider' => 'customers',

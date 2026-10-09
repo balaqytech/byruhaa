@@ -23,6 +23,7 @@ Route::middleware(['auth:customer'])
         Route::post('minor-profiles/{minorProfile}/resume', [MinorProfileController::class, 'resume'])->name('minor-profiles.resume');
         Route::post('minor-profiles/{minorProfile}/direct-payment', [MinorProfileController::class, 'toggleDirectPayment'])->name('minor-profiles.direct-payment');
         Route::post('minor-profiles/{minorProfile}/wallet-spending', [MinorProfileController::class, 'toggleWalletSpending'])->name('minor-profiles.wallet-spending');
+        Route::post('minor-profiles/{minorProfile}/pos-card/revoke', [MinorProfileController::class, 'revokePosCard'])->middleware('throttle:5,1')->name('minor-profiles.pos-card.revoke');
         Route::get('minor-profiles/{minorProfile}/wallet', [WalletController::class, 'show'])->name('minor-profiles.wallet');
         Route::post('minor-profiles/{minorProfile}/wallet/top-up', [WalletController::class, 'topUp'])->middleware('throttle:10,1')->name('minor-profiles.wallet.top-up');
         Route::get('minor-profiles/{minorProfile}/wallet/top-ups/{operationKey}/success', [WalletController::class, 'success'])
