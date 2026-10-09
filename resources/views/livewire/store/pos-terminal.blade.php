@@ -1,4 +1,4 @@
-<div x-data x-on:pos-order-completed.window="$nextTick(() => $refs.completedOrder?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }))" class="space-y-5 xl:space-y-7">
+<div x-data="{ scannerError: '' }" x-on:pos-scanner-error.window="scannerError = $event.detail.message; $flux.modal('pos-scanner-error').show()" x-on:pos-order-completed.window="$nextTick(() => $refs.completedOrder?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' }))" class="space-y-5 xl:space-y-7">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <p class="text-xs font-bold tracking-[0.12em] text-[#718778] dark:text-[#a7b9a9]">نقطة البيع / طلب جديد</p>
@@ -20,10 +20,16 @@
             <div class="rounded-2xl border border-[#dee5d9] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#142621] sm:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div><h2 class="font-heading text-2xl font-black">المنتجات</h2><p class="mt-1 text-xs text-[#718677] dark:text-[#adc2b3]">اضغط على المنتج لإضافته إلى الطلب</p></div>
-                    <span class="text-xs font-semibold text-[#718677] dark:text-[#adc2b3]">حتى ٥٠ منتجًا</span>
+                    <span class="text-xs font-semibold text-[#718677] dark:text-[#adc2b3]">حتى ٥٠ خيارًا في كل عرض</span>
+                </div>
+                <div role="group" aria-label="تصنيفات المنتجات" class="mt-5 flex gap-2 overflow-x-auto pb-2">
+                    <button type="button" wire:click="selectCategory(null)" aria-pressed="{{ $selectedCategoryId === null ? 'true' : 'false' }}" class="min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold transition {{ $selectedCategoryId === null ? 'border-[#204d3a] bg-[#204d3a] text-white' : 'border-[#d7e0d4] bg-[#f7f9f5] hover:border-[#73a886] dark:border-white/15 dark:bg-[#10211c]' }}">الكل</button>
+                    @foreach ($categories as $category)
+                        <button type="button" wire:key="pos-category-{{ $category->id }}" wire:click="selectCategory({{ $category->id }})" aria-pressed="{{ $selectedCategoryId === $category->id ? 'true' : 'false' }}" class="min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold transition {{ $selectedCategoryId === $category->id ? 'border-[#204d3a] bg-[#204d3a] text-white' : 'border-[#d7e0d4] bg-[#f7f9f5] hover:border-[#73a886] dark:border-white/15 dark:bg-[#10211c]' }}">{{ $category->name }}</button>
+                    @endforeach
                 </div>
                 <label for="product-search" class="mt-6 block text-sm font-bold">ابحث عن منتج أو رمز الصنف</label>
-                <input id="product-search" wire:model.live.debounce.250ms="search" type="search" class="mt-2 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-4 py-3 text-base outline-none transition focus:border-[#5a9a70] focus:ring-2 focus:ring-[#5a9a70]/20 dark:border-white/15 dark:bg-[#0d1c19]" placeholder="اسم المنتج أو SKU" />
+                <input id="product-search" wire:model.live.debounce.250ms="search" type="search" class="mt-2 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-4 py-3 text-base outline-none transition focus:border-[#5a9a70] focus:ring-2 focus:ring-[#5a9a70]/20 dark:border-white/15 dark:bg-[#0d1c19]" placeholder="ابحث في جميع التصنيفات بالاسم أو SKU" />
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                     @forelse ($catalog as $option)
                         <button type="button" wire:key="pos-option-{{ $option->id }}" wire:click="addOption({{ $option->id }})" wire:loading.attr="disabled" aria-label="إضافة {{ $option->product->name }}، {{ $option->name }} إلى الطلب" class="group flex min-h-28 flex-col justify-between rounded-xl border border-[#dde5da] bg-[#fbfcf8] p-3 text-right transition hover:border-[#73a886] hover:bg-[#f1f8ea] hover:shadow-sm focus-visible:outline-2 focus-visible:outline-[#3b8261] disabled:opacity-60 dark:border-white/10 dark:bg-[#10211c] dark:hover:bg-[#1c3b2d] sm:p-4">
@@ -37,7 +43,8 @@
             </div>
         </section>
 
-        <section class="space-y-4 md:sticky md:top-4 xl:top-6">
+        <section class="space-y-4 md:sticky md:top-4 md:flex md:max-h-[calc(100dvh-2rem)] md:min-h-0 md:flex-col md:gap-4 md:space-y-0 xl:top-6 xl:max-h-[calc(100dvh-3rem)]">
+            <div class="space-y-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pe-1">
             <div class="rounded-2xl border border-[#dee5d9] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#142621] sm:p-6">
                 <div class="flex items-center justify-between"><h2 class="font-heading text-2xl font-black">الطلب الحالي</h2><span class="rounded-full bg-[#eaf1e5] px-3 py-1 text-xs font-bold dark:bg-white/10">{{ array_sum($cart) }} عناصر</span></div>
                 <div class="mt-4 divide-y divide-[#e8ece6] dark:divide-white/10">
@@ -57,7 +64,6 @@
                         <p class="py-8 text-center text-sm text-[#718677] dark:text-[#adc2b3]">اختر منتجًا للبدء.</p>
                     @endforelse
                 </div>
-                @error('cart') <p role="alert" class="mt-3 text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
             </div>
 
             <div class="rounded-2xl border border-[#dee5d9] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#142621] sm:p-6">
@@ -78,14 +84,11 @@
                             <video x-ref="video" autoplay muted playsinline class="aspect-square max-h-72 w-full rounded-lg bg-black object-cover"></video>
                             <div class="mt-3 flex items-center justify-between gap-3 text-sm"><span x-text="isStarting ? 'جارٍ تشغيل الكاميرا…' : 'ضع رمز QR داخل الإطار'"></span><button type="button" @click="close()" class="min-h-11 rounded-lg border border-white/30 px-4 font-bold">إغلاق الكاميرا</button></div>
                         </div>
-                        <p x-show="error" x-cloak x-text="error" role="alert" class="mt-2 text-sm text-rose-700 dark:text-rose-300"></p>
                         <form wire:submit="scan" class="mt-3 flex gap-2">
                             <input wire:model="scanToken" type="password" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="رمز بطاقة QR من قارئ خارجي أو إدخال يدوي" placeholder="رمز البطاقة أو قارئ QR" class="min-h-12 min-w-0 flex-1 rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-3 py-3 font-mono text-sm outline-none focus:border-[#5a9a70] dark:border-white/15 dark:bg-[#0d1c19]" />
                             <button type="submit" wire:loading.attr="disabled" class="min-h-12 rounded-xl border border-[#204d3a] px-4 py-3 text-sm font-bold text-[#204d3a] hover:bg-[#eaf2e5] disabled:opacity-60 dark:border-emerald-300 dark:text-emerald-200">تحقق</button>
                         </form>
                     </div>
-                    @error('scanToken') <p role="alert" class="mt-2 text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
-                    @error('card') <p role="alert" class="mt-2 text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
                     @if ($selectedProfileId)
                         <p class="mt-4 rounded-xl bg-[#eaf2e0] px-4 py-3 text-sm font-bold text-[#2a5b3e] dark:bg-emerald-800/30 dark:text-emerald-100">القائد: {{ $selectedProfileName }}</p>
                     @endif
@@ -95,16 +98,14 @@
                         <div><label for="guest-name" class="block text-xs font-bold">اسم الضيف · اختياري</label><input id="guest-name" wire:model="guestName" type="text" maxlength="255" autocomplete="off" class="mt-1 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-3 py-2.5 text-sm dark:border-white/15 dark:bg-[#0d1c19]" /></div>
                         <div><label for="guest-phone" class="block text-xs font-bold">رقم الهاتف · اختياري</label><input id="guest-phone" wire:model="guestPhone" type="tel" dir="ltr" maxlength="32" autocomplete="off" class="mt-1 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-3 py-2.5 text-sm dark:border-white/15 dark:bg-[#0d1c19]" /></div>
                     </div>
-                    @error('guestPhone') <p role="alert" class="mt-2 text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
                 @endif
             </div>
+            </div>
 
-            <div class="rounded-2xl border border-[#dee5d9] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#142621] sm:p-6">
+            <div class="shrink-0 rounded-2xl border border-[#dee5d9] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#142621] sm:p-6">
                 <div class="mb-4 flex items-center gap-3"><span class="grid size-8 place-items-center rounded-full bg-[#dcecc7] text-sm font-black text-[#28533c]">٢</span><h2 class="font-heading text-xl font-black">المراجعة والدفع</h2></div>
                 <p class="mb-4 text-sm leading-6 text-[#687d70] dark:text-[#afc0b3]">راجع الأصناف والسعر النهائي وطريقة الدفع قبل تأكيد الطلب.</p>
                 <button type="button" wire:click="review" wire:loading.attr="disabled" class="min-h-14 w-full rounded-xl bg-[#204d3a] px-4 text-base font-black text-white transition hover:bg-[#2c674c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#204d3a] disabled:opacity-60">مراجعة الطلب والدفع</button>
-                @error('payment') <p role="alert" class="mt-3 text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
-                @error('wallet') <p role="alert" class="mt-3 text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
             </div>
         </section>
     </div>
@@ -130,9 +131,6 @@
                             <input id="cash-received" wire:model="cashReceived" type="text" inputmode="decimal" dir="ltr" autocomplete="off" placeholder="0.000" class="mt-2 min-h-14 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-4 text-center text-2xl outline-none focus:border-[#5a9a70] dark:border-white/15 dark:bg-[#0d1c19]" />
                         </div>
                     @endif
-                    @foreach (['card', 'cashReceived', 'total', 'payment', 'wallet', 'order', 'inventory', 'guestPhone'] as $errorKey)
-                        @error($errorKey) <p role="alert" class="text-sm text-rose-700 dark:text-rose-300">{{ $message }}</p> @enderror
-                    @endforeach
                     <div class="flex flex-col-reverse gap-3 sm:flex-row">
                         <flux:modal.close><button type="button" class="min-h-14 w-full rounded-xl border border-[#cad8c8] px-4 text-base font-bold dark:border-white/20">تعديل الطلب</button></flux:modal.close>
                         <button type="submit" wire:loading.attr="disabled" class="min-h-14 flex-[1.5] rounded-xl bg-[#204d3a] px-4 text-base font-black text-white transition hover:bg-[#2c674c] disabled:opacity-60">{{ $paymentMethod === 'cash' ? 'تأكيد استلام النقد والطلب' : 'تأكيد الخصم والدفع' }}</button>
@@ -140,5 +138,29 @@
                 </form>
             </div>
         @endif
+    </flux:modal>
+
+    <flux:modal name="pos-errors" wire:model.self="showErrorModal" class="w-full max-w-md">
+        <div class="space-y-4 text-right">
+            <flux:heading size="lg">تعذّر إكمال الخطوة</flux:heading>
+            <div role="alert" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-7 text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200">
+                @if ($errors->any())
+                    <ul class="list-inside list-disc space-y-1">
+                        @foreach ($errors->all() as $message)
+                            <li>{{ $message }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+            <flux:modal.close><button type="button" class="min-h-12 w-full rounded-xl bg-[#204d3a] px-4 font-bold text-white">حسنًا</button></flux:modal.close>
+        </div>
+    </flux:modal>
+
+    <flux:modal name="pos-scanner-error" class="w-full max-w-md">
+        <div class="space-y-4 text-right">
+            <flux:heading size="lg">تعذّر استخدام الكاميرا</flux:heading>
+            <p role="alert" x-text="scannerError" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-7 text-rose-800 dark:border-rose-500/30 dark:bg-rose-950/30 dark:text-rose-200"></p>
+            <flux:modal.close><button type="button" class="min-h-12 w-full rounded-xl bg-[#204d3a] px-4 font-bold text-white">حسنًا</button></flux:modal.close>
+        </div>
     </flux:modal>
 </div>

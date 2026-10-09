@@ -21,6 +21,7 @@ use App\Modules\Store\Actions\ChangeOrderState;
 use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Listeners\SendUchatOrderStateWebhook;
+use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Settings\StoreSettings;
@@ -374,6 +375,67 @@ test('cashier terminal requires a visible total review before QR wallet payment'
         ->and($order->pos_cashier_user_id)->toBe($this->cashier->id)
         ->and($order->statusHistory()->where('to_status', 'confirmed')->sole()->actor_user_id)->toBe($this->cashier->id)
         ->and($this->wallet->refresh()->balance_baisa)->toBe(4250);
+});
+
+test('cashier catalog opens by category and searches across every category', function (): void {
+    $firstCategory = $this->option->product->category;
+    $firstCategory->update(['name' => 'المشروبات', 'sort_order' => 0]);
+    $this->option->product->update(['name' => 'قهوة خاصة']);
+
+    $secondCategory = Category::factory()->create(['name' => 'الحلويات', 'sort_order' => 100]);
+    $dessert = Product::factory()->active()->for($secondCategory)->create(['name' => 'كعكة التمر']);
+
+    $this->actingAs($this->cashier, 'cashier');
+
+    Livewire::test(PosTerminal::class)
+        ->assertSet('selectedCategoryId', $firstCategory->id)
+        ->assertSee('قهوة خاصة')
+        ->assertDontSee('كعكة التمر')
+        ->assertSee('المشروبات')
+        ->assertSee('الحلويات')
+        ->call('selectCategory', $secondCategory->id)
+        ->assertSet('selectedCategoryId', $secondCategory->id)
+        ->assertSee('كعكة التمر')
+        ->assertDontSee('قهوة خاصة')
+        ->set('search', 'قهوة خاصة')
+        ->assertSet('selectedCategoryId', null)
+        ->assertSee('قهوة خاصة')
+        ->assertDontSee('كعكة التمر')
+        ->call('selectCategory', $secondCategory->id)
+        ->assertSet('search', '')
+        ->assertSee('كعكة التمر');
+
+    expect($dessert->defaultOption()->exists())->toBeTrue();
+});
+
+test('cashier validation errors open a visible dialog', function (): void {
+    $this->actingAs($this->cashier, 'cashier');
+
+    Livewire::test(PosTerminal::class)
+        ->call('review')
+        ->assertHasErrors('cart')
+        ->assertSet('showErrorModal', true)
+        ->assertSee('تعذّر إكمال الخطوة')
+        ->assertSee('أضف منتجات قبل مراجعة الإجمالي.')
+        ->set('showErrorModal', false)
+        ->assertHasNoErrors()
+        ->assertSet('showErrorModal', false);
+});
+
+test('cash payment errors appear in a dialog above the review step', function (): void {
+    $this->actingAs($this->cashier, 'cashier');
+
+    Livewire::test(PosTerminal::class)
+        ->call('addOption', $this->option->id)
+        ->call('review')
+        ->assertSet('showReviewModal', true)
+        ->set('cashReceived', 'invalid')
+        ->call('pay')
+        ->assertHasErrors('cashReceived')
+        ->assertSet('showErrorModal', true)
+        ->assertSee('أدخل المبلغ المستلم بالريال العماني');
+
+    expect(Order::query()->count())->toBe(0);
 });
 
 test('cashier can confirm a guest cash order without an account or phone', function (): void {

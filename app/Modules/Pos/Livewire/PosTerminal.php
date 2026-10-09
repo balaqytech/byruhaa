@@ -8,6 +8,7 @@ use App\Modules\Identity\Models\User;
 use App\Modules\Pos\Actions\CreateCashPosOrder;
 use App\Modules\Pos\Actions\CreatePosOrder;
 use App\Modules\Store\Actions\AddCartItem;
+use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Services\PricingContextResolver;
 use App\Modules\Store\Services\StorePricing;
@@ -24,6 +25,8 @@ class PosTerminal extends Component
 {
     public string $search = '';
 
+    public ?int $selectedCategoryId = null;
+
     public string $scanToken = '';
 
     public string $buyerType = 'guest';
@@ -37,6 +40,8 @@ class PosTerminal extends Component
     public string $cashReceived = '';
 
     public bool $showReviewModal = false;
+
+    public bool $showErrorModal = false;
 
     /** @var array<int, int> */
     public array $cart = [];
@@ -75,16 +80,35 @@ class PosTerminal extends Component
     public function mount(): void
     {
         $this->attemptKey = (string) Str::uuid();
+        $this->selectedCategoryId = $this->categories()->first()?->id;
     }
 
     public function render(): View
     {
         $this->authorizeTerminal();
 
+        if ($this->getErrorBag()->any()) {
+            $this->showErrorModal = true;
+        }
+
         return view('livewire.store.pos-terminal', [
+            'categories' => $this->categories(),
             'catalog' => $this->catalog(),
             'cartOptions' => $this->cartOptions(),
         ])->layout('layouts.staff-workspace', ['workspace' => 'cashier']);
+    }
+
+    /** @return Collection<int, Category> */
+    private function categories(): Collection
+    {
+        return Category::query()
+            ->active()
+            ->whereHas('products', fn (Builder $products): Builder => $products
+                ->where('status', 'active')
+                ->whereHas('options', fn (Builder $options): Builder => $options->where('is_available', true)))
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
     }
 
     /** @return Collection<int, ProductOption> */
@@ -96,6 +120,8 @@ class PosTerminal extends Component
             ->whereHas('product', fn (Builder $query): Builder => $query
                 ->where('status', 'active')
                 ->whereHas('category', fn (Builder $category): Builder => $category->where('is_active', true)))
+            ->when($this->selectedCategoryId !== null, fn (Builder $query): Builder => $query
+                ->whereHas('product', fn (Builder $product): Builder => $product->where('category_id', $this->selectedCategoryId)))
             ->when(trim($this->search) !== '', fn (Builder $query): Builder => $query->where(function (Builder $search): void {
                 $term = '%'.trim($this->search).'%';
                 $search->where('name', 'like', $term)
@@ -105,6 +131,30 @@ class PosTerminal extends Component
             ->orderBy('id')
             ->limit(50)
             ->get();
+    }
+
+    public function selectCategory(?int $categoryId): void
+    {
+        $this->authorizeTerminal();
+
+        if ($categoryId !== null) {
+            abort_unless($this->categories()->contains('id', $categoryId), 422);
+        }
+
+        $this->selectedCategoryId = $categoryId;
+        $this->search = '';
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->selectedCategoryId = null;
+    }
+
+    public function updatedShowErrorModal(bool $isOpen): void
+    {
+        if (! $isOpen) {
+            $this->resetValidation();
+        }
     }
 
     /** @return Collection<int, ProductOption> */
@@ -144,6 +194,7 @@ class PosTerminal extends Component
         $this->showReviewModal = false;
         $this->cashReceived = '';
         $this->resetValidation();
+        $this->showErrorModal = false;
     }
 
     public function selectPaymentMethod(string $paymentMethod): void
@@ -156,6 +207,7 @@ class PosTerminal extends Component
         $this->showReviewModal = false;
         $this->cashReceived = '';
         $this->resetValidation();
+        $this->showErrorModal = false;
     }
 
     public function removeOption(int $optionId): void
@@ -186,6 +238,7 @@ class PosTerminal extends Component
     {
         $this->authorizeTerminal();
         $this->resetValidation();
+        $this->showErrorModal = false;
         abort_unless($this->buyerType === 'minor', 422);
         $profile = $credentials->resolve(trim($this->scanToken));
 
@@ -206,6 +259,7 @@ class PosTerminal extends Component
     {
         $this->authorizeTerminal();
         $this->resetValidation();
+        $this->showErrorModal = false;
 
         if (! in_array($this->buyerType, ['guest', 'minor'], true)
             || ! in_array($this->paymentMethod, ['wallet', 'cash'], true)
@@ -258,12 +312,14 @@ class PosTerminal extends Component
 
         $this->cashReceived = number_format($this->reviewedTotalBaisa / 1000, 3, '.', '');
         $this->resetValidation('cashReceived');
+        $this->showErrorModal = false;
     }
 
     public function pay(CreatePosOrder $createPosOrder, CreateCashPosOrder $createCashPosOrder): void
     {
         $this->authorizeTerminal();
         $this->resetValidation();
+        $this->showErrorModal = false;
 
         if (! $this->reviewed || ($this->buyerType === 'minor' && $this->selectedProfileId === null)) {
             throw ValidationException::withMessages(['cart' => 'راجع الإجمالي قبل الدفع.']);

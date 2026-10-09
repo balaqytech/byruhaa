@@ -2,7 +2,6 @@ document.addEventListener('alpine:init', () => {
     window.Alpine.data('cashierQrScanner', () => ({
         isOpen: false,
         isStarting: false,
-        error: '',
         scanner: null,
         visibilityHandler: null,
 
@@ -21,10 +20,8 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            this.error = '';
-
             if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-                this.error = 'تحتاج الكاميرا إلى اتصال HTTPS آمن. استخدم قارئ QR أو أدخل الرمز يدويًا.';
+                this.reportError('تحتاج الكاميرا إلى اتصال HTTPS آمن. استخدم قارئ QR أو أدخل الرمز يدويًا.');
                 return;
             }
 
@@ -56,7 +53,7 @@ document.addEventListener('alpine:init', () => {
                 const wasOpen = this.isOpen;
                 this.close();
                 if (wasOpen) {
-                    this.error = 'تعذّر تشغيل الكاميرا. تحقّق من إذن الكاميرا، أو أدخل الرمز يدويًا.';
+                    this.reportError('تعذّر تشغيل الكاميرا. تحقّق من إذن الكاميرا، أو أدخل الرمز يدويًا.');
                 }
             } finally {
                 this.isStarting = false;
@@ -74,8 +71,12 @@ document.addEventListener('alpine:init', () => {
                 await this.$wire.$set('scanToken', value.trim());
                 await this.$wire.scan();
             } catch {
-                this.error = 'تعذّر التحقق من البطاقة. حاول المسح مرة أخرى أو أدخل الرمز يدويًا.';
+                this.reportError('تعذّر التحقق من البطاقة. حاول المسح مرة أخرى أو أدخل الرمز يدويًا.');
             }
+        },
+
+        reportError(message) {
+            this.$dispatch('pos-scanner-error', { message });
         },
 
         close() {
