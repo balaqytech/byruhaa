@@ -3,6 +3,7 @@
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\PublicEventInterestController;
 use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\RabbaniyeenInterestController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Middleware\CaptureAffiliateReferral;
 use App\Modules\Content\Http\Controllers\PublicPageController;
@@ -16,6 +17,9 @@ Route::middleware(CaptureAffiliateReferral::class)->group(function (): void {
     Route::get('coffee/{slug}', [PublicSiteController::class, 'coffeeProduct'])->name('coffee.product');
     Route::get('events', [PublicSiteController::class, 'events'])->name('events.index');
     Route::get('events/{event:slug}', [PublicSiteController::class, 'event'])->name('events.show');
+    Route::post('events/{event:slug}/rabbaniyeen-interest', RabbaniyeenInterestController::class)
+        ->middleware('throttle:10,1')
+        ->name('events.rabbaniyeen.interests.store');
     Route::post('events/{event:slug}/interest', PublicEventInterestController::class)
         ->middleware(['auth:customer', 'throttle:10,1'])
         ->name('events.interests.store');

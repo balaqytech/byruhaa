@@ -11,6 +11,12 @@
             <span>احجز الآن</span>
             <x-hugeicon name="ticket-01" class="text-lg" />
         </a>
+    @elseif ($event->landing_page_key === 'rabbaniyeen-v1' && $event->canExpressInterest())
+        <a href="{{ route('events.show', $event) }}#sajjil"
+            class="{{ $buttonClass }} whitespace-nowrap overflow-visible shrink-0 min-w-max">
+            <span>سجّل اهتمامك</span>
+            <x-hugeicon name="user-heart-02" class="text-lg" />
+        </a>
     @elseif (session('event_interest_recorded') === $event->id)
         <div role="status"
             class="flex max-w-md items-start gap-3 rounded-sm border border-[#009060]/20 bg-[#e8f8f1] px-5 py-4 text-sm leading-7 text-[#075f43] dark:border-[#e0a800]/20 dark:bg-[#e0a800]/10 dark:text-[#f3dda0]">

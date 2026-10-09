@@ -150,6 +150,7 @@ return [
     'event_landing_pages' => [
         'life_after_school_v1' => 'الحياة بعد المدرسة، الإصدار الأول',
         'umrah_2026_v1' => 'رحلة العمرة ٢٠٢٦، الإصدار الأول',
+        'rabbaniyeen_v1' => 'ربانيين، الإصدار الأول',
     ],
 
     'event_infolist' => [

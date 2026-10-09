@@ -150,6 +150,7 @@ return [
     'event_landing_pages' => [
         'life_after_school_v1' => 'Life after school, version 1',
         'umrah_2026_v1' => 'Umrah 2026, version 1',
+        'rabbaniyeen_v1' => 'Rabbaniyeen, version 1',
     ],
 
     'event_infolist' => [
