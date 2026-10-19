@@ -24,8 +24,9 @@ class UchatMinorAvatarRequest extends UchatRequest
     {
         return [
             'uchat_phone' => $this->phoneRules(),
-            'avatar' => ['required_without:avatar_base64', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2048,max_height=2048', 'prohibits:avatar_base64'],
-            'avatar_base64' => ['required_without:avatar', 'string', 'max:2800000', 'prohibits:avatar'],
+            'avatar' => ['required_without_all:avatar_base64,avatar_url', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2048,max_height=2048', 'prohibits:avatar_base64,avatar_url'],
+            'avatar_base64' => ['required_without_all:avatar,avatar_url', 'string', 'max:2800000', 'prohibits:avatar,avatar_url'],
+            'avatar_url' => ['required_without_all:avatar,avatar_base64', 'string', 'url', 'max:4096', 'prohibits:avatar,avatar_base64'],
         ];
     }
 }

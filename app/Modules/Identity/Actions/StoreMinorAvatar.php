@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class StoreMinorAvatar
 {
+    public function __construct(private DownloadMinorAvatarImage $downloads) {}
+
     public function storeFile(MinorProfile $profile, UploadedFile $file): void
     {
         $contents = file_get_contents($file->getRealPath());
@@ -36,24 +38,29 @@ class StoreMinorAvatar
         $this->storeBytes($profile, $contents, 'image/'.$matches[1], 'avatar_base64');
     }
 
-    private function storeBytes(MinorProfile $profile, string $contents, string $declaredMime, string $errorKey): void
+    public function storeUrl(MinorProfile $profile, string $url): void
     {
-        $image = @getimagesizefromstring($contents);
-        $mime = $image['mime'] ?? null;
-        $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        $this->storeDownloadedUrl($profile, $this->downloadUrl($url));
+    }
 
-        if (strlen($contents) > 2 * 1024 * 1024
-            || $mime !== $declaredMime
-            || ! isset($extensions[$mime])
-            || ($image[0] ?? 0) < 1
-            || ($image[1] ?? 0) < 1
-            || ($image[0] ?? 0) > 2048
-            || ($image[1] ?? 0) > 2048) {
-            throw ValidationException::withMessages([$errorKey => 'الصورة يجب أن تكون JPEG أو PNG أو WebP، بحجم لا يتجاوز ٢ ميغابايت وأبعاد لا تتجاوز ٢٠٤٨ بكسل.']);
-        }
+    public function downloadUrl(string $url): string
+    {
+        $contents = $this->downloads->download($url);
+        $this->validateImage($contents, null, 'avatar_url');
 
+        return $contents;
+    }
+
+    public function storeDownloadedUrl(MinorProfile $profile, string $contents): void
+    {
+        $this->storeBytes($profile, $contents, null, 'avatar_url');
+    }
+
+    private function storeBytes(MinorProfile $profile, string $contents, ?string $declaredMime, string $errorKey): void
+    {
+        $extension = $this->validateImage($contents, $declaredMime, $errorKey);
         $disk = Storage::disk('local');
-        $path = 'minor-avatars/'.$profile->id.'/'.Str::uuid().'.'.$extensions[$mime];
+        $path = 'minor-avatars/'.$profile->id.'/'.Str::uuid().'.'.$extension;
 
         if (! $disk->put($path, $contents)) {
             throw ValidationException::withMessages([$errorKey => 'تعذّر حفظ الصورة. حاول مرة أخرى.']);
@@ -72,5 +79,24 @@ class StoreMinorAvatar
         if ($previousPath !== null) {
             $disk->delete($previousPath);
         }
+    }
+
+    private function validateImage(string $contents, ?string $declaredMime, string $errorKey): string
+    {
+        $image = @getimagesizefromstring($contents);
+        $mime = $image['mime'] ?? null;
+        $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+
+        if (strlen($contents) > 2 * 1024 * 1024
+            || ($declaredMime !== null && $mime !== $declaredMime)
+            || ! isset($extensions[$mime])
+            || ($image[0] ?? 0) < 1
+            || ($image[1] ?? 0) < 1
+            || ($image[0] ?? 0) > 2048
+            || ($image[1] ?? 0) > 2048) {
+            throw ValidationException::withMessages([$errorKey => 'الصورة يجب أن تكون JPEG أو PNG أو WebP، بحجم لا يتجاوز ٢ ميغابايت وأبعاد لا تتجاوز ٢٠٤٨ بكسل.']);
+        }
+
+        return $extensions[$mime];
     }
 }

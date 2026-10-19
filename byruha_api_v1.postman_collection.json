@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "7e42a4fc-a492-4f4d-b59f-9c8313db1f2a",
     "name": "Byruha API v1",
-    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout. Includes child-account cart/order selection, wallet balance/history, wallet top-ups, and immediate wallet payment for child orders.\nCustomer, family, booking, payment and assistant-interest endpoints require the trusted server-side UChat bearer token. Public events remain readable without a token. Password updates via the customer API are prohibited. Linked minor accounts must use the account lifecycle workflow before parent/family deletion (409 minor_account_lifecycle_required).\nUChat onboarding: find or create a family member, open the minor profile after the guardian accepts both consent statements, then share activation_url so the child can set a password. Guardian phone OTP is not required and its public endpoints have been removed. New minor profiles start with wallet spending enabled after activation; spending permission and operational wallet status are managed independently through the Wallets requests.\nStore member pricing: price_baisa remains the regular VAT-inclusive price for compatibility. Catalog options also expose regular_price_baisa and nullable member_price_baisa. Server quotes and orders expose pricing_tier, regular_total_baisa and discount_baisa plus per-line regular and discount snapshots. The server is always the final pricing authority.",
+    "description": "Postman documentation for Byruha API v1. Includes Events APIs, customer operations, event interests, and the authenticated UChat Store integration for catalog, cart, orders, and Thawani checkout. Includes child-account cart/order selection, wallet balance/history, wallet top-ups, and immediate wallet payment for child orders.\nCustomer, family, booking, payment and assistant-interest endpoints require the trusted server-side UChat bearer token. Public events remain readable without a token. Password updates via the customer API are prohibited. Linked minor accounts must use the account lifecycle workflow before parent/family deletion (409 minor_account_lifecycle_required).\nUChat onboarding: find or create a family member, open the minor profile after the guardian accepts both consent statements, then share activation_url so the child can set a password. Guardian phone OTP is not required and its public endpoints have been removed. New minor profiles start with wallet spending enabled after activation; spending permission and operational wallet status are managed independently through the Wallets requests.\nMinor avatars: the UChat create and avatar-update endpoints accept one image source at a time: public HTTPS avatar_url, Base64 data URI avatar_base64, or multipart avatar file. Image links returned by the API are signed for 24 hours.\nStore member pricing: price_baisa remains the regular VAT-inclusive price for compatibility. Catalog options also expose regular_price_baisa and nullable member_price_baisa. Server quotes and orders expose pricing_tier, regular_total_baisa and discount_baisa plus per-line regular and discount snapshots. The server is always the final pricing authority.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -99,6 +99,16 @@
     {
       "key": "store_minor_profile_id",
       "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "minor_avatar_url",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "minor_avatar_base64",
+      "value": "",
       "type": "string"
     },
     {
@@ -1977,7 +1987,7 @@
     },
     {
       "name": "UChat Store",
-      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server. A phone matching a Byruhaa customer receives member pricing automatically; an unknown phone receives standard pricing. An owned active minor_profile_id also receives member pricing.\n\nMember-pricing contract: catalog price_baisa remains the regular VAT-inclusive price. regular_price_baisa is the explicit alias and member_price_baisa is nullable. Quotes and orders add pricing_tier (standard|member), regular_total_baisa and discount_baisa. Lines add regular_unit_price_baisa, unit_discount_baisa and line_discount_baisa while unit_price_baisa and line_total_baisa are the effective charged values. VAT is calculated from the effective price. store.order.* webhooks carry the same saved snapshots. Never submit or calculate a client-side price.\n\nWallet flow: set the guardian WhatsApp phone and store_minor_profile_id; the guardian must own the active child profile. Guardian phone verification is not part of this API contract. Enable WALLETS_ENABLED on the server. Use the wallet controls to manage spending permission independently from operational wallet status. A suspended wallet cannot be spent from or topped up. Read the wallet, initiate a Thawani top-up, and open checkout_url in the browser. Use the same minor_profile_id throughout cart and order requests. Create a wallet order after explicit guardian approval; the API debits and confirms immediately in the same request when funds are available. No website confirmation link is returned. Pickup only; email is optional. Wallet refunds continue through the website/admin workflow. New minor accounts do not require a minor OTP. Show the two consent statements returned by GET account and obtain explicit guardian approval for each. Create with consent_accepted=true and notifications_consent_accepted=true, then share activation_url for password setup. Recover lost/expired links with the activation-link endpoint.\n\nUse a new idempotency key for each new order or top-up, retaining it for retries of that same operation. Do not reuse a key for another amount or child. All monetary response fields ending in _baisa are integer baisa (1000 = OMR 1).\nAccount onboarding uses the same trusted token and guardian X-WhatsApp-Phone. Accept-Language: ar or en. Errors retain code and add reasons[field] machine-readable codes when available.",
+      "description": "Authenticated server-to-server Store API used by UChat. Every request requires the configured Bearer token. Customer-scoped requests use X-WhatsApp-Phone as the trusted identity. Prices, VAT, totals, availability, and ownership are always calculated by the server. A phone matching a Byruhaa customer receives member pricing automatically; an unknown phone receives standard pricing. An owned active minor_profile_id also receives member pricing.\n\nMember-pricing contract: catalog price_baisa remains the regular VAT-inclusive price. regular_price_baisa is the explicit alias and member_price_baisa is nullable. Quotes and orders add pricing_tier (standard|member), regular_total_baisa and discount_baisa. Lines add regular_unit_price_baisa, unit_discount_baisa and line_discount_baisa while unit_price_baisa and line_total_baisa are the effective charged values. VAT is calculated from the effective price. store.order.* webhooks carry the same saved snapshots. Never submit or calculate a client-side price.\n\nWallet flow: set the guardian WhatsApp phone and store_minor_profile_id; the guardian must own the active child profile. Guardian phone verification is not part of this API contract. Enable WALLETS_ENABLED on the server. Use the wallet controls to manage spending permission independently from operational wallet status. A suspended wallet cannot be spent from or topped up. Read the wallet, initiate a Thawani top-up, and open checkout_url in the browser. Use the same minor_profile_id throughout cart and order requests. Create a wallet order after explicit guardian approval; the API debits and confirms immediately in the same request when funds are available. No website confirmation link is returned. Pickup only; email is optional. Wallet refunds continue through the website/admin workflow. New minor accounts do not require a minor OTP. Show the two consent statements returned by GET account and obtain explicit guardian approval for each. Create with consent_accepted=true and notifications_consent_accepted=true, then share activation_url for password setup. Recover lost/expired links with the activation-link endpoint.\n\nUse a new idempotency key for each new order or top-up, retaining it for retries of that same operation. Do not reuse a key for another amount or child. All monetary response fields ending in _baisa are integer baisa (1000 = OMR 1).\nMinor profile responses include avatar_url and avatar_url_expires_at. Use GET minor-profiles to refresh an expired image link. Set minor_avatar_url in this collection before using the URL examples. Account onboarding uses the same trusted token and guardian X-WhatsApp-Phone. Accept-Language: ar or en. Errors retain code and add reasons[field] machine-readable codes when available.",
       "auth": {
         "type": "bearer",
         "bearer": [
@@ -2539,7 +2549,7 @@
                 "minor-profiles"
               ]
             },
-            "description": "200 data array scoped to the guardian phone. Includes inactive/pending children: minor_profile_id, family_member_id, name, member_code, status, direct_payment_enabled, wallet_spending_enabled. Use returned IDs, never guess IDs."
+            "description": "200 data array scoped to the guardian phone. Includes inactive/pending children: minor_profile_id, family_member_id, name, member_code, status, direct_payment_enabled, wallet_spending_enabled, avatar_url and avatar_url_expires_at. avatar_url is null when no image exists; signed image links expire after 24 hours. Refresh this list to obtain a new image URL. Use returned IDs, never guess IDs."
           },
           "response": []
         },
@@ -2579,7 +2589,7 @@
                 "minor-profiles"
               ]
             },
-            "description": "First select/create a family member. Show GET account consent_text and notifications_consent_text as two separate approvals. Never display consent_policy_text or either *_policy_identifier; they are internal policy identifiers. Set consent_accepted=true and notifications_consent_accepted=true only after the guardian explicitly accepts both display texts. The account consent explicitly states wallet spending starts enabled after child activation; the guardian can disable spending or suspend the wallet. New member_code values are two uppercase letters and three digits (case-insensitive on login), with no BRH- prefix. The notification consent covers all current and future minor-account notifications, including order and wallet notifications, and details may appear on the device lock screen. Reuses stored name/birthdate; under 18 only. Returns 201 {data:{minor_profile_id,family_member_id,name,member_code,status:\"pending_child_activation\",direct_payment_enabled:false,wallet_spending_enabled:true},created:true,activation_url:\"signed URL\",expires_at:\"ISO timestamp\"}. Share activation_url with the child to set a password within 24 hours; do not collect passwords in UChat. No minor OTP or outbound webhook is needed. Retry returns 200 same profile, created:false, activation_url:null and does not invalidate the previous link; it also safely records missing notification consent for an existing test profile. Recover missing links using Issue or renew minor activation link. Guardian phone verification is not required and no phone OTP call should be made.",
+            "description": "First select/create a family member. Show GET account consent_text and notifications_consent_text as two separate approvals. Never display consent_policy_text or either *_policy_identifier; they are internal policy identifiers. Set consent_accepted=true and notifications_consent_accepted=true only after the guardian explicitly accepts both display texts. The account consent explicitly states wallet spending starts enabled after child activation; the guardian can disable spending or suspend the wallet. New member_code values are two uppercase letters and three digits (case-insensitive on login), with no BRH- prefix. The notification consent covers all current and future minor-account notifications, including order and wallet notifications, and details may appear on the device lock screen. Reuses stored name/birthdate; under 18 only. Optional avatar: send exactly one of avatar_url (public HTTPS direct image URL), avatar_base64 (data:image/jpeg, png or webp Base64 URI), or avatar (multipart image file). JPEG, PNG and WebP are accepted up to 2 MiB and 2048 by 2048 pixels. The server downloads URL images into private storage; up to three redirects are checked individually, and private network destinations are rejected. Returns 201 {data:{minor_profile_id,family_member_id,name,member_code,status:\"pending_child_activation\",direct_payment_enabled:false,wallet_spending_enabled:true,avatar_url:\"signed image URL or null\",avatar_url_expires_at:\"ISO timestamp or null\"},created:true,activation_url:\"signed URL\",expires_at:\"ISO timestamp\"}. Share activation_url with the child to set a password within 24 hours; do not collect passwords in UChat. No minor OTP or outbound webhook is needed. Retry returns 200 same profile, created:false, activation_url:null and does not invalidate the previous link; it also safely records missing notification consent for an existing test profile. Recover missing links using Issue or renew minor activation link. Guardian phone verification is not required and no phone OTP call should be made.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"family_member_id\": \"{{family_member_id}}\",\n  \"consent_accepted\": true,\n  \"notifications_consent_accepted\": true\n}",
@@ -2603,6 +2613,208 @@
               }
             }
           ]
+        },
+        {
+          "name": "Open minor account with avatar URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-WhatsApp-Phone",
+                "value": "{{uchat_phone}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "{{uchat_language}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integrations",
+                "uchat",
+                "store",
+                "minor-profiles"
+              ]
+            },
+            "description": "Set minor_avatar_url to a direct public HTTPS image URL before sending. Guardian consent is still required. The endpoint also safely retries an existing profile and can update its avatar. The server downloads the image into private storage. JPEG/PNG/WebP only, maximum 2 MiB and 2048 by 2048 pixels. Returns data.avatar_url and data.avatar_url_expires_at; the signed image URL expires after 24 hours.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"family_member_id\": \"{{family_member_id}}\",\n  \"consent_accepted\": true,\n  \"notifications_consent_accepted\": true,\n  \"avatar_url\": \"{{minor_avatar_url}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code < 300 && pm.response.json().data?.minor_profile_id) pm.collectionVariables.set(\"store_minor_profile_id\", pm.response.json().data.minor_profile_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update minor avatar from URL",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-WhatsApp-Phone",
+                "value": "{{uchat_phone}}"
+              },
+              {
+                "key": "Accept-Language",
+                "value": "{{uchat_language}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/avatar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integrations",
+                "uchat",
+                "store",
+                "minor-profiles",
+                "{{store_minor_profile_id}}",
+                "avatar"
+              ]
+            },
+            "description": "Replace the owned minor profile avatar using a direct public HTTPS image URL. The server checks up to three HTTPS redirects, rejects private network destinations at every step, and stores the verified image privately. Returns 200 with data.avatar_url and data.avatar_url_expires_at. Refresh GET minor-profiles after 24 hours for a fresh signed image URL.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"avatar_url\": \"{{minor_avatar_url}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update minor avatar from Base64",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-WhatsApp-Phone",
+                "value": "{{uchat_phone}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/avatar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integrations",
+                "uchat",
+                "store",
+                "minor-profiles",
+                "{{store_minor_profile_id}}",
+                "avatar"
+              ]
+            },
+            "description": "Set minor_avatar_base64 to the full data URI, for example data:image/png;base64,... . Send this field alone, without avatar_url or avatar. JPEG/PNG/WebP only, maximum decoded size 2 MiB and dimensions 2048 by 2048 pixels.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"avatar_base64\": \"{{minor_avatar_base64}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update minor avatar by multipart upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "X-WhatsApp-Phone",
+                "value": "{{uchat_phone}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/integrations/uchat/store/minor-profiles/{{store_minor_profile_id}}/avatar",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "integrations",
+                "uchat",
+                "store",
+                "minor-profiles",
+                "{{store_minor_profile_id}}",
+                "avatar"
+              ]
+            },
+            "description": "Choose a JPEG, PNG, or WebP file in the avatar form-data field. Postman sets the multipart Content-Type boundary automatically. Maximum 2 MiB and 2048 by 2048 pixels.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "response": []
         },
         {
           "name": "Issue or renew minor activation link",

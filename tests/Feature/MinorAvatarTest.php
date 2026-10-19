@@ -1,11 +1,13 @@
 <?php
 
 use App\Modules\Identity\Enums\MinorProfileStatus;
+use App\Modules\Identity\Actions\PublicAvatarAddressResolver;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\MinorProfile;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 test('guardian can add and replace a private avatar and old signed links stop working', function (): void {
@@ -119,4 +121,199 @@ test('uchat also accepts multipart avatar during minor creation', function (): v
     ])->assertCreated()->assertJsonPath('data.name', $familyMember->name);
 
     expect(MinorProfile::query()->sole()->avatar_path)->toEndWith('.jpg');
+});
+
+test('invalid remote avatar does not create a minor account', function (): void {
+    Storage::fake('local');
+    config([
+        'byruhaa.uchat.api_token' => 'avatar-secret',
+        'byruhaa.uchat.owner_key_secret' => 'owner-secret',
+        'byruhaa.minor_accounts.enabled' => true,
+    ]);
+    $this->withHeaders(['Authorization' => 'Bearer avatar-secret', 'X-WhatsApp-Phone' => '+96891234567']);
+    $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $familyMember = FamilyMember::factory()->for($guardian)->create(['birth_date' => now()->subYears(12)]);
+    $url = 'https://media.uchat.test/invalid.png';
+
+    $this->mock(PublicAvatarAddressResolver::class)
+        ->shouldReceive('resolve')
+        ->with('media.uchat.test')
+        ->once()
+        ->andReturn('93.184.216.34');
+    Http::preventStrayRequests();
+    Http::fake([$url => Http::response('invalid image', 200, ['Content-Type' => 'image/png'])]);
+
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', [
+        'family_member_id' => $familyMember->id,
+        'consent_accepted' => true,
+        'notifications_consent_accepted' => true,
+        'avatar_url' => $url,
+    ])->assertUnprocessable()->assertJsonValidationErrors('avatar_url');
+
+    expect(MinorProfile::query()->count())->toBe(0);
+});
+
+test('uchat can create a minor with a remote avatar URL and then replace it by URL', function (): void {
+    Storage::fake('local');
+    config([
+        'byruhaa.uchat.api_token' => 'avatar-secret',
+        'byruhaa.uchat.owner_key_secret' => 'owner-secret',
+        'byruhaa.minor_accounts.enabled' => true,
+        'byruhaa.uchat.webhook_url' => null,
+    ]);
+    $this->withHeaders(['Authorization' => 'Bearer avatar-secret', 'X-WhatsApp-Phone' => '+96891234567']);
+    $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $familyMember = FamilyMember::factory()->for($guardian)->create(['birth_date' => now()->subYears(12)]);
+    $image = UploadedFile::fake()->image('leader.png', 120, 120);
+    $contents = file_get_contents($image->getRealPath());
+    $remoteUrl = 'https://media.uchat.test/leader.png?signature=example';
+
+    $this->mock(PublicAvatarAddressResolver::class)
+        ->shouldReceive('resolve')
+        ->with('media.uchat.test')
+        ->twice()
+        ->andReturn('93.184.216.34');
+    Http::preventStrayRequests();
+    Http::fake([$remoteUrl => fn () => Http::response($contents, 200, ['Content-Type' => 'image/png'])]);
+
+    $created = $this->postJson('/api/v1/integrations/uchat/store/minor-profiles', [
+        'family_member_id' => $familyMember->id,
+        'consent_accepted' => true,
+        'notifications_consent_accepted' => true,
+        'avatar_url' => $remoteUrl,
+    ])->assertCreated()->assertJsonPath('data.name', $familyMember->name);
+
+    $profile = MinorProfile::query()->sole();
+    $oldPath = $profile->avatar_path;
+    Storage::disk('local')->assertExists($oldPath);
+    $this->get($created->json('data.avatar_url'))->assertOk()->assertHeader('Content-Type', 'image/png');
+
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles/'.$profile->id.'/avatar', [
+        'avatar_url' => $remoteUrl,
+    ])->assertOk();
+
+    $profile->refresh();
+    Storage::disk('local')->assertMissing($oldPath);
+    Storage::disk('local')->assertExists($profile->avatar_path);
+    Http::assertSentCount(2);
+});
+
+test('uchat follows a public HTTPS image redirect after checking its destination', function (): void {
+    Storage::fake('local');
+    config([
+        'byruhaa.uchat.api_token' => 'avatar-secret',
+        'byruhaa.uchat.owner_key_secret' => 'owner-secret',
+    ]);
+    $this->withHeaders(['Authorization' => 'Bearer avatar-secret', 'X-WhatsApp-Phone' => '+96891234567']);
+    $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create();
+    $image = UploadedFile::fake()->image('leader.png', 120, 120);
+
+    $this->mock(PublicAvatarAddressResolver::class)
+        ->shouldReceive('resolve')
+        ->with('media.uchat.test')
+        ->once()
+        ->andReturn('93.184.216.34')
+        ->shouldReceive('resolve')
+        ->with('cdn.uchat.test')
+        ->once()
+        ->andReturn('93.184.216.35');
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://media.uchat.test/leader' => Http::response('', 302, ['Location' => 'https://cdn.uchat.test/leader.png']),
+        'https://cdn.uchat.test/leader.png' => Http::response(file_get_contents($image->getRealPath()), 200, ['Content-Type' => 'image/png']),
+    ]);
+
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles/'.$profile->id.'/avatar', [
+        'avatar_url' => 'https://media.uchat.test/leader',
+    ])->assertOk();
+
+    Storage::disk('local')->assertExists($profile->fresh()->avatar_path);
+    Http::assertSentCount(2);
+});
+
+test('remote avatar URLs reject private hosts, redirects, oversized bodies and non-images', function (): void {
+    Storage::fake('local');
+    config([
+        'byruhaa.uchat.api_token' => 'avatar-secret',
+        'byruhaa.uchat.owner_key_secret' => 'owner-secret',
+    ]);
+    $this->withHeaders(['Authorization' => 'Bearer avatar-secret', 'X-WhatsApp-Phone' => '+96891234567']);
+    $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create();
+    $endpoint = '/api/v1/integrations/uchat/store/minor-profiles/'.$profile->id.'/avatar';
+    Http::preventStrayRequests();
+    Http::fake();
+
+    foreach ([
+        'http://media.uchat.test/leader.png',
+        'https://127.0.0.1/leader.png',
+        'https://localhost/leader.png',
+        'https://media.uchat.test:8443/leader.png',
+        'https://user:password@media.uchat.test/leader.png',
+    ] as $url) {
+        $this->postJson($endpoint, ['avatar_url' => $url])->assertUnprocessable();
+    }
+
+    Http::assertNothingSent();
+    expect($profile->fresh()->avatar_path)->toBeNull();
+
+    $this->mock(PublicAvatarAddressResolver::class)
+        ->shouldReceive('resolve')
+        ->with('media.uchat.test')
+        ->times(4)
+        ->andReturn('93.184.216.34');
+    $remoteUrl = 'https://media.uchat.test/leader.png';
+    Http::fakeSequence()
+        ->push('', 302, ['Location' => 'http://127.0.0.1/private'])
+        ->push('x', 200, ['Content-Length' => '2097153'])
+        ->push('not an image', 200, ['Content-Type' => 'image/png'])
+        ->push(str_repeat('x', 2097153), 200, ['Content-Type' => 'image/png']);
+
+    for ($attempt = 0; $attempt < 4; $attempt++) {
+        $this->postJson($endpoint, ['avatar_url' => $remoteUrl])
+            ->assertUnprocessable()->assertJsonValidationErrors('avatar_url');
+    }
+
+    expect($profile->fresh()->avatar_path)->toBeNull();
+});
+
+test('remote avatar input is mutually exclusive with file and base64 fields', function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'avatar-secret',
+        'byruhaa.uchat.owner_key_secret' => 'owner-secret',
+    ]);
+    $this->withHeaders(['Authorization' => 'Bearer avatar-secret', 'X-WhatsApp-Phone' => '+96891234567']);
+    $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create();
+
+    $this->postJson('/api/v1/integrations/uchat/store/minor-profiles/'.$profile->id.'/avatar', [
+        'avatar_url' => 'https://media.uchat.test/leader.png',
+        'avatar_base64' => 'data:image/png;base64,AAAA',
+    ])->assertUnprocessable()->assertJsonValidationErrors('avatar_url');
+});
+
+test('remote avatar address checks reject private and reserved IP ranges', function (): void {
+    $resolver = app(PublicAvatarAddressResolver::class);
+
+    expect($resolver->isPublicIp('93.184.216.34'))->toBeTrue()
+        ->and($resolver->isPublicIp('127.0.0.1'))->toBeFalse()
+        ->and($resolver->isPublicIp('10.0.0.5'))->toBeFalse()
+        ->and($resolver->isPublicIp('100.100.100.200'))->toBeFalse()
+        ->and($resolver->isPublicIp('169.254.169.254'))->toBeFalse()
+        ->and($resolver->isPublicIp('198.18.0.1'))->toBeFalse()
+        ->and($resolver->isPublicIp('2001:db8::1'))->toBeFalse()
+        ->and($resolver->isPublicIp('::1'))->toBeFalse()
+        ->and($resolver->isPublicIp('::ffff:127.0.0.1'))->toBeFalse();
+});
+
+test('Postman collection documents the avatar URL create and update requests', function (): void {
+    $collection = json_decode(file_get_contents(base_path('byruha_api_v1.postman_collection.json')), true, flags: JSON_THROW_ON_ERROR);
+    $store = collect($collection['item'])->firstWhere('name', 'UChat Store');
+    $requests = collect($store['item'])->keyBy('name');
+
+    expect($requests->get('Open minor account with avatar URL')['request']['body']['raw'])->toContain('avatar_url')
+        ->and($requests->get('Update minor avatar from URL')['request']['body']['raw'])->toContain('minor_avatar_url')
+        ->and($requests->get('Update minor avatar from Base64')['request']['body']['raw'])->toContain('avatar_base64')
+        ->and($requests->get('Update minor avatar by multipart upload')['request']['body']['formdata'][0]['key'])->toBe('avatar');
 });

@@ -67,6 +67,9 @@ class UchatAccountController extends Controller
     ): JsonResponse {
         $guardian = $this->guardian($request);
         $this->requireMinorAccounts();
+        $downloadedAvatar = filled($request->validated('avatar_url'))
+            ? $avatars->downloadUrl((string) $request->validated('avatar_url'))
+            : null;
         $created = false;
         $activationToken = null;
         $profile = DB::transaction(function () use ($guardian, $request, $create, $recordNotificationConsent, &$created, &$activationToken): MinorProfile {
@@ -92,7 +95,11 @@ class UchatAccountController extends Controller
             return $result['profile'];
         });
 
-        $this->saveAvatar($request, $profile, $avatars);
+        if ($downloadedAvatar !== null) {
+            $avatars->storeDownloadedUrl($profile, $downloadedAvatar);
+        } else {
+            $this->saveAvatar($request, $profile, $avatars);
+        }
 
         return response()->json([
             'data' => $this->profileData($profile->load('familyMember')),
@@ -300,6 +307,8 @@ class UchatAccountController extends Controller
             $avatars->storeFile($profile, $request->file('avatar'));
         } elseif (filled($request->validated('avatar_base64'))) {
             $avatars->storeBase64($profile, (string) $request->validated('avatar_base64'));
+        } elseif (filled($request->validated('avatar_url'))) {
+            $avatars->storeUrl($profile, (string) $request->validated('avatar_url'));
         }
     }
 
