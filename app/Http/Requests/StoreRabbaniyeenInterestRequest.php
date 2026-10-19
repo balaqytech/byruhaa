@@ -24,11 +24,10 @@ class StoreRabbaniyeenInterestRequest extends FormRequest
     {
         return [
             'guardian_name' => ['required', 'string', 'max:255'],
+            'student_name' => ['required', 'string', 'max:255'],
             'whatsapp_number' => ['required', 'regex:/^[0-9]{8,15}$/'],
             'wilaya' => ['required', 'string', 'max:255'],
-            'student_grade' => ['required', Rule::in(['7', '8', '9', '10', '11', '12', 'multiple'])],
-            'recitation_level' => ['nullable', Rule::in(['fluent', 'hesitant', 'not_fluent', 'unsure'])],
-            'preferred_track' => ['nullable', Rule::in(['sakinah', 'nur', 'hijrah', 'choose_after_test'])],
+            'student_grade' => ['required', Rule::in(['7', '8', '9', '10', '11', '12'])],
             'note' => ['nullable', 'string', 'max:3000'],
             'contact_consent' => ['accepted'],
         ];
@@ -51,6 +50,7 @@ class StoreRabbaniyeenInterestRequest extends FormRequest
     {
         return [
             'guardian_name' => 'اسم ولي الأمر',
+            'student_name' => 'اسم الطالب/ القائد',
             'whatsapp_number' => 'رقم الواتساب',
             'wilaya' => 'الولاية',
             'student_grade' => 'صف الابن',

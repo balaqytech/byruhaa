@@ -33,15 +33,15 @@ test('homepage loads', function () {
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSee('بِيرُحاء إبراء')
-        ->assertSee('مساحةٌ ينضج فيها الفتى بالفعل')
-        ->assertSee('يومٌ متوازن، وأثرٌ يمتد')
-        ->assertSee('التربية تبدأ بالصحبة، لا بالشعار')
+        ->assertSee('مؤسسة تربوية للفتيان من الصف السابع إلى الثاني عشر')
         ->assertSee($featuredEvent->name)
         ->assertSee(route('events.show', $featuredEvent), false)
         ->assertDontSee(route('customer.events.show', $featuredEvent), false)
         ->assertSee(route('events.index'), false)
         ->assertSee(route('coffee'), false)
-        ->assertSee('قهوة بيرحاء، بابٌ يومي للمكان')
+        ->assertSeeInOrder(['data-home-featured', 'data-home-coffee', 'data-home-events'], false)
+        ->assertSee('قهوة بيرحاء')
+        ->assertSee('فعاليات بيرحاء')
         ->assertSee(route('register'), false)
         ->assertSee(route('minor.login'), false)
         ->assertDontSee(route('affiliate.login'), false)
@@ -57,10 +57,9 @@ test('homepage loads', function () {
         ->assertSee('data-whatsapp-reveal-sentinel', false)
         ->assertSee('data-public-footer', false)
         ->assertSee('data-home-events-link', false)
-        ->assertSee('player.vimeo.com/video/1215490802', false)
-        ->assertSee('autoplay=1&amp;muted=1', false)
         ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
-        ->assertSee('x-on:load', false)
+        ->assertDontSee('يومٌ متوازن، وأثرٌ يمتد')
+        ->assertDontSee('اكتملت المقاعد')
         ->assertSee('جميع الحقوق محفوظة.')
         ->assertSee('تطوير')
         ->assertSee('ردء')
@@ -89,10 +88,6 @@ test('public event cards show their editorial card content', function () {
         ->assertSee('احجز الآن')
         ->assertDontSee($event->starts_at->format('Y-m-d'));
 
-    $this->get(route('home'))
-        ->assertSuccessful()
-        ->assertSee('مهارات الكلام والتعامل مع الناس')
-        ->assertSee('من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة');
 });
 
 test('coffee page renders the database-backed public storefront', function () {
@@ -380,37 +375,22 @@ test('homepage features the nearest published event and hides drafts', function 
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSeeInOrder(['Nearest published event', 'مساحةٌ ينضج فيها الفتى بالفعل'])
+        ->assertSeeInOrder(['Nearest published event', 'قهوة بيرحاء', 'فعاليات بيرحاء'])
         ->assertSee(route('events.show', $nearestEvent), false)
         ->assertDontSee(route('customer.events.show', $nearestEvent), false)
         ->assertDontSee('Hidden draft event');
 });
 
-test('homepage shows the current price tier followed by the next tier', function () {
+test('homepage keeps price tier details on the event page', function () {
     $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
     $event->update(['status' => EventStatus::Published]);
-    $firstTier = $event->priceTiers()->firstOrFail();
-    $booking = Booking::factory()->for($event)->create();
-
-    BookingSeatAllocation::factory()->for($booking)->create([
-        'event_id' => $event->id,
-        'event_price_tier_id' => $firstTier->id,
-        'seat_count' => 3,
-        'state' => SeatAllocationState::Reserved,
-        'tier_name' => $firstTier->name,
-        'tier_unit_price_baisa' => $firstTier->price_baisa,
-    ]);
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSeeInOrder([
-            'الباقة المتاحة الآن',
-            'الباقة الأولى',
-            'بقي 7 مقاعد',
-            'الباقة التالية',
-            'الباقة الثانية',
-            '69.000',
-        ]);
+        ->assertSee($event->name)
+        ->assertSee(route('events.show', $event), false)
+        ->assertDontSee('الباقة المتاحة الآن')
+        ->assertDontSee('الباقة التالية');
 });
 
 test('events page loads', function () {

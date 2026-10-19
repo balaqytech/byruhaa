@@ -146,37 +146,22 @@
     transition: background .18s ease, border-color .18s ease, transform .18s ease;
   }
   .rabbaniyeen-landing .btn:hover { transform: translateY(-2px); background: var(--green-hover); border-color: var(--green-hover); }
-  .rabbaniyeen-landing .btn-ghost {
-    border-color: rgb(18 51 41 / 22%);
-    background: rgb(255 255 255 / 68%);
-    color: var(--forest);
-  }
-  .rabbaniyeen-landing .btn-ghost:hover { background: #fff; border-color: var(--green); }
   .rabbaniyeen-landing .no-commit {
     margin-block: 15px 0;
     color: var(--hibr-2);
     font-size: 13px;
   }
-  .rabbaniyeen-landing .mushaf {
-    position: relative;
+  .rabbaniyeen-landing .hero-media {
     margin: 0;
-    padding: clamp(22px, 3vw, 40px);
+    overflow: hidden;
+    aspect-ratio: 4 / 5;
+    max-height: 590px;
     border: 6px solid #eaf4ed;
     border-radius: 4px;
-    background: var(--paper);
+    background: #d8e5d9;
     box-shadow: 20px 22px 0 rgb(18 51 41 / 9%), 0 22px 60px rgb(18 51 41 / 9%);
   }
-  .rabbaniyeen-landing .mushaf svg { display: block; width: 100%; height: auto; }
-  .rabbaniyeen-landing .mushaf figcaption {
-    margin-block-start: 22px;
-    padding-block-start: 16px;
-    border-block-start: 1px solid #e7e6d8;
-    color: var(--forest);
-    font-size: 14px;
-    font-weight: 700;
-    text-align: center;
-  }
-  .rabbaniyeen-landing .mushaf b { color: #87631d; }
+  .rabbaniyeen-landing .hero-media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 64%; }
 
   .rabbaniyeen-landing section { padding-block: clamp(72px, 8vw, 120px); }
   .rabbaniyeen-landing .sec-t {
@@ -264,30 +249,26 @@
   .rabbaniyeen-landing .track:nth-child(3) { border-block-start: 3px solid var(--gold); }
   .rabbaniyeen-landing #masarat .tracks + p { font-size: 16px; }
 
-  .rabbaniyeen-landing .feat { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 50px 72px; }
-  .rabbaniyeen-landing .f { padding-block-start: 25px; border-block-start: 2px solid #acd5bb; }
-  .rabbaniyeen-landing .f h3 { margin: 0 0 14px; color: var(--forest); font-size: 26px; }
-  .rabbaniyeen-landing .f p { margin: 0; color: var(--hibr-2); font-size: 16px; line-height: 1.95; }
-
-  .rabbaniyeen-landing #asila { background: var(--mint); }
-  .rabbaniyeen-landing details { margin-block-end: 10px; border: 1px solid var(--hd); border-radius: 3px; background: #fff; }
-  .rabbaniyeen-landing details[open] { border-color: #acd5bb; box-shadow: 0 10px 30px rgb(18 51 41 / 4%); }
-  .rabbaniyeen-landing summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 19px 22px;
-    color: var(--forest);
-    font-size: 17px;
-    font-weight: 700;
-    list-style: none;
-    cursor: pointer;
+  .rabbaniyeen-landing .managers { border-block-start: 1px solid var(--hd); background: #fff; }
+  .rabbaniyeen-landing .managers .sec-t { margin-block-end: 42px; }
+  .rabbaniyeen-landing .managers-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+  .rabbaniyeen-landing .manager {
+    padding: clamp(28px, 3.5vw, 48px);
+    border: 1px solid var(--hd);
+    border-block-start: 3px solid var(--green);
+    border-radius: 3px;
+    background: var(--mint);
   }
-  .rabbaniyeen-landing summary::-webkit-details-marker { display: none; }
-  .rabbaniyeen-landing summary::after { content: "+"; flex: none; color: var(--green); font-size: 25px; line-height: 1; }
-  .rabbaniyeen-landing details[open] summary::after { content: "–"; }
-  .rabbaniyeen-landing details .body { padding: 0 22px 23px; color: var(--hibr-2); font-size: 16px; line-height: 1.95; }
+  .rabbaniyeen-landing .manager-mark {
+    width: 58px;
+    height: 58px;
+    margin-block-end: 26px;
+    border: 1px solid #b6d9c5;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, var(--green) 0 6px, transparent 7px), radial-gradient(circle at center, transparent 0 17px, #acd5bb 18px 19px, transparent 20px);
+  }
+  .rabbaniyeen-landing .manager h3 { margin: 0 0 20px; color: var(--forest); font-size: clamp(23px, 2.2vw, 30px); }
+  .rabbaniyeen-landing .manager p { margin: 0; color: var(--hibr-2); font-size: 16px; line-height: 2; }
 
   .rabbaniyeen-landing .form-sec { background: var(--forest); color: #fff; }
   .rabbaniyeen-landing .form-sec > .wrap {
@@ -382,13 +363,14 @@
     .rabbaniyeen-landing .nav { display: none; }
     .rabbaniyeen-landing .hero-grid, .rabbaniyeen-landing .time-grid { grid-template-columns: 1fr; }
     .rabbaniyeen-landing .hero h1 { max-width: 16ch; font-size: clamp(37px, 8vw, 52px); }
-    .rabbaniyeen-landing .mushaf { max-width: 570px; }
+    .rabbaniyeen-landing .hero-media { order: -1; width: 100%; max-width: 570px; aspect-ratio: 5 / 4; max-height: 410px; }
+    .rabbaniyeen-landing .hero-media img { object-position: center 65%; }
     .rabbaniyeen-landing .time-grid { margin-block-start: 30px; gap: 36px; }
     .rabbaniyeen-landing .bignum { font-size: clamp(90px, 20vw, 130px); }
     .rabbaniyeen-landing .tracks { grid-template-columns: 1fr; }
     .rabbaniyeen-landing .track:first-child { grid-column: auto; }
     .rabbaniyeen-landing .track .wird { min-height: 0; }
-    .rabbaniyeen-landing .feat { grid-template-columns: 1fr; gap: 34px; }
+    .rabbaniyeen-landing .managers-grid { grid-template-columns: 1fr; }
     .rabbaniyeen-landing .form-sec > .wrap { display: block; }
     .rabbaniyeen-landing .form-sec .sec-t { margin-block-start: 0; }
     .rabbaniyeen-landing .form-sec .sec-s { margin-block-end: 30px; }
@@ -401,7 +383,7 @@
     .rabbaniyeen-landing .hero h1 { font-size: 39px; }
     .rabbaniyeen-landing .cta-row { align-items: stretch; }
     .rabbaniyeen-landing .cta-row .btn { flex: 1 1 100%; }
-    .rabbaniyeen-landing .mushaf { padding: 18px; box-shadow: 10px 12px 0 rgb(18 51 41 / 9%); }
+    .rabbaniyeen-landing .hero-media { aspect-ratio: 6 / 5; box-shadow: 10px 12px 0 rgb(18 51 41 / 9%); }
     .rabbaniyeen-landing .ledger { font-size: 14px; }
     .rabbaniyeen-landing .two { grid-template-columns: 1fr; gap: 0; }
     .rabbaniyeen-landing .card { padding: 22px 18px; }
@@ -423,7 +405,7 @@
     <nav class="nav">
       <a href="#kayf">كيف يمشي اليوم</a>
       <a href="#masarat">المسارات</a>
-      <a href="#asila">أسئلة الأهل</a>
+      <a href="#managers">من يدير البرنامج</a>
       <a href="#sajjil">سجِّل اهتمامك</a>
     </nav>
   </div>
@@ -438,38 +420,12 @@
       <p class="aya">﴿كونوا رَبّانِيّينَ بِما كُنتُم تُعَلِّمونَ الكِتابَ وَبِما كُنتُم تَدرُسونَ﴾</p>
       <div class="cta-row">
         <a class="btn" href="#sajjil">سجِّل اهتمامك</a>
-        <a class="btn btn-ghost" href="#kayf">كيف يمشي يومُ الفتى؟</a>
       </div>
       <p class="no-commit">التسجيلُ اليومَ إبداءُ اهتمامٍ فقط، بلا رسمٍ، وبلا توقيع، وبلا التزام.</p>
     </div>
 
-    <figure class="mushaf">
-      <!-- لوحُ الوِرد: صفحةٌ من خمسة عشر سطرًا، سطران منها هما وِردُ اليوم -->
-      <svg viewBox="0 0 300 200" role="img" aria-label="رسمٌ لصفحةٍ من المصحف من خمسة عشر سطرًا، سطران منها مُميَّزان بلون ذهبي بوصفهما وِرْدَ اليوم">
-        <rect x="12" y="8" width="276" height="184" rx="6" fill="#FFFDF6" stroke="#DCD5BE" stroke-width="1.4"/>
-        <rect x="22" y="18" width="256" height="164" rx="3" fill="none" stroke="#E6DFC8" stroke-width="1"/>
-        <g stroke="#C8CFD6" stroke-width="3.2" stroke-linecap="round">
-          <line x1="34" y1="30" x2="266" y2="30"/>
-          <line x1="34" y1="41" x2="252" y2="41"/>
-          <line x1="34" y1="52" x2="266" y2="52"/>
-          <line x1="34" y1="63" x2="240" y2="63"/>
-          <line x1="34" y1="74" x2="266" y2="74"/>
-          <line x1="34" y1="85" x2="258" y2="85"/>
-        </g>
-        <!-- وِردُ اليوم -->
-        <g stroke="#B7892B" stroke-width="4" stroke-linecap="round">
-          <line x1="34" y1="99" x2="266" y2="99"/>
-          <line x1="34" y1="111" x2="228" y2="111"/>
-        </g>
-        <g stroke="#C8CFD6" stroke-width="3.2" stroke-linecap="round">
-          <line x1="34" y1="125" x2="266" y2="125"/>
-          <line x1="34" y1="136" x2="248" y2="136"/>
-          <line x1="34" y1="147" x2="266" y2="147"/>
-          <line x1="34" y1="158" x2="236" y2="158"/>
-          <line x1="34" y1="169" x2="266" y2="169"/>
-        </g>
-      </svg>
-      <figcaption>هذا هو وِردُ اليوم في مسار السكينة: <b>ثُمنُ صفحة</b>.</figcaption>
+    <figure class="hero-media">
+      <img src="{{ asset('images/rabbaniyeen-hero.png') }}" alt="مشرف يرافق فتَيَين في قراءة القرآن في مجلس عُماني" width="1122" height="1402" fetchpriority="high">
     </figure>
   </div>
 </div>
@@ -535,67 +491,22 @@
   </div>
 </section>
 
-<!-- ═════════ المميزات ═════════ -->
-<section style="background:var(--waraq-2);border-block:1px solid var(--hd)">
+<!-- ═════════ إدارة البرنامج ═════════ -->
+<section class="managers" id="managers" dir="rtl" lang="ar">
   <div class="wrap">
-    <h2 class="sec-t">أربعةُ أشياءَ نفعلها ولا تُفعَل في غيرنا</h2>
-    <p class="sec-s">اقرأها ثم اسأل بها أيَّ برنامجٍ آخر.</p>
-    <div class="feat">
-      <div class="f">
-        <h3>مَن يُعلِّم لا يُجيز</h3>
-        <p>إجازةُ الجزء لا يمنحها معلِّمُ ابنك، بل مُسمِّعٌ مستقلٌّ لا يعرفه ولا يُقاس بأدائه. فلا نسأل رجلًا أن يشهد على عمله، وتصير كلمةُ «أتقن» تعني الشيءَ نفسَه عند الجميع.</p>
-      </div>
-      <div class="f">
-        <h3>ليلتان في بيرحاء كلَّ شهر</h3>
-        <p>من الخميس إلى السبت: تسميعٌ وإجازاتٌ ولقاءُ المشرف وجهًا لوجه، وبينها ملعبٌ وقهوةٌ وسينما وميدانُ رماية. وِردُه اليوميُّ تذكرتُه إليها.</p>
-      </div>
-      <div class="f">
-        <h3>وضعُ الصيانة في الامتحانات</h3>
-        <p>قبل اختباراته بأسبوعين يتوقّف الحفظُ الجديدُ تلقائيًّا، ويبقى خمسُ دقائقَ مراجعةً في اليوم. لا انقطاع، ولا اشتراكٌ معلَّق، ولا إحساسٌ بالذنب، ويصلك إشعارٌ بذلك.</p>
-      </div>
-      <div class="f">
-        <h3>لا نُحمِّلك متابعة</h3>
-        <p>لن نطلب منك خمسَ دقائقَ في الأسبوع. المسؤوليةُ على ابنك وحدَه. أمّا أنت فترى تقدُّمَه وحضورَه، ويصلك كلَّ شهرٍ تسجيلُ صوته وهو يقرأ، ترجع إليه بعد سنةٍ فتسمع الفرق.</p>
-      </div>
+    <h2 class="sec-t">من يدير البرنامج</h2>
+    <div class="managers-grid">
+      <article class="manager">
+        <div class="manager-mark" aria-hidden="true"></div>
+        <h3>أبو بلج عبدالله العيسري</h3>
+        <p>مهتمٌّ بتعليم القرآن الكريم وتحفيظه وإدارة برامجه، وله مؤلفات في تعليم القرآن عمومًا، منها كتاب «الطفل والقرآن»، وكتاب «كيف أعلّم أبنائي القرآن الكريم: ست خطوات سهلة ومجرَّبة». وله محاضرات كثيرة في التعامل مع القرآن الكريم، منها محاضرة «كيف أحفِّظ أطفالي القرآن الكريم؟» ومحاضرة «أفكار للتعامل مع القرآن».</p>
+      </article>
+      <article class="manager">
+        <div class="manager-mark" aria-hidden="true"></div>
+        <h3>أبو الخليل إبراهيم الغافري</h3>
+        <p>مؤسس برنامج «مكنون» لحفظ القرآن الكريم، وصاحب طريقة مبتكرة في التحفيظ، تخرَّج على يديه مئات الحفّاظ. قاد برنامج «ربانيين» في دفعته الأولى ودفعته الثانية، وهو اليوم مؤسس طريقة التحفيظ الجديدة للفتيان، من الصف السابع إلى الصف الثاني عشر.</p>
+      </article>
     </div>
-  </div>
-</section>
-
-<!-- ═════════ الأسئلة ═════════ -->
-<section id="asila">
-  <div class="wrap" style="max-width:820px">
-    <h2 class="sec-t">أسئلةٌ يسألها كلُّ أب</h2>
-    <p class="sec-s">أجوبةٌ صريحة. وإن لم تجد سؤالك فاسأله في الاستمارة أسفل الصفحة.</p>
-
-    <details open>
-      <summary>ماذا يعني «سجِّل اهتمامك»؟ وهل أدفع شيئًا؟</summary>
-      <div class="body">لا. التسجيلُ في هذه المرحلة إبداءُ اهتمامٍ فقط: لا رسمَ، ولا توقيعَ عقد، ولا التزامَ ماليًّا ولا قانونيًّا. أنت تأذن لنا بشيءٍ واحد: أن نُبلِغك حين يُفتَح التسجيلُ الفعليّ. وعندها ترى الرسمَ والعقدَ كاملَين ثم تقرِّر.</div>
-    </details>
-
-    <details>
-      <summary>متى ينطلق البرنامج؟</summary>
-      <div class="body">نستهدف انطلاقَ الدفعة الأولى في يناير ٢٠٢٧م، مع بداية الفصل الدراسي الثاني. وسنُخبرك بالموعد الدقيق قبل الفتح بوقتٍ يكفي للقرار. ولن نفتح قبل أن يكتمل شرطٌ واحد: أن يكون لكلِّ فتًى مشرفٌ باسمه ومعلِّمٌ اجتاز اعتمادَنا.</div>
-    </details>
-
-    <details>
-      <summary>«جزءٌ في العام»… أليس هذا قليلًا؟</summary>
-      <div class="body">سؤالٌ عادل. نعم، ترى برامجَ تعِد بخمسة أجزاءٍ في صيفٍ واحد. والفرقُ بين حفظٍ يبقى وحفظٍ يذهب هو الفرقُ بين الوعدَين: المقدارُ الكبيرُ في الزمن القصير يتفلّت بعد شهرين، فيخرج ابنك وقد «ختم» ولا يملك سورةً يقوم بها في رمضان. وابنٌ دخل في السابع وخرج من الثاني عشر بجزءين في كلِّ عام يخرج باثني عشر جزءًا راسخة، وهي خيرٌ من ثلاثين متفلِّتة.</div>
-    </details>
-
-    <details>
-      <summary>ابني لا يُتقن التلاوة. هل يُقبَل؟</summary>
-      <div class="body">يُقبَل. ولن نقول له يومًا إنه سيدخل «دورةً لتعلُّم القراءة»، بل يدخل «المستوى الأول لإتقان التلاوة»، وهذا اسمُه الحقيقيُّ لا تلطيفًا له. وأسابيعُ قليلةٌ في التأسيس تُوفِّر عليه سنواتٍ من التعثّر، لأنّ من يحفظ وهو لا يُتقن القراءة يحفظ الخطأَ ويُثبِّته بالتكرار.</div>
-    </details>
-
-    <details>
-      <summary>ابني خارج إبراء. هل يستطيع الالتحاق؟</summary>
-      <div class="body">نعم. الوِردُ اليوميُّ والتسميعُ عن بُعد، والحضورُ ليلتين في الشهر فقط. والاعتمادُ الوحيدُ عليك ماليٌّ ونقلُ ابنك إلى لقاء بيرحاء الشهري، وما عدا ذلك يُدار بين ابنك ومشرفه.</div>
-    </details>
-
-    <details>
-      <summary>ماذا عن خصوصية ابني وصورته؟</summary>
-      <div class="body">لا نُصوِّر وجوهَ القُصَّر ولا نُعلِن أسماءهم الكاملة إلا بموافقةٍ خطيةٍ منك، والألقابُ هي الأصل عندنا. ولا لوحاتِ صدارةٍ ولا ترتيبَ حفّاظٍ ولا مقارنةَ فتًى بفتًى في أيِّ واجهةٍ أو رسالة. وبياناتُ ابنك تُعالَج وفق قانون حماية البيانات الشخصية العُماني (المرسوم ٦/٢٠٢٢).</div>
-    </details>
   </div>
 </section>
 
@@ -628,6 +539,11 @@
             <input id="guardian_name" name="guardian_name" type="text" autocomplete="name" value="{{ old('guardian_name') }}" required>
             @error('guardian_name') <p class="err" style="display:block">{{ $message }}</p> @enderror
           </div>
+          <div class="field">
+            <label for="student_name">اسم الطالب/ القائد <span class="req">*</span></label>
+            <input id="student_name" name="student_name" type="text" autocomplete="off" value="{{ old('student_name') }}" required>
+            @error('student_name') <p class="err" style="display:block">{{ $message }}</p> @enderror
+          </div>
           <div class="two">
             <div class="field">
               <label for="whatsapp_number">رقمُ الواتساب <span class="req">*</span></label>
@@ -640,36 +556,15 @@
               @error('wilaya') <p class="err" style="display:block">{{ $message }}</p> @enderror
             </div>
           </div>
-          <div class="two">
-            <div class="field">
-              <label for="student_grade">صفُّ الابن <span class="req">*</span></label>
-              <select id="student_grade" name="student_grade" required>
-                <option value="">اختر…</option>
-                @foreach (['7' => 'السابع', '8' => 'الثامن', '9' => 'التاسع', '10' => 'العاشر', '11' => 'الحادي عشر', '12' => 'الثاني عشر', 'multiple' => 'لديّ أكثر من ابنٍ في صفوفٍ مختلفة'] as $value => $label)
-                  <option value="{{ $value }}" @selected(old('student_grade') == $value)>{{ $label }}</option>
-                @endforeach
-              </select>
-              @error('student_grade') <p class="err" style="display:block">{{ $message }}</p> @enderror
-            </div>
-            <div class="field">
-              <label for="recitation_level">هل يقرأ المصحفَ المشكولَ بطلاقة؟</label>
-              <select id="recitation_level" name="recitation_level">
-                <option value="">اختر…</option>
-                @foreach (['fluent' => 'نعم، يقرأ بطلاقة', 'hesitant' => 'يقرأ بتعثُّرٍ يسير', 'not_fluent' => 'لا يقرأ جيدًا', 'unsure' => 'لستُ متأكِّدًا'] as $value => $label)
-                  <option value="{{ $value }}" @selected(old('recitation_level') === $value)>{{ $label }}</option>
-                @endforeach
-              </select>
-              <p class="hint">لا يُبنى عليها قبولٌ ولا ردّ، اختبارُ التصنيف هو الفيصل.</p>
-            </div>
-          </div>
           <div class="field">
-            <label for="preferred_track">المسارُ الذي تراه مناسبًا مبدئيًّا</label>
-            <select id="preferred_track" name="preferred_track">
+            <label for="student_grade">صفُّ الابن <span class="req">*</span></label>
+            <select id="student_grade" name="student_grade" required>
               <option value="">اختر…</option>
-              @foreach (['sakinah' => 'السكينة، ثُمنُ صفحة', 'nur' => 'النور، ربعُ صفحة', 'hijrah' => 'الهجرة، نصفُ صفحة', 'choose_after_test' => 'اختاروا أنتم بعد الاختبار'] as $value => $label)
-                <option value="{{ $value }}" @selected(old('preferred_track') === $value)>{{ $label }}</option>
+              @foreach (['7' => 'السابع', '8' => 'الثامن', '9' => 'التاسع', '10' => 'العاشر', '11' => 'الحادي عشر', '12' => 'الثاني عشر'] as $value => $label)
+                <option value="{{ $value }}" @selected(old('student_grade') == $value)>{{ $label }}</option>
               @endforeach
             </select>
+            @error('student_grade') <p class="err" style="display:block">{{ $message }}</p> @enderror
           </div>
           <div class="field">
             <label for="note">سؤالٌ أو ملاحظة</label>

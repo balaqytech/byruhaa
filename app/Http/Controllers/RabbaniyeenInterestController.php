@@ -29,24 +29,23 @@ class RabbaniyeenInterestController extends Controller
                 'event_id' => $event->id,
                 'reference_code' => 'RB-'.Str::upper(Str::random(10)),
                 'guardian_name' => trim($data['guardian_name']),
+                'student_name' => trim($data['student_name']),
                 'whatsapp_number' => $data['whatsapp_number'],
                 'wilaya' => trim($data['wilaya']),
                 'student_grade' => $data['student_grade'],
-                'recitation_level' => $data['recitation_level'] ?? null,
-                'preferred_track' => $data['preferred_track'] ?? null,
                 'note' => $data['note'] ?? null,
                 'consent_at' => $timestamp,
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
             ],
-        ], ['event_id', 'whatsapp_number'], [
-            'guardian_name', 'wilaya', 'student_grade', 'recitation_level',
-            'preferred_track', 'note', 'consent_at', 'updated_at',
+        ], ['event_id', 'whatsapp_number', 'student_name'], [
+            'guardian_name', 'wilaya', 'student_grade', 'note', 'consent_at', 'updated_at',
         ]);
 
         $reference = DB::table('event_interest_leads')
             ->where('event_id', $event->id)
             ->where('whatsapp_number', $data['whatsapp_number'])
+            ->where('student_name', trim($data['student_name']))
             ->value('reference_code');
 
         return redirect()->to(route('events.show', $event).'#sajjil')
