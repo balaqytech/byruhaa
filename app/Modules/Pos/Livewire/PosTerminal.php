@@ -41,6 +41,8 @@ class PosTerminal extends Component
 
     public bool $showReviewModal = false;
 
+    public bool $showScanModal = false;
+
     public bool $showErrorModal = false;
 
     /** @var array<int, int> */
@@ -51,6 +53,15 @@ class PosTerminal extends Component
 
     #[Locked]
     public string $selectedProfileName = '';
+
+    #[Locked]
+    public string $selectedProfileMemberCode = '';
+
+    #[Locked]
+    public ?string $selectedProfileAvatarUrl = null;
+
+    #[Locked]
+    public bool $scanConfirmed = false;
 
     #[Locked]
     public bool $reviewed = false;
@@ -190,11 +201,23 @@ class PosTerminal extends Component
         $this->scanToken = '';
         $this->selectedProfileId = null;
         $this->selectedProfileName = '';
+        $this->selectedProfileMemberCode = '';
+        $this->selectedProfileAvatarUrl = null;
+        $this->scanConfirmed = false;
+        $this->showScanModal = $buyerType === 'minor';
         $this->reviewed = false;
         $this->showReviewModal = false;
         $this->cashReceived = '';
         $this->resetValidation();
         $this->showErrorModal = false;
+    }
+
+    public function openScanModal(): void
+    {
+        $this->authorizeTerminal();
+        abort_unless($this->buyerType === 'minor', 422);
+
+        $this->showScanModal = true;
     }
 
     public function selectPaymentMethod(string $paymentMethod): void
@@ -250,9 +273,39 @@ class PosTerminal extends Component
 
         $this->selectedProfileId = $profile->profileId;
         $this->selectedProfileName = $profile->name;
+        $this->selectedProfileMemberCode = $profile->memberCode;
+        $this->selectedProfileAvatarUrl = $profile->avatarUrl;
+        $this->scanConfirmed = false;
+        $this->showScanModal = true;
         $this->reviewed = false;
         $this->showReviewModal = false;
         $this->completedReference = '';
+    }
+
+    public function confirmScannedProfile(): void
+    {
+        $this->authorizeTerminal();
+
+        if ($this->buyerType !== 'minor' || $this->selectedProfileId === null) {
+            throw ValidationException::withMessages(['scanToken' => 'امسح بطاقة القائد أولًا.']);
+        }
+
+        $this->scanConfirmed = true;
+        $this->showScanModal = false;
+    }
+
+    public function resetScan(): void
+    {
+        $this->authorizeTerminal();
+        $this->scanToken = '';
+        $this->selectedProfileId = null;
+        $this->selectedProfileName = '';
+        $this->selectedProfileMemberCode = '';
+        $this->selectedProfileAvatarUrl = null;
+        $this->scanConfirmed = false;
+        $this->reviewed = false;
+        $this->showReviewModal = false;
+        $this->showScanModal = true;
     }
 
     public function review(PosPurchasing $credentials, StorePricing $pricing, PricingContextResolver $contexts): void
@@ -273,8 +326,8 @@ class PosTerminal extends Component
 
         $profile = $this->buyerType === 'minor' ? $credentials->resolve(trim($this->scanToken)) : null;
 
-        if ($this->buyerType === 'minor' && ($profile === null || $this->selectedProfileId !== $profile->profileId)) {
-            throw ValidationException::withMessages(['cart' => 'امسح بطاقة القائد قبل المراجعة.']);
+        if ($this->buyerType === 'minor' && ($profile === null || $this->selectedProfileId !== $profile->profileId || ! $this->scanConfirmed)) {
+            throw ValidationException::withMessages(['cart' => 'امسح بطاقة القائد وأكّد هويته قبل المراجعة.']);
         }
 
         if ($this->paymentMethod === 'wallet' && ! $profile->walletSpendingEnabled) {
@@ -321,7 +374,7 @@ class PosTerminal extends Component
         $this->resetValidation();
         $this->showErrorModal = false;
 
-        if (! $this->reviewed || ($this->buyerType === 'minor' && $this->selectedProfileId === null)) {
+        if (! $this->reviewed || ($this->buyerType === 'minor' && ($this->selectedProfileId === null || ! $this->scanConfirmed))) {
             throw ValidationException::withMessages(['cart' => 'راجع الإجمالي قبل الدفع.']);
         }
 
@@ -387,6 +440,10 @@ class PosTerminal extends Component
         $this->scanToken = '';
         $this->selectedProfileId = null;
         $this->selectedProfileName = '';
+        $this->selectedProfileMemberCode = '';
+        $this->selectedProfileAvatarUrl = null;
+        $this->scanConfirmed = false;
+        $this->showScanModal = false;
         $this->reviewed = false;
         $this->showReviewModal = false;
         $this->reviewLines = [];

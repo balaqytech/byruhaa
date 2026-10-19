@@ -51,6 +51,7 @@ Route::prefix('v1')
                 Route::get('account', [UchatAccountController::class, 'account'])->name('account');
                 Route::get('minor-profiles', [UchatAccountController::class, 'index'])->name('minor-profiles.index');
                 Route::post('minor-profiles', [UchatAccountController::class, 'store'])->middleware('throttle:10,1')->name('minor-profiles.store');
+                Route::post('minor-profiles/{minorProfile}/avatar', [UchatAccountController::class, 'updateAvatar'])->whereNumber('minorProfile')->middleware('throttle:10,1')->name('minor-profiles.avatar.update');
                 Route::post('minor-profiles/{minorProfile}/activation-link', [UchatAccountController::class, 'activationLink'])->whereNumber('minorProfile')->middleware('throttle:5,1')->name('minor-profiles.activation-link');
                 Route::post('minor-profiles/{minorProfile}/verification/send', [UchatAccountController::class, 'resend'])->whereNumber('minorProfile')->middleware('throttle:5,1')->name('minor-profiles.resend');
                 Route::post('minor-profiles/{minorProfile}/verification/verify', [UchatAccountController::class, 'verify'])->whereNumber('minorProfile')->middleware('throttle:10,1')->name('minor-profiles.verify');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UchatMinorActivationRequest;
+use App\Http\Requests\UchatMinorAvatarRequest;
 use App\Http\Requests\UchatMinorProfileRequest;
 use App\Http\Requests\UchatVerificationRequest;
 use App\Modules\Finance\Actions\SetMinorWalletStatus;
@@ -13,6 +14,7 @@ use App\Modules\Identity\Actions\IssueMinorProfileActivation;
 use App\Modules\Identity\Actions\RecordMinorNotificationConsent;
 use App\Modules\Identity\Actions\SendMinorProfileVerificationCode;
 use App\Modules\Identity\Actions\SetMinorWalletSpending;
+use App\Modules\Identity\Actions\StoreMinorAvatar;
 use App\Modules\Identity\Actions\VerifyMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Models\Customer;
@@ -61,6 +63,7 @@ class UchatAccountController extends Controller
         UchatMinorProfileRequest $request,
         CreateMinorProfile $create,
         RecordMinorNotificationConsent $recordNotificationConsent,
+        StoreMinorAvatar $avatars,
     ): JsonResponse {
         $guardian = $this->guardian($request);
         $this->requireMinorAccounts();
@@ -89,12 +92,22 @@ class UchatAccountController extends Controller
             return $result['profile'];
         });
 
+        $this->saveAvatar($request, $profile, $avatars);
+
         return response()->json([
             'data' => $this->profileData($profile->load('familyMember')),
             'created' => $created,
             'activation_url' => $activationToken === null ? null : URL::temporarySignedRoute('minor.activate', $profile->activation_token_expires_at, ['minorProfile' => $profile->id, 'token' => $activationToken]),
             'expires_at' => $profile->activation_token_expires_at?->toJSON(),
         ], $created ? 201 : 200);
+    }
+
+    public function updateAvatar(UchatMinorAvatarRequest $request, int $minorProfile, StoreMinorAvatar $avatars): JsonResponse
+    {
+        $profile = $this->ownedProfile($this->guardian($request), $minorProfile);
+        $this->saveAvatar($request, $profile, $avatars);
+
+        return response()->json(['data' => $this->profileData($profile->load('familyMember'))]);
     }
 
     public function activationLink(UchatMinorActivationRequest $request, int $minorProfile, IssueMinorProfileActivation $issueActivation): JsonResponse
@@ -266,6 +279,8 @@ class UchatAccountController extends Controller
     /** @return array<string, mixed> */
     private function profileData(MinorProfile $profile): array
     {
+        $avatarExpiresAt = $profile->avatar_path === null ? null : now()->addDay();
+
         return [
             'minor_profile_id' => $profile->id,
             'family_member_id' => $profile->family_member_id,
@@ -274,7 +289,18 @@ class UchatAccountController extends Controller
             'status' => $profile->status->value,
             'direct_payment_enabled' => $profile->direct_payment_enabled,
             'wallet_spending_enabled' => $profile->wallet_spending_enabled,
+            'avatar_url' => $avatarExpiresAt === null ? null : $profile->avatarUrl($avatarExpiresAt),
+            'avatar_url_expires_at' => $avatarExpiresAt?->toIso8601String(),
         ];
+    }
+
+    private function saveAvatar(UchatRequest $request, MinorProfile $profile, StoreMinorAvatar $avatars): void
+    {
+        if ($request->hasFile('avatar')) {
+            $avatars->storeFile($profile, $request->file('avatar'));
+        } elseif (filled($request->validated('avatar_base64'))) {
+            $avatars->storeBase64($profile, (string) $request->validated('avatar_base64'));
+        }
     }
 
     private function requireMinorAccounts(): void

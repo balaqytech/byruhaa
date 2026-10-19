@@ -29,7 +29,7 @@
         <aside class="rounded-2xl border border-emerald-900/10 bg-white p-6 dark:border-white/10 dark:bg-zinc-900">
             <h2 class="text-lg font-semibold">إنشاء حساب</h2>
             <p class="mt-2 text-sm leading-7 text-emerald-900/70 dark:text-white/70">اختر فردًا موجودًا أو أضف فردًا جديدًا. سيظهر رابط التفعيل مباشرةً ليختار الابن كلمة مروره.</p>
-            <form method="POST" action="{{ route('customer.minor-profiles.store') }}" x-data="{ familyMemberId: @js((string) old('family_member_id', '')) }" class="mt-5 grid gap-5">
+            <form method="POST" action="{{ route('customer.minor-profiles.store') }}" enctype="multipart/form-data" x-data="{ familyMemberId: @js((string) old('family_member_id', '')) }" class="mt-5 grid gap-5">
                 @csrf
                 <flux:select name="family_member_id" :error:message="$errors->has('family_member_id') ? __($errors->first('family_member_id')) : null" label="فرد الأسرة" x-model="familyMemberId">
                     <option value="">إنشاء فرد جديد</option>
@@ -42,6 +42,12 @@
                     <flux:input name="birth_date" :error:message="$errors->has('birth_date') ? __($errors->first('birth_date')) : null" label="تاريخ الميلاد" type="date" :value="old('birth_date')" x-bind:required="! familyMemberId" x-bind:disabled="!! familyMemberId" dir="ltr" />
                 </div>
                 <p x-cloak x-show="familyMemberId" class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">سيُستخدم الاسم وتاريخ الميلاد المسجّلان لفرد الأسرة.</p>
+                <div class="space-y-2">
+                    <label for="minor-avatar" class="block text-sm font-semibold">صورة القائد · اختيارية</label>
+                    <input id="minor-avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" class="block w-full rounded-xl border border-emerald-900/15 bg-emerald-50 p-2 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-emerald-800 file:px-3 file:py-2 file:font-semibold file:text-white dark:border-white/15 dark:bg-white/5" />
+                    <p class="text-xs text-emerald-900/60 dark:text-white/60">JPEG أو PNG أو WebP، حتى ٢ ميغابايت. تظهر الصورة على بطاقة QR ولدى الكاشير.</p>
+                    @error('avatar') <p class="text-sm text-rose-700" role="alert">{{ $message }}</p> @enderror
+                </div>
                 <p class="text-xs leading-6 text-emerald-900/70 dark:text-white/70">بإنشاء الحساب، توافق على استخدام الابن للمتجر تحت إشرافك. تبقى صلاحيات الدفع متوقفة إلى أن تفعّلها.</p>
                 <flux:checkbox
                     name="browser_notifications_consent"
@@ -65,12 +71,20 @@
                 <article class="overflow-hidden rounded-2xl border border-emerald-900/10 bg-white dark:border-white/10 dark:bg-zinc-900">
                     <header class="flex flex-wrap items-start justify-between gap-4 bg-emerald-50/60 p-5 dark:bg-white/5 sm:p-6">
                         <div class="flex min-w-0 items-center gap-3">
-                            <span aria-hidden="true" class="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-xl font-semibold text-emerald-800 dark:bg-emerald-300/10 dark:text-emerald-200">{{ mb_substr($profile->familyMember->name, 0, 1) }}</span>
+                            <x-minor-avatar :name="$profile->familyMember->name" :url="$profile->avatarUrl()" class="size-12 rounded-2xl text-xl" />
                             <div class="min-w-0"><h3 class="break-words text-lg font-semibold">{{ $profile->familyMember->name }}</h3><p class="mt-1 text-xs text-emerald-900/60 dark:text-white/60">رمز العضوية: <bdi class="font-mono font-semibold">{{ $profile->member_code }}</bdi></p></div>
                         </div>
                         <flux:badge size="sm" :color="match ($profile->status->value) { 'active' => 'green', 'suspended', 'invalidated' => 'red', default => 'amber' }">{{ $profile->status->label() }}</flux:badge>
                     </header>
                     <div class="space-y-5 p-5 sm:p-6">
+                        <form method="POST" action="{{ route('customer.minor-profiles.avatar.update', $profile) }}" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3 rounded-xl border border-emerald-900/10 bg-emerald-50/50 p-4 dark:border-white/10 dark:bg-white/5">
+                            @csrf
+                            <div class="min-w-48 flex-1 space-y-1">
+                                <label for="avatar-{{ $profile->id }}" class="block text-sm font-semibold">{{ $profile->avatar_path ? 'تغيير صورة القائد' : 'إضافة صورة القائد' }}</label>
+                                <input id="avatar-{{ $profile->id }}" name="avatar" type="file" required accept="image/jpeg,image/png,image/webp" class="block w-full text-xs file:me-3 file:rounded-lg file:border-0 file:bg-emerald-800 file:px-3 file:py-2 file:font-semibold file:text-white" />
+                            </div>
+                            <flux:button type="submit" size="sm">حفظ الصورة</flux:button>
+                        </form>
                         @if (in_array($profile->status->value, ['pending_guardian_verification', 'pending_child_activation'], true))
                             <p class="text-sm leading-7 text-emerald-900/70 dark:text-white/70">شارك رابط التفعيل مع الابن ليختار كلمة مروره. لا يلزم إدخال رمز تحقق.</p>
                             <form method="POST" action="{{ route('customer.minor-profiles.activation-link', $profile) }}" class="space-y-3">

@@ -7,9 +7,11 @@ use App\Modules\Identity\Actions\CreateMinorProfile;
 use App\Modules\Identity\Actions\IssueMinorProfileActivation;
 use App\Modules\Identity\Actions\ManageMinorPosCredential;
 use App\Modules\Identity\Actions\SetMinorWalletSpending;
+use App\Modules\Identity\Actions\StoreMinorAvatar;
 use App\Modules\Identity\Actions\VerifyMinorProfile;
 use App\Modules\Identity\Enums\MinorProfileStatus;
 use App\Modules\Identity\Http\Requests\StoreMinorProfileRequest;
+use App\Modules\Identity\Http\Requests\UpdateMinorAvatarRequest;
 use App\Modules\Identity\Http\Requests\VerifyMinorProfileRequest;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\MinorProfile;
@@ -33,7 +35,7 @@ class MinorProfileController
         ]);
     }
 
-    public function store(StoreMinorProfileRequest $request, CreateMinorProfile $createMinorProfile): RedirectResponse
+    public function store(StoreMinorProfileRequest $request, CreateMinorProfile $createMinorProfile, StoreMinorAvatar $avatars): RedirectResponse
     {
         /** @var Customer $guardian */
         $guardian = $request->user('customer');
@@ -44,6 +46,10 @@ class MinorProfileController
             $request->boolean('browser_notifications_consent'),
         );
 
+        if ($request->hasFile('avatar')) {
+            $avatars->storeFile($result['profile'], $request->file('avatar'));
+        }
+
         return redirect()->route('customer.minor-profiles.index')->with([
             'success' => 'تم إنشاء الحساب. شارك رابط التفعيل مع الابن لاختيار كلمة مروره.',
             'activation_url' => URL::temporarySignedRoute('minor.activate', $result['profile']->activation_token_expires_at, [
@@ -51,6 +57,14 @@ class MinorProfileController
                 'token' => $result['activation_token'],
             ]),
         ]);
+    }
+
+    public function updateAvatar(UpdateMinorAvatarRequest $request, MinorProfile $minorProfile, StoreMinorAvatar $avatars): RedirectResponse
+    {
+        $this->assertOwnedBy($request, $minorProfile);
+        $avatars->storeFile($minorProfile, $request->file('avatar'));
+
+        return back()->with('success', 'تم تحديث صورة القائد.');
     }
 
     public function activationLink(Request $request, MinorProfile $minorProfile, IssueMinorProfileActivation $issueActivation): RedirectResponse

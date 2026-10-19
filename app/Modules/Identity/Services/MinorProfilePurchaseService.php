@@ -56,6 +56,7 @@ class MinorProfilePurchaseService implements MinorProfilePurchasing
             (int) $profile->familyMember->customer_id,
             $profile->familyMember->name,
             $profile->member_code,
+            $profile->avatarUrl(),
             $profile->direct_payment_enabled,
             $profile->wallet_spending_enabled,
         );

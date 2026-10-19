@@ -27,6 +27,8 @@ class UchatMinorProfileRequest extends UchatRequest
             'family_member_id' => ['required', 'integer'],
             'consent_accepted' => ['accepted'],
             'notifications_consent_accepted' => ['accepted'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2048,max_height=2048', 'prohibits:avatar_base64'],
+            'avatar_base64' => ['nullable', 'string', 'max:2800000', 'prohibits:avatar'],
         ];
     }
 }

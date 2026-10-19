@@ -77,20 +77,12 @@
                         <button type="button" wire:click="selectPaymentMethod('wallet')" aria-pressed="{{ $paymentMethod === 'wallet' ? 'true' : 'false' }}" class="min-h-12 rounded-xl border px-3 py-2.5 text-sm font-bold transition {{ $paymentMethod === 'wallet' ? 'border-[#5f9d71] bg-[#e9f3e2] text-[#28563b]' : 'border-[#d7e0d4] dark:border-white/15' }}">المحفظة</button>
                         <button type="button" wire:click="selectPaymentMethod('cash')" aria-pressed="{{ $paymentMethod === 'cash' ? 'true' : 'false' }}" class="min-h-12 rounded-xl border px-3 py-2.5 text-sm font-bold transition {{ $paymentMethod === 'cash' ? 'border-[#5f9d71] bg-[#e9f3e2] text-[#28563b]' : 'border-[#d7e0d4] dark:border-white/15' }}">نقدًا</button>
                     </div>
-                    <div x-data="cashierQrScanner" class="mt-4">
-                        <p class="text-xs leading-6 text-[#718677] dark:text-[#adc2b3]">قرّب بطاقة القائد من كاميرا الجهاز، أو استخدم قارئ QR الخارجي.</p>
-                        <button type="button" @click="open()" :disabled="isOpen || isStarting" class="mt-3 flex min-h-14 w-full items-center justify-center rounded-xl bg-[#204d3a] px-4 text-base font-black text-white transition hover:bg-[#2c674c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#204d3a] disabled:opacity-60">فتح كاميرا الجهاز لمسح QR</button>
-                        <div x-show="isOpen" x-cloak class="mt-3 overflow-hidden rounded-xl bg-[#0d1c19] p-3 text-white">
-                            <video x-ref="video" autoplay muted playsinline class="aspect-square max-h-72 w-full rounded-lg bg-black object-cover"></video>
-                            <div class="mt-3 flex items-center justify-between gap-3 text-sm"><span x-text="isStarting ? 'جارٍ تشغيل الكاميرا…' : 'ضع رمز QR داخل الإطار'"></span><button type="button" @click="close()" class="min-h-11 rounded-lg border border-white/30 px-4 font-bold">إغلاق الكاميرا</button></div>
+                    <button type="button" wire:click="openScanModal" class="mt-4 flex min-h-14 w-full items-center justify-center rounded-xl bg-[#204d3a] px-4 text-base font-black text-white transition hover:bg-[#2c674c]">{{ $scanConfirmed ? 'إعادة مسح بطاقة القائد' : 'مسح بطاقة القائد والتحقق من هويته' }}</button>
+                    @if ($selectedProfileId && $scanConfirmed)
+                        <div class="mt-4 flex items-center gap-3 rounded-xl bg-[#eaf2e0] p-3 text-[#2a5b3e] dark:bg-emerald-800/30 dark:text-emerald-100">
+                            <x-minor-avatar :name="$selectedProfileName" :url="$selectedProfileAvatarUrl" class="size-14 shrink-0 rounded-xl" />
+                            <div><p class="text-sm font-black">{{ $selectedProfileName }}</p><p class="mt-1 font-mono text-xs" dir="ltr">{{ $selectedProfileMemberCode }}</p></div>
                         </div>
-                        <form wire:submit="scan" class="mt-3 flex gap-2">
-                            <input wire:model="scanToken" type="password" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="رمز بطاقة QR من قارئ خارجي أو إدخال يدوي" placeholder="رمز البطاقة أو قارئ QR" class="min-h-12 min-w-0 flex-1 rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-3 py-3 font-mono text-sm outline-none focus:border-[#5a9a70] dark:border-white/15 dark:bg-[#0d1c19]" />
-                            <button type="submit" wire:loading.attr="disabled" class="min-h-12 rounded-xl border border-[#204d3a] px-4 py-3 text-sm font-bold text-[#204d3a] hover:bg-[#eaf2e5] disabled:opacity-60 dark:border-emerald-300 dark:text-emerald-200">تحقق</button>
-                        </form>
-                    </div>
-                    @if ($selectedProfileId)
-                        <p class="mt-4 rounded-xl bg-[#eaf2e0] px-4 py-3 text-sm font-bold text-[#2a5b3e] dark:bg-emerald-800/30 dark:text-emerald-100">القائد: {{ $selectedProfileName }}</p>
                     @endif
                 @else
                     <p class="mt-4 text-xs leading-6 text-[#718677] dark:text-[#adc2b3]">الدفع النقدي متاح مباشرة. اسم الضيف ورقم الهاتف اختياريان.</p>
@@ -110,13 +102,40 @@
         </section>
     </div>
 
+    <flux:modal name="pos-scan" wire:model.self="showScanModal" class="w-full max-w-xl">
+        <div x-data="cashierQrScanner" x-effect="if (! $wire.showScanModal) close()" class="space-y-5 text-right">
+            <div><p class="text-xs font-bold text-[#718677]">تحقق من هوية القائد</p><flux:heading size="xl">مسح بطاقة QR</flux:heading><p class="mt-2 text-sm text-[#687d70]">طابق صورة القائد واسمه مع حامل البطاقة قبل متابعة الدفع.</p></div>
+            @if (! $selectedProfileId)
+            <div class="space-y-3">
+                <button type="button" @click="open()" :disabled="isOpen || isStarting" class="min-h-14 w-full rounded-xl bg-[#204d3a] px-4 font-black text-white disabled:opacity-60">فتح كاميرا الجهاز</button>
+                <div x-show="isOpen" x-cloak class="overflow-hidden rounded-xl bg-[#0d1c19] p-3 text-white">
+                    <video x-ref="video" autoplay muted playsinline class="aspect-square max-h-72 w-full rounded-lg bg-black object-cover"></video>
+                    <div class="mt-3 flex items-center justify-between gap-3 text-sm"><span x-text="isStarting ? 'جارٍ تشغيل الكاميرا…' : 'ضع رمز QR داخل الإطار'"></span><button type="button" @click="close()" class="min-h-11 rounded-lg border border-white/30 px-4 font-bold">إغلاق الكاميرا</button></div>
+                </div>
+                <form wire:submit="scan" x-on:submit="close()" class="flex gap-2">
+                    <input wire:model="scanToken" type="password" dir="ltr" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="رمز بطاقة QR من قارئ خارجي أو إدخال يدوي" placeholder="رمز البطاقة أو قارئ QR" class="min-h-12 min-w-0 flex-1 rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-3 font-mono text-sm dark:border-white/15 dark:bg-[#0d1c19]" />
+                    <button type="submit" wire:loading.attr="disabled" class="min-h-12 rounded-xl border border-[#204d3a] px-4 text-sm font-bold text-[#204d3a] disabled:opacity-60">تحقق</button>
+                </form>
+            </div>
+            @endif
+            @if ($selectedProfileId)
+                <div class="flex items-center gap-5 rounded-2xl border border-[#d7e4d3] bg-[#f4f8ef] p-5 dark:border-white/15 dark:bg-white/5">
+                    <x-minor-avatar :name="$selectedProfileName" :url="$selectedProfileAvatarUrl" class="size-24 shrink-0 rounded-2xl text-3xl" />
+                    <div><p class="text-xs text-[#687d70]">القائد المسجّل</p><p class="mt-1 font-heading text-xl font-black">{{ $selectedProfileName }}</p><p class="mt-2 font-mono text-sm" dir="ltr">{{ $selectedProfileMemberCode }}</p></div>
+                </div>
+                <p class="text-sm text-[#687d70]">{{ $selectedProfileAvatarUrl ? 'قارن الصورة بالقائد الموجود أمامك.' : 'لا توجد صورة مسجّلة لهذا القائد؛ تحقق من اسمه ورمز العضوية.' }}</p>
+                <div class="flex gap-3"><button type="button" wire:click="confirmScannedProfile" class="min-h-14 flex-1 rounded-xl bg-[#204d3a] px-4 font-black text-white">تأكيد هوية القائد</button><button type="button" wire:click="resetScan" class="min-h-14 rounded-xl border border-[#cad8c8] px-4 font-bold">مسح بطاقة أخرى</button></div>
+            @endif
+        </div>
+    </flux:modal>
+
     <flux:modal name="pos-review" wire:model.self="showReviewModal" class="w-full max-w-xl">
         @if ($reviewed)
             <div class="space-y-5 text-right">
                 <div>
                     <p class="text-xs font-bold text-[#718677] dark:text-[#adc2b3]">الخطوة الأخيرة</p>
                     <flux:heading size="xl">مراجعة الطلب</flux:heading>
-                    <p class="mt-2 text-sm text-[#687d70] dark:text-[#afc0b3]">{{ $buyerType === 'minor' ? 'القائد: '.$selectedProfileName : ($guestName !== '' ? 'الضيف: '.$guestName : 'طلب ضيف') }} · {{ $paymentMethod === 'cash' ? 'دفع نقدي' : 'محفظة القائد' }}</p>
+                    <div class="mt-2 flex items-center gap-3 text-sm text-[#687d70] dark:text-[#afc0b3]">@if ($buyerType === 'minor') <x-minor-avatar :name="$selectedProfileName" :url="$selectedProfileAvatarUrl" class="size-12 shrink-0 rounded-xl" /> @endif <span>{{ $buyerType === 'minor' ? 'القائد: '.$selectedProfileName : ($guestName !== '' ? 'الضيف: '.$guestName : 'طلب ضيف') }} · {{ $paymentMethod === 'cash' ? 'دفع نقدي' : 'محفظة القائد' }}</span></div>
                 </div>
                 <div class="max-h-64 divide-y divide-[#e8ece6] overflow-y-auto rounded-xl bg-[#f7f9f5] px-4 dark:divide-white/10 dark:bg-white/5">
                     @foreach ($reviewLines as $line)

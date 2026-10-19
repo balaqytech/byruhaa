@@ -6,6 +6,7 @@ use App\Modules\Finance\Events\WalletMovementPosted;
 use App\Modules\Finance\Listeners\SendWalletMovementNotification;
 use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Actions\ManageMinorPosCredential;
+use App\Modules\Identity\Actions\StoreMinorAvatar;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\MinorProfile;
@@ -32,6 +33,8 @@ use App\Services\Webhooks\ByruhaaWebhookSender;
 use Database\Seeders\StaffWorkspaceRolesSeeder;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -281,6 +284,8 @@ test('pickup board viewing permission does not grant completion', function (): v
 });
 
 test('only card managers can issue and print a card from the minors resource', function (): void {
+    Storage::fake('local');
+    app(StoreMinorAvatar::class)->storeFile($this->minor, UploadedFile::fake()->image('leader.png', 120, 120));
     $manager = User::factory()->create();
     $manager->givePermissionTo(Permission::findOrCreate('Manage:PosCards', 'web'));
     $this->actingAs($manager, 'web')->get(route('filament.admin.resources.minor-profiles.index'))->assertSuccessful();
@@ -293,6 +298,9 @@ test('only card managers can issue and print a card from the minors resource', f
     $this->get(route('staff.pos-cards.print', $this->minor))
         ->assertSuccessful()
         ->assertSee('<svg', false)
+        ->assertSee($this->minor->familyMember->name)
+        ->assertSee('minor-profiles/'.$this->minor->id.'/avatar?', false)
+        ->assertSee('الوجه الخلفي')
         ->assertSee($this->minor->member_code);
 
     $credential = $this->minor->posCredential->fresh();
@@ -350,20 +358,28 @@ test('guardian can revoke a QR card when wallet payments are disabled', function
 });
 
 test('cashier terminal requires a visible total review before QR wallet payment', function (): void {
+    Storage::fake('local');
+    app(StoreMinorAvatar::class)->storeFile($this->minor, UploadedFile::fake()->image('leader.png', 120, 120));
     $this->actingAs($this->cashier, 'cashier');
 
     $terminal = Livewire::test(PosTerminal::class)
         ->call('selectBuyerType', 'minor')
-        ->assertSee('فتح كاميرا الجهاز لمسح QR')
+        ->assertSee('فتح كاميرا الجهاز')
         ->call('addOption', $this->option->id)
         ->set('scanToken', $this->token)
         ->call('scan')
-        ->assertSet('selectedProfileId', $this->minor->id);
+        ->assertSet('selectedProfileId', $this->minor->id)
+        ->assertSet('scanConfirmed', false)
+        ->assertSet('showScanModal', true)
+        ->assertSee('minor-profiles/'.$this->minor->id.'/avatar?', false)
+        ->assertSee($this->minor->familyMember->name);
 
     $terminal->call('pay')->assertHasErrors(['cart']);
+    $terminal->call('review')->assertHasErrors(['cart']);
     expect(Order::query()->count())->toBe(0);
 
-    $terminal->call('review')->assertSet('reviewedTotalBaisa', 750)
+    $terminal->call('confirmScannedProfile')->assertSet('scanConfirmed', true)
+        ->call('review')->assertSet('reviewedTotalBaisa', 750)
         ->assertSet('showReviewModal', true)
         ->assertSee('مراجعة الطلب')
         ->call('pay')->assertHasNoErrors()
@@ -613,6 +629,7 @@ test('minor can pay cash with QR even when wallet spending is disabled', functio
         ->call('addOption', $this->option->id)
         ->set('scanToken', $this->token)
         ->call('scan')
+        ->call('confirmScannedProfile')
         ->call('review')
         ->assertSet('reviewedTotalBaisa', 750)
         ->set('cashReceived', '1.000');

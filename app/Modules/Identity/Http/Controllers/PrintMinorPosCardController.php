@@ -19,7 +19,7 @@ class PrintMinorPosCardController
         $user = $request->user('web');
         abort_unless($user instanceof User && ($user->isPanelAdministrator() || $user->canAny(['Print:PosCards', 'Manage:PosCards'])), 403);
 
-        $minorProfile->load('posCredential');
+        $minorProfile->load('posCredential', 'familyMember');
         $credential = $minorProfile->posCredential;
         abort_unless($minorProfile->status === MinorProfileStatus::Active
             && $credential?->card_revoked_at === null
@@ -31,6 +31,8 @@ class PrintMinorPosCardController
 
         return response()->view('pages.staff.pos-card-print', [
             'memberCode' => $minorProfile->member_code,
+            'minorName' => $minorProfile->familyMember->name,
+            'avatarUrl' => $minorProfile->avatarUrl(),
             'qrSvg' => $qrSvg,
         ])->header('Cache-Control', 'no-store, private');
     }

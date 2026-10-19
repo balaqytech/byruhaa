@@ -29,6 +29,7 @@ class StoreMinorProfileRequest extends FormRequest
             'school_name' => ['nullable', 'string', 'max:255'],
             'grade' => ['nullable', 'string', 'max:64'],
             'relationship_to_customer' => ['nullable', 'string', 'max:64'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=2048,max_height=2048'],
             'browser_notifications_consent' => ['accepted'],
         ];
     }

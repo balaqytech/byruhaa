@@ -7,6 +7,7 @@ use App\Http\Controllers\Store\PaymentController;
 use App\Http\Controllers\Store\TrackOrderController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
 use App\Modules\Identity\Http\Controllers\PrintMinorPosCardController;
+use App\Modules\Identity\Http\Controllers\ShowMinorAvatarController;
 use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,10 @@ Route::middleware('signed')->group(function () {
 require __DIR__.'/customer.php';
 require __DIR__.'/minor-profile.php';
 require __DIR__.'/staff-workspaces.php';
+
+Route::get('minor-profiles/{minorProfile}/avatar', ShowMinorAvatarController::class)
+    ->middleware('signed')
+    ->name('minor-profiles.avatar');
 
 Route::get('staff/pos-cards/{minorProfile}/print', PrintMinorPosCardController::class)
     ->middleware('auth:web')

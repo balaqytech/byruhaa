@@ -17,6 +17,7 @@ Route::middleware(['auth:customer'])
         Route::livewire('family-members', 'pages::customer.family-members.index')->name('family-members.index');
         Route::get('minor-profiles', [MinorProfileController::class, 'index'])->name('minor-profiles.index');
         Route::post('minor-profiles', [MinorProfileController::class, 'store'])->name('minor-profiles.store');
+        Route::post('minor-profiles/{minorProfile}/avatar', [MinorProfileController::class, 'updateAvatar'])->name('minor-profiles.avatar.update');
         Route::post('minor-profiles/{minorProfile}/activation-link', [MinorProfileController::class, 'activationLink'])->middleware('throttle:10,1')->name('minor-profiles.activation-link');
         Route::post('minor-profiles/{minorProfile}/verify', [MinorProfileController::class, 'verify'])->name('minor-profiles.verify');
         Route::post('minor-profiles/{minorProfile}/suspend', [MinorProfileController::class, 'suspend'])->name('minor-profiles.suspend');
