@@ -17,12 +17,12 @@ THAWANI_TEST_API_BASE_URL=https://uatcheckout.thawani.om/api/v1
 THAWANI_TEST_CHECKOUT_BASE_URL=https://uatcheckout.thawani.om
 THAWANI_WEBHOOK_TOKEN=<Thawani callback token>
 
-UCHAT_STORE_API_TOKEN=<inbound UChat token>
+UCHAT_API_TOKEN=<inbound UChat token>
 UCHAT_STORE_OWNER_KEY_SECRET=<dedicated random secret>
-UCHAT_STORE_WEBHOOK_URL=https://<uchat-webhook-endpoint>
-UCHAT_STORE_WEBHOOK_BEARER_TOKEN=<outbound UChat token>
-UCHAT_STORE_WEBHOOK_SIGNING_SECRET=<outbound signing secret>
-UCHAT_STORE_RATE_LIMIT=60
+UCHAT_WEBHOOK_URL=https://<uchat-webhook-endpoint>
+UCHAT_WEBHOOK_BEARER_TOKEN=<outbound UChat token>
+UCHAT_WEBHOOK_SIGNING_SECRET=<outbound signing secret>
+UCHAT_RATE_LIMIT=60
 QUEUE_CONNECTION=database
 DB_QUEUE_RETRY_AFTER=90
 BYRUHAA_WEBHOOK_QUEUE=default
@@ -73,3 +73,20 @@ The scheduler runs `app:expire-store-orders` every minute, `seats:release-expire
 9. Verify customer history and the VAT receipt.
 
 After verification, keep generated caches in the normal staging deployment state. Never print or paste credentials into tickets, logs or test output.
+
+## Unified UChat cutover — 2026-10-29
+
+This is a breaking API deployment. Code preparation does not confirm staging deployment.
+
+1. Back up the database and inventory pending/queued webhook deliveries before deployment. Pause the scheduler and gracefully drain the old webhook queue before switching the destination and receiver contract; do not discard queued jobs or rotate APP_KEY.
+2. Copy the existing UCHAT_STORE_API_TOKEN value into UCHAT_API_TOKEN. Keep UCHAT_STORE_OWNER_KEY_SECRET unchanged so existing phone-owned carts retain their owner keys. Rename UCHAT_STORE_RATE_LIMIT to UCHAT_RATE_LIMIT.
+3. Configure one UCHAT_WEBHOOK_URL, UCHAT_WEBHOOK_BEARER_TOKEN and UCHAT_WEBHOOK_SIGNING_SECRET. Move the existing Store webhook credentials to those names if retaining that receiver. The old per-event BYRUHAA_*_WEBHOOK_URL and BYRUHAA_WEBHOOK_SIGNING_SECRET settings no longer control outgoing events.
+4. Update both UChat assistants to /api/v1/integrations/uchat, send the trusted X-WhatsApp-Phone on every request, and route incoming messages by event. Remove customer IDs and phone_number identity fields from payloads. Use booking/payment references in detail paths.
+5. Run the new migrations and rebuild configuration/routes. Restart Queue workers after code deployment, then resume the scheduler. Leave retained legacy deliveries untouched; only encrypted dispatch_payload snapshots produced by this release are eligible for recovery.
+6. Verify a correct token plus phone can read account and event-interests; incorrect tokens return 401, missing phones return 422, and another customer's resources return 404. Confirm the old /customers and /integrations/assistant paths return 404.
+7. Submit one Booking twice with the same Idempotency-Key and verify one booking, one coupon redemption and one booking.created delivery. Change the request with that key and verify 409.
+8. Cancel a test Event and confirm event.cancelled, a booking.cancelled with each affected phone/reference, and a completion/needs_attention event. Verify signature against raw JSON and deduplicate by delivery_id.
+9. Confirm all shared configuration is complete, the receiver uses HTTPS, failed deliveries are observable, and uchat:webhooks:dispatch-pending runs every minute. Retry selected failed delivery IDs with uchat:webhooks:retry; retries preserve delivery_id and snapshot.
+10. Confirm Store guest ordering, minor ownership, Wallet top-up and VAT quotes still work. Do not treat a checkout URL or API response as payment confirmation.
+
+On rollback, restore the matching application and assistant/receiver configuration together. Keep the additive migrations and stored snapshots; do not roll them back after new bookings or deletion requests have been created. Maintain the same APP_KEY to decrypt recoverable webhook payloads.
