@@ -9,6 +9,9 @@ use App\Modules\Store\Models\ProductOption;
 use App\Modules\Store\Services\PricingContextResolver;
 use App\Modules\Store\Services\PricingRules\MemberPriceRule;
 use App\Modules\Store\Services\StorePricing;
+use Tests\TestCase;
+
+uses(TestCase::class);
 
 function pipelineProductOption(int $regularPrice = 1600, ?int $memberPrice = 1100): ProductOption
 {

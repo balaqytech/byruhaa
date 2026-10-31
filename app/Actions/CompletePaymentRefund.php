@@ -31,6 +31,9 @@ class CompletePaymentRefund
         $refund = DB::transaction(function () use ($refund, $attributes): PaymentRefund {
             $refund = PaymentRefund::query()->whereKey($refund->id)
                 ->with('payment.bookingInstallment')->lockForUpdate()->firstOrFail();
+            if ($refund->payment->subject_type === 'store_order') {
+                throw ValidationException::withMessages(['refund' => 'Store order refunds must be resolved through their order request.']);
+            }
             if (! in_array($refund->state, [PaymentRefundState::Pending, PaymentRefundState::ManualRequired], true)) {
                 throw ValidationException::withMessages([
                     'refund' => 'This refund has already been resolved.',
@@ -58,6 +61,7 @@ class CompletePaymentRefund
             }
 
             $this->postRefundLedgerTransaction->execute($refund);
+            $this->webhookSender->sendPaymentRefunded($refund);
 
             return $refund->refresh();
         });
@@ -72,8 +76,6 @@ class CompletePaymentRefund
         if ($booking?->customer !== null) {
             $booking->customer->notify(new PaymentRefundedNotification($refund->id));
         }
-
-        $this->webhookSender->sendPaymentRefunded($refund);
 
         return $refund;
     }

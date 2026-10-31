@@ -2,6 +2,8 @@
 
 namespace App\Modules\Store\Http\Requests;
 
+use App\Http\Requests\Integrations\Uchat\UchatRequest;
+
 class UchatCartUpdateRequest extends UchatRequest
 {
     /** @return array<string, array<int, mixed>> */

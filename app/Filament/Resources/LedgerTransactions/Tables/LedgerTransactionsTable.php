@@ -5,6 +5,7 @@ namespace App\Filament\Resources\LedgerTransactions\Tables;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
+use App\Support\LedgerText;
 use App\Support\MoneyFormatter;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -28,6 +29,7 @@ class LedgerTransactionsTable
                     ->copyable(),
                 TextColumn::make('description')
                     ->label(__('admin.fields.description'))
+                    ->formatStateUsing(fn (string $state): string => LedgerText::description($state))
                     ->searchable()
                     ->limit(50),
                 TextColumn::make('source')

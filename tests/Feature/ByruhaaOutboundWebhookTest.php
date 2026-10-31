@@ -5,6 +5,7 @@ use App\Enums\EventEnrollmentStatus;
 use App\Enums\EventInterestSource;
 use App\Enums\PaymentState;
 use App\Enums\WebhookDeliveryStatus;
+use App\Jobs\UchatWebhookJob as CallWebhookJob;
 use App\Models\EventCancellation;
 use App\Models\WebhookDelivery;
 use App\Modules\Events\Actions\CreateCustomerBooking;
@@ -31,12 +32,12 @@ use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
-use Spatie\WebhookServer\CallWebhookJob;
 use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
 
 beforeEach(function (): void {
+    config(['byruhaa.uchat.webhook_bearer_token' => 'outbound-test', 'byruhaa.uchat.webhook_signing_secret' => 'signing-test']);
     config([
         'byruhaa.uchat.api_token' => 'legacy-api-test-token',
         'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
@@ -47,16 +48,8 @@ beforeEach(function (): void {
 beforeEach(function (): void {
     config([
         'app.url' => 'https://byruhaa.test',
-        'byruhaa.webhooks.customer_registered_url' => null,
-        'byruhaa.webhooks.interest_created_url' => null,
-        'byruhaa.webhooks.booking_created_url' => null,
-        'byruhaa.webhooks.booking_approved_url' => null,
-        'byruhaa.webhooks.booking_cancelled_url' => null,
-        'byruhaa.webhooks.booking_contracts_signed_url' => null,
-        'byruhaa.webhooks.payment_paid_url' => null,
-        'byruhaa.webhooks.event_cancelled_url' => null,
-        'byruhaa.webhooks.payment_refunded_url' => null,
-        'byruhaa.webhooks.signing_secret' => null,
+        'byruhaa.uchat.webhook_url' => null,
+        'byruhaa.uchat.webhook_signing_secret' => 'signing-test',
         'byruhaa.webhooks.timeout' => 10,
         'byruhaa.webhooks.queue' => 'default',
         'payments.default' => 'thawani',
@@ -69,27 +62,12 @@ beforeEach(function (): void {
 });
 
 test('byruhaa webhook config values exist', function () {
-    expect(config('byruhaa.webhooks'))
-        ->toHaveKeys([
-            'customer_registered_url',
-            'interest_created_url',
-            'booking_created_url',
-            'booking_approved_url',
-            'booking_cancelled_url',
-            'booking_contracts_signed_url',
-            'payment_paid_url',
-            'event_cancelled_url',
-            'payment_refunded_url',
-            'signing_secret',
-            'timeout',
-            'queue',
-        ])
-        ->and(config('byruhaa.webhooks.timeout'))->toBe(10)
-        ->and(config('byruhaa.webhooks.queue'))->toBe('default');
+    expect(config('byruhaa.uchat'))->toHaveKeys(['api_token', 'webhook_url', 'webhook_bearer_token', 'webhook_signing_secret', 'owner_key_secret', 'rate_limit']);
+    expect(config('byruhaa.webhooks'))->toHaveKeys(['timeout', 'queue']);
 });
 
 test('cancelled booking queues one webhook with booking customer and event payload', function () {
-    config(['byruhaa.webhooks.booking_cancelled_url' => 'https://partner.test/webhooks/booking-cancelled']);
+    config(['byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-cancelled']);
     Queue::fake();
     $customer = Customer::factory()->create([
         'name' => 'Cancelled Customer',
@@ -115,14 +93,14 @@ test('cancelled booking queues one webhook with booking customer and event paylo
 
     app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking->refresh());
 
-    Queue::assertPushed(CallWebhookJob::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->payload['event'] === 'booking.cancelled');
     expect(byruhaaWebhookDelivery('booking.cancelled', $booking, 'https://partner.test/webhooks/booking-cancelled')->status)
         ->toBe(WebhookDeliveryStatus::Queued);
 });
 
 test('new interest queues a webhook with interest event and customer payload', function () {
     config([
-        'byruhaa.webhooks.interest_created_url' => 'https://partner.test/webhooks/interest-created',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/interest-created',
         'byruhaa.webhooks.queue' => 'webhooks',
     ]);
 
@@ -173,7 +151,7 @@ test('new interest queues a webhook with interest event and customer payload', f
 
 test('repeated interest expression queues only the newly created interest webhook', function () {
     config([
-        'byruhaa.webhooks.interest_created_url' => 'https://partner.test/webhooks/interest-created',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/interest-created',
     ]);
 
     Queue::fake();
@@ -186,7 +164,7 @@ test('repeated interest expression queues only the newly created interest webhoo
     $expressInterest->execute($customer, $event, [], EventInterestSource::Assistant);
     app(ByruhaaWebhookSender::class)->sendInterestCreated($interest->refresh());
 
-    Queue::assertPushed(CallWebhookJob::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->payload['event'] === 'interest.created');
     expect(WebhookDelivery::query()
         ->whereMorphedTo('webhookable', $interest)
         ->where('event', 'interest.created')
@@ -218,16 +196,15 @@ test('legacy customer webhook morph types resolve after identity model move', fu
 
 test('customer registration through the api queues a webhook with safe customer payload', function () {
     config([
-        'byruhaa.webhooks.customer_registered_url' => 'https://partner.test/webhooks/customer-registered',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/customer-registered',
         'byruhaa.webhooks.queue' => 'webhooks',
     ]);
 
     Queue::fake();
 
-    $this->postJson('/api/v1/customers', [
+    $this->withHeader('X-WhatsApp-Phone', '91234567')->postJson('/api/v1/integrations/uchat/account', [
         'name' => 'Registered Customer',
         'email' => 'registered@example.com',
-        'phone_number' => '91234567',
         'civil_id' => '12345678',
         'address' => 'House 12',
         'wilaya' => 'Muscat',
@@ -261,7 +238,7 @@ test('customer registration through the api queues a webhook with safe customer 
 
 test('customer registration through fortify queues a webhook', function () {
     config([
-        'byruhaa.webhooks.customer_registered_url' => 'https://partner.test/webhooks/customer-registered',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/customer-registered',
     ]);
 
     Queue::fake();
@@ -288,10 +265,9 @@ test('customer registration through fortify queues a webhook', function () {
 test('customer registration does not queue a webhook when url is empty', function () {
     Queue::fake();
 
-    $this->postJson('/api/v1/customers', [
+    $this->withHeader('X-WhatsApp-Phone', '91234567')->postJson('/api/v1/integrations/uchat/account', [
         'name' => 'No Webhook Customer',
         'email' => 'no.webhook@example.com',
-        'phone_number' => '91234568',
         'password' => 'password',
         'password_confirmation' => 'password',
     ])->assertCreated();
@@ -304,7 +280,7 @@ test('customer registration does not queue a webhook when url is empty', functio
 
 test('repeated customer registered sender call does not queue duplicate webhooks', function () {
     config([
-        'byruhaa.webhooks.customer_registered_url' => 'https://partner.test/webhooks/customer-registered',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/customer-registered',
     ]);
 
     Queue::fake();
@@ -314,7 +290,7 @@ test('repeated customer registered sender call does not queue duplicate webhooks
     app(ByruhaaWebhookSender::class)->sendCustomerRegistered($customer);
     app(ByruhaaWebhookSender::class)->sendCustomerRegistered($customer->refresh());
 
-    Queue::assertPushed(CallWebhookJob::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->payload['event'] === 'customer.registered');
     expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $customer)->where('event', 'customer.registered')->count())->toBe(1);
 });
 
@@ -322,7 +298,7 @@ test('booking creation queues a webhook with booking event customer and family m
     [$customer, $event, $familyMembers] = byruhaaBookingCreationFixture();
 
     config([
-        'byruhaa.webhooks.booking_created_url' => 'https://partner.test/webhooks/booking-created',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-created',
         'byruhaa.webhooks.queue' => 'webhooks',
     ]);
 
@@ -342,7 +318,7 @@ test('booking creation queues a webhook with booking event customer and family m
         ->and($delivery->queued_at)->not->toBeNull()
         ->and($job->meta)->toHaveKey('webhook_delivery_id', $delivery->id)
         ->and($job->queue)->toBe('webhooks')
-        ->and($job->headers)->not->toHaveKey('Signature')
+        ->and($job->headers)->toHaveKey('Signature')
         ->and($payload['event'])->toBe('booking.created')
         ->and($payload['customer_phone'])->toBe('+96892345678')
         ->and($payload['data']['booking']['id'])->toBe($booking->id)
@@ -356,11 +332,11 @@ test('booking creation queues a webhook with booking event customer and family m
         ->and($payload['data']['participants'][0]['name'])->toBe('First Created Member')
         ->and($payload['data']['participants'][0]['contract_id'])->toBeNull()
         ->and($payload['data']['participants'][0]['contract_status'])->toBeNull()
-        ->and($payload['data']['pricing']['unit_price'])->toBe('12.000')
-        ->and($payload['data']['pricing']['subtotal'])->toBe('24.000')
-        ->and($payload['data']['pricing']['total'])->toBe('24.000');
+        ->and($payload['data']['pricing']['unit_price_baisa'])->toBe(12000)
+        ->and($payload['data']['pricing']['subtotal_baisa'])->toBe(24000)
+        ->and($payload['data']['pricing']['total_baisa'])->toBe(24000);
 
-    expect(json_encode($payload))->not->toContain('_baisa');
+    expect(json_encode($payload))->toContain('_baisa');
 });
 
 test('booking creation does not queue a webhook when url is empty', function () {
@@ -381,7 +357,7 @@ test('repeated booking created sender call does not queue duplicate webhooks', f
     [$customer, $event, $familyMembers] = byruhaaBookingCreationFixture();
 
     config([
-        'byruhaa.webhooks.booking_created_url' => 'https://partner.test/webhooks/booking-created',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-created',
     ]);
 
     Queue::fake();
@@ -393,7 +369,7 @@ test('repeated booking created sender call does not queue duplicate webhooks', f
 
     app(ByruhaaWebhookSender::class)->sendBookingCreated($booking->refresh());
 
-    Queue::assertPushed(CallWebhookJob::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->payload['event'] === 'booking.created');
     expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $booking)->where('event', 'booking.created')->count())->toBe(1);
 });
 
@@ -401,8 +377,8 @@ test('booking approval queues a signed webhook with booking payload', function (
     [$booking, $staff] = byruhaaWebhookBookingFixture();
 
     config([
-        'byruhaa.webhooks.booking_approved_url' => 'https://partner.test/webhooks/booking-approved',
-        'byruhaa.webhooks.signing_secret' => 'secret',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-approved',
+        'byruhaa.uchat.webhook_signing_secret' => 'secret',
         'byruhaa.webhooks.queue' => 'webhooks',
     ]);
 
@@ -431,10 +407,10 @@ test('booking approval queues a signed webhook with booking payload', function (
         ->and($payload['data']['event']['name'])->toBe('Webhook Camp')
         ->and($payload['data']['participants'][0]['name'])->toBe('Maha Webhook')
         ->and($payload['data']['participants'][0]['contract_status'])->toBe('awaiting_signature')
-        ->and($payload['data']['pricing']['unit_price'])->toBe('489.000')
-        ->and($payload['data']['pricing']['total'])->toBe('489.000');
+        ->and($payload['data']['pricing']['unit_price_baisa'])->toBe(489000)
+        ->and($payload['data']['pricing']['total_baisa'])->toBe(489000);
 
-    expect(json_encode($payload))->not->toContain('_baisa');
+    expect(json_encode($payload))->toContain('_baisa');
 });
 
 test('booking approval does not queue a webhook when url is empty', function () {
@@ -452,7 +428,7 @@ test('signing all booking contracts queues a webhook with contract summary', fun
     [$booking, $staff] = byruhaaWebhookBookingFixture(familyMemberCount: 2);
 
     config([
-        'byruhaa.webhooks.booking_contracts_signed_url' => 'https://partner.test/webhooks/booking-contracts-signed',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-contracts-signed',
         'byruhaa.webhooks.queue' => 'webhooks',
     ]);
 
@@ -491,16 +467,16 @@ test('signing all booking contracts queues a webhook with contract summary', fun
         ->and($payload['data']['contracts']['signed_count'])->toBe(2)
         ->and($payload['data']['contracts']['all_signed'])->toBeTrue()
         ->and($payload['data']['contracts']['latest_signed_at'])->not->toBeNull()
-        ->and($payload['data']['pricing']['total'])->toBe('978.000');
+        ->and($payload['data']['pricing']['total_baisa'])->toBe(978000);
 
-    expect(json_encode($payload))->not->toContain('_baisa');
+    expect(json_encode($payload))->toContain('_baisa');
 });
 
 test('all contracts signed webhook is idempotent', function () {
     [$booking, $staff] = byruhaaWebhookBookingFixture();
 
     config([
-        'byruhaa.webhooks.booking_contracts_signed_url' => 'https://partner.test/webhooks/booking-contracts-signed',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-contracts-signed',
     ]);
 
     $approvedBooking = app(BookingApprovalService::class)->approve($booking, $staff)
@@ -512,7 +488,7 @@ test('all contracts signed webhook is idempotent', function () {
     $approvedBooking->familyMembers->first()->contract->sign(byruhaaSignatureDataUrl(), 'Only signer', '127.0.0.1');
     app(ByruhaaWebhookSender::class)->sendBookingContractsSigned($approvedBooking->refresh());
 
-    Queue::assertPushed(CallWebhookJob::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->payload['event'] === 'booking.contracts_signed');
     expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $approvedBooking)->where('event', 'booking.contracts_signed')->count())->toBe(1);
 });
 
@@ -520,7 +496,7 @@ test('paid thawani confirmation queues a payment webhook with paid booking statu
     $payment = byruhaaWebhookPaymentFixture(amountBaisa: 489000);
 
     config([
-        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/payment-paid',
     ]);
 
     byruhaaFakePaidThawaniSession($payment);
@@ -543,7 +519,8 @@ test('paid thawani confirmation queues a payment webhook with paid booking statu
         ->and($payload['data']['payment']['provider'])->toBe('thawani')
         ->and($payload['data']['payment']['status'])->toBe('paid')
         ->and($payload['data']['payment']['provider_status'])->toBe('paid')
-        ->and($payload['data']['payment']['amount'])->toBe('489.000')
+        ->and($payload['data']['payment']['amount_baisa'])->toBe(489000)
+        ->and($payload['data']['payment']['reference'])->toBe($payment->reference)
         ->and($payload['data']['payment']['provider_reference'])->toBe('payment_'.$payment->id)
         ->and($payload['data']['booking']['payment_status'])->toBe('paid')
         ->and($payload['data']['booking']['customer_panel_url'])->toBe(route('customer.bookings.show', $payment->bookingInstallment->paymentSchedule->booking))
@@ -551,14 +528,14 @@ test('paid thawani confirmation queues a payment webhook with paid booking statu
         ->and($payload['data']['customer']['phone'])->toBe($payment->bookingInstallment->paymentSchedule->booking->customer->phone_number)
         ->and($payload['data'])->not->toHaveKey('installments');
 
-    expect(json_encode($payload))->not->toContain('_baisa');
+    expect(json_encode($payload))->toContain('_baisa');
 });
 
 test('partial payment webhook includes installment summary and items', function () {
     $payment = byruhaaWebhookPaymentFixture(amountBaisa: 200000, remainingAmountBaisa: 289000);
 
     config([
-        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/payment-paid',
     ]);
 
     byruhaaFakePaidThawaniSession($payment);
@@ -571,21 +548,21 @@ test('partial payment webhook includes installment summary and items', function 
     expect($payload['data']['booking']['payment_status'])->toBe('partially_paid')
         ->and($payload['data']['installments']['paid_installments_count'])->toBe(1)
         ->and($payload['data']['installments']['total_installments_count'])->toBe(2)
-        ->and($payload['data']['installments']['paid_amount'])->toBe('200.000')
-        ->and($payload['data']['installments']['remaining_amount'])->toBe('289.000')
+        ->and($payload['data']['installments']['paid_amount_baisa'])->toBe(200000)
+        ->and($payload['data']['installments']['remaining_amount_baisa'])->toBe(289000)
         ->and($payload['data']['installments']['items'][0]['status'])->toBe('paid')
-        ->and($payload['data']['installments']['items'][0]['amount'])->toBe('200.000')
+        ->and($payload['data']['installments']['items'][0]['amount_baisa'])->toBe(200000)
         ->and($payload['data']['installments']['items'][1]['status'])->toBe('pending')
-        ->and($payload['data']['installments']['items'][1]['amount'])->toBe('289.000');
+        ->and($payload['data']['installments']['items'][1]['amount_baisa'])->toBe(289000);
 
-    expect(json_encode($payload))->not->toContain('_baisa');
+    expect(json_encode($payload))->toContain('_baisa');
 });
 
 test('repeated paid thawani confirmation does not queue duplicate webhooks', function () {
     $payment = byruhaaWebhookPaymentFixture(amountBaisa: 489000);
 
     config([
-        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/payment-paid',
     ]);
 
     byruhaaFakePaidThawaniSession($payment);
@@ -594,7 +571,7 @@ test('repeated paid thawani confirmation does not queue duplicate webhooks', fun
     $confirmedPayment = app(ConfirmThawaniPayment::class)->confirm($payment);
     app(ConfirmThawaniPayment::class)->confirm($confirmedPayment->refresh());
 
-    Queue::assertPushed(CallWebhookJob::class, 1);
+    Queue::assertPushed(CallWebhookJob::class, fn (CallWebhookJob $job): bool => $job->payload['event'] === 'payment.paid');
     expect(WebhookDelivery::query()->whereMorphedTo('webhookable', $payment)->where('event', 'payment.paid')->count())->toBe(1);
 });
 
@@ -820,7 +797,8 @@ function byruhaaQueuedWebhook(string $url): CallWebhookJob
     $queuedJob = null;
 
     Queue::assertPushed(CallWebhookJob::class, function (CallWebhookJob $job) use (&$queuedJob, $url): bool {
-        if ($job->webhookUrl !== $url) {
+        $expectedEvent = ['booking-created' => 'booking.created', 'booking-approved' => 'booking.approved', 'booking-cancelled' => 'booking.cancelled', 'booking-contracts-signed' => 'booking.contracts_signed', 'payment-paid' => 'payment.paid', 'interest-created' => 'interest.created', 'customer-registered' => 'customer.registered'][basename($url)] ?? null;
+        if ($job->webhookUrl !== $url || ($expectedEvent !== null && $job->payload['event'] !== $expectedEvent)) {
             return false;
         }
 

@@ -15,15 +15,15 @@ beforeEach(function (): void {
         'byruhaa.uchat.api_token' => 'legacy-api-test-token',
         'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
     ]);
-    $this->withToken('legacy-api-test-token');
+    $this->withToken('legacy-api-test-token')->withHeader('X-WhatsApp-Phone', '91234567');
 });
 
 test('event api exposes enrollment capabilities and filters by enrollment status', function () {
-    Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
-    Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingOpen]);
+    $interestEvent = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
+    $bookingEvent = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingOpen]);
 
     $this->getJson('/api/v1/events?enrollment_status=interest_open')
-        ->assertOk()->assertJsonCount(1, 'data')
+        ->assertOk()->assertJsonFragment(['id' => $interestEvent->id])->assertJsonMissing(['id' => $bookingEvent->id])
         ->assertJsonPath('data.0.enrollment_status', 'interest_open')
         ->assertJsonPath('data.0.can_express_interest', true)
         ->assertJsonPath('data.0.can_book', false)
@@ -33,26 +33,26 @@ test('event api exposes enrollment capabilities and filters by enrollment status
 test('assistant can idempotently express inspect and withdraw customer interest', function () {
     $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
     $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
-    $payload = ['phone_number' => '91234567', 'event_slug' => $event->slug, 'contact_consent' => true, 'preferred_contact_channel' => 'whatsapp'];
+    $payload = ['event_slug' => $event->slug, 'contact_consent' => true, 'preferred_contact_channel' => 'whatsapp'];
 
-    $this->putJson('/api/v1/integrations/assistant/event-interests', $payload)
+    $this->putJson('/api/v1/integrations/uchat/event-interests', $payload)
         ->assertCreated()->assertJsonPath('data.status', 'interested')->assertJsonPath('data.event.slug', $event->slug);
-    $this->putJson('/api/v1/integrations/assistant/event-interests', $payload)->assertOk();
+    $this->putJson('/api/v1/integrations/uchat/event-interests', $payload)->assertOk();
 
     expect(EventInterest::query()->count())->toBe(1);
 
-    $query = http_build_query(['phone_number' => '91234567', 'event_slug' => $event->slug]);
-    $this->getJson('/api/v1/integrations/assistant/event-interests?'.$query)
+    $query = http_build_query(['event_slug' => $event->slug]);
+    $this->getJson('/api/v1/integrations/uchat/event-interests?'.$query)
         ->assertOk()->assertJsonMissingPath('data.customer');
-    $this->deleteJson('/api/v1/integrations/assistant/event-interests?'.$query)
+    $this->deleteJson('/api/v1/integrations/uchat/event-interests?'.$query)
         ->assertOk()->assertJsonPath('data.status', 'withdrawn');
 });
 
 test('assistant receives a registration link when customer does not exist', function () {
     $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
 
-    $this->putJson('/api/v1/integrations/assistant/event-interests', [
-        'phone_number' => '91234567', 'event_slug' => $event->slug, 'contact_consent' => true,
+    $this->putJson('/api/v1/integrations/uchat/event-interests', [
+        'event_slug' => $event->slug, 'contact_consent' => true,
     ])->assertStatus(409)->assertJsonPath('code', 'customer_account_required')->assertJsonStructure(['registration_url']);
 });
 
@@ -61,18 +61,18 @@ test('assistant cannot access interests for draft events', function () {
     $event = Event::factory()->draft()->create(['enrollment_status' => EventEnrollmentStatus::InterestOpen]);
     $interest = EventInterest::factory()->for($customer)->for($event)->create();
     $payload = [
-        'phone_number' => '91234567',
+
         'event_slug' => $event->slug,
         'contact_consent' => true,
     ];
     $query = http_build_query([
-        'phone_number' => '91234567',
+
         'event_slug' => $event->slug,
     ]);
 
-    $this->putJson('/api/v1/integrations/assistant/event-interests', $payload)->assertNotFound();
-    $this->getJson('/api/v1/integrations/assistant/event-interests?'.$query)->assertNotFound();
-    $this->deleteJson('/api/v1/integrations/assistant/event-interests?'.$query)->assertNotFound();
+    $this->putJson('/api/v1/integrations/uchat/event-interests', $payload)->assertNotFound();
+    $this->getJson('/api/v1/integrations/uchat/event-interests?'.$query)->assertNotFound();
+    $this->deleteJson('/api/v1/integrations/uchat/event-interests?'.$query)->assertNotFound();
 
     expect($interest->refresh()->status)->toBe(EventInterestStatus::Interested);
 });
@@ -81,8 +81,8 @@ test('interest is rejected when enrollment is closed and never changes seats', f
     $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
     $event = Event::factory()->create(['enrollment_status' => EventEnrollmentStatus::BookingClosed, 'seat_capacity' => 12]);
 
-    $this->putJson('/api/v1/integrations/assistant/event-interests', [
-        'phone_number' => $customer->phone_number, 'event_slug' => $event->slug, 'contact_consent' => true,
+    $this->putJson('/api/v1/integrations/uchat/event-interests', [
+        'event_slug' => $event->slug, 'contact_consent' => true,
     ])->assertUnprocessable();
 
     expect($event->remainingSeats())->toBe(12)->and(Booking::query()->count())->toBe(0);

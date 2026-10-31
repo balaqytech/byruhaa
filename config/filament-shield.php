@@ -300,6 +300,7 @@ return [
     'custom_permissions' => [
         'View:LogViewer' => 'View Log Viewer',
         'Sell:Pos' => 'Sell at cashier',
+        'RefundCash:Pos' => 'Refund cash POS orders',
         'Reprint:PosReceipts' => 'Reprint POS receipts',
         'View:BaristaBoard' => 'View barista orders',
         'Prepare:BaristaOrders' => 'Update barista preparation',

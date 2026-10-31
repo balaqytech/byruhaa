@@ -4,18 +4,23 @@ namespace App\Filament\Resources\LedgerTransactions\Pages;
 
 use App\Filament\Resources\LedgerTransactions\LedgerTransactionResource;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 
 class ViewLedgerTransaction extends ViewRecord
 {
     protected static string $resource = LedgerTransactionResource::class;
 
-    public function hasCombinedRelationManagerTabsWithContent(): bool
+    public function getMaxContentWidth(): Width
     {
-        return true;
+        return Width::Full;
     }
 
-    public function getContentTabLabel(): ?string
+    public function content(Schema $schema): Schema
     {
-        return __('admin.resources.ledger_transactions.label');
+        return $schema->components([
+            $this->getInfolistContentComponent()->columnSpanFull(),
+            $this->getRelationManagersContentComponent()->columnSpanFull(),
+        ]);
     }
 }

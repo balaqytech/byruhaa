@@ -12,6 +12,7 @@ class StaffWorkspaceRolesSeeder extends Seeder
     public function run(): void
     {
         $cashierPermission = Permission::findOrCreate('Sell:Pos', 'web');
+        $cashRefundPermission = Permission::findOrCreate('RefundCash:Pos', 'web');
         $baristaPermission = Permission::findOrCreate('View:BaristaBoard', 'web');
         $prepareOrdersPermission = Permission::findOrCreate('Prepare:BaristaOrders', 'web');
         $reprintReceiptsPermission = Permission::findOrCreate('Reprint:PosReceipts', 'web');
@@ -22,7 +23,7 @@ class StaffWorkspaceRolesSeeder extends Seeder
         $printCardsPermission = Permission::findOrCreate('Print:PosCards', 'web');
         Permission::findOrCreate('Adjust:ProductStock', 'web');
 
-        Role::findOrCreate('pos_cashier', 'web')->givePermissionTo($cashierPermission, $reprintReceiptsPermission);
+        Role::findOrCreate('pos_cashier', 'web')->givePermissionTo($cashierPermission, $cashRefundPermission, $reprintReceiptsPermission);
         Role::findOrCreate('pos_barista', 'web')->givePermissionTo($baristaPermission, $prepareOrdersPermission);
         Role::findOrCreate('pos_pickup_attendant', 'web')->givePermissionTo($pickupBoardPermission, $completeOrdersPermission);
         Role::findOrCreate('pos_card_manager', 'web')->givePermissionTo($issueCardsPermission, $printCardsPermission);

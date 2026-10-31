@@ -1,9 +1,11 @@
 <?php
 
 use App\Filament\Resources\MinorProfiles\Pages\ListMinorProfiles;
+use App\Modules\Finance\Actions\CloseCashDrawer;
 use App\Modules\Finance\Contracts\WalletService;
 use App\Modules\Finance\Events\WalletMovementPosted;
 use App\Modules\Finance\Listeners\SendWalletMovementNotification;
+use App\Modules\Finance\Models\FinancialEvent;
 use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Actions\ManageMinorPosCredential;
 use App\Modules\Identity\Actions\StoreMinorAvatar;
@@ -19,21 +21,24 @@ use App\Modules\Pos\Livewire\CashierOrders;
 use App\Modules\Pos\Livewire\PickupBoard;
 use App\Modules\Pos\Livewire\PosTerminal;
 use App\Modules\Store\Actions\ChangeOrderState;
+use App\Modules\Store\Actions\ManageOrderRefund;
 use App\Modules\Store\Events\OrderStateChanged;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Listeners\SendUchatOrderStateWebhook;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Order;
+use App\Modules\Store\Models\OrderRefundRequest;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Settings\StoreSettings;
 use App\Modules\Store\States\Order\Cancelled;
+use App\Modules\Store\States\Order\Completed;
 use App\Modules\Store\States\Order\Preparing;
 use App\Modules\Store\States\Order\ReadyForPickup;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use Database\Seeders\StaffWorkspaceRolesSeeder;
 use Filament\Actions\Testing\TestAction;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -160,7 +165,9 @@ test('barista board shows active orders without granting access to cashier or ad
     Livewire::test('store.barista-board')->assertSee($order->reference);
     Livewire::test(BaristaBoard::class)->call('startPreparing', $order->id)->assertForbidden();
 
-    app(ChangeOrderState::class)->execute($order, Cancelled::class);
+    app(ChangeOrderState::class)->execute($order, Preparing::class);
+    app(ChangeOrderState::class)->execute($order, ReadyForPickup::class);
+    app(ChangeOrderState::class)->execute($order, Completed::class);
     Livewire::test(BaristaBoard::class)->assertDontSee($order->reference);
 });
 
@@ -619,6 +626,146 @@ test('a cashier without reprint permission cannot inspect a colleagues order', f
     $this->get(route('cashier.orders.receipt', $order))->assertNotFound();
 });
 
+test('cashier records a partial guest cash refund then confirms handover and prints its linked receipt', function (): void {
+    config(['audit.console' => true]);
+    $this->cashier->givePermissionTo(Permission::findOrCreate('RefundCash:Pos', 'web'));
+    $order = app(CreateCashPosOrder::class)->execute($this->cashier, [
+        'buyer_type' => 'guest',
+        'items' => posItems($this->option->id, 2),
+        'reviewed_total_baisa' => 2000,
+        'cash_received_baisa' => 2000,
+        'idempotency_key' => 'guest-cash-refund-sale',
+    ]);
+    $this->actingAs($this->cashier, 'cashier');
+
+    $page = Livewire::test(CashierOrders::class)
+        ->call('openCashRefund', $order->id)
+        ->assertSet('refundAmountOmr', '2.000')
+        ->set('refundAmountOmr', '0.750')
+        ->set('refundReason', 'صنف غير متاح')
+        ->call('requestCashRefund')
+        ->assertHasNoErrors();
+
+    $refund = OrderRefundRequest::query()->where('order_id', $order->id)->sole();
+    expect($refund->status)->toBe('approved')
+        ->and($refund->amount_baisa)->toBe(750)
+        ->and(FinancialEvent::query()->where('event_key', 'store-refund:'.$refund->id)->exists())->toBeFalse();
+
+    $page->set('receiptReference', 'CASH-REFUND-750')->call('confirmCashPayout')->assertHasErrors(['cashHandedOver']);
+    $page->set('cashHandedOver', true)->call('confirmCashPayout')->assertHasNoErrors();
+
+    expect($refund->refresh()->status)->toBe('paid')
+        ->and($refund->paid_by_user_id)->toBe($this->cashier->id)
+        ->and($refund->payout_reference)->toBe('CASH-REFUND-750')
+        ->and(FinancialEvent::query()->where('event_key', 'store-refund:'.$refund->id)->count())->toBe(1)
+        ->and($refund->audits()->count())->toBeGreaterThanOrEqual(3)
+        ->and($refund->audits()->latest()->value('user_id'))->toBe($this->cashier->id);
+    $duplicate = app(ManageOrderRefund::class)->request($order, null, $this->cashier->id, 750, 'صنف غير متاح', $page->get('refundOperationKey'));
+    app(ManageOrderRefund::class)->completeCash($refund, $this->cashier->id, 'CASH-REFUND-750');
+    expect($duplicate->id)->toBe($refund->id)
+        ->and(FinancialEvent::query()->where('event_key', 'store-refund:'.$refund->id)->count())->toBe(1);
+    $this->get(route('cashier.orders.refunds.receipt', [$order, $refund]))
+        ->assertSuccessful()
+        ->assertSee('إيصال إرجاع نقدي')
+        ->assertSee($order->reference)
+        ->assertSee('CASH-REFUND-750');
+
+    $closure = app(CloseCashDrawer::class)->execute($this->cashier->id, today()->toDateString(), 0, 1250, User::factory()->admin()->create()->id);
+    expect($closure->refunds_baisa)->toBe(750)
+        ->and($closure->expected_baisa)->toBe(1250)
+        ->and($closure->status)->toBe('balanced');
+});
+
+test('another authorized cashier can pay a minor cash refund and the sale cashier does not carry its cash closure', function (): void {
+    $this->seed(StaffWorkspaceRolesSeeder::class);
+    $payer = User::factory()->create();
+    $payer->syncRoles(Role::findByName('pos_cashier', 'web'));
+    $order = app(CreateCashPosOrder::class)->execute($this->cashier, [
+        'buyer_type' => 'minor',
+        'token' => $this->token,
+        'reviewed_profile_id' => $this->minor->id,
+        'items' => posItems($this->option->id, 1),
+        'reviewed_total_baisa' => 750,
+        'cash_received_baisa' => 1000,
+        'idempotency_key' => 'minor-cash-refund-sale',
+    ]);
+
+    $this->actingAs($payer, 'cashier');
+    Livewire::test(CashierOrders::class)
+        ->set('search', $order->reference)
+        ->assertSee($order->reference)
+        ->call('openCashRefund', $order->id)
+        ->set('refundReason', 'إرجاع الطلب')
+        ->call('requestCashRefund')
+        ->set('receiptReference', 'MINOR-REFUND-1')
+        ->set('cashHandedOver', true)
+        ->call('confirmCashPayout')
+        ->assertHasNoErrors();
+
+    $refund = OrderRefundRequest::query()->where('order_id', $order->id)->sole();
+    expect($refund->amount_baisa)->toBe($order->total_baisa)
+        ->and($refund->paid_by_user_id)->toBe($payer->id)
+        ->and($order->refresh()->status->getValue())->toBe('refunded');
+
+    $administrator = User::factory()->admin()->create();
+    $sellerClosure = app(CloseCashDrawer::class)->execute($this->cashier->id, today()->toDateString(), 0, 750, $administrator->id);
+    $payerClosure = app(CloseCashDrawer::class)->execute($payer->id, today()->toDateString(), 750, 0, $administrator->id);
+    expect($sellerClosure->refunds_baisa)->toBe(0)
+        ->and($payerClosure->refunds_baisa)->toBe(750);
+});
+
+test('cashier cash refund action enforces permission and remaining amount', function (): void {
+    $order = app(CreateCashPosOrder::class)->execute($this->cashier, [
+        'buyer_type' => 'guest',
+        'items' => posItems($this->option->id, 1),
+        'reviewed_total_baisa' => 1000,
+        'cash_received_baisa' => 1000,
+        'idempotency_key' => 'cash-refund-permission-sale',
+    ]);
+    $this->actingAs($this->cashier, 'cashier');
+    Livewire::test(CashierOrders::class)->call('openCashRefund', $order->id)->assertNotFound();
+    $this->get(route('cashier.orders.refunds.receipt', [$order, 999]))->assertNotFound();
+
+    $this->cashier->givePermissionTo(Permission::findOrCreate('RefundCash:Pos', 'web'));
+    Livewire::test(CashierOrders::class)
+        ->call('openCashRefund', $order->id)
+        ->set('refundAmountOmr', '1.001')
+        ->set('refundReason', 'مبلغ زائد')
+        ->call('requestCashRefund')
+        ->assertHasErrors(['amount']);
+    expect(OrderRefundRequest::query()->where('order_id', $order->id)->count())->toBe(0);
+});
+
+test('cashier exact search finds an eligible previous day POS cash order but hides an expired colleague order', function (): void {
+    $this->cashier->givePermissionTo(Permission::findOrCreate('RefundCash:Pos', 'web'));
+    $colleague = User::factory()->create();
+    $eligible = Order::factory()->create([
+        'payment_method' => 'cash',
+        'paid_at' => now()->subHours(23),
+        'created_at' => now()->subHours(23),
+        'pos_cashier_user_id' => $colleague->id,
+    ]);
+    $eligible->statusHistory()->create(['from_status' => 'ready_for_pickup', 'to_status' => 'completed'])->forceFill(['created_at' => now()->subHours(23)])->save();
+    $expired = Order::factory()->create([
+        'payment_method' => 'cash',
+        'paid_at' => now()->subHours(25),
+        'created_at' => now()->subHours(25),
+        'pos_cashier_user_id' => $colleague->id,
+    ]);
+    $expired->statusHistory()->create(['from_status' => 'ready_for_pickup', 'to_status' => 'completed'])->forceFill(['created_at' => now()->subHours(25)])->save();
+
+    $this->actingAs($this->cashier, 'cashier');
+    Livewire::test(CashierOrders::class)
+        ->set('search', $eligible->reference)
+        ->assertSee($eligible->reference)
+        ->assertSee('إرجاع مبلغ نقدي');
+    Livewire::test(CashierOrders::class)
+        ->set('search', $expired->reference)
+        ->assertDontSee($expired->reference)
+        ->call('openCashRefund', $expired->id)
+        ->assertNotFound();
+});
+
 test('minor can pay cash with QR even when wallet spending is disabled', function (): void {
     $this->minor->update(['wallet_spending_enabled' => false]);
     $this->actingAs($this->cashier, 'cashier');
@@ -787,14 +934,17 @@ test('replaced and revoked cards stop working without revealing the token in sto
     expect(fn () => $credentials->resolve($replacement))->toThrow(ValidationException::class);
 });
 
-test('cancelling a paid POS order reverses the wallet purchase once', function (): void {
+test('a paid POS wallet order is refunded through the approved request', function (): void {
     $order = app(CreatePosOrder::class)->execute($this->cashier, $this->token, posItems($this->option->id), 1500, 'refund-sale', $this->minor->id);
-    $cancelled = app(ChangeOrderState::class)->execute($order, Cancelled::class, $this->cashier->id, 'Customer cancelled');
-    app(WalletService::class)->reversePurchase($order->reference);
+    expect(fn (): mixed => app(ChangeOrderState::class)->execute($order, Cancelled::class, $this->cashier->id, 'Customer cancelled'))
+        ->toThrow(ValidationException::class);
+    $administrator = User::factory()->admin()->create();
+    $refund = app(ManageOrderRefund::class)->request($order, null, $administrator->id, $order->total_baisa, 'Customer cancelled', 'pos-wallet-refund');
+    app(ManageOrderRefund::class)->approve($refund, $administrator->id);
 
-    expect($cancelled->status->getValue())->toBe('cancelled')
+    expect($order->refresh()->status->getValue())->toBe('refunded')
         ->and($this->wallet->refresh()->balance_baisa)->toBe(5000)
-        ->and($this->wallet->movements()->where('type', 'purchase_reversal')->count())->toBe(1)
+        ->and($this->wallet->movements()->where('type', 'purchase_refund')->count())->toBe(1)
         ->and($this->option->refresh()->stock_on_hand)->toBe(3);
 });
 

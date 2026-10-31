@@ -46,9 +46,9 @@ class VerifyCustomerPhone
 
         throw ValidationException::withMessages([
             'code' => match ($error) {
-                'incorrect' => 'The verification code is incorrect.',
-                'expired' => 'The verification code has expired.',
-                default => 'Request a new verification code.',
+                'incorrect' => 'رمز التحقق غير صحيح.',
+                'expired' => 'انتهت صلاحية رمز التحقق. اطلب رمزًا جديدًا.',
+                default => 'اطلب رمز تحقق جديدًا لهاتف حسابك.',
             },
         ]);
     }

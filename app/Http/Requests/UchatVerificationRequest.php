@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Modules\Store\Http\Requests\UchatRequest;
+use App\Http\Requests\Integrations\Uchat\UchatRequest;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class UchatVerificationRequest extends UchatRequest

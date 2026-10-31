@@ -39,7 +39,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $manually_completed_at
  * @property int|null $manually_completed_by_user_id
  */
-#[Fillable(['payment_id', 'reference', 'amount', 'amount_baisa', 'currency', 'state', 'resolution_method', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at', 'manual_reference', 'manual_notes', 'manual_evidence_path', 'manual_required_at', 'manually_completed_at', 'manually_completed_by_user_id'])]
+#[Fillable(['payment_id', 'reference', 'operation_key', 'amount', 'amount_baisa', 'currency', 'state', 'resolution_method', 'provider_refund_id', 'provider_payment_id', 'provider_status', 'reason', 'request_payload', 'response_payload', 'processed_at', 'manual_reference', 'manual_notes', 'manual_evidence_path', 'manual_required_at', 'manually_completed_at', 'manually_completed_by_user_id'])]
 class PaymentRefund extends Model
 {
     /** @use HasFactory<PaymentRefundFactory> */

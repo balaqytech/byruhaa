@@ -3,6 +3,7 @@
 return [
     'view_log_viewer' => 'View log viewer',
     'sell_pos' => 'Sell at cashier',
+    'refund_cash_pos' => 'Refund cash POS orders',
     'reprint_pos_receipts' => 'Reprint POS receipts',
     'view_barista_board' => 'View barista orders',
     'prepare_barista_orders' => 'Update barista preparation',

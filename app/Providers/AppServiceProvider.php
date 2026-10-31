@@ -6,10 +6,13 @@ use App\Listeners\UpdateWebhookDeliveryStatus;
 use App\Modules\Identity\Models\User;
 use App\Policies\AuditPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
@@ -36,6 +39,13 @@ class AppServiceProvider extends ServiceProvider
         $this->registerAuditAuthorization();
         $this->registerLogViewerAuthorization();
         $this->configureDefaults();
+        RateLimiter::for('uchat', function (Request $request) {
+            $integrationFingerprint = hash('sha256', (string) config('byruhaa.uchat.api_token', 'unconfigured'));
+
+            return Limit::perMinute((int) config('byruhaa.uchat.rate_limit', 60))
+                ->by(hash('sha256', 'uchat|'.$integrationFingerprint.'|'.($request->ip() ?? 'unknown')));
+        });
+
     }
 
     protected function registerWebhookDeliveryListeners(): void

@@ -34,6 +34,7 @@ return [
         'morph_prefix' => 'user',
         'guards' => [
             'web',
+            'cashier',
             'customer',
             'affiliate',
         ],

@@ -2,6 +2,7 @@
 
 namespace App\Modules\Finance\Models;
 
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,11 @@ use Illuminate\Support\Carbon;
 #[Fillable(['wallet_id', 'wallet_top_up_id', 'operation_key', 'type', 'order_reference', 'credit_baisa', 'debit_baisa', 'balance_after_baisa', 'metadata'])]
 class WalletMovement extends Model
 {
+    protected static function booted(): void
+    {
+        static::created(fn (WalletMovement $movement) => app(ByruhaaWebhookSender::class)->sendUchatWalletMovement($movement));
+    }
+
     protected $table = 'wallet_movements';
 
     /**

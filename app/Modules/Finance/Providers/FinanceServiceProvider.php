@@ -10,7 +10,6 @@ use App\Modules\Finance\Events\PaymentSucceeded;
 use App\Modules\Finance\Events\WalletMovementPosted;
 use App\Modules\Finance\Listeners\CreditWalletTopUp;
 use App\Modules\Finance\Listeners\NotifyMinorWalletTopUp;
-use App\Modules\Finance\Listeners\SendWalletMovementNotification;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
@@ -30,7 +29,6 @@ class FinanceServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Event::listen(PaymentSucceeded::class, CreditWalletTopUp::class);
-        Event::listen(WalletMovementPosted::class, SendWalletMovementNotification::class);
         Event::listen(WalletMovementPosted::class, NotifyMinorWalletTopUp::class);
 
         Relation::morphMap([

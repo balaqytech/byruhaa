@@ -5,6 +5,7 @@ namespace App\Modules\Finance\Services\Payments;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
+use App\Exceptions\PaymentGatewayException;
 use App\Modules\Finance\Contracts\PaymentGateway;
 use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Data\Payments\PaymentCheckoutData;
@@ -15,6 +16,7 @@ use App\Modules\Finance\Events\PaymentSucceeded;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use DateTimeInterface;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -246,27 +248,35 @@ class ThawaniPaymentService implements PaymentService
         return $this->verificationData($payment, $payment->state->value);
     }
 
-    public function refundPayment(string $paymentReference, int $amountBaisa, string $reason): PaymentRefundData
+    public function refundPayment(string $paymentReference, int $amountBaisa, string $reason, ?string $operationKey = null): PaymentRefundData
     {
-        $paymentRefund = DB::transaction(function () use ($paymentReference, $amountBaisa, $reason): PaymentRefund {
+        $paymentRefund = DB::transaction(function () use ($paymentReference, $amountBaisa, $reason, $operationKey): PaymentRefund {
             $payment = Payment::query()->where('reference', $paymentReference)->with('refunds')->lockForUpdate()->firstOrFail();
+            if ($payment->subject_type !== 'store_order') {
+                throw ValidationException::withMessages(['refund' => 'This payment requires its subject refund workflow.']);
+            }
             if (! in_array($payment->state, [PaymentState::Paid, PaymentState::PartiallyRefunded], true)) {
                 throw ValidationException::withMessages(['refund' => 'The payment is not refundable.']);
             }
 
-            $existing = $payment->refunds
-                ->first(fn (PaymentRefund $refund): bool => $refund->amount_baisa === $amountBaisa
-                    && in_array($refund->state, [PaymentRefundState::Pending, PaymentRefundState::Succeeded], true));
+            $existing = $operationKey === null ? null : $payment->refunds->firstWhere('operation_key', $operationKey);
             if ($existing instanceof PaymentRefund) {
-                return $existing->load('payment');
+                if ($existing->amount_baisa !== $amountBaisa) {
+                    throw ValidationException::withMessages(['refund' => 'Refund operation key was reused with another amount.']);
+                }
+                if ($existing->state === PaymentRefundState::Succeeded || $existing->state === PaymentRefundState::ManualRequired) {
+                    return $existing->load('payment');
+                }
+                throw ValidationException::withMessages(['refund' => 'This refund is already processing or failed and requires manual review.']);
             }
 
-            $alreadyRefunded = (int) $payment->refunds->where('state', PaymentRefundState::Succeeded)->sum('amount_baisa');
+            $alreadyRefunded = (int) $payment->refunds->whereIn('state', [PaymentRefundState::Pending, PaymentRefundState::Succeeded, PaymentRefundState::ManualRequired])->sum('amount_baisa');
             if ($amountBaisa < 1 || $alreadyRefunded + $amountBaisa > $payment->amount_baisa) {
                 throw ValidationException::withMessages(['refund' => 'The refund amount is invalid.']);
             }
 
             return $payment->refunds()->create([
+                'operation_key' => $operationKey,
                 'amount_baisa' => $amountBaisa,
                 'currency' => $payment->currency,
                 'reason' => $reason,
@@ -277,7 +287,7 @@ class ThawaniPaymentService implements PaymentService
             ])->load('payment');
         });
 
-        if ($paymentRefund->state === PaymentRefundState::Succeeded) {
+        if (in_array($paymentRefund->state, [PaymentRefundState::Succeeded, PaymentRefundState::ManualRequired], true)) {
             return $this->refundData($paymentRefund);
         }
 
@@ -298,8 +308,31 @@ class ThawaniPaymentService implements PaymentService
         try {
             $response = $this->gateway()->createRefund($payload);
         } catch (Throwable $exception) {
-            $paymentRefund->forceFill(['state' => PaymentRefundState::Failed, 'response_payload' => ['error' => $exception->getMessage()], 'processed_at' => now()])->save();
+            $uncertain = $exception instanceof ConnectionException || ($exception instanceof PaymentGatewayException && $exception->getCode() === 4300);
+            $paymentRefund->forceFill([
+                'state' => $uncertain ? PaymentRefundState::ManualRequired : PaymentRefundState::Failed,
+                'provider_status' => $uncertain ? 'manual_required' : 'failed',
+                'response_payload' => ['error' => $exception->getMessage()],
+                'manual_required_at' => $uncertain ? now() : null,
+                'processed_at' => now(),
+            ])->save();
+            if ($uncertain) {
+                return $this->refundData($paymentRefund);
+            }
             throw $exception;
+        }
+
+        $providerStatus = strtolower((string) data_get($response, 'data.status', ''));
+        if (! in_array($providerStatus, ['succeeded', 'success', 'refunded'], true)) {
+            $paymentRefund->forceFill([
+                'state' => PaymentRefundState::ManualRequired,
+                'provider_status' => $providerStatus !== '' ? $providerStatus : 'unknown',
+                'response_payload' => $response,
+                'manual_required_at' => now(),
+                'processed_at' => now(),
+            ])->save();
+
+            return $this->refundData($paymentRefund);
         }
 
         return DB::transaction(function () use ($paymentRefund, $payment, $providerPaymentId, $response): PaymentRefundData {

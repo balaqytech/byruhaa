@@ -2,6 +2,7 @@
 
 namespace App\Modules\Store\Http\Requests;
 
+use App\Http\Requests\Integrations\Uchat\UchatRequest;
 use App\Modules\Identity\Contracts\CustomerIdentityResolver;
 use Illuminate\Contracts\Validation\ValidationRule;
 

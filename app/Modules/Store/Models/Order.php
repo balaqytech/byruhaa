@@ -105,6 +105,12 @@ class Order extends Model implements AuditableContract
         return $this->hasMany(OrderItem::class);
     }
 
+    /** @return HasMany<OrderRefundRequest, $this> */
+    public function refundRequests(): HasMany
+    {
+        return $this->hasMany(OrderRefundRequest::class);
+    }
+
     /** @return HasMany<OrderStatusHistory, $this> */
     public function statusHistory(): HasMany
     {

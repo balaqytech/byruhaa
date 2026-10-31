@@ -35,6 +35,10 @@ class RefundPayment
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if (in_array($payment->subject_type, ['wallet_topup', 'store_order'], true)) {
+                throw ValidationException::withMessages(['refund' => 'Use Wallet withdrawal or the Store order refund workflow.']);
+            }
+
             if (! in_array($payment->state, [PaymentState::Paid, PaymentState::PartiallyRefunded], true)) {
                 throw ValidationException::withMessages([
                     'refund' => __('ui.messages.payment_not_refundable'),

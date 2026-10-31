@@ -137,7 +137,7 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
 
     public function with(StoreReceiptRenderer $receiptRenderer): array
     {
-        return ['order' => $this->order->load(['items', 'statusHistory']), 'receiptAvailable' => $receiptRenderer->isAvailable($this->order)];
+        return ['order' => $this->order->load(['items', 'statusHistory', 'refundRequests']), 'receiptAvailable' => $receiptRenderer->isAvailable($this->order)];
     }
 
     private function ownedOrder(string $paymentToken): Order
@@ -181,6 +181,43 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
     </div>
 
     <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:heading>تتبع الحالة</flux:heading><div class="mt-4 space-y-4">@foreach ($order->statusHistory as $history)<div wire:key="status-history-{{ $history->id }}" class="flex gap-3"><span class="mt-1 size-2 shrink-0 rounded-full bg-emerald-600"></span><div><flux:heading class="text-sm">{{ $this->statusLabel($history->to_status) }}</flux:heading><flux:text>{{ $history->note ? __($history->note) : '' }}</flux:text><flux:text dir="ltr">{{ $history->created_at->format('Y-m-d H:i') }}</flux:text></div></div>@endforeach</div></div>
+
+    @if ($order->paid_at)
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <flux:heading>طلبات الاسترداد</flux:heading>
+            @if (session('refund_request_status'))<p class="mt-3 text-sm text-emerald-700 dark:text-emerald-300">تم إرسال طلبك للمراجعة.</p>@endif
+            <div class="mt-4 divide-y divide-emerald-900/10 dark:divide-white/10">
+                @foreach ($order->refundRequests as $refund)
+                    <div class="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                        <span>{{ $refund->reference }} · <x-money :amount-baisa="$refund->amount_baisa" :currency="$refund->currency" /></span>
+                        <span>{{ ['pending' => 'قيد المراجعة', 'approved' => 'موافق عليه', 'processing' => 'قيد التنفيذ', 'paid' => 'تم رد المبلغ', 'rejected' => 'مرفوض', 'manual_review' => 'مراجعة يدوية', 'failed' => 'تعثر الرد وتراجعه الإدارة'][$refund->status] ?? $refund->status }}
+                            @if ($refund->status === 'paid')
+                                · <a class="underline" href="{{ route('customer.store.orders.refunds.credit-note', [$order->payment_token, $refund]) }}" target="_blank">إشعار دائن</a>
+                            @endif
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+            @php($completedAt = $order->statusHistory->firstWhere('to_status', OrderStatus::Completed->value)?->created_at)
+            @if ($completedAt === null || $completedAt->copy()->addHours(24)->isFuture())
+                <form method="POST" action="{{ route('customer.store.orders.refund-requests.store', $order->payment_token) }}" class="mt-5 flex max-w-xl flex-col gap-4 border-t border-emerald-900/10 pt-5 dark:border-white/10">
+                    @csrf
+                    <input type="hidden" name="operation_key" value="{{ old('operation_key', (string) \Illuminate\Support\Str::uuid()) }}">
+                    <flux:input name="reason" label="سبب طلب الاسترداد" required maxlength="255" :value="old('reason')" />
+                    <flux:input name="amount_omr" label="مبلغ الاسترداد الجزئي أو الكامل بالريال (اتركه فارغًا عند اختيار أصناف)" type="number" min="0.001" step="0.001" :value="old('amount_omr')" dir="ltr" />
+                    <div class="flex flex-col gap-2">
+                        <p class="text-sm">أو اختر كمية الأصناف المراد ردها</p>
+                        @foreach ($order->items as $item)
+                            <flux:input name="items[{{ $item->id }}]" label="{{ $item->product_name }} · {{ $item->option_name }}" type="number" min="1" max="{{ $item->quantity }}" :value="old('items.'.$item->id)" />
+                        @endforeach
+                    </div>
+                    <flux:button type="submit" variant="primary">إرسال طلب الاسترداد</flux:button>
+                </form>
+            @else
+                <p class="mt-4 text-sm text-emerald-900/70 dark:text-white/70">انتهت مهلة الطلب الإلكتروني. تواصل مع الإدارة إذا احتجت إلى استثناء.</p>
+            @endif
+        </div>
+    @endif
 
     <x-policy-links :pages="$order->payment_method === 'wallet' ? ['wallet', 'pickup', 'refund-cancellation'] : ['terms', 'pickup', 'refund-cancellation']" label="سياسات الدفع والاستلام" />
 

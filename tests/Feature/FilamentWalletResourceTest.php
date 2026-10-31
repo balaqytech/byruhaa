@@ -58,7 +58,7 @@ test('wallet history is scoped and top ups show reserved and expired refund elig
     $topUp = $wallet->topUps()->create([
         'operation_key' => 'admin-wallet-top-up', 'payment_id' => $payment->id,
         'amount_baisa' => 5000, 'spendable_baisa' => 4000, 'refundable_baisa' => 4000,
-        'reserved_refund_baisa' => 1000, 'status' => 'refunding', 'currency' => 'OMR',
+        'reserved_refund_baisa' => 1000, 'reserved_withdrawal_baisa' => 500, 'status' => 'refunding', 'currency' => 'OMR',
         'refund_deadline_at' => now()->addHour(),
     ]);
     $movement = $wallet->movements()->create([
@@ -75,13 +75,12 @@ test('wallet history is scoped and top ups show reserved and expired refund elig
         ->assertTableHeaderActionsExistInOrder([])->assertTableActionsExistInOrder([]);
     Livewire::test(TopUpsRelationManager::class, ['ownerRecord' => $wallet, 'pageClass' => ViewWallet::class])
         ->assertCanSeeTableRecords([$topUp])
-        ->assertTableColumnStateSet('available_baisa', 3000, $topUp)
-        ->assertTableColumnStateSet('eligible_refund_baisa', 3000, $topUp)
+        ->assertTableColumnStateSet('available_baisa', 2500, $topUp)
+        ->assertTableColumnStateSet('reserved_withdrawal_baisa', 500, $topUp)
         ->assertSee(PaymentResource::getUrl('view', ['record' => $payment]), false);
     $topUp->update(['refund_deadline_at' => now()->subMinute()]);
     Livewire::test(TopUpsRelationManager::class, ['ownerRecord' => $wallet, 'pageClass' => ViewWallet::class])
-        ->assertTableColumnStateSet('eligible_refund_baisa', 0, $topUp)
-        ->assertTableColumnStateSet('available_baisa', 3000, $topUp);
+        ->assertTableColumnStateSet('available_baisa', 2500, $topUp);
 });
 
 test('guests and customer sessions cannot access admin wallet and minor pages', function (): void {

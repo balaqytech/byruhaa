@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Http\Requests\Integrations\Uchat;
+
+class UchatIdentityRequest extends UchatRequest
+{
+    /** @return array<string, array<int, mixed>> */
+    public function rules(): array
+    {
+        return [
+            'uchat_phone' => $this->phoneRules(),
+            'minor_profile_id' => ['nullable', 'integer'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ];
+    }
+}

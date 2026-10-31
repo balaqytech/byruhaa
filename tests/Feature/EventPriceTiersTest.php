@@ -461,35 +461,12 @@ test('event REST endpoints expose active price tiers with their remaining seats'
         ->and($indexedEvent['price_tiers'][0]['remaining_seats'])->toBe(0);
 });
 
-test('existing REST payment endpoint reserves seats without changing its response contract', function () {
+test('UChat cannot reserve seats by submitting a fabricated paid payment', function () {
     $event = Event::factory()->create(['seat_capacity' => 2, 'price_baisa' => 10000]);
-    EventPriceTier::factory()->for($event)->create(['seat_capacity' => 1, 'price_baisa' => 5000]);
-    $booking = tierBooking($event, 1, [
-        'unit_price_baisa' => 5000,
-        'subtotal_baisa' => 5000,
-        'total_baisa' => 5000,
-    ]);
-    $member = $booking->familyMembers()->firstOrFail();
-    EventContract::factory()->for($member, 'bookingFamilyMember')->create([
-        'state' => Signed::$name,
-        'signed_at' => now(),
-    ]);
+    $booking = tierBooking($event, 1, ['unit_price_baisa' => 5000, 'subtotal_baisa' => 5000, 'total_baisa' => 5000]);
     $installment = tierPaymentSchedule($booking);
-
-    $response = $this->postJson("/api/v1/customers/{$booking->customer_id}/payments", [
-        'booking_installment_id' => $installment->id,
-        'amount_baisa' => 5000,
-        'state' => PaymentState::Paid->value,
-        'paid_at' => now()->toJSON(),
-    ]);
-
-    $response
-        ->assertCreated()
-        ->assertJsonPath('data.booking_installment_id', $installment->id)
-        ->assertJsonPath('data.amount', '5.000')
-        ->assertJsonPath('data.state', PaymentState::Paid->value)
-        ->assertJsonMissingPath('data.seat_allocation');
-
-    expect($booking->seatAllocation()->firstOrFail()->state)->toBe(SeatAllocationState::Reserved)
-        ->and($event->remainingSeats())->toBe(1);
+    $this->withHeader('X-WhatsApp-Phone', $booking->customer->phone_number)->postJson('/api/v1/integrations/uchat/payments', [
+        'booking_installment_id' => $installment->id, 'amount_baisa' => 5000, 'state' => 'paid',
+    ])->assertMethodNotAllowed();
+    expect($event->remainingSeats())->toBe(2);
 });

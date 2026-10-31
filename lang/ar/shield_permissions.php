@@ -3,6 +3,7 @@
 return [
     'view_log_viewer' => 'عرض سجل النظام',
     'sell_pos' => 'إجراء البيع عبر الكاشير',
+    'refund_cash_pos' => 'إرجاع مبالغ طلبات نقاط البيع النقدية',
     'reprint_pos_receipts' => 'إعادة طباعة إيصالات نقاط البيع',
     'view_barista_board' => 'عرض طلبات الباريستا',
     'prepare_barista_orders' => 'تحديث حالة تحضير الطلبات',

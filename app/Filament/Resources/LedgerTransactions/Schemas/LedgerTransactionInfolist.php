@@ -7,6 +7,7 @@ use App\Filament\Resources\Payments\PaymentResource;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
+use App\Support\LedgerText;
 use App\Support\MoneyFormatter;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -19,6 +20,7 @@ class LedgerTransactionInfolist
         return $schema
             ->components([
                 Section::make(__('admin.resources.ledger_transactions.label'))
+                    ->columnSpanFull()
                     ->columns(3)
                     ->schema([
                         TextEntry::make('reference')
@@ -26,6 +28,7 @@ class LedgerTransactionInfolist
                             ->copyable(),
                         TextEntry::make('description')
                             ->label(__('admin.fields.description'))
+                            ->formatStateUsing(fn (string $state): string => LedgerText::description($state))
                             ->columnSpan(2),
                         TextEntry::make('source')
                             ->label(__('admin.fields.source'))

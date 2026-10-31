@@ -18,6 +18,7 @@ class ConfirmWalletOrder
         private MinorProfilePurchasing $minorProfiles,
         private ConsumeInventoryReservation $consumeReservation,
         private ChangeOrderState $changeOrderState,
+        private PostStoreOrderPayment $postPayment,
     ) {}
 
     public function execute(Order $order, int $customerId, ?int $minorProfileId = null, ?int $actorUserId = null): Order
@@ -64,6 +65,8 @@ class ConfirmWalletOrder
                 'paid_at' => now(),
                 'payment_reference' => 'WALLET-'.$spend->movementId,
             ])->save();
+
+            $this->postPayment->execute($order);
 
             return $this->changeOrderState->execute($order, Confirmed::class, $actorUserId, 'Wallet payment confirmed.');
         });

@@ -28,7 +28,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $credited_at
  * @property Carbon|null $refund_deadline_at
  */
-#[Fillable(['wallet_id', 'payment_id', 'reference', 'operation_key', 'status', 'currency', 'amount', 'amount_baisa', 'refundable_baisa', 'reserved_refund_baisa', 'spendable_baisa', 'credited_at', 'refund_deadline_at'])]
+#[Fillable(['wallet_id', 'payment_id', 'reference', 'operation_key', 'status', 'currency', 'amount', 'amount_baisa', 'refundable_baisa', 'reserved_refund_baisa', 'reserved_withdrawal_baisa', 'spendable_baisa', 'credited_at', 'refund_deadline_at'])]
 class WalletTopUp extends Model
 {
     protected $table = 'wallet_top_ups';
@@ -74,6 +74,7 @@ class WalletTopUp extends Model
             'amount_baisa' => 'integer',
             'refundable_baisa' => 'integer',
             'reserved_refund_baisa' => 'integer',
+            'reserved_withdrawal_baisa' => 'integer',
             'spendable_baisa' => 'integer',
             'credited_at' => 'datetime',
             'refund_deadline_at' => 'datetime',

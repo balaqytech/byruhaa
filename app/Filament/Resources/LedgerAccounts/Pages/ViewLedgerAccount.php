@@ -4,18 +4,23 @@ namespace App\Filament\Resources\LedgerAccounts\Pages;
 
 use App\Filament\Resources\LedgerAccounts\LedgerAccountResource;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 
 class ViewLedgerAccount extends ViewRecord
 {
     protected static string $resource = LedgerAccountResource::class;
 
-    public function hasCombinedRelationManagerTabsWithContent(): bool
+    public function getMaxContentWidth(): Width
     {
-        return true;
+        return Width::Full;
     }
 
-    public function getContentTabLabel(): ?string
+    public function content(Schema $schema): Schema
     {
-        return __('admin.resources.ledger_accounts.label');
+        return $schema->components([
+            $this->getInfolistContentComponent()->columnSpanFull(),
+            $this->getRelationManagersContentComponent()->columnSpanFull(),
+        ]);
     }
 }

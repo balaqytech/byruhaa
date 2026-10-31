@@ -7,6 +7,7 @@ use App\Enums\PaymentState;
 use App\Modules\Finance\Models\LedgerAccount;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
+use App\Support\LedgerText;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -41,14 +42,14 @@ class PostPaymentLedgerTransaction
             );
 
             $customerDepositsAccount = $this->account(
-                LedgerAccount::CUSTOMER_DEPOSITS_CODE,
-                'Customer deposits',
+                $payment->subject_type === 'wallet_topup' ? LedgerAccount::WALLET_LIABILITY_CODE : LedgerAccount::CUSTOMER_DEPOSITS_CODE,
+                $payment->subject_type === 'wallet_topup' ? 'Wallet liability' : 'Customer deposits',
                 LedgerAccountType::Liability,
                 $payment->currency,
             );
 
             $transaction = $payment->ledgerTransaction()->create([
-                'description' => 'Thawani payment '.$payment->reference,
+                'description' => LedgerText::description('Thawani payment '.$payment->reference),
                 'occurred_at' => $payment->paid_at ?? now(),
                 'currency' => $payment->currency,
                 'total_baisa' => MoneyFactory::toMinor($payment->amount),
@@ -89,7 +90,7 @@ class PostPaymentLedgerTransaction
         return LedgerAccount::query()->firstOrCreate(
             ['code' => $code],
             [
-                'name' => $name,
+                'name' => LedgerText::accountName($code, $name),
                 'type' => $type,
                 'currency' => $currency,
                 'is_active' => true,
@@ -100,11 +101,15 @@ class PostPaymentLedgerTransaction
     private function memo(Payment $payment): string
     {
         if ($payment->subject_type === 'wallet_topup') {
-            return Str::limit('Wallet top-up '.$payment->subject_reference.' payment '.$payment->reference, 255, '');
+            return Str::limit(LedgerText::description('Wallet top-up '.$payment->subject_reference.' payment '.$payment->reference), 255, '');
+        }
+
+        if ($payment->subject_type === 'store_order') {
+            throw new RuntimeException('Store payments require Store ledger posting.');
         }
 
         $payment->loadMissing('bookingInstallment.paymentSchedule.booking');
 
-        return Str::limit('Booking '.$payment->bookingInstallment->paymentSchedule->booking->reference.' payment '.$payment->reference, 255, '');
+        return Str::limit(LedgerText::description('Booking '.$payment->bookingInstallment->paymentSchedule->booking->reference.' payment '.$payment->reference), 255, '');
     }
 }

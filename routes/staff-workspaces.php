@@ -6,6 +6,7 @@ use App\Modules\Pos\Livewire\BaristaBoard;
 use App\Modules\Pos\Livewire\CashierOrders;
 use App\Modules\Pos\Livewire\PickupBoard;
 use App\Modules\Pos\Livewire\PosTerminal;
+use App\Modules\Store\Http\Controllers\OrderCreditNoteController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('cashier')->name('cashier.')->group(function (): void {
@@ -16,6 +17,7 @@ Route::prefix('cashier')->name('cashier.')->group(function (): void {
         Route::get('/', PosTerminal::class)->name('terminal');
         Route::get('orders', CashierOrders::class)->name('orders');
         Route::get('orders/{order}/receipt', [CashierOrderReceiptController::class, 'show'])->name('orders.receipt');
+        Route::get('orders/{order}/refunds/{refund}/receipt', [OrderCreditNoteController::class, 'cashier'])->name('orders.refunds.receipt');
         Route::post('logout', [StaffWorkspaceAuthController::class, 'cashierLogout'])->name('logout');
     });
 });

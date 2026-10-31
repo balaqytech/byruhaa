@@ -8,6 +8,7 @@ use App\Http\Controllers\Store\TrackOrderController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
 use App\Modules\Identity\Http\Controllers\PrintMinorPosCardController;
 use App\Modules\Identity\Http\Controllers\ShowMinorAvatarController;
+use App\Modules\Store\Http\Controllers\OrderCreditNoteController;
 use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,10 @@ Route::get('minor-profiles/{minorProfile}/avatar', ShowMinorAvatarController::cl
 Route::get('staff/pos-cards/{minorProfile}/print', PrintMinorPosCardController::class)
     ->middleware('auth:web')
     ->name('staff.pos-cards.print');
+
+Route::get('staff/store/orders/{order}/refunds/{refund}/credit-note', [OrderCreditNoteController::class, 'staff'])
+    ->middleware('auth:web')
+    ->name('staff.store.orders.refunds.credit-note');
 
 Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(function (): void {
     Route::get('checkout', [PublicSiteController::class, 'checkout'])->name('checkout');

@@ -10,5 +10,7 @@ final readonly class WalletSummaryData
         public int $balanceBaisa,
         public string $currency,
         public string $status,
+        public int $heldBaisa = 0,
+        public int $availableBaisa = 0,
     ) {}
 }

@@ -1,8 +1,11 @@
 <?php
 
 use App\Modules\Finance\Http\Controllers\WalletController;
+use App\Modules\Identity\Http\Controllers\CustomerPhoneVerificationController;
 use App\Modules\Identity\Http\Controllers\MinorProfileController;
 use App\Modules\Store\Http\Controllers\CustomerOrderReceiptController;
+use App\Modules\Store\Http\Controllers\OrderCreditNoteController;
+use App\Modules\Store\Http\Controllers\OrderRefundController;
 use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +30,10 @@ Route::middleware(['auth:customer'])
         Route::post('minor-profiles/{minorProfile}/pos-card/revoke', [MinorProfileController::class, 'revokePosCard'])->middleware('throttle:5,1')->name('minor-profiles.pos-card.revoke');
         Route::get('minor-profiles/{minorProfile}/wallet', [WalletController::class, 'show'])->name('minor-profiles.wallet');
         Route::post('minor-profiles/{minorProfile}/wallet/top-up', [WalletController::class, 'topUp'])->middleware('throttle:10,1')->name('minor-profiles.wallet.top-up');
+        Route::post('minor-profiles/{minorProfile}/wallet/withdrawals', [WalletController::class, 'requestWithdrawal'])->middleware('throttle:5,1')->name('minor-profiles.wallet.withdrawals.store');
+        Route::post('minor-profiles/{minorProfile}/wallet/withdrawals/{withdrawal}/cancel', [WalletController::class, 'cancelWithdrawal'])->middleware('throttle:5,1')->name('minor-profiles.wallet.withdrawals.cancel');
+        Route::post('phone-verification/send', [CustomerPhoneVerificationController::class, 'send'])->middleware('throttle:3,1')->name('phone-verification.send');
+        Route::post('phone-verification/verify', [CustomerPhoneVerificationController::class, 'verify'])->middleware('throttle:5,1')->name('phone-verification.verify');
         Route::get('minor-profiles/{minorProfile}/wallet/top-ups/{operationKey}/success', [WalletController::class, 'success'])
             ->middleware('signed')
             ->name('minor-profiles.wallet.top-up.success');
@@ -46,6 +53,11 @@ Route::middleware(['auth:customer'])
             ->name('store.orders.receipt');
         Route::get('store/orders/{order:payment_token}/receipt.pdf', [CustomerOrderReceiptController::class, 'pdf'])
             ->name('store.orders.receipt.pdf');
+        Route::get('store/orders/{order:payment_token}/refunds/{refund}/credit-note', [OrderCreditNoteController::class, 'customer'])
+            ->name('store.orders.refunds.credit-note');
+        Route::post('store/orders/{order:payment_token}/refund-requests', [OrderRefundController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('store.orders.refund-requests.store');
         Route::post('store/orders/{order:payment_token}/wallet', [WalletOrderController::class, 'confirm'])
             ->middleware('throttle:10,1')
             ->name('store.orders.wallet.confirm');

@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $refund_deadline_at
  * @property Carbon|null $reversed_at
  */
-#[Fillable(['wallet_id', 'wallet_top_up_id', 'order_reference', 'amount_baisa', 'refund_deadline_at', 'reversed_at'])]
+#[Fillable(['wallet_id', 'wallet_top_up_id', 'order_reference', 'amount_baisa', 'refunded_baisa', 'refund_deadline_at', 'reversed_at'])]
 class WalletPurchaseAllocation extends Model
 {
     protected $table = 'wallet_purchase_allocations';
@@ -44,6 +44,7 @@ class WalletPurchaseAllocation extends Model
     {
         return [
             'amount_baisa' => 'integer',
+            'refunded_baisa' => 'integer',
             'refund_deadline_at' => 'datetime',
             'reversed_at' => 'datetime',
         ];

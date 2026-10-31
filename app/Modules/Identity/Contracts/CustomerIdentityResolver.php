@@ -7,4 +7,6 @@ interface CustomerIdentityResolver
     public function normalizePhone(string $phone): ?string;
 
     public function findCustomerIdByPhone(string $normalizedPhone): ?int;
+
+    public function ownsMinorProfile(int $customerId, int $profileId): bool;
 }

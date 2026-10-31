@@ -14,11 +14,15 @@ class SendCustomerPhoneVerificationCode
 
     public function execute(Customer $customer): string
     {
+        if (! $this->sender->canSendUchatCustomerPhoneVerificationCode()) {
+            throw ValidationException::withMessages(['phone' => 'خدمة إرسال رمز التحقق غير متاحة حاليًا. يرجى التواصل مع الإدارة لإكمال طلب السحب.']);
+        }
+
         $latest = $customer->phoneVerifications()->latest('id')->first();
         $cooldown = (int) config('byruhaa.wallets.phone_otp_resend_seconds', 60);
 
         if ($latest instanceof CustomerPhoneVerification && $latest->created_at?->gt(now()->subSeconds($cooldown))) {
-            throw ValidationException::withMessages(['phone' => 'Wait before requesting another verification code.']);
+            throw ValidationException::withMessages(['phone' => 'يرجى الانتظار قليلًا قبل طلب رمز تحقق جديد.']);
         }
 
         $code = (string) random_int(100000, 999999);

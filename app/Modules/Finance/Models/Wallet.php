@@ -67,6 +67,12 @@ class Wallet extends Model
         return $this->hasMany(WalletSettlement::class);
     }
 
+    /** @return HasMany<WalletWithdrawalRequest, $this> */
+    public function withdrawalRequests(): HasMany
+    {
+        return $this->hasMany(WalletWithdrawalRequest::class);
+    }
+
     /**
      * @return array<string, string>
      */

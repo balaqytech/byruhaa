@@ -23,3 +23,5 @@ Schedule::command('seats:release-expired-holds')
 Schedule::command('app:expire-store-orders')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('uchat:webhooks:dispatch-pending')->everyMinute()->withoutOverlapping();

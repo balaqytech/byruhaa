@@ -4,6 +4,7 @@ namespace App\Filament\Resources\LedgerTransactions\RelationManagers;
 
 use App\Filament\Resources\LedgerAccounts\LedgerAccountResource;
 use App\Modules\Finance\Models\LedgerEntry;
+use App\Support\LedgerText;
 use App\Support\MoneyFormatter;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Model;
 class EntriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'entries';
+
+    protected static bool $isLazy = false;
 
     public static function getTitle(Model $ownerRecord, string $pageClass): string
     {
@@ -30,6 +33,7 @@ class EntriesRelationManager extends RelationManager
                     ->url(fn (LedgerEntry $record): string => LedgerAccountResource::getUrl('view', ['record' => $record->ledgerAccount])),
                 TextColumn::make('ledgerAccount.name')
                     ->label(__('admin.resources.ledger_accounts.label'))
+                    ->formatStateUsing(fn (string $state, LedgerEntry $record): string => $record->ledgerAccount->displayName())
                     ->searchable(),
                 TextColumn::make('debit_baisa')
                     ->label(__('admin.fields.debit'))
@@ -39,6 +43,7 @@ class EntriesRelationManager extends RelationManager
                     ->formatStateUsing(fn (int $state, LedgerEntry $record): string => MoneyFormatter::baisa($state, $record->currency)),
                 TextColumn::make('memo')
                     ->label(__('admin.fields.memo'))
+                    ->formatStateUsing(fn (?string $state): string => LedgerText::description($state ?? ''))
                     ->limit(50)
                     ->placeholder('-'),
             ]);

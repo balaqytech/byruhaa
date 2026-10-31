@@ -14,6 +14,7 @@ class ConfirmCashOrder
     public function __construct(
         private ConsumeInventoryReservation $consumeReservation,
         private ChangeOrderState $changeOrderState,
+        private PostStoreOrderPayment $postPayment,
     ) {}
 
     public function execute(Order $order, int $cashReceivedBaisa, ?int $actorUserId): Order
@@ -58,6 +59,8 @@ class ConfirmCashOrder
                 'paid_at' => now(),
                 'payment_reference' => 'CASH-'.$order->reference,
             ])->save();
+
+            $this->postPayment->execute($order);
 
             return $this->changeOrderState->execute($order, Confirmed::class, $actorUserId, 'Cash payment received at the POS.');
         });

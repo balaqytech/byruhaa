@@ -17,10 +17,12 @@ use App\Modules\Events\States\Booking\PendingReview;
 use App\Modules\Finance\Actions\ConfirmThawaniPayment;
 use App\Modules\Finance\Actions\RefundPayment;
 use App\Modules\Finance\Models\Payment;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQueue
@@ -112,13 +114,16 @@ class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQ
             ];
         }
 
-        $cancellation->forceFill([
-            'status' => $errors === [] ? EventCancellationStatus::Completed : EventCancellationStatus::NeedsAttention,
-            'refunded_payments_count' => $succeededRefunds->count(),
-            'refunded_amount_baisa' => $succeededRefunds->sum('succeeded_refund_amount_baisa'),
-            'errors' => $errors === [] ? null : $errors,
-            'completed_at' => $errors === [] ? now() : null,
-        ])->save();
+        DB::transaction(function () use ($cancellation, $errors, $succeededRefunds): void {
+            $cancellation->forceFill([
+                'status' => $errors === [] ? EventCancellationStatus::Completed : EventCancellationStatus::NeedsAttention,
+                'refunded_payments_count' => $succeededRefunds->count(),
+                'refunded_amount_baisa' => $succeededRefunds->sum('succeeded_refund_amount_baisa'),
+                'errors' => $errors === [] ? null : $errors,
+                'completed_at' => $errors === [] ? now() : null,
+            ])->save();
+            app(ByruhaaWebhookSender::class)->sendEventCancellationOutcome($cancellation);
+        });
     }
 
     public function uniqueId(): string
@@ -128,10 +133,11 @@ class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQ
 
     public function failed(Throwable $exception): void
     {
-        EventCancellation::query()->whereKey($this->eventCancellationId)->update([
-            'status' => EventCancellationStatus::NeedsAttention->value,
-            'errors' => [['message' => $exception->getMessage()]],
-        ]);
+        DB::transaction(function () use ($exception): void {
+            $cancellation = EventCancellation::query()->findOrFail($this->eventCancellationId);
+            $cancellation->update(['status' => EventCancellationStatus::NeedsAttention, 'errors' => [['message' => $exception->getMessage()]]]);
+            app(ByruhaaWebhookSender::class)->sendEventCancellationOutcome($cancellation);
+        });
     }
 
     private function processBooking(Booking $booking, EventCancellation $cancellation, ConfirmThawaniPayment $confirmPayment, RefundPayment $refundPayment, ReleaseBookingSeats $releaseBookingSeats): void
@@ -159,13 +165,16 @@ class ProcessEventCancellation implements ShouldBeUniqueUntilProcessing, ShouldQ
             $failure = $exception;
         }
 
-        $booking->refresh();
-        if ($booking->state instanceof PendingReview || $booking->state instanceof Approved) {
-            $booking->forceFill([
-                'cancellation_reason' => $cancellation->reason,
-            ])->save();
-            $booking->state->transitionTo(Cancelled::class);
-        }
+        DB::transaction(function () use ($booking, $cancellation): void {
+            $booking = Booking::query()->whereKey($booking->id)->lockForUpdate()->firstOrFail();
+            if ($booking->state instanceof PendingReview || $booking->state instanceof Approved) {
+                $booking->forceFill([
+                    'cancellation_reason' => $cancellation->reason,
+                ])->save();
+                $booking->state->transitionTo(Cancelled::class);
+            }
+
+        });
 
         $booking->installments()
             ->where('state', BookingInstallmentState::Pending->value)

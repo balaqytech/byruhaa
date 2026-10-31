@@ -23,6 +23,8 @@ test('a guardian can verify a phone with a durable otp attempt counter', functio
     $code = null;
 
     mock(ByruhaaWebhookSender::class)
+        ->shouldReceive('canSendUchatCustomerPhoneVerificationCode')->once()->andReturnTrue()
+        ->getMock()
         ->shouldReceive('sendUchatCustomerPhoneVerificationCode')
         ->once()
         ->andReturnUsing(function (Customer $customer, string $verificationCode, mixed ...$unused) use (&$code): void {
@@ -46,6 +48,8 @@ test('a phone verification cannot be reused after the phone changes', function (
     $customer = Customer::factory()->create(['phone_verified_at' => null]);
 
     mock(ByruhaaWebhookSender::class)
+        ->shouldReceive('canSendUchatCustomerPhoneVerificationCode')->once()->andReturnTrue()
+        ->getMock()
         ->shouldReceive('sendUchatCustomerPhoneVerificationCode')
         ->once()
         ->andReturnUsing(function (): void {});
@@ -71,6 +75,8 @@ test('expired phone verification codes are rejected', function (): void {
     $customer = Customer::factory()->create(['phone_verified_at' => null]);
 
     mock(ByruhaaWebhookSender::class)
+        ->shouldReceive('canSendUchatCustomerPhoneVerificationCode')->once()->andReturnTrue()
+        ->getMock()
         ->shouldReceive('sendUchatCustomerPhoneVerificationCode')
         ->once()
         ->andReturnUsing(function (): void {});

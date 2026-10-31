@@ -8,4 +8,8 @@ enum WalletMovementType: string
     case TopUpRefund = 'top_up_refund';
     case Purchase = 'purchase';
     case PurchaseReversal = 'purchase_reversal';
+
+    case PurchaseRefund = 'purchase_refund';
+
+    case Withdrawal = 'withdrawal';
 }

@@ -14,8 +14,10 @@ use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Modules\Identity\Models\MinorProfile;
+use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Notifications\MinorWalletTopUpNotification;
 use App\Modules\Store\Actions\ChangeOrderState;
+use App\Modules\Store\Actions\ManageOrderRefund;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\States\Order\Accepted;
 use App\Modules\Store\States\Order\Cancelled;
@@ -23,8 +25,6 @@ use App\Modules\Store\States\Order\Completed;
 use App\Modules\Store\States\Order\Confirmed;
 use App\Modules\Store\States\Order\Preparing;
 use App\Modules\Store\States\Order\ReadyForPickup;
-use App\Modules\Store\States\Order\Refunded;
-use App\Modules\Store\States\Order\RefundPending;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
@@ -35,7 +35,6 @@ use NotificationChannels\WebPush\WebPushChannel;
 beforeEach(function (): void {
     config([
         'byruhaa.wallets.enabled' => true,
-        'byruhaa.wallets.top_up_refund_window_hours' => 24,
     ]);
 });
 
@@ -83,7 +82,8 @@ test('a verified payment credits a child wallet exactly once', function (): void
     app(WalletService::class)->creditTopUp($payment->refresh());
 
     expect($wallet->refresh()->balance_baisa)->toBe(5000)
-        ->and($topUp->refresh()->refundable_baisa)->toBe(5000)
+        ->and($topUp->refresh()->refundable_baisa)->toBe(0)
+        ->and($topUp->refund_deadline_at)->toBeNull()
         ->and($wallet->movements()->count())->toBe(1)
         ->and($payment->ledgerTransaction()->exists())->toBeTrue();
 });
@@ -248,7 +248,7 @@ test('the Thawani reconciliation command recovers a paid uncredited wallet top u
         ->and($wallet->refresh()->balance_baisa)->toBe(5000);
 });
 
-test('cancelling a wallet order reverses its wallet purchase', function (): void {
+test('a paid wallet order cannot be cancelled before its refund is paid', function (): void {
     $customer = Customer::factory()->create(['phone_verified_at' => now()]);
     $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
     $walletService = app(WalletService::class);
@@ -269,19 +269,22 @@ test('cancelling a wallet order reverses its wallet purchase', function (): void
         'payment_method' => 'wallet',
         'minor_profile_id' => $profile->id,
         'customer_id' => $customer->id,
+        'subtotal_baisa' => 3000,
+        'vat_baisa' => 0,
         'total_baisa' => 3000,
+        'paid_at' => now(),
     ]);
 
     $walletService->spend($profile->id, $order->reference, 3000, 'OMR');
     app(ChangeOrderState::class)->execute($order, Confirmed::class);
-    app(ChangeOrderState::class)->execute($order, Cancelled::class);
+    expect(fn (): mixed => app(ChangeOrderState::class)->execute($order, Cancelled::class))->toThrow(ValidationException::class);
 
-    expect($wallet->refresh()->balance_baisa)->toBe(5000)
-        ->and($wallet->movements()->where('type', 'purchase_reversal')->count())->toBe(1)
-        ->and($topUp->refresh()->spendable_baisa)->toBe(5000);
+    expect($wallet->refresh()->balance_baisa)->toBe(2000)
+        ->and($wallet->movements()->where('type', 'purchase_reversal')->count())->toBe(0)
+        ->and($topUp->refresh()->spendable_baisa)->toBe(2000);
 });
 
-test('wallet top ups support partial refunds without a booking', function (): void {
+test('new wallet top up refunds are blocked in favor of withdrawal', function (): void {
     config([
         'payments.default' => 'thawani',
         'thawani.mode' => 'test',
@@ -325,16 +328,10 @@ test('wallet top ups support partial refunds without a booking', function (): vo
         'paid_at' => now(),
     ]);
 
-    $refund = app(RefundPayment::class)->execute($payment, 3000, 'Wallet refund');
-
-    expect($refund->state)->toBe(PaymentRefundState::Succeeded)
-        ->and($payment->refresh()->state)->toBe(PaymentState::PartiallyRefunded)
-        ->and($topUp->refresh()->refundable_baisa)->toBe(2000)
-        ->and($topUp->spendable_baisa)->toBe(2000)
-        ->and($topUp->reserved_refund_baisa)->toBe(0)
-        ->and($wallet->refresh()->balance_baisa)->toBe(2000)
-        ->and($wallet->movements()->where('type', 'top_up_refund')->count())->toBe(1)
-        ->and($refund->ledgerTransaction()->exists())->toBeTrue();
+    expect(fn (): mixed => app(RefundPayment::class)->execute($payment, 3000, 'Wallet refund'))
+        ->toThrow(ValidationException::class);
+    expect($payment->refunds()->count())->toBe(0)
+        ->and($wallet->refresh()->balance_baisa)->toBe(5000);
 });
 
 test('wallet top-up refunds are rejected after the refund deadline', function (): void {
@@ -371,7 +368,7 @@ test('wallet top-up refunds are rejected after the refund deadline', function ()
         ->and($topUp->refresh()->reserved_refund_baisa)->toBe(0);
 });
 
-test('uncertain refund failures retain the wallet refund reservation for manual resolution', function (): void {
+test('a new top up refund cannot create a provider reservation', function (): void {
     config([
         'payments.default' => 'thawani',
         'thawani.mode' => 'test',
@@ -419,12 +416,9 @@ test('uncertain refund failures retain the wallet refund reservation for manual 
     expect(fn (): mixed => app(RefundPayment::class)->execute($payment, 2000))
         ->toThrow(ValidationException::class);
 
-    $refund = $payment->refunds()->firstOrFail();
-    expect($refund->state)->toBe(PaymentRefundState::ManualRequired)
-        ->and($topUp->refresh()->status)->toBe('refunding')
-        ->and($topUp->reserved_refund_baisa)->toBe(2000)
-        ->and($payment->refresh()->refundableAmountBaisa())->toBe(3000)
-        ->and($refundAttempts)->toBe(1);
+    expect($payment->refunds()->count())->toBe(0)
+        ->and($topUp->refresh()->reserved_refund_baisa)->toBe(0)
+        ->and($refundAttempts)->toBe(0);
 });
 
 test('spending can use the unreserved balance of a top up with a pending partial refund', function (): void {
@@ -587,7 +581,10 @@ test('wallet purchases become treasury eligible only after pickup completion', f
         'payment_method' => 'wallet',
         'minor_profile_id' => $profile->id,
         'customer_id' => $customer->id,
+        'subtotal_baisa' => 3000,
+        'vat_baisa' => 0,
         'total_baisa' => 3000,
+        'paid_at' => now(),
     ]);
 
     $walletService->spend($profile->id, $order->reference, 3000, 'OMR');
@@ -627,7 +624,10 @@ test('refunding a completed wallet order removes its treasury eligibility', func
         'payment_method' => 'wallet',
         'minor_profile_id' => $profile->id,
         'customer_id' => $customer->id,
+        'subtotal_baisa' => 3000,
+        'vat_baisa' => 0,
         'total_baisa' => 3000,
+        'paid_at' => now(),
     ]);
 
     $walletService->spend($profile->id, $order->reference, 3000, 'OMR');
@@ -636,8 +636,8 @@ test('refunding a completed wallet order removes its treasury eligibility', func
     app(ChangeOrderState::class)->execute($order, Preparing::class);
     app(ChangeOrderState::class)->execute($order, ReadyForPickup::class);
     app(ChangeOrderState::class)->execute($order, Completed::class);
-    app(ChangeOrderState::class)->execute($order, RefundPending::class);
-    app(ChangeOrderState::class)->execute($order, Refunded::class);
+    $refund = app(ManageOrderRefund::class)->request($order, $customer->id, null, 3000, 'Customer refund', 'wallet-completed-refund');
+    app(ManageOrderRefund::class)->approve($refund, User::factory()->admin()->create()->id);
 
     expect($wallet->settlements()->where('status', 'eligible')->exists())->toBeFalse()
         ->and($wallet->settlements()->sole()->status->value)->toBe('reversed');

@@ -7,6 +7,7 @@ use App\Enums\PaymentRefundState;
 use App\Modules\Finance\Models\LedgerAccount;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\PaymentRefund;
+use App\Support\LedgerText;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -41,14 +42,14 @@ class PostRefundLedgerTransaction
             );
 
             $customerDepositsAccount = $this->account(
-                LedgerAccount::CUSTOMER_DEPOSITS_CODE,
-                'Customer deposits',
+                $paymentRefund->payment->subject_type === 'wallet_topup' ? LedgerAccount::WALLET_LIABILITY_CODE : LedgerAccount::CUSTOMER_DEPOSITS_CODE,
+                $paymentRefund->payment->subject_type === 'wallet_topup' ? 'Wallet liability' : 'Customer deposits',
                 LedgerAccountType::Liability,
                 $paymentRefund->currency,
             );
 
             $transaction = $paymentRefund->ledgerTransaction()->create([
-                'description' => 'Thawani refund '.$paymentRefund->reference,
+                'description' => LedgerText::description('Thawani refund '.$paymentRefund->reference),
                 'occurred_at' => $paymentRefund->processed_at ?? now(),
                 'currency' => $paymentRefund->currency,
                 'total_baisa' => MoneyFactory::toMinor($paymentRefund->amount),
@@ -89,7 +90,7 @@ class PostRefundLedgerTransaction
         return LedgerAccount::query()->firstOrCreate(
             ['code' => $code],
             [
-                'name' => $name,
+                'name' => LedgerText::accountName($code, $name),
                 'type' => $type,
                 'currency' => $currency,
                 'is_active' => true,
@@ -100,11 +101,15 @@ class PostRefundLedgerTransaction
     private function memo(PaymentRefund $paymentRefund): string
     {
         if ($paymentRefund->payment->subject_type === 'wallet_topup') {
-            return Str::limit('Wallet top-up '.$paymentRefund->payment->subject_reference.' refund '.$paymentRefund->reference, 255, '');
+            return Str::limit(LedgerText::description('Wallet top-up '.$paymentRefund->payment->subject_reference.' refund '.$paymentRefund->reference), 255, '');
+        }
+
+        if ($paymentRefund->payment->subject_type === 'store_order') {
+            throw new RuntimeException('Store refunds require Store ledger posting.');
         }
 
         $paymentRefund->loadMissing('payment.bookingInstallment.paymentSchedule.booking');
 
-        return Str::limit('Booking '.$paymentRefund->payment->bookingInstallment->paymentSchedule->booking->reference.' refund '.$paymentRefund->reference, 255, '');
+        return Str::limit(LedgerText::description('Booking '.$paymentRefund->payment->bookingInstallment->paymentSchedule->booking->reference.' refund '.$paymentRefund->reference), 255, '');
     }
 }

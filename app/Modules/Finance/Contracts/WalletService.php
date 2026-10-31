@@ -20,6 +20,8 @@ interface WalletService
 
     public function reversePurchase(string $orderReference): void;
 
+    public function refundPurchase(string $orderReference, string $refundReference, int $amountBaisa): void;
+
     public function canClose(int $minorProfileId): bool;
 
     public function refundTopUp(PaymentRefund $refund): void;

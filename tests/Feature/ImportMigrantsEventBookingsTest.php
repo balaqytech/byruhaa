@@ -6,8 +6,9 @@ use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\Common\Creator\WriterFactory;
 
 beforeEach(function (): void {
+    config(['byruhaa.uchat.webhook_bearer_token' => 'outbound-test', 'byruhaa.uchat.webhook_signing_secret' => 'signing-test']);
     config([
-        'byruhaa.webhooks.booking_created_url' => 'https://partner.test/webhooks/booking-created',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/booking-created',
         'byruhaa.webhooks.queue' => 'sync',
     ]);
 });

@@ -27,10 +27,9 @@ class TopUpsRelationManager extends RelationManager
                 ->url(fn (WalletTopUp $record): ?string => $record->payment_id ? PaymentResource::getUrl('view', ['record' => $record->payment_id]) : null),
             TextColumn::make('status')->label(__('admin.fields.status'))->badge()->formatStateUsing(fn (string $state): string => __('admin_wallets.statuses.'.$state)),
             TextColumn::make('amount_baisa')->label(__('admin.fields.amount'))->money('OMR', divideBy: 1000),
-            TextColumn::make('available_baisa')->label(__('admin_wallets.available'))->state(fn (WalletTopUp $record): int => in_array($record->status, ['credited', 'refunding'], true) ? max(0, $record->spendable_baisa - $record->reserved_refund_baisa) : 0)->money('OMR', divideBy: 1000),
-            TextColumn::make('eligible_refund_baisa')->label(__('admin_wallets.refundable'))->state(fn (WalletTopUp $record): int => in_array($record->status, ['credited', 'refunding'], true) && $record->refund_deadline_at?->isFuture() ? max(0, $record->refundable_baisa - $record->reserved_refund_baisa) : 0)->money('OMR', divideBy: 1000),
-            TextColumn::make('reserved_refund_baisa')->label(__('admin_wallets.reserved'))->money('OMR', divideBy: 1000),
-            TextColumn::make('refund_deadline_at')->label(__('admin_wallets.refund_deadline'))->dateTime()->placeholder('-'),
+            TextColumn::make('available_baisa')->label(__('admin_wallets.available'))->state(fn (WalletTopUp $record): int => in_array($record->status, ['credited', 'refunding'], true) ? max(0, $record->spendable_baisa - $record->reserved_refund_baisa - $record->reserved_withdrawal_baisa) : 0)->money('OMR', divideBy: 1000),
+            TextColumn::make('reserved_withdrawal_baisa')->label('محجوز لـWithdrawal')->money('OMR', divideBy: 1000),
+            TextColumn::make('reserved_refund_baisa')->label('محجوز لاسترداد سابق')->money('OMR', divideBy: 1000),
             TextColumn::make('credited_at')->label(__('admin_wallets.credited_at'))->dateTime()->placeholder('-'),
         ])->filters([SelectFilter::make('status')->label(__('admin.fields.status'))->options(__('admin_wallets.top_up_statuses'))])
             ->headerActions([])->recordActions([])->toolbarActions([]);

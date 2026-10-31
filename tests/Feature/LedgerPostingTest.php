@@ -14,6 +14,7 @@ use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
+use App\Support\LedgerText;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\URL;
 
@@ -21,6 +22,13 @@ test('legacy finance morph types remain mapped after the module move', function 
     expect((new Payment)->getMorphClass())->toBe('App\\Models\\Payment')
         ->and((new PaymentRefund)->getMorphClass())->toBe('App\\Models\\PaymentRefund')
         ->and((new LedgerTransaction)->getMorphClass())->toBe('App\\Models\\LedgerTransaction');
+});
+
+test('existing ledger wording is displayed in Arabic without changing technical codes', function (): void {
+    expect(LedgerText::accountName(LedgerAccount::STORE_SALES_CODE, 'Store sales'))->toBe('مبيعات القهوة')
+        ->and(LedgerText::description('Store refund REF-1'))->toBe('استرداد قيمة طلب القهوة REF-1')
+        ->and(LedgerText::description('Wallet top-up TOP-1 refund REF-2'))->toBe('شحن المحفظة TOP-1، استرداد REF-2')
+        ->and(LedgerText::description('Affiliate commission reversal for cancelled event'))->toBe('عكس عمولة الشريك بسبب إلغاء الفعالية');
 });
 
 test('paid payment posts a balanced double entry ledger transaction', function () {
@@ -32,6 +40,7 @@ test('paid payment posts a balanced double entry ledger transaction', function (
     expect($ledgerTransaction)
         ->reference->toMatch('/^[0-9]{8}$/')
         ->total_baisa->toBe(9001)
+        ->description->toBe('دفعة Thawani '.$payment->reference)
         ->and($entries)->toHaveCount(2)
         ->and($entries->sum('debit_baisa'))->toBe(9001)
         ->and($entries->sum('credit_baisa'))->toBe(9001);
@@ -41,10 +50,14 @@ test('paid payment posts a balanced double entry ledger transaction', function (
 
     expect($debitEntry?->ledgerAccount)
         ->code->toBe(LedgerAccount::THAWANI_CLEARING_CODE)
+        ->name->toBe('حساب تسوية Thawani')
         ->type->toBe(LedgerAccountType::Asset)
         ->and($creditEntry?->ledgerAccount)
         ->code->toBe(LedgerAccount::CUSTOMER_DEPOSITS_CODE)
+        ->name->toBe('ودائع العملاء')
         ->type->toBe(LedgerAccountType::Liability);
+    expect($debitEntry?->ledgerAccount?->currentBalanceBaisa())->toBe(9001)
+        ->and($creditEntry?->ledgerAccount?->currentBalanceBaisa())->toBe(9001);
 });
 
 test('ledger posting is idempotent for the same payment', function () {

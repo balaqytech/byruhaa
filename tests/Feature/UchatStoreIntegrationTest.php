@@ -71,11 +71,11 @@ test('UChat routes fail closed when the token is missing, invalid, or unconfigur
     $this->withHeaders(['Authorization' => 'Bearer wrong'])->getJson('/api/v1/integrations/uchat/store/catalog')->assertUnauthorized();
 });
 
-test('UChat routes fail closed when the owner-key secret is missing', function (): void {
+test('UChat cart operations fail closed when the owner-key secret is missing', function (): void {
     config(['byruhaa.uchat.api_token' => 'configured', 'byruhaa.uchat.owner_key_secret' => null]);
 
-    $this->withHeaders(['Authorization' => 'Bearer configured'])
-        ->getJson('/api/v1/integrations/uchat/store/catalog')
+    $this->withHeaders(['Authorization' => 'Bearer configured', 'X-WhatsApp-Phone' => '91234567'])
+        ->getJson('/api/v1/integrations/uchat/store/cart')
         ->assertStatus(503)
         ->assertJsonPath('code', 'uchat_not_configured');
 });
@@ -282,7 +282,7 @@ test('UChat wallet top ups respect the optional phone verification requirement',
         'Idempotency-Key' => 'uchat-wallet-top-up-1',
     ]);
 
-    $first = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/wallet/top-ups', [
+    $first = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/wallet/top-ups', [
         'minor_profile_id' => $profile->id,
         'amount_omr' => '5.250',
     ]);
@@ -294,7 +294,7 @@ test('UChat wallet top ups respect the optional phone verification requirement',
 
     expect(WalletTopUp::query()->sole()->getRawOriginal('status'))->toBe('pending');
 
-    $second = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/wallet/top-ups', [
+    $second = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/wallet/top-ups', [
         'minor_profile_id' => $profile->id,
         'amount_omr' => '5.250',
     ]);
@@ -307,7 +307,7 @@ test('UChat wallet top ups respect the optional phone verification requirement',
     Payment::query()->sole()->forceFill(['state' => PaymentState::Paid])->save();
 
     $this->withHeaders($headers)
-        ->postJson('/api/v1/integrations/uchat/store/wallet/top-ups', [
+        ->postJson('/api/v1/integrations/uchat/wallet/top-ups', [
             'minor_profile_id' => $profile->id,
             'amount_omr' => '5.250',
         ])

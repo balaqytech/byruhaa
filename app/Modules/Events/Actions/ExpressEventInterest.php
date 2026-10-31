@@ -4,10 +4,11 @@ namespace App\Modules\Events\Actions;
 
 use App\Enums\EventInterestSource;
 use App\Enums\EventInterestStatus;
-use App\Services\Webhooks\ByruhaaWebhookSender;
 use App\Modules\Events\Models\Event;
 use App\Modules\Events\Models\EventInterest;
 use App\Modules\Identity\Models\Customer;
+use App\Services\Webhooks\ByruhaaWebhookSender;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class ExpressEventInterest
@@ -21,23 +22,25 @@ final class ExpressEventInterest
             throw ValidationException::withMessages(['event' => 'هذه الفعالية لا تستقبل إبداء الاهتمام حاليًا.']);
         }
 
-        $interest = EventInterest::query()->updateOrCreate(
-            ['customer_id' => $customer->id, 'event_id' => $event->id],
-            [
-                'status' => EventInterestStatus::Interested,
-                'source' => $source,
-                'preferred_contact_channel' => $data['preferred_contact_channel'] ?? null,
-                'source_reference' => $data['source_reference'] ?? null,
-                'contact_consent_at' => ($data['contact_consent'] ?? false) ? now() : null,
-                'last_expressed_at' => now(),
-                'withdrawn_at' => null,
-            ],
-        )->load(['customer', 'event']);
+        return DB::transaction(function () use ($customer, $event, $data, $source): EventInterest {
+            $interest = EventInterest::query()->updateOrCreate(
+                ['customer_id' => $customer->id, 'event_id' => $event->id],
+                [
+                    'status' => EventInterestStatus::Interested,
+                    'source' => $source,
+                    'preferred_contact_channel' => $data['preferred_contact_channel'] ?? null,
+                    'source_reference' => $data['source_reference'] ?? null,
+                    'contact_consent_at' => ($data['contact_consent'] ?? false) ? now() : null,
+                    'last_expressed_at' => now(),
+                    'withdrawn_at' => null,
+                ],
+            )->load(['customer', 'event']);
 
-        if ($interest->wasRecentlyCreated) {
-            $this->webhookSender->sendInterestCreated($interest);
-        }
+            if ($interest->wasRecentlyCreated) {
+                $this->webhookSender->sendInterestCreated($interest);
+            }
 
-        return $interest;
+            return $interest;
+        });
     }
 }

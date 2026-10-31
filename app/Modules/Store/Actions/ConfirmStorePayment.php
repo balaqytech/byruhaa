@@ -2,14 +2,12 @@
 
 namespace App\Modules\Store\Actions;
 
-use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Data\Payments\PaymentVerificationData;
 use App\Modules\Store\Enums\InventoryReservationStatus;
 use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Models\Order;
 use App\Modules\Store\States\Order\Confirmed;
 use App\Modules\Store\States\Order\Expired;
-use App\Modules\Store\States\Order\Refunded;
 use App\Modules\Store\States\Order\RefundPending;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
@@ -19,7 +17,8 @@ class ConfirmStorePayment
     public function __construct(
         private ConsumeInventoryReservation $consumeReservation,
         private ChangeOrderState $changeOrderState,
-        private PaymentService $payments,
+        private ManageOrderRefund $orderRefunds,
+        private PostStoreOrderPayment $postPayment,
     ) {}
 
     public function execute(PaymentVerificationData $payment): void
@@ -40,6 +39,8 @@ class ConfirmStorePayment
                 'provider_invoice' => $payment->providerInvoice,
             ])->save();
         }
+
+        $this->postPayment->execute($order->refresh());
 
         $status = $order->status->getValue();
         if (in_array($status, [OrderStatus::Confirmed->value, OrderStatus::Accepted->value, OrderStatus::Preparing->value, OrderStatus::ReadyForPickup->value, OrderStatus::Completed->value], true)) {
@@ -83,9 +84,6 @@ class ConfirmStorePayment
             return;
         }
 
-        $refund = $this->payments->refundPayment($payment->paymentReference, $payment->amountBaisa, 'Store order expired before payment confirmation.');
-        if ($refund->status === 'succeeded') {
-            $this->changeOrderState->execute($order, Refunded::class, note: 'Late Store payment refunded.');
-        }
+        $this->orderRefunds->autoRefundExpired($order);
     }
 }

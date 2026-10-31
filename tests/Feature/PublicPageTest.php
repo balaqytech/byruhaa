@@ -80,13 +80,14 @@ test('existing policy pages receive only the leader terminology update', functio
         ->and($accounts->refresh()->content)->toContain('لا توجد خطوة رمز تحقق منفصلة لإنشاء حساب القائد.');
 });
 
-test('refund policy uses the configured window without promising bank settlement within it', function (): void {
-    config(['byruhaa.wallets.top_up_refund_window_hours' => 48]);
+test('refund policy explains the order window and Wallet withdrawal without promising settlement timing', function (): void {
     $this->seed(PublicPageSeeder::class);
 
     $this->get(route('policies.show', ['page' => 'refund-cancellation']))
         ->assertOk()
-        ->assertSee('48 ساعة من تأكيد دفع عملية الشحن')
+        ->assertSee('خلال 24 ساعة من اكتماله')
+        ->assertSee('لا يبدأ استرداد جديد لشحن Wallet')
+        ->assertSee('Bank transfer يدوي موثق')
         ->assertSee('مهلة طلب الاسترداد لا تعني ضمان وصوله خلال المدة نفسها')
         ->assertDontSee('{{refund_hours}}');
 });

@@ -116,12 +116,11 @@ class Booking extends Model implements AuditableContract
 
             if ($booking->state instanceof Cancelled || $booking->state instanceof Rejected) {
                 app(CouponUsageService::class)->releaseForBooking($booking);
+                if ($booking->state instanceof Cancelled) {
+                    app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking);
+                }
                 DB::afterCommit(function () use ($booking): void {
                     app(ReleaseBookingSeats::class)->execute($booking);
-
-                    if ($booking->state instanceof Cancelled) {
-                        app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking);
-                    }
                 });
             }
         });

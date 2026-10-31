@@ -47,6 +47,12 @@ class Customer extends Authenticatable
         return CustomerFactory::new();
     }
 
+    /** @return HasMany<CustomerDeletionRequest, $this> */
+    public function deletionRequests(): HasMany
+    {
+        return $this->hasMany(CustomerDeletionRequest::class);
+    }
+
     protected static function booted(): void
     {
         static::updating(function (Customer $customer): void {

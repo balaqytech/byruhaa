@@ -45,12 +45,20 @@ class DatabaseWalletService implements WalletService
     {
         $wallet = $this->walletForMinorProfile($minorProfileId);
 
+        $held = (int) $wallet->withdrawalRequests()
+            ->whereIn('status', ['pending', 'approved', 'paying', 'manual_review'])
+            ->sum('amount_baisa');
+        $availableTopUps = (int) $wallet->topUps()->whereIn('status', [WalletTopUpStatus::Credited->value, WalletTopUpStatus::Refunding->value])->get()
+            ->sum(fn (WalletTopUp $topUp): int => max(0, $topUp->spendable_baisa - $topUp->reserved_refund_baisa - $topUp->reserved_withdrawal_baisa));
+
         return new WalletSummaryData(
             $wallet->id,
             $wallet->minor_profile_id,
             $wallet->balance_baisa,
             $wallet->currency,
             $wallet->status,
+            $held,
+            max(0, min($wallet->balance_baisa - $held, $availableTopUps)),
         );
     }
 
@@ -64,8 +72,9 @@ class DatabaseWalletService implements WalletService
 
         DB::transaction(function () use ($payment, $retryNotification, &$postedMovement): void {
             $payment = Payment::query()->whereKey($payment->getKey())->lockForUpdate()->firstOrFail();
-            $topUp = WalletTopUp::query()->where('reference', $payment->subject_reference)->lockForUpdate()->firstOrFail();
-            $wallet = Wallet::query()->whereKey($topUp->wallet_id)->lockForUpdate()->firstOrFail();
+            $topUpLocator = WalletTopUp::query()->where('reference', $payment->subject_reference)->firstOrFail(['id', 'wallet_id']);
+            $wallet = Wallet::query()->whereKey($topUpLocator->wallet_id)->lockForUpdate()->firstOrFail();
+            $topUp = WalletTopUp::query()->whereKey($topUpLocator->id)->lockForUpdate()->firstOrFail();
 
             if (in_array($topUp->status, [
                 WalletTopUpStatus::Credited->value,
@@ -107,10 +116,10 @@ class DatabaseWalletService implements WalletService
             $wallet->forceFill(['balance_baisa' => $balance])->save();
             $topUp->forceFill([
                 'status' => WalletTopUpStatus::Credited,
-                'refundable_baisa' => $topUp->amount_baisa,
+                'refundable_baisa' => 0,
                 'spendable_baisa' => $topUp->amount_baisa,
                 'credited_at' => $payment->paid_at ?? now(),
-                'refund_deadline_at' => ($payment->paid_at ?? now())->copy()->addHours((int) config('byruhaa.wallets.top_up_refund_window_hours', 24)),
+                'refund_deadline_at' => null,
             ])->save();
         });
 
@@ -158,7 +167,7 @@ class DatabaseWalletService implements WalletService
             $topUps = WalletTopUp::query()
                 ->where('wallet_id', $wallet->id)
                 ->whereIn('status', [WalletTopUpStatus::Credited->value, WalletTopUpStatus::Refunding->value])
-                ->whereColumn('spendable_baisa', '>', 'reserved_refund_baisa')
+                ->whereRaw('spendable_baisa > reserved_refund_baisa + reserved_withdrawal_baisa')
                 ->orderBy('credited_at')
                 ->orderBy('id')
                 ->lockForUpdate()
@@ -169,7 +178,7 @@ class DatabaseWalletService implements WalletService
                     break;
                 }
 
-                $allocationAmount = min($remaining, $topUp->spendable_baisa - $topUp->reserved_refund_baisa);
+                $allocationAmount = min($remaining, $topUp->spendable_baisa - $topUp->reserved_refund_baisa - $topUp->reserved_withdrawal_baisa);
                 $refundableAmount = min($allocationAmount, $topUp->refundable_baisa);
                 $topUp->forceFill([
                     'spendable_baisa' => $topUp->spendable_baisa - $allocationAmount,
@@ -237,27 +246,105 @@ class DatabaseWalletService implements WalletService
                 ->lockForUpdate()
                 ->get();
 
+            $reversalAmount = 0;
             foreach ($allocations as $allocation) {
                 $allocation->forceFill(['reversed_at' => now()])->save();
 
+                $remainingAllocation = $allocation->amount_baisa - $allocation->refunded_baisa;
+                if ($remainingAllocation <= 0) {
+                    continue;
+                }
+
                 $topUp = WalletTopUp::query()->whereKey($allocation->wallet_top_up_id)->lockForUpdate()->firstOrFail();
-                $topUp->increment('spendable_baisa', $allocation->amount_baisa);
+                $topUp->increment('spendable_baisa', $remainingAllocation);
 
                 if ($allocation->refund_deadline_at?->isFuture()) {
-                    $topUp->increment('refundable_baisa', $allocation->amount_baisa);
+                    $topUp->increment('refundable_baisa', $remainingAllocation);
                 }
+                $reversalAmount += $remainingAllocation;
             }
 
-            $balance = $wallet->balance_baisa + $purchase->debit_baisa;
+            if ($reversalAmount === 0) {
+                $this->reverseSettlement($orderReference);
+
+                return;
+            }
+
+            $balance = $wallet->balance_baisa + $reversalAmount;
             $wallet->forceFill(['balance_baisa' => $balance])->save();
             $postedMovement = $wallet->movements()->create([
                 'operation_key' => $operationKey,
                 'type' => WalletMovementType::PurchaseReversal,
                 'order_reference' => $orderReference,
-                'credit_baisa' => $purchase->debit_baisa,
+                'credit_baisa' => $reversalAmount,
                 'debit_baisa' => 0,
                 'balance_after_baisa' => $balance,
                 'metadata' => ['reversed_movement_id' => $purchase->id],
+            ]);
+            $this->reverseSettlement($orderReference);
+        });
+
+        if ($postedMovement instanceof WalletMovement) {
+            WalletMovementPosted::dispatch($postedMovement->refresh());
+        }
+    }
+
+    public function refundPurchase(string $orderReference, string $refundReference, int $amountBaisa): void
+    {
+        if ($amountBaisa < 1) {
+            throw ValidationException::withMessages(['refund' => 'The wallet refund amount is invalid.']);
+        }
+
+        $postedMovement = null;
+        DB::transaction(function () use ($orderReference, $refundReference, $amountBaisa, &$postedMovement): void {
+            $purchase = WalletMovement::query()->where('operation_key', 'wallet-purchase:'.$orderReference)->firstOrFail();
+            $wallet = Wallet::query()->whereKey($purchase->wallet_id)->lockForUpdate()->firstOrFail();
+            $operationKey = 'wallet-purchase-refund:'.$refundReference;
+            $existing = WalletMovement::query()->where('operation_key', $operationKey)->first();
+            if ($existing instanceof WalletMovement) {
+                if ($existing->credit_baisa !== $amountBaisa || $existing->order_reference !== $orderReference) {
+                    throw ValidationException::withMessages(['refund' => 'Refund key was already used with different details.']);
+                }
+
+                return;
+            }
+
+            $allocations = WalletPurchaseAllocation::query()
+                ->where('order_reference', $orderReference)
+                ->whereNull('reversed_at')
+                ->orderBy('id')->lockForUpdate()->get();
+            $remainingAvailable = (int) $allocations->sum(fn (WalletPurchaseAllocation $allocation): int => $allocation->amount_baisa - $allocation->refunded_baisa);
+            if ($amountBaisa > $remainingAvailable) {
+                throw ValidationException::withMessages(['refund' => 'The requested amount exceeds the remaining wallet purchase.']);
+            }
+
+            $remaining = $amountBaisa;
+            foreach ($allocations as $allocation) {
+                if ($remaining === 0) {
+                    break;
+                }
+                $credit = min($remaining, $allocation->amount_baisa - $allocation->refunded_baisa);
+                if ($credit === 0) {
+                    continue;
+                }
+                $topUp = WalletTopUp::query()->whereKey($allocation->wallet_top_up_id)->lockForUpdate()->firstOrFail();
+                $allocation->forceFill(['refunded_baisa' => $allocation->refunded_baisa + $credit])->save();
+                $topUp->forceFill([
+                    'spendable_baisa' => $topUp->spendable_baisa + $credit,
+                    'refundable_baisa' => $allocation->refund_deadline_at?->isFuture() ? $topUp->refundable_baisa + $credit : $topUp->refundable_baisa,
+                ])->save();
+                $remaining -= $credit;
+            }
+
+            $wallet->forceFill(['balance_baisa' => $wallet->balance_baisa + $amountBaisa])->save();
+            $postedMovement = $wallet->movements()->create([
+                'operation_key' => $operationKey,
+                'type' => WalletMovementType::PurchaseRefund,
+                'order_reference' => $orderReference,
+                'credit_baisa' => $amountBaisa,
+                'debit_baisa' => 0,
+                'balance_after_baisa' => $wallet->balance_baisa,
+                'metadata' => ['refund_reference' => $refundReference],
             ]);
             $this->reverseSettlement($orderReference);
         });
@@ -287,10 +374,9 @@ class DatabaseWalletService implements WalletService
                 return;
             }
 
-            $topUp = WalletTopUp::query()
-                ->where('reference', $payment->subject_reference)
-                ->lockForUpdate()
-                ->firstOrFail();
+            $topUpLocator = WalletTopUp::query()->where('reference', $payment->subject_reference)->firstOrFail(['id', 'wallet_id']);
+            $wallet = Wallet::query()->whereKey($topUpLocator->wallet_id)->lockForUpdate()->firstOrFail();
+            $topUp = WalletTopUp::query()->whereKey($topUpLocator->id)->lockForUpdate()->firstOrFail();
             $operationKey = 'wallet-top-up-refund:'.$refund->id;
             $existingMovement = WalletMovement::query()->where('operation_key', $operationKey)->first();
 
@@ -307,8 +393,6 @@ class DatabaseWalletService implements WalletService
                 || $topUp->spendable_baisa < $refund->amount_baisa) {
                 throw ValidationException::withMessages(['refund' => 'The wallet top-up no longer has enough reserved funds for this refund.']);
             }
-
-            $wallet = Wallet::query()->whereKey($topUp->wallet_id)->lockForUpdate()->firstOrFail();
 
             if ($wallet->balance_baisa < $refund->amount_baisa) {
                 throw ValidationException::withMessages(['refund' => 'The wallet balance is insufficient for this refund.']);
@@ -404,6 +488,10 @@ class DatabaseWalletService implements WalletService
         }
 
         if ($wallet->balance_baisa !== 0) {
+            return false;
+        }
+
+        if ($wallet->withdrawalRequests()->whereIn('status', ['pending', 'approved', 'paying', 'manual_review'])->exists()) {
             return false;
         }
 

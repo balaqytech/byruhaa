@@ -3,10 +3,13 @@
 namespace App\Modules\Finance\Http\Controllers;
 
 use App\Modules\Finance\Actions\InitiateWalletTopUp;
+use App\Modules\Finance\Actions\ManageWalletWithdrawal;
 use App\Modules\Finance\Contracts\PaymentService;
 use App\Modules\Finance\Contracts\WalletService;
+use App\Modules\Finance\Http\Requests\WalletWithdrawalFormRequest;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\WalletTopUp;
+use App\Modules\Finance\Models\WalletWithdrawalRequest;
 use App\Modules\Identity\Models\MinorProfile;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Contracts\View\View;
@@ -28,7 +31,37 @@ class WalletController
         return view('pages.customer.minor-profiles.wallet', [
             'minorProfile' => $minorProfile->load('familyMember'),
             'wallet' => $wallet->load(['movements' => fn ($query) => $query->latest('id')->limit(50)]),
+            'walletSummary' => $wallets->summary($minorProfile->id),
+            'withdrawals' => $wallet->withdrawalRequests()->latest('id')->limit(20)->get(),
+            'withdrawalOperationKey' => (string) Str::uuid(),
+            'guardianPhoneVerified' => $request->user('customer')->hasVerifiedPhone(),
         ]);
+    }
+
+    public function requestWithdrawal(WalletWithdrawalFormRequest $request, MinorProfile $minorProfile, ManageWalletWithdrawal $withdrawals): RedirectResponse
+    {
+        abort_unless(config('byruhaa.wallets.enabled', false), 404);
+        $validated = $request->validated();
+        $withdrawals->request(
+            $minorProfile->id,
+            (int) $request->user('customer')->getAuthIdentifier(),
+            MoneyFactory::omrStringToBaisa((string) $validated['amount_omr']),
+            (string) $validated['operation_key'],
+            (string) $validated['method'],
+            $validated['bank_account'] ?? null,
+            $validated['bank_name'] ?? null,
+        );
+
+        return back()->with('withdrawal_status', 'pending');
+    }
+
+    public function cancelWithdrawal(Request $request, MinorProfile $minorProfile, WalletWithdrawalRequest $withdrawal, ManageWalletWithdrawal $withdrawals): RedirectResponse
+    {
+        $this->assertOwnedBy($request, $minorProfile);
+        abort_unless($withdrawal->wallet()->where('minor_profile_id', $minorProfile->id)->exists(), 404);
+        $withdrawals->cancel($withdrawal, (int) $request->user('customer')->getAuthIdentifier());
+
+        return back()->with('withdrawal_status', 'cancelled');
     }
 
     public function topUp(Request $request, MinorProfile $minorProfile, InitiateWalletTopUp $initiateTopUp): RedirectResponse

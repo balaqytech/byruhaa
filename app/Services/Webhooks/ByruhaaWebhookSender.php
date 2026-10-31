@@ -3,34 +3,35 @@
 namespace App\Services\Webhooks;
 
 use App\Enums\BookingInstallmentState;
-use App\Enums\WebhookDeliveryStatus;
-use App\Jobs\UchatWebhookJob;
 use App\Models\EventCancellation;
-use App\Models\WebhookDelivery;
 use App\Modules\Events\Models\Booking;
-use App\Modules\Events\Models\BookingFamilyMember;
 use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Events\Models\EventInterest;
+use App\Modules\Events\Webhooks\EventWebhookPayload;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Finance\Models\WalletMovement;
 use App\Modules\Finance\Models\WalletTopUp;
+use App\Modules\Finance\Models\WalletWithdrawalRequest;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\MinorProfile;
+use App\Modules\Identity\Webhooks\CustomerWebhookPayload;
 use App\Modules\Store\Models\Order;
-use App\Support\Money\MoneyFactory;
+use App\Modules\Store\Models\OrderRefundRequest;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
-use Spatie\WebhookServer\WebhookCall;
-use Throwable;
 
 class ByruhaaWebhookSender
 {
+    public function __construct(private UchatWebhookTransport $transport, private CustomerWebhookPayload $customers, private EventWebhookPayload $events) {}
+
+    public function canSendUchatCustomerPhoneVerificationCode(): bool
+    {
+        return $this->uchatWebhookConfiguration() !== null;
+    }
+
     public function sendUchatCustomerPhoneVerificationCode(Customer $customer, string $code, CarbonInterface $expiresAt, ?string $deliveryKey = null): void
     {
         $configuration = $this->uchatWebhookConfiguration();
@@ -41,23 +42,19 @@ class ByruhaaWebhookSender
 
         [$url, $secret, $bearer] = $configuration;
 
-        try {
-            $payload = [
-                'event' => 'customer.phone.verification_code',
-                'occurred_at' => now()->toJSON(),
-                'customer_phone' => $customer->phone_number,
-                'data' => [
-                    'customer' => ['id' => $customer->id, 'name' => $customer->name],
-                    'verification' => ['code' => $code, 'expires_at' => $expiresAt->toJSON()],
-                ],
-            ];
-            $auditPayload = $payload;
-            $auditPayload['data']['verification']['code'] = '[redacted]';
+        $payload = [
+            'event' => 'customer.phone.verification_code',
+            'occurred_at' => now()->toJSON(),
+            'customer_phone' => $customer->phone_number,
+            'data' => [
+                'customer' => ['id' => $customer->id, 'name' => $customer->name],
+                'verification' => ['code' => $code, 'expires_at' => $expiresAt->toJSON()],
+            ],
+        ];
+        $auditPayload = $payload;
+        $auditPayload['data']['verification']['code'] = '[redacted]';
 
-            $this->dispatchUchatWebhook($url, 'customer.phone.verification_code', $customer, $payload, $secret, $bearer, $auditPayload, $deliveryKey);
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchUchatWebhook($url, 'customer.phone.verification_code', $customer, $payload, $secret, $bearer, $auditPayload, $deliveryKey);
     }
 
     public function sendUchatMinorVerificationCode(MinorProfile $profile, string $code, ?string $deliveryKey = null): void
@@ -70,32 +67,28 @@ class ByruhaaWebhookSender
 
         [$url, $secret, $bearer] = $configuration;
 
-        try {
-            $profile->loadMissing('familyMember.customer');
-            $payload = [
-                'event' => 'minor.guardian.verification_code',
-                'occurred_at' => now()->toJSON(),
-                'customer_phone' => $profile->familyMember->customer->phone_number,
-                'data' => [
-                    'minor_profile' => [
-                        'id' => $profile->id,
-                        'member_code' => $profile->member_code,
-                        'name' => $profile->familyMember->name,
-                    ],
-                    'verification' => [
-                        'code' => $code,
-                        'expires_at' => now()->addMinutes((int) config('byruhaa.minor_accounts.otp_expiry_minutes', 10))->toJSON(),
-                    ],
+        $profile->loadMissing('familyMember.customer');
+        $payload = [
+            'event' => 'minor.guardian.verification_code',
+            'occurred_at' => now()->toJSON(),
+            'customer_phone' => $profile->familyMember->customer->phone_number,
+            'data' => [
+                'minor_profile' => [
+                    'id' => $profile->id,
+                    'member_code' => $profile->member_code,
+                    'name' => $profile->familyMember->name,
                 ],
-            ];
+                'verification' => [
+                    'code' => $code,
+                    'expires_at' => now()->addMinutes((int) config('byruhaa.minor_accounts.otp_expiry_minutes', 10))->toJSON(),
+                ],
+            ],
+        ];
 
-            $auditPayload = $payload;
-            $auditPayload['data']['verification']['code'] = '[redacted]';
+        $auditPayload = $payload;
+        $auditPayload['data']['verification']['code'] = '[redacted]';
 
-            $this->dispatchUchatWebhook($url, 'minor.guardian.verification_code', $profile, $payload, $secret, $bearer, $auditPayload, $deliveryKey);
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchUchatWebhook($url, 'minor.guardian.verification_code', $profile, $payload, $secret, $bearer, $auditPayload, $deliveryKey);
     }
 
     public function sendUchatOrderState(Order $order): void
@@ -108,60 +101,56 @@ class ByruhaaWebhookSender
 
         [$url, $secret, $bearer] = $configuration;
 
-        try {
-            $freshOrder = Order::query()->with(['items', 'statusHistory'])->whereKey($order->getKey())->firstOrFail();
-            $minorProfile = $freshOrder->minor_profile_id === null
-                ? null
-                : MinorProfile::query()->with('familyMember')->find($freshOrder->minor_profile_id);
-            $event = 'store.order.'.$freshOrder->status->getValue();
-            $payload = [
-                'event' => $event,
-                'occurred_at' => now()->toJSON(),
-                'customer_phone' => $freshOrder->customer_phone,
-                'data' => [
-                    'order' => [
-                        'reference' => $freshOrder->reference,
-                        'status' => $freshOrder->status->getValue(),
-                        'status_label' => $freshOrder->status->label(),
-                        'minor_profile_id' => $freshOrder->minor_profile_id,
-                        'payment_method' => $freshOrder->payment_method,
-                        'minor_name' => $minorProfile?->familyMember?->name,
-                        'pickup_type' => $freshOrder->pickup_type,
-                        'pickup_at' => $freshOrder->pickup_at?->toJSON(),
-                        'currency' => $freshOrder->currency,
-                        'subtotal_baisa' => $freshOrder->subtotal_baisa,
-                        'vat_baisa' => $freshOrder->vat_baisa,
-                        'total_baisa' => $freshOrder->total_baisa,
-                        'regular_total_baisa' => $freshOrder->regular_total_baisa,
-                        'discount_baisa' => $freshOrder->discount_baisa,
-                        'pricing_tier' => $freshOrder->pricing_tier,
-                        'items' => $freshOrder->items->map(fn ($item): array => [
-                            'sku' => $item->sku,
-                            'name' => $item->product_name,
-                            'option' => $item->option_name,
-                            'quantity' => $item->quantity,
-                            'unit_price_baisa' => $item->unit_price_baisa,
-                            'regular_unit_price_baisa' => $item->regular_unit_price_baisa,
-                            'unit_discount_baisa' => $item->unit_discount_baisa,
-                            'vat_baisa' => $item->vat_baisa,
-                            'line_total_baisa' => $item->line_total_baisa,
-                            'line_discount_baisa' => $item->line_discount_baisa,
-                        ])->values()->all(),
-                    ],
-                    'links' => [
-                        'status_url' => URL::temporarySignedRoute('store.orders.status', now()->addDays(7), ['order' => $freshOrder->payment_token]),
-                        'payment_url' => $freshOrder->status->getValue() === 'pending_payment' && $freshOrder->payment_method === 'thawani'
-                            ? URL::temporarySignedRoute('store.orders.payment.store', now()->addHours(12), ['order' => $freshOrder->payment_token])
-                            : null,
-                        'wallet_confirmation_url' => null,
-                    ],
+        $freshOrder = Order::query()->with(['items', 'statusHistory'])->whereKey($order->getKey())->firstOrFail();
+        $minorProfile = $freshOrder->minor_profile_id === null
+            ? null
+            : MinorProfile::query()->with('familyMember')->find($freshOrder->minor_profile_id);
+        $event = 'store.order.'.$freshOrder->status->getValue();
+        $payload = [
+            'event' => $event,
+            'occurred_at' => now()->toJSON(),
+            'customer_phone' => $freshOrder->customer_phone,
+            'data' => [
+                'order' => [
+                    'reference' => $freshOrder->reference,
+                    'status' => $freshOrder->status->getValue(),
+                    'status_label' => $freshOrder->status->label(),
+                    'minor_profile_id' => $freshOrder->minor_profile_id,
+                    'payment_method' => $freshOrder->payment_method,
+                    'minor_name' => $minorProfile?->familyMember?->name,
+                    'pickup_type' => $freshOrder->pickup_type,
+                    'pickup_at' => $freshOrder->pickup_at?->toJSON(),
+                    'currency' => $freshOrder->currency,
+                    'subtotal_baisa' => $freshOrder->subtotal_baisa,
+                    'vat_baisa' => $freshOrder->vat_baisa,
+                    'total_baisa' => $freshOrder->total_baisa,
+                    'regular_total_baisa' => $freshOrder->regular_total_baisa,
+                    'discount_baisa' => $freshOrder->discount_baisa,
+                    'pricing_tier' => $freshOrder->pricing_tier,
+                    'items' => $freshOrder->items->map(fn ($item): array => [
+                        'sku' => $item->sku,
+                        'name' => $item->product_name,
+                        'option' => $item->option_name,
+                        'quantity' => $item->quantity,
+                        'unit_price_baisa' => $item->unit_price_baisa,
+                        'regular_unit_price_baisa' => $item->regular_unit_price_baisa,
+                        'unit_discount_baisa' => $item->unit_discount_baisa,
+                        'vat_baisa' => $item->vat_baisa,
+                        'line_total_baisa' => $item->line_total_baisa,
+                        'line_discount_baisa' => $item->line_discount_baisa,
+                    ])->values()->all(),
                 ],
-            ];
+                'links' => [
+                    'status_url' => URL::temporarySignedRoute('store.orders.status', now()->addDays(7), ['order' => $freshOrder->payment_token]),
+                    'payment_url' => $freshOrder->status->getValue() === 'pending_payment' && $freshOrder->payment_method === 'thawani'
+                        ? URL::temporarySignedRoute('store.orders.payment.store', now()->addHours(12), ['order' => $freshOrder->payment_token])
+                        : null,
+                    'wallet_confirmation_url' => null,
+                ],
+            ],
+        ];
 
-            $this->dispatchUchatWebhook($url, $event, $freshOrder, $payload, $secret, $bearer);
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchUchatWebhook($url, $event, $freshOrder, $payload, $secret, $bearer, null, 'order-transition:'.($freshOrder->statusHistory->first()->id ?? 'initial'));
     }
 
     public function sendUchatWalletMovement(WalletMovement $movement): void
@@ -174,42 +163,90 @@ class ByruhaaWebhookSender
 
         [$url, $secret, $bearer] = $configuration;
 
-        try {
-            $movement = WalletMovement::query()->with('wallet')->findOrFail($movement->id);
-            $profile = MinorProfile::query()->with('familyMember.customer')->find($movement->wallet->minor_profile_id);
+        $movement = WalletMovement::query()->with('wallet')->findOrFail($movement->id);
+        $profile = MinorProfile::query()->with('familyMember.customer')->find($movement->wallet->minor_profile_id);
 
-            if (! $profile instanceof MinorProfile) {
-                return;
-            }
-
-            $payload = [
-                'event' => 'wallet.'.$movement->type,
-                'occurred_at' => $movement->created_at?->toJSON() ?? now()->toJSON(),
-                'customer_phone' => $profile->familyMember->customer->phone_number,
-                'data' => [
-                    'wallet' => [
-                        'id' => $movement->wallet_id,
-                        'minor_profile_id' => $profile->id,
-                        'balance_baisa' => $movement->balance_after_baisa,
-                        'currency' => $movement->wallet->currency,
-                        'status' => $movement->wallet->status,
-                    ],
-                    'movement' => [
-                        'id' => $movement->id,
-                        'type' => $movement->type,
-                        'order_reference' => $movement->order_reference,
-                        'credit_baisa' => $movement->credit_baisa,
-                        'debit_baisa' => $movement->debit_baisa,
-                        'balance_after_baisa' => $movement->balance_after_baisa,
-                        'created_at' => $movement->created_at?->toJSON(),
-                    ],
-                ],
-            ];
-
-            $this->dispatchUchatWebhook($url, $payload['event'], $movement->wallet, $payload, $secret, $bearer, null, $movement->operation_key);
-        } catch (Throwable $exception) {
-            report($exception);
+        if (! $profile instanceof MinorProfile) {
+            return;
         }
+
+        $payload = [
+            'event' => 'wallet.'.$movement->type,
+            'occurred_at' => $movement->created_at?->toJSON() ?? now()->toJSON(),
+            'customer_phone' => $profile->familyMember->customer->phone_number,
+            'data' => [
+                'wallet' => [
+                    'id' => $movement->wallet_id,
+                    'minor_profile_id' => $profile->id,
+                    'balance_baisa' => $movement->balance_after_baisa,
+                    'currency' => $movement->wallet->currency,
+                    'status' => $movement->wallet->status,
+                ],
+                'movement' => [
+                    'id' => $movement->id,
+                    'type' => $movement->type,
+                    'order_reference' => $movement->order_reference,
+                    'credit_baisa' => $movement->credit_baisa,
+                    'debit_baisa' => $movement->debit_baisa,
+                    'balance_after_baisa' => $movement->balance_after_baisa,
+                    'created_at' => $movement->created_at?->toJSON(),
+                ],
+            ],
+        ];
+
+        $this->dispatchUchatWebhook($url, $payload['event'], $movement->wallet, $payload, $secret, $bearer, null, $movement->operation_key);
+    }
+
+    public function sendUchatWalletWithdrawal(WalletWithdrawalRequest $withdrawal): void
+    {
+        $configuration = $this->uchatWebhookConfiguration();
+        if ($configuration === null) {
+            return;
+        }
+        [$url, $secret, $bearer] = $configuration;
+
+        $withdrawal = WalletWithdrawalRequest::query()->with('guardian')->findOrFail($withdrawal->id);
+        $payload = [
+            'event' => 'wallet.withdrawal.'.$withdrawal->status,
+            'occurred_at' => $withdrawal->updated_at?->toJSON() ?? now()->toJSON(),
+            'customer_phone' => $withdrawal->guardian->phone_number,
+            'data' => [
+                'reference' => $withdrawal->reference,
+                'minor_profile_id' => $withdrawal->wallet->minor_profile_id,
+                'amount_baisa' => $withdrawal->amount_baisa,
+                'currency' => $withdrawal->currency,
+                'method' => $withdrawal->method,
+                'status' => $withdrawal->status,
+                'payout_reference' => $withdrawal->status === 'paid' ? $withdrawal->payout_reference : null,
+            ],
+        ];
+        $this->dispatchUchatWebhook($url, $payload['event'], $withdrawal, $payload, $secret, $bearer, null, 'withdrawal:'.$withdrawal->id.':'.$withdrawal->status.':'.$withdrawal->updated_at?->format('YmdHisu'));
+    }
+
+    public function sendUchatOrderRefund(OrderRefundRequest $refund): void
+    {
+        $configuration = $this->uchatWebhookConfiguration();
+        if ($configuration === null) {
+            return;
+        }
+        [$url, $secret, $bearer] = $configuration;
+
+        $refund = OrderRefundRequest::query()->with('order')->findOrFail($refund->id);
+        $payload = [
+            'event' => 'store.refund.'.$refund->status,
+            'occurred_at' => $refund->updated_at?->toJSON() ?? now()->toJSON(),
+            'customer_phone' => $refund->order->customer_phone,
+            'data' => [
+                'reference' => $refund->reference,
+                'order_reference' => $refund->order->reference,
+                'amount_baisa' => $refund->amount_baisa,
+                'currency' => $refund->currency,
+                'status' => $refund->status,
+                'payment_method' => $refund->order->payment_method,
+                'payout_reference' => $refund->status === 'paid' ? $refund->payout_reference : null,
+            ],
+        ];
+        $this->dispatchUchatWebhook($url, $payload['event'], $refund, $payload, $secret, $bearer, null, 'store-refund:'.$refund->id.':'.$refund->status.':'.$refund->updated_at?->format('YmdHisu'));
     }
 
     public function sendCustomerRegistered(Customer $customer): void
@@ -220,18 +257,14 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshCustomer = Customer::query()->whereKey($customer->getKey())->firstOrFail();
+        $freshCustomer = Customer::query()->whereKey($customer->getKey())->firstOrFail();
 
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'customer.registered',
-                webhookable: $freshCustomer,
-                payload: $this->customerPayload('customer.registered', $freshCustomer, now()),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'customer.registered',
+            webhookable: $freshCustomer,
+            payload: $this->customers->customerPayload('customer.registered', $freshCustomer, now()),
+        );
     }
 
     public function sendInterestCreated(EventInterest $interest): void
@@ -242,21 +275,17 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshInterest = EventInterest::query()
-                ->with(['customer', 'event'])
-                ->whereKey($interest->getKey())
-                ->firstOrFail();
+        $freshInterest = EventInterest::query()
+            ->with(['customer', 'event'])
+            ->whereKey($interest->getKey())
+            ->firstOrFail();
 
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'interest.created',
-                webhookable: $freshInterest,
-                payload: $this->interestPayload($freshInterest, now()),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'interest.created',
+            webhookable: $freshInterest,
+            payload: $this->events->interestPayload($freshInterest, now()),
+        );
     }
 
     public function sendBookingCreated(Booking $booking): void
@@ -267,21 +296,17 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshBooking = Booking::query()
-                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->whereKey($booking->getKey())
-                ->firstOrFail();
+        $freshBooking = Booking::query()
+            ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+            ->whereKey($booking->getKey())
+            ->firstOrFail();
 
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'booking.created',
-                webhookable: $freshBooking,
-                payload: $this->bookingPayload('booking.created', $freshBooking, now()),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'booking.created',
+            webhookable: $freshBooking,
+            payload: $this->events->bookingPayload('booking.created', $freshBooking, now()),
+        );
     }
 
     public function sendBookingApproved(Booking $booking): void
@@ -292,21 +317,17 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshBooking = Booking::query()
-                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->whereKey($booking->getKey())
-                ->firstOrFail();
+        $freshBooking = Booking::query()
+            ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+            ->whereKey($booking->getKey())
+            ->firstOrFail();
 
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'booking.approved',
-                webhookable: $freshBooking,
-                payload: $this->bookingPayload('booking.approved', $freshBooking, now()),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'booking.approved',
+            webhookable: $freshBooking,
+            payload: $this->events->bookingPayload('booking.approved', $freshBooking, now()),
+        );
     }
 
     public function sendBookingCancelled(Booking $booking): void
@@ -317,21 +338,17 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshBooking = Booking::query()
-                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->whereKey($booking->getKey())
-                ->firstOrFail();
+        $freshBooking = Booking::query()
+            ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+            ->whereKey($booking->getKey())
+            ->firstOrFail();
 
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'booking.cancelled',
-                webhookable: $freshBooking,
-                payload: $this->bookingPayload('booking.cancelled', $freshBooking, now()),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'booking.cancelled',
+            webhookable: $freshBooking,
+            payload: $this->events->bookingPayload('booking.cancelled', $freshBooking, now()),
+        );
     }
 
     public function sendBookingContractsSigned(Booking $booking): void
@@ -342,28 +359,24 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshBooking = Booking::query()
-                ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
-                ->whereKey($booking->getKey())
-                ->firstOrFail();
+        $freshBooking = Booking::query()
+            ->with(['customer', 'event', 'familyMembers.familyMember', 'familyMembers.contract'])
+            ->whereKey($booking->getKey())
+            ->firstOrFail();
 
-            if (! $freshBooking->hasSignedContracts()) {
-                return;
-            }
-
-            $payload = $this->bookingPayload('booking.contracts_signed', $freshBooking, now());
-            $payload['data']['contracts'] = $this->bookingContractsPayload($freshBooking);
-
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'booking.contracts_signed',
-                webhookable: $freshBooking,
-                payload: $payload,
-            );
-        } catch (Throwable $exception) {
-            report($exception);
+        if (! $freshBooking->hasSignedContracts()) {
+            return;
         }
+
+        $payload = $this->events->bookingPayload('booking.contracts_signed', $freshBooking, now());
+        $payload['data']['contracts'] = $this->events->bookingContractsPayload($freshBooking);
+
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'booking.contracts_signed',
+            webhookable: $freshBooking,
+            payload: $payload,
+        );
     }
 
     public function sendPaymentPaid(Payment $payment): void
@@ -374,25 +387,21 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $freshPayment = Payment::query()
-                ->with([
-                    'bookingInstallment.paymentSchedule.booking.customer',
-                    'bookingInstallment.paymentSchedule.booking.event',
-                    'bookingInstallment.paymentSchedule.installments',
-                ])
-                ->whereKey($payment->getKey())
-                ->firstOrFail();
+        $freshPayment = Payment::query()
+            ->with([
+                'bookingInstallment.paymentSchedule.booking.customer',
+                'bookingInstallment.paymentSchedule.booking.event',
+                'bookingInstallment.paymentSchedule.installments',
+            ])
+            ->whereKey($payment->getKey())
+            ->firstOrFail();
 
-            $this->dispatchWebhook(
-                url: $url,
-                event: 'payment.paid',
-                webhookable: $freshPayment,
-                payload: $this->paymentPaidPayload($freshPayment, now()),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->dispatchWebhook(
+            url: $url,
+            event: 'payment.paid',
+            webhookable: $freshPayment,
+            payload: $this->paymentPaidPayload($freshPayment, now()),
+        );
     }
 
     public function sendEventCancelled(EventCancellation $cancellation): void
@@ -403,28 +412,47 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $cancellation = EventCancellation::query()->with('event')->findOrFail($cancellation->id);
-            $this->dispatchWebhook($url, 'event.cancelled', $cancellation, [
-                'event' => 'event.cancelled',
-                'customer_phone' => null,
-                'occurred_at' => now()->toJSON(),
-                'data' => [
-                    'cancellation' => [
-                        'id' => $cancellation->id,
-                        'status' => $cancellation->status->value,
-                        'reason' => $cancellation->reason,
-                        'bookings_count' => $cancellation->bookings_count,
-                        'refundable_amount' => $this->money($cancellation->refundable_amount_baisa, $cancellation->currency),
-                        'currency' => $cancellation->currency,
-                        'requested_at' => $cancellation->requested_at->toJSON(),
-                    ],
-                    'event' => ['id' => $cancellation->event->id, 'name' => $cancellation->event->name, 'slug' => $cancellation->event->slug],
+        $cancellation = EventCancellation::query()->with('event')->findOrFail($cancellation->id);
+        $this->dispatchWebhook($url, 'event.cancelled', $cancellation, [
+            'event' => 'event.cancelled',
+            'customer_phone' => null,
+            'occurred_at' => now()->toJSON(),
+            'data' => [
+                'cancellation' => [
+                    'id' => $cancellation->id,
+                    'status' => $cancellation->status->value,
+                    'reason' => $cancellation->reason,
+                    'bookings_count' => $cancellation->bookings_count,
+                    'refundable_amount_baisa' => $this->money($cancellation->refundable_amount_baisa, $cancellation->currency),
+                    'currency' => $cancellation->currency,
+                    'requested_at' => $cancellation->requested_at->toJSON(),
                 ],
-            ]);
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+                'event' => ['id' => $cancellation->event->id, 'name' => $cancellation->event->name, 'slug' => $cancellation->event->slug],
+            ],
+        ]);
+    }
+
+    public function sendEventCancellationOutcome(EventCancellation $cancellation): void
+    {
+        $cancellation->loadMissing('event');
+        $event = 'event.cancellation.'.$cancellation->status->value;
+        $this->transport->record($cancellation, [
+            'event' => $event,
+            'customer_phone' => null,
+            'occurred_at' => now()->toJSON(),
+            'data' => [
+                'cancellation' => [
+                    'id' => $cancellation->id,
+                    'status' => $cancellation->status->value,
+                    'bookings_count' => $cancellation->bookings_count,
+                    'refunded_payments_count' => $cancellation->refunded_payments_count,
+                    'refunded_amount_baisa' => $cancellation->refunded_amount_baisa,
+                    'currency' => $cancellation->currency,
+                    'completed_at' => $cancellation->completed_at?->toJSON(),
+                ],
+                'event' => ['id' => $cancellation->event->id, 'slug' => $cancellation->event->slug, 'name' => $cancellation->event->name],
+            ],
+        ]);
     }
 
     public function sendPaymentRefunded(PaymentRefund $refund): void
@@ -435,185 +463,41 @@ class ByruhaaWebhookSender
             return;
         }
 
-        try {
-            $refund = PaymentRefund::query()->with('payment.bookingInstallment.paymentSchedule.booking.customer')->findOrFail($refund->id);
-            $booking = $refund->payment->bookingInstallment?->paymentSchedule?->booking;
+        $refund = PaymentRefund::query()->with('payment.bookingInstallment.paymentSchedule.booking.customer')->findOrFail($refund->id);
+        $booking = $refund->payment->bookingInstallment?->paymentSchedule?->booking;
 
-            if ($booking === null) {
-                $walletTopUp = WalletTopUp::query()->where('reference', $refund->payment->subject_reference)->first();
-                $profile = $walletTopUp?->wallet_id === null
-                    ? null
-                    : MinorProfile::query()->with('familyMember.customer')->find($walletTopUp->wallet->minor_profile_id);
-
-                $this->dispatchWebhook($url, 'payment.refunded', $refund, [
-                    'event' => 'payment.refunded',
-                    'customer_phone' => $profile?->familyMember?->customer?->phone_number,
-                    'occurred_at' => $refund->processed_at?->toJSON() ?? now()->toJSON(),
-                    'data' => [
-                        'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'method' => $refund->resolution_method, 'manual_reference' => $refund->manual_reference, 'amount' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason, 'completed_at' => $refund->processed_at?->toJSON()],
-                        'payment' => ['id' => $refund->payment_id, 'reference' => $refund->payment->reference],
-                        'wallet_top_up' => ['reference' => $refund->payment->subject_reference],
-                        'customer' => $profile === null ? null : ['id' => $profile->familyMember->customer->id, 'name' => $profile->familyMember->customer->name, 'phone' => $profile->familyMember->customer->phone_number, 'email' => $profile->familyMember->customer->email],
-                    ],
-                ]);
-
-                return;
-            }
+        if ($booking === null) {
+            $walletTopUp = WalletTopUp::query()->where('reference', $refund->payment->subject_reference)->first();
+            $profile = $walletTopUp?->wallet_id === null
+                ? null
+                : MinorProfile::query()->with('familyMember.customer')->find($walletTopUp->wallet->minor_profile_id);
 
             $this->dispatchWebhook($url, 'payment.refunded', $refund, [
                 'event' => 'payment.refunded',
-                'customer_phone' => $booking->customer->phone_number,
+                'customer_phone' => $profile?->familyMember?->customer?->phone_number,
                 'occurred_at' => $refund->processed_at?->toJSON() ?? now()->toJSON(),
                 'data' => [
-                    'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'method' => $refund->resolution_method, 'manual_reference' => $refund->manual_reference, 'amount' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason, 'completed_at' => $refund->processed_at?->toJSON()],
+                    'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'method' => $refund->resolution_method, 'manual_reference' => $refund->manual_reference, 'amount_baisa' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason, 'completed_at' => $refund->processed_at?->toJSON()],
                     'payment' => ['id' => $refund->payment_id, 'reference' => $refund->payment->reference],
-                    'booking' => ['id' => $booking->id, 'reference' => $booking->reference],
-                    'customer' => ['id' => $booking->customer->id, 'name' => $booking->customer->name, 'phone' => $booking->customer->phone_number, 'email' => $booking->customer->email],
+                    'wallet_top_up' => ['reference' => $refund->payment->subject_reference],
+                    'customer' => $profile === null ? null : ['id' => $profile->familyMember->customer->id, 'name' => $profile->familyMember->customer->name, 'phone' => $profile->familyMember->customer->phone_number, 'email' => $profile->familyMember->customer->email],
                 ],
             ]);
-        } catch (Throwable $exception) {
-            report($exception);
+
+            return;
         }
-    }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function customerPayload(string $eventName, Customer $customer, CarbonInterface $occurredAt): array
-    {
-        return [
-            'event' => $eventName,
-            'customer_phone' => $customer->phone_number,
-            'occurred_at' => $occurredAt->toJSON(),
+        $this->dispatchWebhook($url, 'payment.refunded', $refund, [
+            'event' => 'payment.refunded',
+            'customer_phone' => $booking->customer->phone_number,
+            'occurred_at' => $refund->processed_at?->toJSON() ?? now()->toJSON(),
             'data' => [
-                'customer' => [
-                    'id' => $customer->id,
-                    'name' => $customer->name,
-                    'phone' => $customer->phone_number,
-                    'email' => $customer->email,
-                    'civil_id' => $customer->civil_id,
-                    'wilaya' => $customer->wilaya,
-                    'area' => $customer->area,
-                    'address' => $customer->address,
-                    'profile_complete' => $customer->hasCompleteProfile(),
-                    'missing_required_profile_fields' => $customer->missingRequiredProfileFields(),
-                    'customer_panel_url' => route('customer.dashboard'),
-                    'created_at' => $customer->created_at?->toJSON(),
-                ],
+                'refund' => ['id' => $refund->id, 'reference' => $refund->reference, 'status' => $refund->state->value, 'method' => $refund->resolution_method, 'manual_reference' => $refund->manual_reference, 'amount_baisa' => $this->money($refund->amount_baisa, $refund->currency), 'currency' => $refund->currency, 'reason' => $refund->reason, 'completed_at' => $refund->processed_at?->toJSON()],
+                'payment' => ['id' => $refund->payment_id, 'reference' => $refund->payment->reference],
+                'booking' => ['id' => $booking->id, 'reference' => $booking->reference],
+                'customer' => ['id' => $booking->customer->id, 'name' => $booking->customer->name, 'phone' => $booking->customer->phone_number, 'email' => $booking->customer->email],
             ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function interestPayload(EventInterest $interest, CarbonInterface $occurredAt): array
-    {
-        return [
-            'event' => 'interest.created',
-            'customer_phone' => $interest->customer->phone_number,
-            'occurred_at' => $occurredAt->toJSON(),
-            'data' => [
-                'interest' => [
-                    'id' => $interest->id,
-                    'status' => $interest->status->value,
-                    'source' => $interest->source->value,
-                    'preferred_contact_channel' => $interest->preferred_contact_channel,
-                    'source_reference' => $interest->source_reference,
-                    'contact_consent_at' => $interest->contact_consent_at?->toJSON(),
-                    'last_expressed_at' => $interest->last_expressed_at->toJSON(),
-                    'created_at' => $interest->created_at->toJSON(),
-                    'customer_panel_url' => route('customer.interests.index'),
-                ],
-                'event' => [
-                    'id' => $interest->event->id,
-                    'name' => $interest->event->name,
-                    'slug' => $interest->event->slug,
-                    'public_url' => route('events.show', $interest->event),
-                ],
-                'customer' => [
-                    'id' => $interest->customer->id,
-                    'name' => $interest->customer->name,
-                    'phone' => $interest->customer->phone_number,
-                    'email' => $interest->customer->email,
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function bookingContractsPayload(Booking $booking): array
-    {
-        $contracts = $booking->familyMembers
-            ->map(fn (BookingFamilyMember $bookingFamilyMember) => $bookingFamilyMember->contract)
-            ->filter();
-        $signedContracts = $contracts
-            ->filter(fn ($contract): bool => $contract->signed_at !== null);
-        $latestSignedAt = $signedContracts
-            ->map(fn ($contract) => $contract->signed_at)
-            ->filter()
-            ->sort()
-            ->last();
-
-        return [
-            'total_count' => $contracts->count(),
-            'signed_count' => $signedContracts->count(),
-            'all_signed' => $contracts->isNotEmpty() && $contracts->count() === $signedContracts->count(),
-            'latest_signed_at' => $latestSignedAt?->toJSON(),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function bookingPayload(string $eventName, Booking $booking, CarbonInterface $occurredAt): array
-    {
-        return [
-            'event' => $eventName,
-            'customer_phone' => $booking->customer?->phone_number,
-            'occurred_at' => $occurredAt->toJSON(),
-            'data' => [
-                'booking' => [
-                    'id' => $booking->id,
-                    'reference' => $booking->reference,
-                    'status' => $booking->state->getValue(),
-                    ...($eventName === 'booking.cancelled' ? ['reason' => $booking->cancellation_reason] : []),
-                    'customer_panel_url' => route('customer.bookings.show', $booking),
-                ],
-                'event' => [
-                    'id' => $booking->event?->id,
-                    'name' => $booking->event?->name,
-                ],
-                'customer' => [
-                    'id' => $booking->customer?->id,
-                    'name' => $booking->customer?->name,
-                    'phone' => $booking->customer?->phone_number,
-                    'email' => $booking->customer?->email,
-                ],
-                'participants' => $booking->familyMembers
-                    ->map(fn (BookingFamilyMember $bookingFamilyMember): array => [
-                        'booking_family_member_id' => $bookingFamilyMember->id,
-                        'family_member_id' => $bookingFamilyMember->family_member_id,
-                        'name' => $bookingFamilyMember->familyMember?->name,
-                        'contract_id' => $bookingFamilyMember->contract?->id,
-                        'contract_status' => $bookingFamilyMember->contract?->state?->getValue(),
-                        'contract_signed_at' => $bookingFamilyMember->contract?->signed_at?->toJSON(),
-                    ])
-                    ->values()
-                    ->all(),
-                'pricing' => [
-                    'unit_price' => $this->money($booking->unit_price_baisa, $booking->currency),
-                    'subtotal' => $this->money($booking->subtotal_baisa, $booking->currency),
-                    'discount_source' => $booking->discountSource(),
-                    'coupon_code' => $booking->coupon_code,
-                    'discount_amount' => $this->money($booking->discount_amount_baisa, $booking->currency),
-                    'total' => $this->money($booking->total_baisa, $booking->currency),
-                    'currency' => $booking->currency,
-                ],
-            ],
-        ];
+        ]);
     }
 
     /**
@@ -637,10 +521,11 @@ class ByruhaaWebhookSender
             'data' => [
                 'payment' => [
                     'id' => $payment->id,
+                    'reference' => $payment->reference,
                     'provider' => $payment->provider->value,
                     'status' => $payment->state->value,
                     'provider_status' => $payment->provider_payment_status,
-                    'amount' => $this->money($payment->amount_baisa, $payment->currency),
+                    'amount_baisa' => $this->money($payment->amount_baisa, $payment->currency),
                     'currency' => $payment->currency,
                     'paid_at' => $payment->paid_at?->toJSON(),
                     'provider_reference' => $payment->provider_payment_id
@@ -683,8 +568,8 @@ class ByruhaaWebhookSender
         return [
             'paid_installments_count' => $paidInstallments->count(),
             'total_installments_count' => $installments->count(),
-            'paid_amount' => $this->money($paidAmountBaisa, $currency),
-            'remaining_amount' => $this->money(max(0, $totalAmountBaisa - $paidAmountBaisa), $currency),
+            'paid_amount_baisa' => $this->money($paidAmountBaisa, $currency),
+            'remaining_amount_baisa' => $this->money(max(0, $totalAmountBaisa - $paidAmountBaisa), $currency),
             'currency' => $currency,
             'items' => $installments
                 ->map(fn (BookingInstallment $installment): array => [
@@ -694,7 +579,7 @@ class ByruhaaWebhookSender
                     'percentage' => $installment->percentage,
                     'due_date' => $installment->due_date->toDateString(),
                     'status' => $installment->state->value,
-                    'amount' => $this->money($installment->amount_baisa, $installment->currency),
+                    'amount_baisa' => $this->money($installment->amount_baisa, $installment->currency),
                     'currency' => $installment->currency,
                     'paid_at' => $installment->paid_at?->toJSON(),
                 ])
@@ -708,193 +593,31 @@ class ByruhaaWebhookSender
      */
     private function dispatchWebhook(string $url, string $event, Model $webhookable, array $payload): void
     {
-        $webhookCall = WebhookCall::create()
-            ->url($url)
-            ->payload($payload)
-            ->onQueue($this->queue())
-            ->timeoutInSeconds((int) config('byruhaa.webhooks.timeout', 10));
-
-        $delivery = $this->createDelivery($webhookCall, $event, $url, $webhookable, $payload);
-
-        if (! $delivery instanceof WebhookDelivery) {
-            return;
-        }
-
-        $secret = $this->configString('byruhaa.webhooks.signing_secret');
-
-        if ($secret !== '') {
-            $webhookCall->useSecret($secret);
-        } else {
-            $webhookCall->doNotSign();
-        }
-
-        try {
-            $webhookCall
-                ->meta(['webhook_delivery_id' => $delivery->id])
-                ->dispatch();
-
-            $delivery->forceFill([
-                'status' => WebhookDeliveryStatus::Queued,
-                'queued_at' => now(),
-            ])->save();
-        } catch (Throwable $exception) {
-            $delivery->forceFill([
-                'status' => WebhookDeliveryStatus::Failed,
-                'failed_at' => now(),
-                'error_type' => $exception::class,
-                'error_message' => $this->truncate($exception->getMessage()),
-            ])->save();
-
-            throw $exception;
-        }
+        $this->transport->record($webhookable, $payload);
     }
 
     /**
-     * Dispatch a signed UChat delivery while retaining the shared webhook audit and queue behavior.
-     *
      * @param  array<string, mixed>  $payload
      * @param  array<string, mixed>|null  $auditPayload
      */
     private function dispatchUchatWebhook(string $url, string $event, Model $webhookable, array $payload, string $secret, string $bearer, ?array $auditPayload = null, ?string $deliveryKey = null): void
     {
-        $defaultWebhookJob = config('webhook-server.webhook_job');
-        Config::set('webhook-server.webhook_job', UchatWebhookJob::class);
-
-        try {
-            $webhookCall = WebhookCall::create();
-        } finally {
-            Config::set('webhook-server.webhook_job', $defaultWebhookJob);
-        }
-
-        $webhookCall
-            ->url($url)
-            ->payload($payload)
-            ->withHeaders(['Authorization' => 'Bearer '.$bearer])
-            ->onQueue($this->queue())
-            ->timeoutInSeconds((int) config('byruhaa.webhooks.timeout', 10))
-            ->useSecret($secret);
-
-        $deliveryPayload = $auditPayload ?? $payload;
-        $delivery = $this->createDelivery($webhookCall, $event, $url, $webhookable, $deliveryPayload, $deliveryKey);
-
-        if (! $delivery instanceof WebhookDelivery) {
-            return;
-        }
-
-        $payload['delivery_id'] = $delivery->id;
-        $delivery->forceFill(['payload' => [...$deliveryPayload, 'delivery_id' => $delivery->id]])->save();
-        $webhookCall->payload($payload);
-
-        try {
-            $webhookCall
-                ->meta(['webhook_delivery_id' => $delivery->id])
-                ->dispatch();
-
-            $delivery->forceFill([
-                'status' => WebhookDeliveryStatus::Queued,
-                'queued_at' => now(),
-            ])->save();
-        } catch (Throwable $exception) {
-            $delivery->forceFill([
-                'status' => WebhookDeliveryStatus::Failed,
-                'failed_at' => now(),
-                'error_type' => $exception::class,
-                'error_message' => $this->truncate($exception->getMessage()),
-            ])->save();
-
-            throw $exception;
-        }
+        $this->transport->record($webhookable, $payload, $auditPayload, $deliveryKey);
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
-    private function createDelivery(WebhookCall $webhookCall, string $event, string $url, Model $webhookable, array $payload, ?string $deliveryKey = null): ?WebhookDelivery
+    private function money(int $amountBaisa, string $currency): int
     {
-        try {
-            return WebhookDelivery::query()->create([
-                'uuid' => $webhookCall->getUuid(),
-                'event' => $event,
-                'delivery_key' => $deliveryKey ?? '',
-                'webhook_url' => $url,
-                'webhook_url_hash' => hash('sha256', $url),
-                'webhookable_type' => $webhookable->getMorphClass(),
-                'webhookable_id' => $webhookable->getKey(),
-                'payload' => $payload,
-                'status' => WebhookDeliveryStatus::Pending,
-            ]);
-        } catch (QueryException $exception) {
-            if ($this->isUniqueConstraintViolation($exception)) {
-                return null;
-            }
-
-            throw $exception;
-        }
-    }
-
-    private function money(int $amountBaisa, string $currency): string
-    {
-        return MoneyFactory::formatMinorUnits($amountBaisa, $currency);
+        return $amountBaisa;
     }
 
     private function webhookUrl(string $key): string
     {
-        return $this->configString("byruhaa.webhooks.{$key}");
+        return $this->transport->configuration()[0] ?? '';
     }
 
     /** @return array{string, string, string}|null */
     private function uchatWebhookConfiguration(): ?array
     {
-        $url = $this->configString('byruhaa.uchat.webhook_url');
-        $bearer = $this->configString('byruhaa.uchat.webhook_bearer_token');
-        $secret = $this->configString('byruhaa.uchat.webhook_signing_secret');
-
-        if ($url === '' && $bearer === '' && $secret === '') {
-            return null;
-        }
-
-        $missing = array_values(array_filter([
-            $url === '' ? 'UCHAT_STORE_WEBHOOK_URL' : null,
-            $bearer === '' ? 'UCHAT_STORE_WEBHOOK_BEARER_TOKEN' : null,
-            $secret === '' ? 'UCHAT_STORE_WEBHOOK_SIGNING_SECRET' : null,
-        ]));
-
-        if ($missing !== []) {
-            Log::warning('UChat Store webhook is disabled because its configuration is incomplete.', ['missing' => $missing]);
-
-            return null;
-        }
-
-        if (in_array(config('app.env'), ['staging', 'production'], true) && ! str_starts_with(strtolower($url), 'https://')) {
-            Log::warning('UChat Store webhook is disabled because staging and production require HTTPS.');
-
-            return null;
-        }
-
-        return [$url, $secret, $bearer];
-    }
-
-    private function queue(): ?string
-    {
-        $queue = $this->configString('byruhaa.webhooks.queue', 'default');
-
-        return $queue === '' ? null : $queue;
-    }
-
-    private function configString(string $key, ?string $default = null): string
-    {
-        $value = config($key, $default);
-
-        return is_scalar($value) ? trim((string) $value) : '';
-    }
-
-    private function isUniqueConstraintViolation(QueryException $exception): bool
-    {
-        return in_array((string) $exception->getCode(), ['23000', '23505'], true);
-    }
-
-    private function truncate(string $value, int $limit = 10000): string
-    {
-        return str($value)->limit($limit, '')->toString();
+        return $this->transport->configuration();
     }
 }

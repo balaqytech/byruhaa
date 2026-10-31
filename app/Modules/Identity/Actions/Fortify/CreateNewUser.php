@@ -3,9 +3,9 @@
 namespace App\Modules\Identity\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
+use App\Modules\Identity\Actions\CreateCustomerAccount;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Services\PhoneNumberNormalizer;
-use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -16,7 +16,7 @@ class CreateNewUser implements CreatesNewUsers
 
     public function __construct(
         private PhoneNumberNormalizer $phoneNumberNormalizer,
-        private ByruhaaWebhookSender $webhookSender,
+        private CreateCustomerAccount $createCustomer,
     ) {}
 
     /**
@@ -35,14 +35,12 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
-        $customer = Customer::create([
+        $customer = $this->createCustomer->execute([
             'name' => $input['name'],
             'email' => ($input['email'] ?? null) ?: null,
             'phone_number' => $input['phone_number'],
             'password' => $input['password'],
         ]);
-
-        $this->webhookSender->sendCustomerRegistered($customer);
 
         return $customer;
     }

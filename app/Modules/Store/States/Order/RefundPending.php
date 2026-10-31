@@ -8,7 +8,7 @@ class RefundPending extends OrderState
 
     public function getLabel(): string
     {
-        return __('Refund pending');
+        return 'قيد الاسترداد';
     }
 
     public function getColor(): string
