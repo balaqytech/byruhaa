@@ -26,44 +26,24 @@ afterEach(function () {
     Carbon::setTestNow();
 });
 
-test('homepage loads', function () {
-    $featuredEvent = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
-    $featuredEvent->update(['status' => EventStatus::Published]);
+test('homepage loads with three destination cards and assistant help', function () {
+    $rabbaniyeen = Event::query()->where('slug', 'rabbaniyeen')->firstOrFail();
+    $response = $this->get(route('home'));
 
-    $this->get(route('home'))
-        ->assertSuccessful()
-        ->assertSee('بِيرُحاء إبراء')
-        ->assertSee('مؤسسة تربوية للفتيان من الصف السابع إلى الثاني عشر')
-        ->assertSee($featuredEvent->name)
-        ->assertSee(route('events.show', $featuredEvent), false)
-        ->assertDontSee(route('customer.events.show', $featuredEvent), false)
-        ->assertSee(route('events.index'), false)
+    $response->assertSuccessful()
+        ->assertSee('اختر وجهتك')
+        ->assertSee('إبراء، سلطنة عُمان')
+        ->assertSeeInOrder(['برنامج ربانيين', 'قهوة بيرحاء', 'فعاليات بيرحاء'])
+        ->assertSee(route('events.show', $rabbaniyeen), false)
         ->assertSee(route('coffee'), false)
-        ->assertSeeInOrder(['data-home-featured', 'data-home-coffee', 'data-home-events'], false)
-        ->assertSee('قهوة بيرحاء')
-        ->assertSee('فعاليات بيرحاء')
-        ->assertSee(route('register'), false)
-        ->assertSee(route('minor.login'), false)
-        ->assertDontSee(route('affiliate.login'), false)
-        ->assertDontSee(route('affiliate.register'), false)
-        ->assertSee('حسابي')
-        ->assertSee('logo-dark.png', false)
-        ->assertSee('data-icon="home-01"', false)
-        ->assertSee('data-icon="calendar-03"', false)
-        ->assertDontSee('cdn.hugeicons.com', false)
-        ->assertDontSee('hgi-stroke', false)
-        ->assertSee('data-whatsapp-floating-button', false)
-        ->assertSee('pointer-events-none invisible', false)
-        ->assertSee('data-whatsapp-reveal-sentinel', false)
+        ->assertSee(route('events.index'), false)
+        ->assertSee('https://wa.me/'.config('coffee.whatsapp_number'), false)
+        ->assertSee('data-public-header', false)
         ->assertSee('data-public-footer', false)
-        ->assertSee('data-home-events-link', false)
-        ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
-        ->assertDontSee('يومٌ متوازن، وأثرٌ يمتد')
-        ->assertDontSee('اكتملت المقاعد')
-        ->assertSee('جميع الحقوق محفوظة.')
-        ->assertSee('تطوير')
-        ->assertSee('ردء')
-        ->assertSee('https://red1ai.com/', false);
+        ->assertSee('logo-dark.png', false)
+        ->assertSee('data-whatsapp-floating-button', false);
+
+    expect(substr_count($response->getContent(), 'data-home-destination='))->toBe(3);
 });
 
 test('public event cards show their editorial card content', function () {
@@ -364,33 +344,30 @@ test('landing page registry only exposes registered views that exist', function 
         ->toBe('pages.public.site.events.show');
 });
 
-test('homepage features the nearest published event and hides drafts', function () {
+test('homepage links to the published rabbaniyeen program rather than another featured event', function () {
+    $program = Event::query()->where('slug', 'rabbaniyeen')->firstOrFail();
     $nearestEvent = Event::factory()->create([
         'name' => 'Nearest published event',
         'status' => EventStatus::Published,
         'starts_at' => now()->addDay(),
-        'ends_at' => now()->addDays(2),
     ]);
-    Event::factory()->draft()->create(['name' => 'Hidden draft event']);
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSeeInOrder(['Nearest published event', 'قهوة بيرحاء', 'فعاليات بيرحاء'])
-        ->assertSee(route('events.show', $nearestEvent), false)
-        ->assertDontSee(route('customer.events.show', $nearestEvent), false)
-        ->assertDontSee('Hidden draft event');
+        ->assertSee(route('events.show', $program), false)
+        ->assertDontSee(route('events.show', $nearestEvent), false)
+        ->assertDontSee('الباقة المتاحة الآن');
 });
 
-test('homepage keeps price tier details on the event page', function () {
-    $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
-    $event->update(['status' => EventStatus::Published]);
+test('homepage keeps the program card usable when the program is unpublished', function () {
+    $program = Event::query()->where('slug', 'rabbaniyeen')->firstOrFail();
+    $program->update(['status' => EventStatus::Draft]);
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSee($event->name)
-        ->assertSee(route('events.show', $event), false)
-        ->assertDontSee('الباقة المتاحة الآن')
-        ->assertDontSee('الباقة التالية');
+        ->assertSee('برنامج ربانيين')
+        ->assertSee(route('events.index'), false)
+        ->assertDontSee(route('events.show', $program), false);
 });
 
 test('events page loads', function () {

@@ -174,3 +174,15 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Do NOT delete tests without approval.
 
 </laravel-boost-guidelines>
+
+## Git Flow (Gitflow AVH)
+
+- This project follows Git Flow. Use the Gitflow AVH tool (`git flow`) to start, publish, and finish feature, release, and hotfix branches rather than manually reproducing its operations.
+- `main` is the production branch; `develop` is the integration branch. Start normal development from `develop` using `git flow feature start <descriptive-name>`. Do not commit application changes directly to `main` or `develop` unless explicitly requested.
+- Use the configured prefixes: `feature/`, `bugfix/`, `release/`, `hotfix/`, and `support/`. Do not substitute `codex/` for Git Flow branches.
+- Releases start from `develop` with `git flow release start <version>`. Production hotfixes start from `main` with `git flow hotfix start <version>`.
+- Use semantic versions such as `1.1.0` for releases and `1.0.1` for hotfixes, not dates. Inspect existing tags and confirm the appropriate next version before creating a versioned branch; do not overwrite existing tags.
+- Before Git operations, inspect the working tree, local/remote branch state, and attached worktrees. Preserve unrelated changes and commits; never force-push, reset, or discard work without explicit authorization.
+- Finish a release or hotfix only when the user requests it and relevant checks pass. Resolve merge conflicts while preserving intended behavior. Let AVH merge into `main`, back-merge into `develop`, create the version tag, and clean up the completed branch. Do not create an empty release tag when no changes exist.
+- Push or publish only within the user's authorized scope. When asked to push a finished release or hotfix, push `main`, `develop`, and its specific version tag, preferably atomically; avoid pushing unrelated branches or tags. Verify synchronization afterward.
+- If Gitflow AVH is unavailable or the repository is not initialized for it, report the missing setup before changing the branching strategy. Do not silently replace AVH with a different workflow.
