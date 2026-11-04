@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'waitlist_webhook_url' => env('COFFEE_WAITLIST_WEBHOOK_URL', 'https://www.uchat.com.au/api/iwh/66b6ee32382d27712a58a6ea9c7168e4'),
     'opening_date' => '1 أغسطس 2026',
     'location' => 'مخيم بيرحاء، ولاية إبراء',
     'service_note' => 'البيع والاستلام من الموقع',
