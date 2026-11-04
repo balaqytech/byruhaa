@@ -4,115 +4,55 @@
 ])
 
 @php
-    $featuredImage = match ($featuredEvent?->landing_page_key) {
-        'rabbaniyeen-v1' => asset('images/rabbaniyeen-hero.png'),
-        'umrah-2026-v1' => asset('images/umrah-2026-hero.png'),
-        'life-after-school-v1' => asset('images/after-twelfth-omani-graduate-hero.png'),
-        default => asset('images/after-twelfth-plan-workshop.png'),
-    };
-    $isRabbaniyeen = $featuredEvent?->landing_page_key === 'rabbaniyeen-v1';
-    $featuredActionLabel = $isRabbaniyeen
-        ? 'سجِّل اهتمامك'
-        : ($featuredEvent?->canBook() ? 'احجز الآن' : 'تعرّف إلى الفعالية');
-    $featuredActionUrl = $featuredEvent
-        ? route('events.show', $featuredEvent).($isRabbaniyeen ? '#sajjil' : '')
-        : route('events.index');
+    $destinations = [
+        ['key' => 'rabbaniyeen', 'title' => 'برنامج ربانيين', 'description' => 'برنامج فريد لحفظ القرآن للفتيان من الصف ٧ إلى ١٢، على أيدي خبراء', 'credit' => 'بإشراف عبدالله العيسري', 'url' => $rabbaniyeen ? route('events.show', $rabbaniyeen) : route('events.index'), 'icon' => 'book-open-text'],
+        ['key' => 'coffee', 'title' => 'قهوة بيرحاء', 'description' => 'أول قهوة مختصة صُمّمت للفتيان من ١٣ إلى ١٨ وفق قيم تربوية رفيعة', 'credit' => 'بقيادة عبدالله العيسري', 'url' => route('coffee'), 'icon' => 'coffee'],
+        ['key' => 'events', 'title' => 'فعاليات بيرحاء', 'description' => 'فعاليات تغطي كل قيم خماسية السكينة في بيئة آمنة', 'credit' => 'بقيادة عبدالله العيسري', 'url' => route('events.index'), 'icon' => 'calendar-03'],
+    ];
+    $assistantUrl = 'https://wa.me/'.config('coffee.whatsapp_number').'?text='.rawurlencode('السلام عليكم، أحتاج مساعدة لاختيار وجهتي في بيرحاء.');
 @endphp
 
 @section('content')
-    <section data-home-featured class="relative isolate overflow-hidden bg-[#123329] text-[#f7f1df]">
-        <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_88%_12%,rgba(52,211,153,0.12),transparent_36%)]"></div>
-        <div class="mx-auto w-full max-w-7xl px-4 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-14 lg:px-8 lg:py-20">
-            <div class="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-white/15 pb-5 text-sm">
-                <p class="font-bold tracking-wide text-[#a5dfca]">بِيرُحاء إبراء</p>
-                <p class="text-[#f7f1df]/65">مؤسسة تربوية للفتيان من الصف السابع إلى الثاني عشر</p>
-            </div>
+    <section aria-labelledby="destinations-title" class="relative isolate overflow-hidden">
+        <div class="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_80%_10%,rgba(0,144,96,0.13),transparent_55%)] dark:bg-[radial-gradient(ellipse_at_80%_10%,rgba(52,211,153,0.08),transparent_55%)]" aria-hidden="true"></div>
+        <div class="mx-auto flex min-h-[calc(100svh-10rem)] max-w-7xl flex-col justify-center px-4 py-3 sm:px-6 lg:min-h-[calc(100svh-5rem)] lg:px-8 lg:py-20">
+            <header class="mb-4 max-w-2xl lg:mb-12">
+                <p class="mb-2 flex items-center gap-3 text-xs lg:mb-4 lg:text-sm font-bold text-[#2a8069] dark:text-[#a8d9ca]">
+                    <span class="h-px w-8 bg-[#b8893a]" aria-hidden="true"></span>
+                    إبراء، سلطنة عُمان
+                </p>
+                <h1 id="destinations-title" class="font-heading text-[28px] font-black leading-tight tracking-tight text-[#123329] sm:text-5xl lg:text-6xl dark:text-[#f7f1df]">اختر وجهتك</h1>
+            </header>
 
-            @if ($featuredEvent)
-                <article class="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] lg:gap-14">
-                    <div class="relative order-1 overflow-hidden border border-white/15 bg-[#224539] lg:order-2">
-                        <img src="{{ $featuredImage }}" alt="{{ $featuredEvent->name }}" width="1536" height="1024"
-                            fetchpriority="high" class="aspect-[16/10] w-full object-cover lg:aspect-[5/4]">
-                        <div class="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10"></div>
-                    </div>
-
-                    <div class="order-2 max-w-2xl lg:order-1">
-                        <p class="inline-flex items-center gap-2 text-sm font-bold text-[#a5dfca]">
-                            <span class="size-2 rounded-full bg-[#a5dfca]"></span>
-                            {{ $isRabbaniyeen ? 'تحفيظ القرآن للفتيان' : 'الفعالية القادمة' }}
-                        </p>
-                        <h1 class="mt-3 font-heading text-5xl font-bold leading-[1.2] sm:mt-5 sm:text-6xl lg:text-7xl">
-                            {{ $featuredEvent->name }}
-                        </h1>
-                        <p class="mt-3 max-w-[48ch] text-lg leading-9 text-[#f7f1df]/82 sm:mt-5">
-                            {{ $isRabbaniyeen ? 'وِردٌ يوميٌّ مع مشرفٍ يتابع ابنك، وليلتان في بيرحاء كل شهر.' : $featuredEvent->excerpt }}
-                        </p>
-                        <div class="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[#f7f1df]/66 sm:mt-7">
-                            <span class="inline-flex items-center gap-2">
-                                <x-hugeicon name="calendar-03" class="text-lg" />
-                                {{ $featuredEvent->starts_at?->translatedFormat('j F Y') ?? 'يُعلن الموعد قريبًا' }}
+            <div class="grid gap-3 lg:grid-cols-3 lg:gap-6">
+                @foreach ($destinations as $destination)
+                    <a href="{{ $destination['url'] }}" data-home-destination="{{ $destination['key'] }}"
+                        class="group relative grid grid-cols-[48px_minmax(0,1fr)] items-center gap-x-3 rounded-2xl lg:flex lg:flex-col lg:items-stretch lg:gap-x-0 border border-[#2a8069]/20 bg-white/90 p-3 shadow-[0_8px_28px_rgba(18,51,41,0.04)] transition-[background-color,border-color,box-shadow] duration-200 hover:border-[#009060]/50 hover:bg-white hover:shadow-[0_16px_36px_rgba(18,51,41,0.09)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#009060] lg:p-8 dark:border-white/15 dark:bg-[#10241e]/90 dark:hover:border-[#6fbd9f]/50 dark:hover:bg-[#142d25]">
+                        <div class="col-start-1 row-span-3 row-start-1 flex items-center justify-between lg:mb-6 lg:gap-4">
+                            <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-[#dff6ef] text-2xl lg:size-16 lg:text-[32px] text-[#137051] dark:bg-[#1c3c30] dark:text-[#a8d9ca]" aria-hidden="true">
+                                @if ($destination['icon'] === 'coffee')
+                                    <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="size-6 lg:size-8">
+                                        <path d="M7 18h22v8a9 9 0 0 1-9 9h-4a9 9 0 0 1-9-9zM29 20h3a5 5 0 0 1 0 10h-4M12 6c-2 3 2 4 0 7M18 6c-2 3 2 4 0 7M24 6c-2 3 2 4 0 7" />
+                                    </svg>
+                                @else
+                                    <x-hugeicon :name="$destination['icon']" />
+                                @endif
                             </span>
-                            @if ($featuredEvent->location)
-                                <span class="inline-flex items-center gap-2">
-                                    <x-hugeicon name="map-pin" class="text-lg" />
-                                    {{ $featuredEvent->location }}
-                                </span>
-                            @endif
+                            <span class="hidden lg:block" aria-hidden="true">
+                                <x-hugeicon name="arrow-left-02" class="text-2xl text-[#b8893a]" />
+                            </span>
                         </div>
-                        <a href="{{ $featuredActionUrl }}"
-                            class="mt-6 inline-flex min-h-13 items-center justify-center gap-3 bg-[#f7f1df] px-7 py-3 text-base font-bold text-[#123329] transition-colors hover:bg-[#d9f3e8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#f7f1df] sm:mt-9">
-                            {{ $featuredActionLabel }}
-                            <x-hugeicon name="arrow-left-02" class="text-xl" />
-                        </a>
-                    </div>
-                </article>
-            @else
-                <div class="max-w-3xl py-14">
-                    <p class="text-sm font-bold text-[#a5dfca]">قريبًا في بيرحاء</p>
-                    <h1 class="mt-5 font-heading text-4xl font-bold leading-tight sm:text-6xl">نعدّ الفعالية القادمة</h1>
-                    <p class="mt-5 text-lg leading-9 text-[#f7f1df]/78">ستظهر هنا بمجرد اعتماد موعدها وفتحها للجمهور.</p>
-                    <a href="{{ route('events.index') }}"
-                        class="mt-8 inline-flex min-h-12 items-center gap-3 bg-[#f7f1df] px-6 py-3 font-bold text-[#123329] transition-colors hover:bg-[#d9f3e8]">
-                        تصفَّح البرامج
-                        <x-hugeicon name="arrow-left-02" class="text-xl" />
+                        <h2 class="col-start-2 row-start-1 mb-1 font-heading text-[22px] font-bold leading-snug lg:mb-3 lg:text-[28px] text-[#123329] lg:text-3xl dark:text-[#f7f1df]">{{ $destination['title'] }}</h2>
+                        <p class="col-start-2 row-start-2 mb-2 text-sm leading-6 lg:mb-7 lg:text-base lg:leading-8 text-[#526c61] lg:text-lg dark:text-[#b6cbbf]">{{ $destination['description'] }}</p>
+                        <p class="col-start-2 row-start-3 text-xs lg:mt-auto lg:border-t lg:border-[#2a8069]/15 lg:pt-5 lg:text-sm font-bold text-[#2a8069] dark:border-white/10 dark:text-[#a8d9ca]">{{ $destination['credit'] }}</p>
                     </a>
-                </div>
-            @endif
-        </div>
-    </section>
+                @endforeach
+            </div>
 
-    <section data-home-coffee class="bg-[#f6fbf8] py-14 sm:py-20 dark:bg-[#0a1914]">
-        <div class="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:px-8">
-            <div class="max-w-xl">
-                <p class="text-sm font-bold text-[#007a52] dark:text-[#8ad9b8]">المتجر / ٠٢</p>
-                <h2 class="mt-4 font-heading text-4xl font-bold leading-tight text-[#123329] sm:text-5xl dark:text-[#f7f1df]">قهوة بيرحاء</h2>
-                <p class="mt-5 text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/78">اطلب قهوتك من متجر بيرحاء الإلكتروني.</p>
-                <a href="{{ route('coffee') }}"
-                    class="mt-7 inline-flex min-h-12 items-center gap-3 border-b-2 border-[#007a52] pb-2 text-base font-bold text-[#007a52] transition-colors hover:border-[#123329] hover:text-[#123329] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#007a52] dark:border-[#8ad9b8] dark:text-[#8ad9b8] dark:hover:text-white">
-                    اطلب الآن
-                    <x-hugeicon name="arrow-left-02" class="text-xl" />
-                </a>
-            </div>
-            <div class="overflow-hidden border border-[#2a8069]/15 bg-white dark:border-white/10">
-                <img src="{{ asset('images/coffee-byruha-menu.webp') }}"
-                    alt="قهوة بيرحاء ومخبوزاتها" width="1536" height="1024" loading="lazy"
-                    class="aspect-[16/9] w-full object-cover sm:aspect-[2/1] lg:aspect-[16/9]">
-            </div>
-        </div>
-    </section>
-
-    <section data-home-events class="border-t border-[#2a8069]/14 bg-white py-14 sm:py-20 dark:border-white/10 dark:bg-[#07120f]">
-        <div class="mx-auto grid w-full max-w-7xl items-end gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-12 lg:px-8">
-            <div class="max-w-3xl">
-                <p class="text-sm font-bold text-[#007a52] dark:text-[#8ad9b8]">للفتيان وآبائهم / ٠٣</p>
-                <h2 class="mt-4 font-heading text-4xl font-bold leading-tight text-[#123329] sm:text-5xl dark:text-[#f7f1df]">فعاليات بيرحاء</h2>
-                <p class="mt-5 text-lg leading-8 text-[#315e52] dark:text-[#d2e7df]/78">مخيمات ورحلات ولقاءات تربوية، من ساعةٍ إلى شهر.</p>
-            </div>
-            <a href="{{ route('events.index') }}" data-home-events-link
-                class="inline-flex min-h-13 w-fit items-center justify-center gap-3 bg-[#007a52] px-7 py-3 text-base font-bold text-white transition-colors hover:bg-[#006746] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#007a52]">
-                تصفَّح البرامج
-                <x-hugeicon name="arrow-left-02" class="text-xl" />
-            </a>
+            <p class="mt-3 text-xs leading-6 lg:mt-8 lg:text-sm lg:leading-7 text-[#526c61] sm:text-base dark:text-[#b6cbbf]">
+                هل تحتاج إلى عون؟
+                <a href="{{ $assistantUrl }}" class="rounded font-bold text-[#137051] underline decoration-[#b8893a]/60 underline-offset-4 hover:decoration-[#137051] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#009060] dark:text-[#a8d9ca]">اسأل مساعد بيرحاء.</a>
+            </p>
         </div>
     </section>
 @endsection
