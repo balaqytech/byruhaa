@@ -2,11 +2,12 @@
 
 namespace Database\Factories;
 
-use App\Enums\UserRole;
+use App\Modules\Identity\Models\Role;
 use App\Modules\Identity\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
 
 /**
  * @extends Factory<User>
@@ -20,6 +21,21 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    public function configure(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            $staffRole = Role::findOrCreate('staff', 'web');
+
+            if ($staffRole->permissions()->doesntExist()) {
+                $staffRole->givePermissionTo(collect(config('filament-shield.staff_permissions'))
+                    ->map(fn (string $name): Permission => Permission::findOrCreate($name, 'web'))
+                    ->all());
+            }
+
+            $user->assignRole($staffRole);
+        });
+    }
+
     /**
      * Define the model's default state.
      *
@@ -30,7 +46,6 @@ class UserFactory extends Factory
         return [
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'role' => UserRole::Staff,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -57,8 +72,8 @@ class UserFactory extends Factory
 
     public function admin(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'role' => UserRole::Admin,
-        ]);
+        return $this->afterCreating(function (User $user): void {
+            $user->syncRoles(Role::findOrCreate(config('filament-shield.super_admin.name'), 'web'));
+        });
     }
 }

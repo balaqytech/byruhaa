@@ -1,0 +1,35 @@
+<?php
+
+use App\Http\Middleware\AuthenticateMinorProfile;
+use App\Modules\Identity\Http\Controllers\MinorProfileAuthController;
+use App\Modules\Identity\Http\Controllers\PushSubscriptionController;
+use App\Modules\Store\Http\Controllers\MinorProfileStoreController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('throttle:10,1')->group(function (): void {
+    Route::get('minor/login', [MinorProfileAuthController::class, 'showLogin'])->name('minor.login');
+    Route::post('minor/login', [MinorProfileAuthController::class, 'login'])->name('minor.login.store');
+    Route::get('minor/activate/{minorProfile}/{token}', [MinorProfileAuthController::class, 'showActivation'])
+        ->middleware('signed')
+        ->name('minor.activate');
+    Route::post('minor/activate/{minorProfile}/{token}', [MinorProfileAuthController::class, 'activate'])
+        ->middleware('signed')
+        ->name('minor.activate.store');
+});
+
+Route::middleware(['auth:minor-profile', AuthenticateMinorProfile::class])
+    ->prefix('minor')
+    ->name('minor.')
+    ->group(function (): void {
+        Route::get('dashboard', [MinorProfileStoreController::class, 'dashboard'])->name('dashboard');
+        Route::get('orders', [MinorProfileStoreController::class, 'orders'])->name('orders.index');
+        Route::get('wallet/movements', [MinorProfileStoreController::class, 'walletMovements'])->name('wallet.movements.index');
+        Route::get('notifications', [MinorProfileStoreController::class, 'notifications'])->name('notifications.index');
+        Route::post('notifications/read', [MinorProfileStoreController::class, 'markAllNotificationsAsRead'])->name('notifications.read-all');
+        Route::post('notifications/{notification}/open', [MinorProfileStoreController::class, 'openNotification'])->name('notifications.open');
+        Route::get('orders/{order:payment_token}', [MinorProfileStoreController::class, 'show'])->name('orders.show');
+        Route::post('orders/{order:payment_token}/payment', [MinorProfileStoreController::class, 'pay'])->middleware('throttle:10,1')->name('orders.payment');
+        Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:10,1')->name('push-subscriptions.store');
+        Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->middleware('throttle:10,1')->name('push-subscriptions.destroy');
+        Route::post('logout', [MinorProfileAuthController::class, 'logout'])->name('logout');
+    });

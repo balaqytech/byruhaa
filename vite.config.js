@@ -10,6 +10,7 @@ export default defineConfig({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.js',
+                'resources/js/pos-qr-scanner.js',
                 'resources/js/public-site.js',
                 'resources/css/filament/admin/theme.css',
             ],

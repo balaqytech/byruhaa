@@ -7,14 +7,14 @@ use App\Filament\Resources\Discounts\Pages\EditDiscount;
 use App\Filament\Resources\Discounts\Pages\ListDiscounts;
 use App\Filament\Resources\Discounts\Schemas\DiscountForm;
 use App\Filament\Resources\Discounts\Tables\DiscountsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Events\Models\Discount;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class DiscountResource extends Resource
+class DiscountResource extends ShieldResource
 {
     protected static ?string $model = Discount::class;
 

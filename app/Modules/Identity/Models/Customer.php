@@ -5,11 +5,13 @@ namespace App\Modules\Identity\Models;
 use App\Models\WebhookDelivery;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\EventInterest;
+use App\Notifications\CustomerResetPasswordNotification;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,6 +24,7 @@ use Illuminate\Validation\ValidationException;
  * @property string $name
  * @property string|null $email
  * @property string $phone_number
+ * @property Carbon|null $phone_verified_at
  * @property string|null $civil_id
  * @property string|null $address
  * @property string|null $wilaya
@@ -42,6 +45,26 @@ class Customer extends Authenticatable
     protected static function newFactory(): CustomerFactory
     {
         return CustomerFactory::new();
+    }
+
+    /** @return HasMany<CustomerDeletionRequest, $this> */
+    public function deletionRequests(): HasMany
+    {
+        return $this->hasMany(CustomerDeletionRequest::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (Customer $customer): void {
+            if ($customer->isDirty('phone_number')) {
+                $customer->phone_verified_at = null;
+            }
+        });
+    }
+
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new CustomerResetPasswordNotification($token));
     }
 
     /**
@@ -95,6 +118,27 @@ class Customer extends Authenticatable
     }
 
     /**
+     * @return HasMany<CustomerPhoneVerification, $this>
+     */
+    public function phoneVerifications(): HasMany
+    {
+        return $this->hasMany(CustomerPhoneVerification::class);
+    }
+
+    public function hasVerifiedPhone(): bool
+    {
+        return $this->phone_verified_at !== null;
+    }
+
+    /**
+     * @return HasManyThrough<MinorProfile, FamilyMember, $this>
+     */
+    public function minorProfiles(): HasManyThrough
+    {
+        return $this->hasManyThrough(MinorProfile::class, FamilyMember::class);
+    }
+
+    /**
      * @return HasMany<Booking, $this>
      */
     public function bookings(): HasMany
@@ -125,6 +169,7 @@ class Customer extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'additional_info' => 'array',
         ];

@@ -6,6 +6,7 @@ return [
         'customer_management' => 'إدارة العملاء',
         'finance' => 'المالية',
         'store' => 'المتجر',
+        'user_management' => 'إدارة المستخدمين',
     ],
 
     'resources' => [
@@ -53,6 +54,11 @@ return [
             'label' => 'عميل',
             'plural_label' => 'العملاء',
             'navigation_label' => 'العملاء',
+        ],
+        'users' => [
+            'label' => 'مستخدم',
+            'plural_label' => 'المستخدمون',
+            'navigation_label' => 'المستخدمون',
         ],
         'discounts' => [
             'label' => 'خصم',
@@ -144,6 +150,7 @@ return [
     'event_landing_pages' => [
         'life_after_school_v1' => 'الحياة بعد المدرسة، الإصدار الأول',
         'umrah_2026_v1' => 'رحلة العمرة ٢٠٢٦، الإصدار الأول',
+        'rabbaniyeen_v1' => 'ربانيين، الإصدار الأول',
     ],
 
     'event_infolist' => [
@@ -273,6 +280,11 @@ return [
 
     'fields' => [
         'affiliate' => 'المسوق',
+        'allergens' => 'مسبّبات الحساسية',
+        'author_name' => 'اسم المؤلف',
+        'display_tag' => 'وسم العرض',
+        'short_name' => 'الاسم المختصر',
+        'source_name' => 'الاسم الأصلي',
         'affiliate_code' => 'رمز المسوق',
         'affiliate_link' => 'رابط المسوق',
         'affiliate_name' => 'اسم المسوق',
@@ -329,6 +341,7 @@ return [
         'due_date' => 'تاريخ الاستحقاق',
         'email_address' => 'البريد الإلكتروني',
         'email_verified_at' => 'تاريخ التحقق من البريد',
+        'permission_roles' => 'أدوار الصلاحيات',
         'ends_at' => 'ينتهي في',
         'entries' => 'القيود',
         'event' => 'الفعالية',
@@ -363,6 +376,10 @@ return [
         'phone_number' => 'رقم الهاتف',
         'percentage' => 'النسبة',
         'price' => 'السعر',
+        'member_price' => 'سعر أعضاء بيرحاء',
+        'regular_unit_price' => 'سعر الوحدة العادي',
+        'regular_total' => 'الإجمالي قبل خصم العضوية',
+        'pricing_tier' => 'فئة التسعير',
         'processed_at' => 'تاريخ المعالجة',
         'posts' => 'التدوينات',
         'provider' => 'مزود الدفع',
@@ -373,6 +390,7 @@ return [
         'provider_status' => 'حالة المزود',
         'pickup_at' => 'وقت الاستلام',
         'pickup_date' => 'تاريخ الاستلام',
+        'has_member_price' => 'لديه سعر أعضاء',
         'recipient' => 'المستلم',
         'recipient_phone' => 'هاتف المستلم',
         'reason' => 'السبب',
@@ -430,6 +448,19 @@ return [
         'wilaya' => 'الولاية',
     ],
 
+    'user_form' => [
+        'sections' => [
+            'account' => 'بيانات الحساب',
+            'permissions' => 'الأدوار والصلاحيات',
+        ],
+        'help' => [
+            'permission_roles' => 'تتحكم أدوار Shield في صلاحيات هذا المستخدم داخل لوحة الإدارة.',
+        ],
+        'errors' => [
+            'last_super_admin' => 'لا يمكن إزالة دور المدير الأعلى من آخر مستخدم يحمله.',
+        ],
+    ],
+
     'filters' => [
         'refundable' => 'قابل للاسترداد',
         'pickup_date' => 'تاريخ الاستلام',
@@ -468,10 +499,77 @@ return [
     ],
 
     'store' => [
+        'product_tabs' => [
+            'details' => 'البيانات والوصف',
+            'media' => 'الصور والفيديو',
+            'options' => 'الخيارات والأسعار',
+        ],
+        'product_list_tabs' => [
+            'all' => 'كل المنتجات',
+            'featured' => 'المميزة',
+            'options_count' => 'عدد الخيارات',
+        ],
+        'category_media' => [
+            'image' => 'صورة التصنيف',
+            'image_help' => 'المقاس الموصى به ٩٠٠ × ١٤٠٠ بكسل (بنسبة ٩:١٤). يفضّل WebP، ويمكن استخدام JPEG أو PNG، حتى ٥ ميغابايت.',
+            'invalid_image' => 'اختر صورة JPEG أو PNG أو WebP لا تتجاوز ٥ ميغابايت.',
+        ],
+        'product_media' => [
+            'video' => 'فيديو المنتج',
+            'video_help' => 'اختياري. MP4 أو WebM حتى ٥٠ ميغابايت. يظهر قبل الصورة الرئيسية في القائمة وصفحة المنتج.',
+            'gallery' => 'معرض صور المنتج',
+            'gallery_help' => 'حتى ٨ صور، ١٠ ميغابايت للصورة. اسحب الصور لترتيب عرضها.',
+            'invalid_video' => 'اختر فيديو MP4 أو WebM بحجم لا يتجاوز ٥٠ ميغابايت.',
+            'invalid_image' => 'اختر صورة بحجم لا يتجاوز ١٠ ميغابايت.',
+        ],
+        'admin_order' => [
+            'quick_create_minor' => 'إضافة قائد سريعًا',
+            'birth_date' => 'تاريخ الميلاد',
+            'school_name' => 'المدرسة',
+            'grade' => 'الصف',
+            'guardian_consent_confirmed' => 'أؤكد أن ولي الأمر وافق على إنشاء حساب القائد والشراء من المتجر.',
+            'minor_created_pending' => 'تم إنشاء حساب القائد، وهو بانتظار التفعيل قبل إضافته إلى الطلب.',
+            'activation_link' => 'رابط التفعيل (صالح ليوم واحد)',
+            'create_guest_order' => 'إضافة طلب ضيف',
+            'guest_details' => 'بيانات الضيف',
+            'guest' => 'ضيف',
+            'quick_create_customer' => 'إضافة عميل سريعًا',
+            'minor_profile' => 'حساب القائد',
+            'minor_optional_help' => 'اتركه فارغًا لطلب العميل. الدفع بالمحفظة متاح للقائد فقط.',
+            'payment_method' => 'طريقة الدفع',
+            'direct_payment' => 'دفع مباشر (رابط ثواني)',
+            'minor_wallet' => 'محفظة القائد',
+            'pickup_type' => 'نوع الاستلام',
+            'wallet_requires_minor' => 'اختر حساب القائد للدفع من محفظته.',
+            'wallet_insufficient' => 'رصيد محفظة القائد غير كافٍ لإتمام الطلب. اشحن المحفظة أو اختر الدفع المباشر.',
+            'creation_failed' => 'تعذّر إنشاء الطلب',
+            'creation_failed_help' => 'حدث خطأ أثناء حفظ الطلب. لم يتم تأكيده أو خصم المحفظة. تحقق من إعدادات النظام أو تواصل مع المسؤول التقني.',
+            'create_order' => 'إنشاء الطلب',
+            'confirmation' => 'طلب المحفظة يُخصم ويُؤكَّد فورًا. الطلب بالدفع المباشر ينتظر السداد عبر الرابط المعروض في صفحة الطلب.',
+            'payment_link' => 'رابط الدفع',
+            'payment_link_unavailable' => 'لا يوجد رابط دفع نشط. ربما انتهت مهلة الطلب أو دُفع بالفعل.',
+            'payment_window' => 'تنتهي مهلة الطلب بالدفع المباشر بعد :minutes دقيقة إذا لم يُدفع. شارك الرابط سريعًا.',
+            'paid_at' => 'تاريخ الدفع',
+            'payment_reference' => 'مرجع الدفع',
+        ],
+        'order_tabs' => [
+            'customer_payment' => 'العميل والدفع',
+            'pickup_notes' => 'الاستلام والملاحظات',
+        ],
+        'order_list_tabs' => [
+            'all' => 'كل الطلبات',
+            'pending_payment' => 'بانتظار الدفع',
+            'in_progress' => 'قيد التنفيذ',
+            'completed' => 'مكتملة',
+            'exceptions' => 'الاستثناءات والاستردادات',
+        ],
         'default_option_help' => 'يجب أن يحتفظ كل منتج بخيار افتراضي واحد فقط. حفظ خيار افتراضي جديد يستبدل الخيار الحالي.',
         'price_includes_vat_help' => 'السعر المدخل هو السعر النهائي شامل ضريبة القيمة المضافة ٥٪.',
+        'member_price_help' => 'اختياري. يجب أن يكون موجبًا وأقل من السعر العادي، ويشمل ضريبة القيمة المضافة.',
+        'member_price_must_be_lower' => 'يجب أن يكون سعر الأعضاء موجبًا وأقل من السعر العادي.',
         'featured_help' => 'يظهر المنتج في تبويب «الأكثر طلبًا» مع بقائه ضمن تصنيفه الأصلي.',
         'sections' => [
+            'customer_payment' => 'بيانات العميل والدفع',
             'identity' => 'الهوية',
             'content' => 'المحتوى',
             'media' => 'الوسائط',
@@ -505,6 +603,10 @@ return [
             'immediate' => 'فوري',
             'scheduled' => 'مجدول',
         ],
+        'pricing_tiers' => [
+            'standard' => 'عادي',
+            'member' => 'عضو بيرحاء',
+        ],
         'actions' => [
             'change_status' => 'تغيير الحالة',
             'adjust_stock' => 'تعديل المخزون',
@@ -529,6 +631,8 @@ return [
         ],
         'inventory' => [
             'history' => 'سجل المخزون',
+            'options_overview' => 'الخيارات والمخزون',
+            'options_overview_help' => 'عدّل الخيارات وأسعارها من تبويب «الخيارات والأسعار» أعلاه، واستخدم هذه القائمة لضبط المخزون. جميع الحركات في تبويب سجل المخزون.',
         ],
     ],
 

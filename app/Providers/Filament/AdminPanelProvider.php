@@ -2,17 +2,18 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\MediaManager;
 use App\Modules\Content\Filament\Resources\PublicPages\PublicPageResource;
 use App\Modules\Store\Filament\Pages\ManageStoreSettings;
 use App\Modules\Store\Filament\Resources\Categories\CategoryResource;
-use App\Modules\Store\Filament\Resources\Options\ProductOptionResource;
 use App\Modules\Store\Filament\Resources\Orders\OrderResource;
 use App\Modules\Store\Filament\Resources\Products\ProductResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -25,6 +26,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Slimani\MediaManager\MediaManagerPlugin;
+use Tapp\FilamentAuditing\FilamentAuditingPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -43,7 +45,6 @@ class AdminPanelProvider extends PanelProvider
             ->resources([
                 CategoryResource::class,
                 ProductResource::class,
-                ProductOptionResource::class,
                 OrderResource::class,
                 PublicPageResource::class,
             ])
@@ -59,6 +60,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugin(
                 MediaManagerPlugin::make()
+                    ->mediaManagerPage(MediaManager::class)
                     ->navigationGroup(__('admin.navigation.content')),
             )
             ->middleware([
@@ -71,6 +73,11 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+            ])
+            ->plugins([
+                FilamentShieldPlugin::make()
+                    ->navigationGroup(__('admin.navigation.user_management')),
+                FilamentAuditingPlugin::make(),
             ])
             ->authMiddleware([
                 Authenticate::class,

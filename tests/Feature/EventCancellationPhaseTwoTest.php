@@ -1,11 +1,16 @@
 <?php
 
+beforeEach(function (): void {
+    config(['byruhaa.uchat.webhook_bearer_token' => 'outbound-test', 'byruhaa.uchat.webhook_signing_secret' => 'signing-test']);
+});
+
 use App\Actions\CancelEvent;
 use App\Actions\ReverseAffiliateCommission;
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Enums\EventCancellationStatus;
 use App\Enums\EventStatus;
 use App\Jobs\ProcessEventCancellation;
+use App\Jobs\UchatWebhookJob as CallWebhookJob;
 use App\Models\EventCancellation;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliateCommission;
@@ -18,10 +23,9 @@ use App\Modules\Identity\Models\Customer;
 use App\Notifications\EventCancelledNotification;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
-use Spatie\WebhookServer\CallWebhookJob;
 
 test('event cancellation notifies each affected customer once and queues its webhook', function () {
-    config(['byruhaa.webhooks.event_cancelled_url' => 'https://partner.test/event-cancelled']);
+    config(['byruhaa.uchat.webhook_url' => 'https://partner.test/event-cancelled']);
     Notification::fake();
     Queue::fake();
     $event = Event::factory()->create(['status' => EventStatus::Published]);

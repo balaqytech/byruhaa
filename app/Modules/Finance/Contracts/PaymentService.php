@@ -17,5 +17,5 @@ interface PaymentService
 
     public function cancelPayment(string $paymentReference): ?PaymentVerificationData;
 
-    public function refundPayment(string $paymentReference, int $amountBaisa, string $reason): PaymentRefundData;
+    public function refundPayment(string $paymentReference, int $amountBaisa, string $reason, ?string $operationKey = null): PaymentRefundData;
 }

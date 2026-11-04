@@ -50,9 +50,14 @@ test('store catalog migrations run up and down cleanly', function (): void {
             'database/migrations/2026_08_13_103809_add_payment_token_to_store_orders_table.php',
             'database/migrations/2026_08_13_150123_add_receipt_snapshots_to_store_orders_table.php',
             'database/migrations/2026_08_13_190000_add_uchat_owner_key_to_store_carts_table.php',
+            'database/migrations/2026_09_24_113532_add_member_price_baisa_to_store_product_options_table.php',
+            'database/migrations/2026_09_24_113534_add_member_pricing_snapshots_to_store_orders_and_items.php',
+            'database/migrations/2026_09_24_113535_backfill_member_pricing_snapshots.php',
         ];
         $migrations = [];
         $legacyCartId = null;
+        $legacyOrderId = null;
+        $legacyOrderItemId = null;
 
         foreach ($migrationPaths as $migrationPath) {
             if ($migrationPath === 'database/migrations/2026_08_13_190000_add_uchat_owner_key_to_store_carts_table.php') {
@@ -60,6 +65,34 @@ test('store catalog migrations run up and down cleanly', function (): void {
                     'token' => (string) Str::uuid(),
                     'customer_id' => null,
                     'last_activity_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            if ($migrationPath === 'database/migrations/2026_09_24_113534_add_member_pricing_snapshots_to_store_orders_and_items.php') {
+                $legacyOrderId = DB::table('store_orders')->insertGetId([
+                    'reference' => 'LEGACY-ORDER',
+                    'payment_token' => (string) Str::uuid(),
+                    'idempotency_key' => (string) Str::uuid(),
+                    'customer_name' => 'Legacy customer',
+                    'customer_phone' => '+96891234567',
+                    'subtotal_baisa' => 952,
+                    'vat_baisa' => 48,
+                    'total_baisa' => 1000,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $legacyOrderItemId = DB::table('store_order_items')->insertGetId([
+                    'order_id' => $legacyOrderId,
+                    'product_name' => 'Legacy product',
+                    'option_name' => 'Standard',
+                    'sku' => 'LEGACY-SKU',
+                    'unit_price_baisa' => 1000,
+                    'quantity' => 1,
+                    'vat_baisa' => 48,
+                    'line_subtotal_baisa' => 952,
+                    'line_total_baisa' => 1000,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -84,7 +117,20 @@ test('store catalog migrations run up and down cleanly', function (): void {
         expect(Schema::hasColumn('store_products', 'is_featured'))->toBeTrue()
             ->and(Schema::hasColumn('store_products', 'featured_sort_order'))->toBeTrue();
         expect(Schema::hasColumn('store_carts', 'uchat_owner_key'))->toBeTrue();
+        expect(Schema::hasColumn('store_product_options', 'member_price_baisa'))->toBeTrue();
+        expect(Schema::getColumnListing('store_orders'))
+            ->toContain('regular_total_baisa', 'discount_baisa', 'pricing_tier');
+        expect(Schema::getColumnListing('store_order_items'))
+            ->toContain('regular_unit_price_baisa', 'unit_discount_baisa', 'line_discount_baisa');
         expect(DB::table('store_carts')->where('id', $legacyCartId)->exists())->toBeTrue();
+        expect(DB::table('store_orders')->where('id', $legacyOrderId)->first())
+            ->regular_total_baisa->toBe(1000)
+            ->discount_baisa->toBe(0)
+            ->pricing_tier->toBe('standard');
+        expect(DB::table('store_order_items')->where('id', $legacyOrderItemId)->first())
+            ->regular_unit_price_baisa->toBe(1000)
+            ->unit_discount_baisa->toBe(0)
+            ->line_discount_baisa->toBe(0);
         expect(collect(Schema::getIndexes('store_inventory_reservation_items'))->pluck('name')->all())
             ->toContain('store_reservation_items_reservation_option_unique');
         expect(collect(Schema::getIndexes('store_order_inventory_reservations'))->pluck('name')->all())

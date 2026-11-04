@@ -3,15 +3,22 @@
 namespace App\Providers;
 
 use App\Listeners\UpdateWebhookDeliveryStatus;
+use App\Modules\Identity\Models\User;
+use App\Policies\AuditPolicy;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallFailedEvent;
 use Spatie\WebhookServer\Events\WebhookCallSucceededEvent;
+use Tapp\FilamentAuditing\Models\Audit;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,7 +36,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerWebhookDeliveryListeners();
+        $this->registerAuditAuthorization();
+        $this->registerLogViewerAuthorization();
         $this->configureDefaults();
+        RateLimiter::for('uchat', function (Request $request) {
+            $integrationFingerprint = hash('sha256', (string) config('byruhaa.uchat.api_token', 'unconfigured'));
+
+            return Limit::perMinute((int) config('byruhaa.uchat.rate_limit', 60))
+                ->by(hash('sha256', 'uchat|'.$integrationFingerprint.'|'.($request->ip() ?? 'unknown')));
+        });
+
     }
 
     protected function registerWebhookDeliveryListeners(): void
@@ -37,6 +53,29 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(WebhookCallSucceededEvent::class, UpdateWebhookDeliveryStatus::class);
         Event::listen(WebhookCallFailedEvent::class, UpdateWebhookDeliveryStatus::class);
         Event::listen(FinalWebhookCallFailedEvent::class, UpdateWebhookDeliveryStatus::class);
+    }
+
+    protected function registerLogViewerAuthorization(): void
+    {
+        Gate::define('viewLogViewer', static function (?User $user): bool {
+            return $user?->isPanelAdministrator()
+                || $user?->can('View:LogViewer');
+        });
+    }
+
+    protected function registerAuditAuthorization(): void
+    {
+        Gate::policy(Audit::class, AuditPolicy::class);
+
+        Gate::define('audit', static function (?User $user): bool {
+            return $user?->isPanelAdministrator()
+                || $user?->can('View:Audit');
+        });
+
+        Gate::define('restoreAudit', static function (?User $user): bool {
+            return $user?->isPanelAdministrator()
+                || $user?->can('Restore:Audit');
+        });
     }
 
     /**
@@ -50,14 +89,14 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
+        Password::defaults(
+            fn (): ?Password => app()->isProduction()
+                ? Password::min(8)
+                    ->letters()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised()
+                : null,
         );
     }
 }

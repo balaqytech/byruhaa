@@ -13,12 +13,24 @@ class OrderController extends Controller
 {
     public function store(CreateOrderRequest $request, ResolveCart $resolveCart, CreateOrder $createOrder): JsonResponse
     {
-        $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
-        $customerId = is_numeric($customerIdentifier) ? (int) $customerIdentifier : null;
-        $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId, false);
+        $minorProfile = $request->user('minor-profile');
+        $customerId = null;
+        $minorProfileId = null;
+
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember');
+            $customerId = (int) $minorProfile->familyMember->customer_id;
+            $minorProfileId = (int) $minorProfile->id;
+        } else {
+            $customerIdentifier = $request->user('customer')?->getAuthIdentifier();
+            $customerId = is_numeric($customerIdentifier) ? (int) $customerIdentifier : null;
+        }
+
+        $cart = $resolveCart->execute($request->header('X-Cart-Token'), $customerId, false, $minorProfileId);
         $order = $createOrder->execute($cart, [
             ...$request->validated(),
             'customer_id' => $customerId,
+            'minor_profile_id' => $minorProfileId,
         ]);
 
         return OrderResource::make($order)->response()->setStatusCode(201);

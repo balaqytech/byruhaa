@@ -8,7 +8,7 @@ class PendingPayment extends OrderState
 
     public function getLabel(): string
     {
-        return 'Pending payment';
+        return __('Pending payment');
     }
 
     public function getColor(): string

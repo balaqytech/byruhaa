@@ -52,9 +52,9 @@ class CancelEvent
                 'enrollment_status' => EventEnrollmentStatus::BookingClosed,
             ])->save();
 
+            $this->webhookSender->sendEventCancelled($cancellation);
             DB::afterCommit(function () use ($cancellation): void {
                 ProcessEventCancellation::dispatch($cancellation->id);
-                $this->webhookSender->sendEventCancelled($cancellation);
                 $customers = Event::query()->findOrFail($cancellation->event_id)
                     ->bookings()->with('customer')->get()->pluck('customer')->unique('id');
                 Notification::send($customers, new EventCancelledNotification($cancellation->id));

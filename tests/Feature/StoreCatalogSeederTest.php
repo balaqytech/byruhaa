@@ -1,97 +1,172 @@
 <?php
 
+use App\Livewire\Store\CoffeeStore;
+use App\Livewire\Store\ProductDetail;
+use App\Modules\Store\Actions\BrowseProduct;
 use App\Modules\Store\Enums\ProductStatus;
+use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
+use App\Modules\Store\Settings\StoreSettings;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\StoreCatalogSeeder;
+use Livewire\Livewire;
+use Slimani\MediaManager\Models\File;
 
-test('store catalogue seeder imports the approved catalogue as drafts with deterministic skus', function (): void {
+test('store catalogue seeder retains the previously active products and prices', function (): void {
     $this->seed(StoreCatalogSeeder::class);
 
-    expect(Category::query()->count())->toBe(9)
-        ->and(Product::query()->count())->toBe(23)
-        ->and(ProductOption::query()->count())->toBe(45)
-        ->and(Product::query()->where('status', ProductStatus::Draft)->count())->toBe(23)
-        ->and(ProductOption::query()->where('sku', 'BYR-0001')->exists())->toBeTrue()
-        ->and(ProductOption::query()->where('sku', 'BYR-0045')->exists())->toBeTrue()
-        ->and(Product::query()->where('is_featured', true)->count())->toBe(6);
+    expect(Category::query()->count())->toBe(8)
+        ->and(Product::query()->count())->toBe(145)
+        ->and(ProductOption::query()->count())->toBe(150)
+        ->and(Product::query()->where('status', ProductStatus::Active)->count())->toBe(74)
+        ->and(ProductOption::query()->where('sku', 'FR-001')->exists())->toBeTrue()
+        ->and(ProductOption::query()->where('sku', 'BK-022')->exists())->toBeTrue()
+        ->and(ProductOption::query()->where('sku', 'PR-030')->exists())->toBeTrue()
+        ->and(Product::query()->where('is_featured', true)->count())->toBe(0);
 
-    $skuToSlug = ProductOption::query()
-        ->with('product:id,slug')
-        ->get()
-        ->mapWithKeys(fn (ProductOption $option): array => [$option->sku => $option->product->slug])
-        ->all();
+    expect(Category::query()->orderBy('sort_order')->pluck('slug')->all())->toBe([
+        'fresh',
+        'frozen',
+        'sweets',
+        'cold',
+        'hot',
+        'tools',
+        'antiques',
+        'books',
+    ]);
 
-    $expectedSkuToSlug = [];
-    $productSkuGroups = [
-        'catalogue-1' => ['BYR-0001'],
-        'catalogue-2' => ['BYR-0002'],
-        'catalogue-3' => ['BYR-0003'],
-        'catalogue-4' => ['BYR-0004'],
-        'catalogue-5' => ['BYR-0005', 'BYR-0006', 'BYR-0007', 'BYR-0008', 'BYR-0009', 'BYR-0010'],
-        'catalogue-11' => ['BYR-0011'],
-        'catalogue-12' => ['BYR-0012', 'BYR-0013', 'BYR-0014', 'BYR-0015', 'BYR-0016', 'BYR-0017'],
-        'catalogue-18' => ['BYR-0018', 'BYR-0019'],
-        'catalogue-20' => ['BYR-0020'],
-        'catalogue-21' => ['BYR-0021', 'BYR-0022', 'BYR-0023', 'BYR-0024', 'BYR-0025', 'BYR-0026'],
-        'catalogue-27' => ['BYR-0027', 'BYR-0028', 'BYR-0029', 'BYR-0030', 'BYR-0031'],
-        'catalogue-32' => ['BYR-0032', 'BYR-0033', 'BYR-0034'],
-        'catalogue-35' => ['BYR-0035'],
-        'catalogue-36' => ['BYR-0036'],
-        'catalogue-37' => ['BYR-0037'],
-        'catalogue-38' => ['BYR-0038'],
-        'catalogue-39' => ['BYR-0039'],
-        'catalogue-40' => ['BYR-0040'],
-        'catalogue-41' => ['BYR-0041'],
-        'catalogue-42' => ['BYR-0042'],
-        'kark-byruha' => ['BYR-0043'],
-        'afnaa-brew' => ['BYR-0044'],
-        'naseem-qarnan' => ['BYR-0045'],
-    ];
+    $karkadeh = Product::query()->where('slug', 'fresh-09')->firstOrFail();
 
-    foreach ($productSkuGroups as $slug => $skus) {
-        foreach ($skus as $sku) {
-            $expectedSkuToSlug[$sku] = $slug;
-        }
-    }
+    expect($karkadeh->options()->count())->toBe(6)
+        ->and($karkadeh->defaultOption()->value('name'))->toBe('بلا إضافة')
+        ->and($karkadeh->options()->pluck('price_baisa')->all())->toBe([1600, 1800, 1800, 1800, 1800, 1800])
+        ->and(Product::query()->whereNotNull('long_description')->count())->toBe(80)
+        ->and(Product::query()->where('slug', 'proposal-001')->firstOrFail()->status)->toBe(ProductStatus::Draft)
+        ->and(Product::query()->where('slug', 'sweets-01')->firstOrFail()->status)->toBe(ProductStatus::Active);
 
-    expect($skuToSlug)
-        ->toHaveCount(45)
-        ->toMatchArray($expectedSkuToSlug);
+    expect(ProductOption::query()->where('sku', 'FR-006')->value('member_price_baisa'))->toBe(1120)
+        ->and(ProductOption::query()->where('sku', 'FR-001')->value('member_price_baisa'))->toBeNull()
+        ->and(ProductOption::query()->where('sku', 'SW-001')->value('price_baisa'))->toBe(1700)
+        ->and(ProductOption::query()->where('sku', 'SW-002')->value('price_baisa'))->toBe(1500)
+        ->and(ProductOption::query()->where('sku', 'BK-005')->value('price_baisa'))->toBe(4000)
+        ->and(ProductOption::query()->where('sku', 'BYR-0016')->value('price_baisa'))->toBe(1800)
+        ->and(ProductOption::query()->where('sku', 'BYR-0051')->value('price_baisa'))->toBe(8500)
+        ->and(ProductOption::query()->where('sku', 'BYR-0060')->value('price_baisa'))->toBe(4000)
+        ->and(ProductOption::query()->where('sku', 'BYR-0079')->value('price_baisa'))->toBe(4500)
+        ->and(Product::query()->where('slug', 'legacy-books-12')->firstOrFail()->long_description)->toBeNull();
 
-    expect(Product::query()->withCount(['options as default_options_count' => fn ($query) => $query->where('is_default', true)])
+    expect(Category::query()->withCount(['products as active_products_count' => fn ($query) => $query->where('status', ProductStatus::Active)])
+        ->orderBy('sort_order')
+        ->pluck('active_products_count')->all())->toBe([9, 4, 5, 12, 14, 10, 8, 12]);
+
+    expect(Product::query()
+        ->withCount(['options as default_options_count' => fn ($query) => $query->where('is_default', true)])
         ->pluck('default_options_count')
         ->every(fn (int $count): bool => $count === 1))->toBeTrue();
 
     $this->seed(StoreCatalogSeeder::class);
 
-    expect(Product::query()->count())->toBe(23)
-        ->and(ProductOption::query()->count())->toBe(45);
+    expect(Category::query()->count())->toBe(8)
+        ->and(Product::query()->count())->toBe(145)
+        ->and(ProductOption::query()->count())->toBe(150);
 });
 
 test('database seeder can build the complete application seed path', function (): void {
     $this->seed(DatabaseSeeder::class);
 
-    expect(Category::query()->count())->toBe(9)
-        ->and(Product::query()->count())->toBe(23)
-        ->and(ProductOption::query()->count())->toBe(45)
-        ->and(ProductOption::query()->where('is_default', true)->count())->toBe(23);
+    expect(Category::query()->count())->toBe(8)
+        ->and(Product::query()->count())->toBe(145)
+        ->and(ProductOption::query()->count())->toBe(150)
+        ->and(ProductOption::query()->where('is_default', true)->count())->toBe(145);
 });
 
-test('rerunning the catalog seeder preserves panel-managed product data', function (): void {
+test('confirmed catalogue renders as a category card carousel with one department at a time', function (): void {
     $this->seed(StoreCatalogSeeder::class);
 
-    $product = Product::query()->where('slug', 'catalogue-5')->firstOrFail();
-    $replacementCategory = Category::query()->where('slug', 'store')->firstOrFail();
+    $fresh = Category::query()->where('slug', 'fresh')->firstOrFail();
+    $frozen = Category::query()->where('slug', 'frozen')->firstOrFail();
+
+    Livewire::test(CoffeeStore::class)
+        ->assertSet('categoryId', $fresh->id)
+        ->assertSee('snap-mandatory', false)
+        ->assertSee('الموهيتو')
+        ->assertSee('9 صنفًا')
+        ->assertSee('المنعش الفوّار بالباشن')
+        ->assertDontSee('الجميدة')
+        ->call('selectCategory', $frozen->id)
+        ->assertSet('categoryId', $frozen->id)
+        ->assertSee('الجميدة')
+        ->assertSee('4 صنفًا')
+        ->assertSee('مثلّجة القهوة')
+        ->assertDontSee('المنعش الفوّار بالباشن');
+});
+
+test('product page renders formatted long description and never exposes draft proposals', function (): void {
+    $this->seed(StoreCatalogSeeder::class);
+
+    $product = Product::query()->where('slug', 'fresh-01')->firstOrFail();
+    $proposal = Product::query()->where('slug', 'proposal-001')->firstOrFail();
+    $iceCream = Product::query()->where('slug', 'frozen-01')->firstOrFail();
+    $karkadeh = Product::query()->where('slug', 'fresh-09')->firstOrFail();
+
+    $this->get(route('coffee.product', ['slug' => $product->slug]))
+        ->assertSuccessful()
+        ->assertSee('product-title', false)
+        ->assertSee('للباشن حموضةٌ عطرية')
+        ->assertSee('<h3>للفتى</h3>', false);
+
+    $this->get(route('coffee.product', ['slug' => $iceCream->slug]))
+        ->assertSee('مسبّبات الحساسية')
+        ->assertSee('حليب')
+        ->assertSee('الطلب متوقف مؤقتًا');
+
+    $this->get(route('coffee.product', ['slug' => $karkadeh->slug]))
+        ->assertSee('اختر الخيار')
+        ->assertSee('كركديه');
+
+    $this->get(route('coffee.product', ['slug' => $proposal->slug]))->assertNotFound();
+});
+
+test('product page can add the selected product option to the cart', function (): void {
+    $this->seed(StoreCatalogSeeder::class);
+
+    $settings = app(StoreSettings::class);
+    $settings->ordering_enabled = true;
+    $settings->save();
+
+    $product = Product::query()->where('slug', 'fresh-09')->firstOrFail();
+    $berryOption = $product->options()->where('sku', 'FR-009-01')->firstOrFail();
+
+    Livewire::test(ProductDetail::class, ['product' => app(BrowseProduct::class)->execute($product->slug)])
+        ->set('selectedOptionId', $berryOption->id)
+        ->assertSee($berryOption->name)
+        ->call('addToCart')
+        ->assertSet('feedback', 'أضيف المنتج إلى السلة.');
+
+    expect(Cart::query()->firstOrFail()->items()->firstOrFail()->product_option_id)->toBe($berryOption->id);
+});
+
+test('rerunning the catalog seeder refreshes source content while preserving merchandising and stock', function (): void {
+    $this->seed(StoreCatalogSeeder::class);
+
+    $product = Product::query()->where('slug', 'fresh-01')->firstOrFail();
+    $replacementCategory = Category::query()->where('slug', 'books')->firstOrFail();
+    $categoryImage = File::query()->create([
+        'name' => 'books.webp',
+        'mime_type' => 'image/webp',
+        'size' => 1024,
+        'extension' => 'webp',
+    ]);
+    $replacementCategory->update(['image_id' => $categoryImage->id]);
     $option = $product->defaultOption()->firstOrFail();
 
     $product->update([
         'category_id' => $replacementCategory->id,
-        'name' => 'Team curated latte',
-        'status' => ProductStatus::Active,
-        'is_featured' => false,
+        'name' => 'Team curated refresher',
+        'status' => ProductStatus::Archived,
+        'is_featured' => true,
         'featured_sort_order' => 99,
     ]);
     $option->update([
@@ -105,12 +180,13 @@ test('rerunning the catalog seeder preserves panel-managed product data', functi
     $product->refresh();
     $option->refresh();
 
-    expect($product->category_id)->toBe($replacementCategory->id)
-        ->and($product->name)->toBe('Team curated latte')
+    expect($product->category_id)->not->toBe($replacementCategory->id)
+        ->and($replacementCategory->fresh()->image_id)->toBe($categoryImage->id)
+        ->and($product->name)->toBe('المنعش الفوّار بالباشن')
         ->and($product->status)->toBe(ProductStatus::Active)
-        ->and($product->is_featured)->toBeFalse()
+        ->and($product->is_featured)->toBeTrue()
         ->and($product->featured_sort_order)->toBe(99)
-        ->and($option->price_baisa)->toBe(9999)
+        ->and($option->price_baisa)->toBe(1200)
         ->and($option->stock_on_hand)->toBe(12)
         ->and($option->tracks_inventory)->toBeTrue();
 });

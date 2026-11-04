@@ -20,10 +20,13 @@ class OrderItemResource extends JsonResource
             'sku' => $this->sku,
             'currency' => $this->currency,
             'unit_price_baisa' => $this->unit_price_baisa,
+            'regular_unit_price_baisa' => $this->regular_unit_price_baisa,
+            'unit_discount_baisa' => $this->unit_discount_baisa,
             'quantity' => $this->quantity,
             'vat_baisa' => $this->vat_baisa,
             'line_subtotal_baisa' => $this->line_subtotal_baisa,
             'line_total_baisa' => $this->line_total_baisa,
+            'line_discount_baisa' => $this->line_discount_baisa,
             'note' => $this->note,
         ];
     }

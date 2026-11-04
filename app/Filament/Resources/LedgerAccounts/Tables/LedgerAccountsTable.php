@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\LedgerAccounts\Tables;
 
 use App\Enums\LedgerAccountType;
+use App\Modules\Finance\Models\LedgerAccount;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -26,6 +27,7 @@ class LedgerAccountsTable
                     ->copyable(),
                 TextColumn::make('name')
                     ->label(__('admin.fields.name'))
+                    ->formatStateUsing(fn (string $state, LedgerAccount $record): string => $record->displayName())
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('type')

@@ -4,6 +4,7 @@ use App\Actions\ConfirmManualPaymentRefund;
 use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentRefundState;
 use App\Enums\PaymentState;
+use App\Jobs\UchatWebhookJob as CallWebhookJob;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Events\Models\BookingPaymentSchedule;
@@ -21,9 +22,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
-use Spatie\WebhookServer\CallWebhookJob;
 
 beforeEach(function () {
+    config(['byruhaa.uchat.webhook_bearer_token' => 'outbound-test', 'byruhaa.uchat.webhook_signing_secret' => 'signing-test']);
     config([
         'payments.default' => 'thawani',
         'thawani.mode' => 'test',
@@ -71,7 +72,7 @@ test('paid payment can be fully refunded through thawani and posts reversal ledg
 });
 
 test('successful refund notifies the customer and queues a refund webhook once', function () {
-    config(['byruhaa.webhooks.payment_refunded_url' => 'https://partner.test/payment-refunded']);
+    config(['byruhaa.uchat.webhook_url' => 'https://partner.test/payment-refunded']);
     Http::preventStrayRequests();
     Http::fake([
         'https://uatcheckout.thawani.om/api/v1/refunds' => Http::response([
@@ -213,7 +214,7 @@ test('thawani code 4300 reserves the amount for manual refund without financial 
 test('admin confirmation completes a manual refund and runs normal accounting and notifications', function () {
     Notification::fake();
     Queue::fake();
-    config(['byruhaa.webhooks.payment_refunded_url' => 'https://partner.test/webhooks/payment-refunded']);
+    config(['byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/payment-refunded']);
     $payment = refundablePaymentFixture(amountBaisa: 12000);
     $refund = PaymentRefund::factory()->for($payment)->create([
         'amount_baisa' => 12000,

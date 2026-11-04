@@ -2,18 +2,18 @@
 
 namespace App\Modules\Store\Filament\Pages;
 
+use App\Filament\Pages\ShieldSettingsPage;
 use App\Modules\Store\Settings\StoreSettings;
 use BackedEnum;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Pages\SettingsPage;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
-class ManageStoreSettings extends SettingsPage
+class ManageStoreSettings extends ShieldSettingsPage
 {
     protected static string $settings = StoreSettings::class;
 

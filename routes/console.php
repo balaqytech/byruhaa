@@ -12,6 +12,10 @@ Schedule::command('payments:reconcile-thawani')
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+Schedule::command('wallets:reconcile')
+    ->dailyAt('01:00')
+    ->withoutOverlapping();
+
 Schedule::command('seats:release-expired-holds')
     ->everyMinute()
     ->withoutOverlapping();
@@ -19,3 +23,5 @@ Schedule::command('seats:release-expired-holds')
 Schedule::command('app:expire-store-orders')
     ->everyMinute()
     ->withoutOverlapping();
+
+Schedule::command('uchat:webhooks:dispatch-pending')->everyMinute()->withoutOverlapping();

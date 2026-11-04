@@ -2,36 +2,33 @@
 
 namespace App\Modules\Content\Policies;
 
-use BackedEnum;
-use Illuminate\Contracts\Auth\Authenticatable;
+use App\Modules\Identity\Models\User;
 
 class PublicPagePolicy
 {
-    public function viewAny(Authenticatable $user): bool
+    public function viewAny(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'ViewAny:PublicPage');
     }
 
-    public function view(Authenticatable $user): bool
+    public function view(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'View:PublicPage');
     }
 
-    public function update(Authenticatable $user): bool
+    public function update(User $user): bool
     {
-        return $this->allows($user);
+        return $this->allows($user, 'Update:PublicPage');
     }
 
-    public function delete(Authenticatable $user): bool
+    public function delete(User $user): bool
     {
         return false;
     }
 
-    private function allows(Authenticatable $user): bool
+    private function allows(User $user, string $permission): bool
     {
-        $role = $user->getAttribute('role');
-        $roleValue = $role instanceof BackedEnum ? $role->value : $role;
-
-        return in_array($roleValue, ['staff', 'admin'], true);
+        return $user->isPanelAdministrator()
+            || $user->can($permission);
     }
 }

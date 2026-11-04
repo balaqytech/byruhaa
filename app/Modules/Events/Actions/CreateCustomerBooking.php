@@ -5,6 +5,7 @@ namespace App\Modules\Events\Actions;
 use App\Enums\AffiliateStatus;
 use App\Enums\EventInterestStatus;
 use App\Enums\EventStatus;
+use App\Exceptions\IdempotencyConflict;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Events\Models\Booking;
 use App\Modules\Events\Models\Coupon;
@@ -16,6 +17,7 @@ use App\Modules\Identity\Models\FamilyMember;
 use App\Services\Webhooks\ByruhaaWebhookSender;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,11 +32,15 @@ class CreateCustomerBooking
     ) {}
 
     /**
-     * @param  array{event_id: int, family_member_ids: array<int, int>, coupon_code?: string|null}  $data
+     * @param  array{event_id: int, family_member_ids: array<int, int>, coupon_code?: string|null, idempotency_key?: string}  $data
      * @param  array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null  $affiliateAttribution
      */
     public function execute(Customer $customer, array $data, ?array $affiliateAttribution = null): Booking
     {
+        if (isset($data['idempotency_key'])) {
+            return $this->executeIdempotently($customer, $data, $affiliateAttribution);
+        }
+
         $customer->ensureProfileIsComplete('family_member_ids');
 
         $booking = DB::transaction(function () use ($customer, $data, $affiliateAttribution): Booking {
@@ -93,10 +99,10 @@ class CreateCustomerBooking
 
             $this->createAffiliateReferral($booking, $affiliateAttribution);
 
-            return $booking->load(['event', 'familyMembers.familyMember', 'paymentSchedule.installments']);
-        });
+            $this->webhookSender->sendBookingCreated($booking);
 
-        $this->webhookSender->sendBookingCreated($booking);
+            return $booking->load(['event.cancellation', 'familyMembers.familyMember', 'paymentSchedule.installments']);
+        });
 
         if ($this->usesAutomaticApproval()) {
             return $this->bookingApprovalService
@@ -105,6 +111,48 @@ class CreateCustomerBooking
         }
 
         return $booking;
+    }
+
+    /**
+     * @param  array{event_id: int, family_member_ids: array<int, int>, coupon_code?: string|null, idempotency_key: string}  $data
+     * @param  array{affiliate_id: int, code: string, name: string, captured_at: string, expires_at: string}|null  $affiliateAttribution
+     */
+    private function executeIdempotently(Customer $customer, array $data, ?array $affiliateAttribution): Booking
+    {
+        $memberIds = array_map('intval', $data['family_member_ids']);
+        sort($memberIds);
+        $key = $data['idempotency_key'];
+        $hash = hash('sha256', json_encode([$customer->id, $data['event_id'], $memberIds, $this->couponCode($data)], JSON_THROW_ON_ERROR));
+
+        try {
+            return DB::transaction(function () use ($customer, $data, $affiliateAttribution, $key, $hash): Booking {
+                Customer::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
+                $existing = Booking::query()->where('idempotency_key', $key)->first();
+                if ($existing !== null) {
+                    if ($existing->customer_id !== $customer->id || $existing->idempotency_request_hash !== $hash) {
+                        throw new IdempotencyConflict;
+                    }
+
+                    return $existing->load(['event.cancellation', 'familyMembers.familyMember', 'paymentSchedule.installments']);
+                }
+
+                unset($data['idempotency_key']);
+                $booking = $this->execute($customer, $data, $affiliateAttribution);
+                $booking->forceFill(['idempotency_key' => $key, 'idempotency_request_hash' => $hash])->save();
+
+                return $booking;
+            });
+        } catch (UniqueConstraintViolationException $exception) {
+            $existing = Booking::query()->where('idempotency_key', $key)->first();
+            if ($existing === null) {
+                throw $exception;
+            }
+            if ($existing->customer_id !== $customer->id || $existing->idempotency_request_hash !== $hash) {
+                throw new IdempotencyConflict;
+            }
+
+            return $existing->load(['event.cancellation', 'familyMembers.familyMember', 'paymentSchedule.installments']);
+        }
     }
 
     /**

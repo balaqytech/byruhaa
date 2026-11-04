@@ -13,6 +13,7 @@ use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use App\Support\Money\MoneyFactory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 
 function fakeCouponAffiliateAttribution(): void
@@ -28,6 +29,14 @@ function fakeCouponAffiliateAttribution(): void
         }
     });
 }
+
+beforeEach(function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
 
 test('customer checkout applies an entered fixed coupon when it beats automatic discounts', function () {
     $customer = Customer::factory()->create();
@@ -178,7 +187,7 @@ test('invalid or ineligible coupon codes block booking submission', function () 
         'minimum_family_members' => 2,
     ]);
 
-    $this->postJson("/api/v1/customers/{$customer->id}/bookings", [
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Accept-Language', 'ar')->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => [$familyMember->id],
         'coupon_code' => 'TWOONLY',
@@ -230,7 +239,7 @@ test('customer booking api accepts a valid coupon code and returns coupon snapsh
         'minimum_family_members' => 2,
     ]);
 
-    $this->postJson("/api/v1/customers/{$customer->id}/bookings", [
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Accept-Language', 'ar')->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => $familyMembers->pluck('id')->all(),
         'coupon_code' => 'api10',
@@ -239,8 +248,8 @@ test('customer booking api accepts a valid coupon code and returns coupon snapsh
         ->assertJsonPath('data.coupon_code', 'API10')
         ->assertJsonPath('data.discount_source', 'coupon')
         ->assertJsonPath('data.discount_name', 'API coupon')
-        ->assertJsonPath('data.discount_amount', '5.000')
-        ->assertJsonPath('data.total', '15.000');
+        ->assertJsonPath('data.discount_amount_baisa', 5000)
+        ->assertJsonPath('data.total_baisa', 15000);
 });
 
 test('coupon maximum uses are consumed when bookings are created', function () {
@@ -267,7 +276,7 @@ test('coupon maximum uses are consumed when bookings are created', function () {
 
     expect($coupon->activeRedemptionsCount())->toBe(1);
 
-    $this->postJson("/api/v1/customers/{$secondCustomer->id}/bookings", [
+    $this->withHeader('X-WhatsApp-Phone', $secondCustomer->phone_number)->withHeader('Accept-Language', 'ar')->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => [$secondFamilyMember->id],
         'coupon_code' => 'ONCE',
@@ -302,7 +311,7 @@ test('coupon maximum uses per customer are enforced independently from global us
         'coupon_code' => 'ONEPER',
     ]);
 
-    $this->postJson("/api/v1/customers/{$firstCustomer->id}/bookings", [
+    $this->withHeader('X-WhatsApp-Phone', $firstCustomer->phone_number)->withHeader('Accept-Language', 'ar')->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => [$firstCustomerFamilyMembers[1]->id],
         'coupon_code' => 'ONEPER',

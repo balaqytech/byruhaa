@@ -1,8 +1,14 @@
 <?php
 
+use App\Enums\PaymentState;
 use App\Jobs\UchatWebhookJob;
 use App\Models\WebhookDelivery;
+use App\Modules\Finance\Contracts\WalletService;
+use App\Modules\Finance\Models\Payment;
+use App\Modules\Finance\Models\WalletTopUp;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\FamilyMember;
+use App\Modules\Identity\Models\MinorProfile;
 use App\Modules\Store\Actions\ChangeOrderState;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Order;
@@ -57,6 +63,7 @@ function uchatOption(array $attributes = []): ProductOption
 }
 
 test('UChat routes fail closed when the token is missing, invalid, or unconfigured', function (): void {
+    config(['byruhaa.uchat.api_token' => null, 'byruhaa.uchat.owner_key_secret' => null]);
     $response = $this->getJson('/api/v1/integrations/uchat/store/catalog');
     $response->assertStatus(503)->assertJsonPath('code', 'uchat_not_configured');
 
@@ -64,11 +71,11 @@ test('UChat routes fail closed when the token is missing, invalid, or unconfigur
     $this->withHeaders(['Authorization' => 'Bearer wrong'])->getJson('/api/v1/integrations/uchat/store/catalog')->assertUnauthorized();
 });
 
-test('UChat routes fail closed when the owner-key secret is missing', function (): void {
+test('UChat cart operations fail closed when the owner-key secret is missing', function (): void {
     config(['byruhaa.uchat.api_token' => 'configured', 'byruhaa.uchat.owner_key_secret' => null]);
 
-    $this->withHeaders(['Authorization' => 'Bearer configured'])
-        ->getJson('/api/v1/integrations/uchat/store/catalog')
+    $this->withHeaders(['Authorization' => 'Bearer configured', 'X-WhatsApp-Phone' => '91234567'])
+        ->getJson('/api/v1/integrations/uchat/store/cart')
         ->assertStatus(503)
         ->assertJsonPath('code', 'uchat_not_configured');
 });
@@ -128,6 +135,30 @@ test('UChat cart is phone-owned and quotes from server prices', function (): voi
         ->assertJsonPath('data.items', []);
 });
 
+test('UChat keeps guardian and minor carts separate for the same phone', function (): void {
+    enableUchatStore();
+    $customer = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
+    $option = uchatOption();
+    $headers = uchatHeaders();
+
+    $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/cart/items', [
+        'sku' => $option->sku,
+        'quantity' => 1,
+        'minor_profile_id' => $profile->id,
+    ])->assertSuccessful();
+
+    $this->withHeaders($headers)
+        ->getJson('/api/v1/integrations/uchat/store/cart')
+        ->assertSuccessful()
+        ->assertJsonPath('data.items', []);
+
+    $this->withHeaders($headers)
+        ->getJson('/api/v1/integrations/uchat/store/cart?minor_profile_id='.$profile->id)
+        ->assertSuccessful()
+        ->assertJsonPath('data.items.0.sku', $option->sku);
+});
+
 test('UChat creates an idempotent order and initiates payment without trusting client prices', function (): void {
     enableUchatStore();
     $option = uchatOption(['price_baisa' => 2000]);
@@ -149,6 +180,56 @@ test('UChat creates an idempotent order and initiates payment without trusting c
 
     expect(Order::query()->count())->toBe(1)
         ->and(Order::query()->sole()->total_baisa)->toBe(2000);
+});
+
+test('UChat wallet orders pay immediately, roll back insufficient attempts, and do not duplicate deliveries', function (): void {
+    enableUchatStore();
+    config(['byruhaa.wallets.enabled' => true]);
+    Queue::fake();
+    $guardian = Customer::factory()->create(['phone_number' => '+96891234567']);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($guardian))->create(['wallet_spending_enabled' => true]);
+    $wallet = app(WalletService::class)->walletForMinorProfile($profile->id);
+    $option = uchatOption(['price_baisa' => 2000]);
+    $item = ['sku' => $option->sku, 'quantity' => 1, 'minor_profile_id' => $profile->id];
+    $this->withHeaders(uchatHeaders())->postJson('/api/v1/integrations/uchat/store/cart/items', $item)->assertOk();
+    $headers = uchatHeaders(['Idempotency-Key' => 'uchat-wallet-direct-1']);
+    $payload = ['customer_name' => 'Guardian', 'pickup_type' => 'immediate', 'minor_profile_id' => $profile->id, 'payment_method' => 'wallet'];
+
+    $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/orders', $payload)
+        ->assertUnprocessable();
+    expect(Order::query()->count())->toBe(0)
+        ->and($wallet->movements()->count())->toBe(0);
+
+    $wallet->increment('balance_baisa', 5000);
+    WalletTopUp::query()->create([
+        'wallet_id' => $wallet->id,
+        'operation_key' => 'uchat-wallet-direct-top-up',
+        'status' => 'credited',
+        'currency' => 'OMR',
+        'amount_baisa' => 5000,
+        'spendable_baisa' => 5000,
+        'refundable_baisa' => 5000,
+        'credited_at' => now(),
+        'refund_deadline_at' => now()->addDay(),
+    ]);
+
+    $first = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/orders', $payload);
+    $first->assertCreated()->assertJsonPath('data.status', 'confirmed')
+        ->assertJsonPath('payment.method', 'wallet')->assertJsonPath('payment.status', 'paid')
+        ->assertJsonMissingPath('payment.confirmation_url');
+    $second = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/store/orders', $payload);
+    $second->assertCreated()->assertJsonPath('data.reference', $first->json('data.reference'));
+    $order = Order::query()->sole();
+    $this->withHeaders(uchatHeaders())->postJson('/api/v1/integrations/uchat/store/orders/'.$order->reference.'/payment', [
+        'minor_profile_id' => $profile->id,
+    ])->assertOk()->assertJsonPath('payment.status', 'paid')->assertJsonMissingPath('payment.confirmation_url');
+
+    expect($wallet->refresh()->balance_baisa)->toBe(5000 - $order->total_baisa)
+        ->and($wallet->movements()->where('type', 'purchase')->count())->toBe(1)
+        ->and(WebhookDelivery::query()->where('event', 'wallet.purchase')->count())->toBe(1)
+        ->and(WebhookDelivery::query()->where('event', 'store.order.confirmed')->count())->toBe(1)
+        ->and(WebhookDelivery::query()->where('event', 'store.order.confirmed')->sole()->payload['data']['links']['wallet_confirmation_url'])->toBeNull();
+    Queue::assertPushed(UchatWebhookJob::class, 2);
 });
 
 test('UChat does not expose missing Thawani credentials', function (): void {
@@ -181,6 +262,61 @@ test('UChat order history and details are restricted to the normalized phone', f
     $this->withHeaders(uchatHeaders())->getJson('/api/v1/integrations/uchat/store/orders/'.$other->reference)->assertNotFound();
 });
 
+test('UChat wallet top ups respect the optional phone verification requirement', function (bool $verificationRequired): void {
+    enableUchatStore();
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.phone_verification.required' => $verificationRequired]);
+    Http::fake([
+        'https://uatcheckout.thawani.om/api/v1/checkout/session' => Http::response([
+            'success' => true,
+            'data' => ['session_id' => 'uchat_wallet_checkout_session'],
+        ]),
+    ]);
+
+    $customer = Customer::factory()->create([
+        'phone_number' => '+96891234567',
+        'phone_verified_at' => $verificationRequired ? now() : null,
+    ]);
+    $profile = MinorProfile::factory()->for(FamilyMember::factory()->for($customer))->create();
+    $headers = uchatHeaders([
+        'X-WhatsApp-Phone' => '91234567',
+        'Idempotency-Key' => 'uchat-wallet-top-up-1',
+    ]);
+
+    $first = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/wallet/top-ups', [
+        'minor_profile_id' => $profile->id,
+        'amount_omr' => '5.250',
+    ]);
+    $first->assertCreated()
+        ->assertJsonPath('amount_baisa', 5250)
+        ->assertJsonPath('currency', 'OMR')
+        ->assertJsonPath('status', 'pending')
+        ->assertJsonPath('checkout_url', 'https://uatcheckout.thawani.om/pay/uchat_wallet_checkout_session?key=test_publishable_key');
+
+    expect(WalletTopUp::query()->sole()->getRawOriginal('status'))->toBe('pending');
+
+    $second = $this->withHeaders($headers)->postJson('/api/v1/integrations/uchat/wallet/top-ups', [
+        'minor_profile_id' => $profile->id,
+        'amount_omr' => '5.250',
+    ]);
+
+    $second->assertCreated()->assertJsonPath('top_up_reference', $first->json('top_up_reference'));
+
+    expect(WalletTopUp::query()->count())->toBe(1)
+        ->and(Payment::query()->where('subject_type', 'wallet_topup')->count())->toBe(1);
+
+    Payment::query()->sole()->forceFill(['state' => PaymentState::Paid])->save();
+
+    $this->withHeaders($headers)
+        ->postJson('/api/v1/integrations/uchat/wallet/top-ups', [
+            'minor_profile_id' => $profile->id,
+            'amount_omr' => '5.250',
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('code', 'validation_failed');
+
+    expect(Payment::query()->where('subject_type', 'wallet_topup')->count())->toBe(1);
+})->with([true, false]);
+
 test('store state transitions queue one signed UChat webhook per state', function (): void {
     enableUchatStore();
     Queue::fake();
@@ -198,6 +334,9 @@ test('store state transitions queue one signed UChat webhook per state', functio
     expect($delivery->payload['delivery_id'])->toBe($delivery->id)
         ->and($queuedJob?->headers['Authorization'])->toBe('Bearer outbound-secret')
         ->and($queuedJob?->payload['data']['order']['reference'])->toBe($order->reference)
+        ->and($queuedJob?->payload['data']['order']['regular_total_baisa'])->toBe($order->regular_total_baisa)
+        ->and($queuedJob?->payload['data']['order']['discount_baisa'])->toBe($order->discount_baisa)
+        ->and($queuedJob?->payload['data']['order']['pricing_tier'])->toBe('standard')
         ->and($queuedJob?->payload)->not->toHaveKey('payment_token')
         ->and($queuedJob?->payload['data']['order'])->not->toHaveKey('id');
 });

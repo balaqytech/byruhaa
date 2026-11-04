@@ -7,15 +7,15 @@ use App\Filament\Resources\AffiliatePayoutRequests\Pages\ViewAffiliatePayoutRequ
 use App\Filament\Resources\AffiliatePayoutRequests\Schemas\AffiliatePayoutRequestForm;
 use App\Filament\Resources\AffiliatePayoutRequests\Schemas\AffiliatePayoutRequestInfolist;
 use App\Filament\Resources\AffiliatePayoutRequests\Tables\AffiliatePayoutRequestsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class AffiliatePayoutRequestResource extends Resource
+class AffiliatePayoutRequestResource extends ShieldResource
 {
     protected static ?string $model = AffiliatePayoutRequest::class;
 

@@ -6,7 +6,6 @@ use App\Enums\AffiliatePayoutRequestStatus;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliatePayoutRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<AffiliatePayoutRequest>
@@ -24,7 +23,6 @@ class AffiliatePayoutRequestFactory extends Factory
     {
         return [
             'affiliate_id' => Affiliate::factory(),
-            'reference' => 'APO-'.Str::upper(Str::random(12)),
             'amount_baisa' => 20000,
             'currency' => 'OMR',
             'status' => AffiliatePayoutRequestStatus::Pending,

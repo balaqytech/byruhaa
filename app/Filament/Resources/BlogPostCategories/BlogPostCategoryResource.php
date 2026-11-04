@@ -7,15 +7,15 @@ use App\Filament\Resources\BlogPostCategories\Pages\EditBlogPostCategory;
 use App\Filament\Resources\BlogPostCategories\Pages\ListBlogPostCategories;
 use App\Filament\Resources\BlogPostCategories\Schemas\BlogPostCategoryForm;
 use App\Filament\Resources\BlogPostCategories\Tables\BlogPostCategoriesTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Content\Models\BlogPostCategory;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class BlogPostCategoryResource extends Resource
+class BlogPostCategoryResource extends ShieldResource
 {
     protected static ?string $model = BlogPostCategory::class;
 

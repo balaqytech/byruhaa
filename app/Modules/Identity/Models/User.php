@@ -2,24 +2,28 @@
 
 namespace App\Modules\Identity\Models;
 
-use App\Enums\UserRole;
+use App\Modules\Identity\Concerns\RecordsCustomAudits;
+use App\Modules\Identity\Contracts\AuditsIdentityRelations;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
  * @property int $id
  * @property string $name
  * @property string $email
- * @property UserRole $role
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -29,12 +33,23 @@ use Illuminate\Support\Str;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'role', 'password'])]
+#[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements AuditableContract, AuditsIdentityRelations, FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use AuditableTrait, HasFactory, HasRoles, Notifiable, RecordsCustomAudits;
+
+    protected string $guard_name = 'web';
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'name',
+        'email',
+        'email_verified_at',
+    ];
 
     protected static function newFactory(): UserFactory
     {
@@ -49,7 +64,6 @@ class User extends Authenticatable implements FilamentUser
     protected function casts(): array
     {
         return [
-            'role' => UserRole::class,
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
@@ -57,7 +71,26 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return in_array($this->role, [UserRole::Staff, UserRole::Admin], true);
+        $workspacePermissions = [
+            'Sell:Pos', 'Reprint:PosReceipts', 'View:BaristaBoard',
+            'Prepare:BaristaOrders', 'View:PickupBoard', 'Complete:PickupOrders',
+        ];
+
+        return $this->isPanelAdministrator()
+            || $this->hasRole(config('filament-shield.panel_user.name'))
+            || $this->permissions()
+                ->where('guard_name', $panel->getAuthGuard())
+                ->whereNotIn('name', $workspacePermissions)
+                ->exists()
+            || $this->roles()
+                ->where('guard_name', $panel->getAuthGuard())
+                ->whereHas('permissions', fn (Builder $query): Builder => $query->whereNotIn('name', $workspacePermissions))
+                ->exists();
+    }
+
+    public function isPanelAdministrator(): bool
+    {
+        return $this->hasRole(config('filament-shield.super_admin.name'));
     }
 
     /**

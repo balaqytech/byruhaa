@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Store\Actions\InitiateStorePayment;
+use App\Modules\Store\Actions\ConfirmWalletOrder;
 use App\Modules\Store\Actions\ReorderStoreOrder;
 use App\Modules\Store\Enums\OrderStatus;
 use App\Modules\Store\Models\Order;
@@ -68,6 +69,22 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
         }
     }
 
+    public function payWithWallet(ConfirmWalletOrder $confirmWalletOrder): void
+    {
+        try {
+            $confirmWalletOrder->execute($this->ownedOrder($this->order->payment_token), (int) Auth::guard('customer')->id(), (int) $this->order->minor_profile_id);
+            $this->feedback = 'تم تأكيد الدفع من محفظة الابن.';
+            $this->refreshOrder();
+        } catch (\Throwable $exception) {
+            if ($exception instanceof \Illuminate\Validation\ValidationException) {
+                $this->error = collect($exception->errors())->flatten()->first();
+            } else {
+                report($exception);
+                $this->error = 'تعذر تأكيد الدفع من المحفظة الآن.';
+            }
+        }
+    }
+
     public function reorder(ReorderStoreOrder $reorderStoreOrder): ?RedirectResponse
     {
         $this->reordering = true;
@@ -120,7 +137,7 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
 
     public function with(StoreReceiptRenderer $receiptRenderer): array
     {
-        return ['order' => $this->order->load(['items', 'statusHistory']), 'receiptAvailable' => $receiptRenderer->isAvailable($this->order)];
+        return ['order' => $this->order->load(['items', 'statusHistory', 'refundRequests']), 'receiptAvailable' => $receiptRenderer->isAvailable($this->order)];
     }
 
     private function ownedOrder(string $paymentToken): Order
@@ -147,7 +164,7 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
     <div class="grid gap-4 md:grid-cols-3">
         <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:text>العميل</flux:text><flux:heading class="mt-1 text-base">{{ $order->customer_name }}</flux:heading><flux:text dir="ltr">{{ $order->customer_phone }}</flux:text>@if ($order->recipient_name)<flux:text class="mt-2">المستلم: {{ $order->recipient_name }} · {{ $order->recipient_phone }}</flux:text>@endif</div>
         <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:text>طريقة الاستلام</flux:text><flux:heading class="mt-1 text-base">{{ $order->pickup_type === 'scheduled' ? 'استلام مجدول' : 'استلام فوري' }}</flux:heading>@if ($order->pickup_at)<flux:text dir="ltr">{{ $order->pickup_at->format('Y-m-d H:i') }}</flux:text>@endif</div>
-        <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:text>الإجمالي</flux:text><flux:heading class="mt-1 text-2xl"><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></flux:heading></div>
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:text>الإجمالي</flux:text><flux:heading class="mt-1 text-2xl"><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></flux:heading>@if ($order->discount_baisa > 0)<flux:text class="mt-1 font-semibold text-amber-700 dark:text-amber-300">وفّرت <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /> بسعر الأعضاء</flux:text>@endif</div>
     </div>
 
     <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
@@ -156,18 +173,61 @@ new #[Title('تفاصيل طلب القهوة')] class extends Component {
             @foreach ($order->items as $item)
                 <div wire:key="order-item-{{ $item->id }}" class="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div><flux:heading class="text-base">{{ $item->product_name }} · {{ $item->option_name }}</flux:heading><flux:text>SKU: {{ $item->sku }} · الكمية: {{ $item->quantity }}</flux:text><flux:text>الضريبة المضمنة: <x-money :amount-baisa="$item->vat_baisa" :currency="$item->currency" /></flux:text>@if ($item->note)<flux:text>ملاحظة: {{ $item->note }}</flux:text>@endif</div>
-                    <div class="text-start"><flux:text><x-money :amount-baisa="$item->unit_price_baisa" :currency="$item->currency" /> × {{ $item->quantity }}</flux:text><flux:heading class="text-base"><x-money :amount-baisa="$item->line_total_baisa" :currency="$item->currency" /></flux:heading></div>
+                    <div class="text-start">@if ($item->unit_discount_baisa > 0)<flux:text class="line-through"><x-money :amount-baisa="$item->regular_unit_price_baisa" :currency="$item->currency" /></flux:text>@endif<flux:text><x-money :amount-baisa="$item->unit_price_baisa" :currency="$item->currency" /> × {{ $item->quantity }}</flux:text><flux:heading class="text-base"><x-money :amount-baisa="$item->line_total_baisa" :currency="$item->currency" /></flux:heading></div>
                 </div>
             @endforeach
         </div>
-        <div class="mt-4 grid gap-2 border-t border-emerald-900/10 pt-4 text-sm dark:border-white/10 sm:max-w-sm sm:ms-auto"><div class="flex justify-between"><span>المجموع قبل الضريبة</span><span><x-money :amount-baisa="$order->subtotal_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between"><span>الضريبة المضمنة ({{ $order->vat_rate_percentage ?? 5 }}٪)</span><span><x-money :amount-baisa="$order->vat_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between text-base font-bold"><span>الإجمالي شامل الضريبة</span><span><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></span></div></div>
+        <div class="mt-4 grid gap-2 border-t border-emerald-900/10 pt-4 text-sm dark:border-white/10 sm:max-w-sm sm:ms-auto">@if ($order->discount_baisa > 0)<div class="flex justify-between"><span>الإجمالي قبل الخصم</span><span><x-money :amount-baisa="$order->regular_total_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between font-semibold text-amber-700 dark:text-amber-300"><span>توفير الأعضاء</span><span>− <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /></span></div>@endif<div class="flex justify-between"><span>المجموع قبل الضريبة</span><span><x-money :amount-baisa="$order->subtotal_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between"><span>الضريبة المضمنة ({{ $order->vat_rate_percentage ?? 5 }}٪)</span><span><x-money :amount-baisa="$order->vat_baisa" :currency="$order->currency" /></span></div><div class="flex justify-between text-base font-bold"><span>الإجمالي شامل الضريبة</span><span><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></span></div></div>
     </div>
 
-    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:heading>تتبع الحالة</flux:heading><div class="mt-4 space-y-4">@foreach ($order->statusHistory as $history)<div wire:key="status-history-{{ $history->id }}" class="flex gap-3"><span class="mt-1 size-2 shrink-0 rounded-full bg-emerald-600"></span><div><flux:heading class="text-sm">{{ $this->statusLabel($history->to_status) }}</flux:heading><flux:text>{{ $history->note }}</flux:text><flux:text dir="ltr">{{ $history->created_at->format('Y-m-d H:i') }}</flux:text></div></div>@endforeach</div></div>
+    <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5"><flux:heading>تتبع الحالة</flux:heading><div class="mt-4 space-y-4">@foreach ($order->statusHistory as $history)<div wire:key="status-history-{{ $history->id }}" class="flex gap-3"><span class="mt-1 size-2 shrink-0 rounded-full bg-emerald-600"></span><div><flux:heading class="text-sm">{{ $this->statusLabel($history->to_status) }}</flux:heading><flux:text>{{ $history->note ? __($history->note) : '' }}</flux:text><flux:text dir="ltr">{{ $history->created_at->format('Y-m-d H:i') }}</flux:text></div></div>@endforeach</div></div>
+
+    @if ($order->paid_at)
+        <div class="rounded-2xl border border-emerald-900/10 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-white/5">
+            <flux:heading>طلبات الاسترداد</flux:heading>
+            @if (session('refund_request_status'))<p class="mt-3 text-sm text-emerald-700 dark:text-emerald-300">تم إرسال طلبك للمراجعة.</p>@endif
+            <div class="mt-4 divide-y divide-emerald-900/10 dark:divide-white/10">
+                @foreach ($order->refundRequests as $refund)
+                    <div class="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                        <span>{{ $refund->reference }} · <x-money :amount-baisa="$refund->amount_baisa" :currency="$refund->currency" /></span>
+                        <span>{{ ['pending' => 'قيد المراجعة', 'approved' => 'موافق عليه', 'processing' => 'قيد التنفيذ', 'paid' => 'تم رد المبلغ', 'rejected' => 'مرفوض', 'manual_review' => 'مراجعة يدوية', 'failed' => 'تعثر الرد وتراجعه الإدارة'][$refund->status] ?? $refund->status }}
+                            @if ($refund->status === 'paid')
+                                · <a class="underline" href="{{ route('customer.store.orders.refunds.credit-note', [$order->payment_token, $refund]) }}" target="_blank">إشعار دائن</a>
+                            @endif
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+            @php($completedAt = $order->statusHistory->firstWhere('to_status', OrderStatus::Completed->value)?->created_at)
+            @if ($completedAt === null || $completedAt->copy()->addHours(24)->isFuture())
+                <form method="POST" action="{{ route('customer.store.orders.refund-requests.store', $order->payment_token) }}" class="mt-5 flex max-w-xl flex-col gap-4 border-t border-emerald-900/10 pt-5 dark:border-white/10">
+                    @csrf
+                    <input type="hidden" name="operation_key" value="{{ old('operation_key', (string) \Illuminate\Support\Str::uuid()) }}">
+                    <flux:input name="reason" label="سبب طلب الاسترداد" required maxlength="255" :value="old('reason')" />
+                    <flux:input name="amount_omr" label="مبلغ الاسترداد الجزئي أو الكامل بالريال (اتركه فارغًا عند اختيار أصناف)" type="number" min="0.001" step="0.001" :value="old('amount_omr')" dir="ltr" />
+                    <div class="flex flex-col gap-2">
+                        <p class="text-sm">أو اختر كمية الأصناف المراد ردها</p>
+                        @foreach ($order->items as $item)
+                            <flux:input name="items[{{ $item->id }}]" label="{{ $item->product_name }} · {{ $item->option_name }}" type="number" min="1" max="{{ $item->quantity }}" :value="old('items.'.$item->id)" />
+                        @endforeach
+                    </div>
+                    <flux:button type="submit" variant="primary">إرسال طلب الاسترداد</flux:button>
+                </form>
+            @else
+                <p class="mt-4 text-sm text-emerald-900/70 dark:text-white/70">انتهت مهلة الطلب الإلكتروني. تواصل مع الإدارة إذا احتجت إلى استثناء.</p>
+            @endif
+        </div>
+    @endif
+
+    <x-policy-links :pages="$order->payment_method === 'wallet' ? ['wallet', 'pickup', 'refund-cancellation'] : ['terms', 'pickup', 'refund-cancellation']" label="سياسات الدفع والاستلام" />
 
     <div class="flex flex-wrap gap-3">
         @if ($order->status->getValue() === OrderStatus::PendingPayment->value)
-            <flux:button wire:click="retryPayment" wire:target="retryPayment" wire:loading.attr="disabled" variant="primary"><x-hugeicon name="wallet-02" class="text-lg" /> ادفع الآن</flux:button>
+            @if ($order->payment_method === 'wallet')
+                <flux:button wire:click="payWithWallet" wire:target="payWithWallet" wire:loading.attr="disabled" variant="primary"><x-hugeicon name="wallet-02" class="text-lg" /> الدفع من المحفظة</flux:button>
+            @else
+                <flux:button wire:click="retryPayment" wire:target="retryPayment" wire:loading.attr="disabled" variant="primary"><x-hugeicon name="wallet-02" class="text-lg" /> ادفع الآن</flux:button>
+            @endif
         @endif
         @if ($receiptAvailable)
             <flux:button :href="route('customer.store.orders.receipt', $order->payment_token)" target="_blank" variant="outline"><x-hugeicon name="file-view" class="text-lg" /> طباعة الفاتورة</flux:button>

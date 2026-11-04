@@ -2,6 +2,7 @@
 
 namespace App\Modules\Store\Actions;
 
+use App\Modules\Identity\Contracts\MinorProfilePurchasing;
 use App\Modules\Store\Enums\OrderPickupType;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Order;
@@ -17,6 +18,7 @@ class CreateOrder
         private ReserveInventory $reserveInventory,
         private QuoteCart $quoteCart,
         private StoreSettings $settings,
+        private MinorProfilePurchasing $minorProfiles,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -30,16 +32,57 @@ class CreateOrder
         return DB::transaction(function () use ($cart, $data): Order {
             $cart = Cart::query()->whereKey($cart->getKey())->lockForUpdate()->firstOrFail();
             $cartCustomerId = $cart->getRawOriginal('customer_id');
+            $cartMinorProfileId = $cart->getRawOriginal('minor_profile_id');
             $orderCustomerId = $data['customer_id'] ?? null;
+            $minorProfileId = filled($data['minor_profile_id'] ?? null) ? (int) $data['minor_profile_id'] : null;
+            $paymentMethod = (string) ($data['payment_method'] ?? 'thawani');
+
+            if (! in_array($paymentMethod, ['thawani', 'wallet'], true)
+                && ! ($paymentMethod === 'cash'
+                    && filled($data['pos_cashier_user_id'] ?? null)
+                    && filled($data['pos_request_hash'] ?? null))) {
+                throw ValidationException::withMessages(['payment_method' => 'This payment method is not supported.']);
+            }
+
+            if ($paymentMethod === 'wallet' && ! config('byruhaa.wallets.enabled', false)) {
+                throw ValidationException::withMessages(['payment_method' => 'Wallet payments are currently unavailable.']);
+            }
 
             if ($cartCustomerId !== null && (int) $cartCustomerId !== (int) $orderCustomerId) {
                 throw ValidationException::withMessages(['cart' => 'This cart does not belong to the customer creating the order.']);
             }
 
+            if ($minorProfileId !== null) {
+                if ($orderCustomerId === null) {
+                    throw ValidationException::withMessages(['minor_profile_id' => 'A guardian account is required for a minor order.']);
+                }
+
+                $minorProfile = $this->minorProfiles->forGuardian($minorProfileId, (int) $orderCustomerId);
+
+                if ($paymentMethod === 'wallet' && ! $minorProfile->walletSpendingEnabled) {
+                    throw ValidationException::withMessages(['payment_method' => 'Wallet spending is not enabled for this child account.']);
+                }
+
+                if ((int) ($cartMinorProfileId ?? 0) !== $minorProfileId) {
+                    throw ValidationException::withMessages(['cart' => 'This cart does not belong to the selected minor profile.']);
+                }
+            } elseif ($cartMinorProfileId !== null) {
+                throw ValidationException::withMessages(['minor_profile_id' => 'A minor profile is required for this cart.']);
+            }
+
+            if ($paymentMethod === 'wallet' && $minorProfileId === null) {
+                throw ValidationException::withMessages(['payment_method' => 'A child account is required for wallet payment.']);
+            }
+
             $existing = Order::query()->where('idempotency_key', $data['idempotency_key'])->lockForUpdate()->first();
 
             if ($existing instanceof Order) {
-                if (($data['customer_id'] ?? null) !== $existing->customer_id || $existing->customer_phone !== $data['customer_phone']) {
+                if (($data['customer_id'] ?? null) !== $existing->customer_id
+                    || $existing->customer_phone !== $data['customer_phone']
+                    || (int) ($existing->minor_profile_id ?? 0) !== (int) ($minorProfileId ?? 0)
+                    || $existing->payment_method !== $paymentMethod
+                    || $existing->pos_cashier_user_id !== ($data['pos_cashier_user_id'] ?? null)
+                    || $existing->pos_request_hash !== ($data['pos_request_hash'] ?? null)) {
                     throw ValidationException::withMessages(['idempotency_key' => 'This idempotency key belongs to another order.']);
                 }
 
@@ -56,6 +99,10 @@ class CreateOrder
             $order = Order::query()->create([
                 'idempotency_key' => $data['idempotency_key'],
                 'customer_id' => $data['customer_id'] ?? null,
+                'minor_profile_id' => $minorProfileId,
+                'payment_method' => $paymentMethod,
+                'pos_cashier_user_id' => $data['pos_cashier_user_id'] ?? null,
+                'pos_request_hash' => $data['pos_request_hash'] ?? null,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -67,6 +114,9 @@ class CreateOrder
                 'subtotal_baisa' => $quote['subtotal_baisa'],
                 'vat_baisa' => $quote['vat_baisa'],
                 'total_baisa' => $quote['total_baisa'],
+                'regular_total_baisa' => $quote['regular_total_baisa'],
+                'discount_baisa' => $quote['discount_baisa'],
+                'pricing_tier' => $quote['pricing_tier'],
                 'currency' => $quote['currency'],
                 'vat_rate_percentage' => $this->settings->vat_rate_percentage,
                 'seller_legal_name' => $this->settings->legal_name,

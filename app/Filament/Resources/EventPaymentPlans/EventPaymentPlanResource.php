@@ -7,14 +7,14 @@ use App\Filament\Resources\EventPaymentPlans\Pages\EditEventPaymentPlan;
 use App\Filament\Resources\EventPaymentPlans\Pages\ListEventPaymentPlans;
 use App\Filament\Resources\EventPaymentPlans\Schemas\EventPaymentPlanForm;
 use App\Filament\Resources\EventPaymentPlans\Tables\EventPaymentPlansTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Events\Models\EventPaymentPlan;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
-class EventPaymentPlanResource extends Resource
+class EventPaymentPlanResource extends ShieldResource
 {
     protected static ?string $model = EventPaymentPlan::class;
 

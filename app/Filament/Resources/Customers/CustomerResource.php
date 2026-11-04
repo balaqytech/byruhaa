@@ -6,18 +6,19 @@ use App\Filament\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\RelationManagers\BookingsRelationManager;
+use App\Filament\Resources\Customers\RelationManagers\DeletionRequestsRelationManager;
 use App\Filament\Resources\Customers\RelationManagers\FamilyMembersRelationManager;
 use App\Filament\Resources\Customers\Schemas\CustomerForm;
 use App\Filament\Resources\Customers\Tables\CustomersTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Identity\Models\Customer;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class CustomerResource extends Resource
+class CustomerResource extends ShieldResource
 {
     protected static ?string $model = Customer::class;
 
@@ -58,6 +59,7 @@ class CustomerResource extends Resource
         return [
             FamilyMembersRelationManager::class,
             BookingsRelationManager::class,
+            DeletionRequestsRelationManager::class,
         ];
     }
 

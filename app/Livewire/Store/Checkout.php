@@ -2,16 +2,21 @@
 
 namespace App\Livewire\Store;
 
+use App\Modules\Store\Actions\ConfirmWalletOrder;
 use App\Modules\Store\Actions\CreateOrder;
 use App\Modules\Store\Actions\InitiateStorePayment;
 use App\Modules\Store\Actions\QuoteCart;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Models\Cart;
+use App\Modules\Store\Models\Order;
 use App\Modules\Store\Settings\StoreSettings;
+use App\Services\Webhooks\ByruhaaWebhookSender;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 class Checkout extends Component
@@ -48,6 +53,13 @@ class Checkout extends Component
 
     public ?string $cartToken = null;
 
+    #[Locked]
+    public ?int $minorProfileId = null;
+
+    public string $paymentMethod = 'thawani';
+
+    public bool $walletPaymentAvailable = false;
+
     public function boot(QuoteCart $quoteCart, ResolveCart $resolveCart, StoreSettings $settings): void
     {
         $this->quoteCart = $quoteCart;
@@ -59,11 +71,21 @@ class Checkout extends Component
     {
         session()->forget(self::LEGACY_CHECKOUT_IDEMPOTENCY_KEY_SESSION);
         $this->cartToken = session('store_cart_token');
-        $customer = auth('customer')->user();
+        $minorProfile = auth('minor-profile')->user();
 
-        if ($customer !== null) {
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember.customer');
+            $this->minorProfileId = (int) $minorProfile->id;
+            $guardian = $minorProfile->familyMember->customer;
+            $this->customerName = (string) $guardian->name;
+            $this->customerPhone = (string) $guardian->phone_number;
+            $this->customerEmail = (string) ($guardian->email ?? '');
+            $this->recipientName = (string) $minorProfile->familyMember->name;
+            $this->walletPaymentAvailable = (bool) config('byruhaa.wallets.enabled', false)
+                && (bool) $minorProfile->wallet_spending_enabled;
+        } elseif (($customer = auth('customer')->user()) !== null) {
             $this->customerName = (string) ($customer->name ?? '');
-            $this->customerPhone = (string) ($customer->phone ?? '');
+            $this->customerPhone = (string) ($customer->phone_number ?? '');
             $this->customerEmail = (string) ($customer->email ?? '');
         }
     }
@@ -73,7 +95,7 @@ class Checkout extends Component
         $this->redirect(route('coffee').'#menu', navigate: true);
     }
 
-    public function placeOrder(CreateOrder $createOrder, InitiateStorePayment $initiatePayment): void
+    public function placeOrder(CreateOrder $createOrder, InitiateStorePayment $initiatePayment, ConfirmWalletOrder $confirmWalletOrder, ByruhaaWebhookSender $webhookSender): void
     {
         if ($this->submitting) {
             return;
@@ -93,6 +115,7 @@ class Checkout extends Component
                 'note' => $this->orderNote ?: null,
                 'pickup_type' => $this->pickupType,
                 'pickup_at' => $this->pickupAt ?: null,
+                'payment_method' => $this->paymentMethod,
             ], [
                 'idempotency_key' => ['required', 'string', 'max:100'],
                 'customer_name' => ['required', 'string', 'max:255'],
@@ -103,11 +126,40 @@ class Checkout extends Component
                 'note' => ['nullable', 'string', 'max:5000'],
                 'pickup_type' => ['required', 'in:immediate,scheduled'],
                 'pickup_at' => ['nullable', 'date'],
+                'payment_method' => ['required', 'in:thawani,wallet'],
             ])->validate();
+            $this->assertAuthenticatedMinorProfile();
             $validated['customer_id'] = $this->customerId();
+            $validated['minor_profile_id'] = $this->minorProfileId;
+
+            if ($this->paymentMethod === 'wallet') {
+                $order = DB::transaction(function () use ($createOrder, $confirmWalletOrder, $validated): Order {
+                    $order = $createOrder->execute($this->resolveExistingCart(), $validated);
+
+                    return $confirmWalletOrder->execute($order, (int) $this->customerId(), $this->minorProfileId);
+                });
+                $this->resetCheckoutAttempt();
+                $this->dispatch('store-cart-updated');
+                $this->submitting = false;
+                $this->redirect($this->minorProfileId !== null
+                    ? route('minor.orders.show', $order->payment_token)
+                    : route('customer.store.orders.show', $order->payment_token), navigate: true);
+
+                return;
+            }
 
             $order = $createOrder->execute($this->resolveExistingCart(), $validated);
-            $payment = $initiatePayment->execute($order, $this->customerId());
+
+            if ($this->minorProfileId !== null && ! (bool) auth('minor-profile')->user()?->direct_payment_enabled) {
+                $webhookSender->sendUchatOrderState($order);
+                $this->resetCheckoutAttempt();
+                $this->submitting = false;
+                $this->redirect(route('minor.orders.show', $order->payment_token), navigate: true);
+
+                return;
+            }
+
+            $payment = $initiatePayment->execute($order, $this->customerId(), $this->minorProfileId);
             $this->resetCheckoutAttempt();
 
             $this->submitting = false;
@@ -150,7 +202,7 @@ class Checkout extends Component
         }
 
         try {
-            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId)
                 ->load('items.productOption.product.category');
         } catch (ValidationException) {
             return null;
@@ -159,13 +211,19 @@ class Checkout extends Component
 
     private function resolveExistingCart(): Cart
     {
-        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId)
             ->load('items.productOption.product.category');
     }
 
     private function customerId(): ?int
     {
         $identifier = auth('customer')->user()?->getAuthIdentifier();
+
+        if ($identifier === null) {
+            $minorProfile = auth('minor-profile')->user();
+            $minorProfile?->loadMissing('familyMember');
+            $identifier = $minorProfile?->familyMember?->customer_id;
+        }
 
         return is_numeric($identifier) ? (int) $identifier : null;
     }
@@ -195,10 +253,20 @@ class Checkout extends Component
         return self::CHECKOUT_IDEMPOTENCY_KEYS_SESSION.'.'.hash('sha256', (string) $this->cartToken);
     }
 
+    private function assertAuthenticatedMinorProfile(): void
+    {
+        $minorProfile = auth('minor-profile')->user();
+
+        if ($minorProfile !== null && (int) $minorProfile->getAuthIdentifier() !== (int) $this->minorProfileId) {
+            throw ValidationException::withMessages(['minor_profile_id' => 'The authenticated child account does not match this checkout.']);
+        }
+    }
+
     private function showValidation(ValidationException $exception): void
     {
         foreach ($exception->errors() as $field => $messages) {
-            $this->addError($field, is_array($messages) ? (string) ($messages[0] ?? 'تعذّر تنفيذ الطلب.') : (string) $messages);
+            $message = is_array($messages) ? (string) ($messages[0] ?? 'تعذّر تنفيذ الطلب.') : (string) $messages;
+            $this->addError($field, __($message));
         }
     }
 }

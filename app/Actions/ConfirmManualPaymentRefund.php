@@ -18,6 +18,9 @@ class ConfirmManualPaymentRefund
     {
         $refund = DB::transaction(function () use ($refund, $reference, $completedAt, $completedByUserId, $notes, $evidencePath): PaymentRefund {
             $refund = PaymentRefund::query()->whereKey($refund->id)->lockForUpdate()->firstOrFail();
+            if ($refund->payment()->where('subject_type', 'store_order')->exists()) {
+                throw ValidationException::withMessages(['refund' => 'Store order refunds must be confirmed from the Store refund request.']);
+            }
             if ($refund->state !== PaymentRefundState::ManualRequired) {
                 throw ValidationException::withMessages(['refund' => 'هذا الاسترداد لا ينتظر معالجة يدوية.']);
             }
@@ -41,7 +44,13 @@ class ConfirmManualPaymentRefund
         ]);
 
         $refund->loadMissing('payment.bookingInstallment.paymentSchedule.booking.event');
-        $event = $refund->payment->bookingInstallment->paymentSchedule->booking->event;
+        $booking = $refund->payment->bookingInstallment?->paymentSchedule?->booking;
+
+        if ($booking === null) {
+            return $refund;
+        }
+
+        $event = $booking->event;
         $cancellation = EventCancellation::query()->whereBelongsTo($event)->first();
         if ($cancellation !== null) {
             ProcessEventCancellation::dispatch($cancellation->id);

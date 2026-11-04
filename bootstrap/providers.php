@@ -5,6 +5,7 @@ use App\Modules\Content\Providers\ContentServiceProvider;
 use App\Modules\Events\Providers\EventsServiceProvider;
 use App\Modules\Finance\Providers\FinanceServiceProvider;
 use App\Modules\Identity\Providers\IdentityServiceProvider;
+use App\Modules\Pos\Providers\PosServiceProvider;
 use App\Modules\Store\Providers\StoreServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\Filament\AdminPanelProvider;
@@ -18,4 +19,5 @@ return [
     AffiliatesServiceProvider::class,
     ContentServiceProvider::class,
     StoreServiceProvider::class,
+    PosServiceProvider::class,
 ];

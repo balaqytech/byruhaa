@@ -16,6 +16,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @property int $id
@@ -31,10 +33,24 @@ use Illuminate\Support\Str;
  */
 #[Fillable(['name', 'email', 'phone_number', 'password', 'code', 'status', 'reviewed_by_user_id', 'reviewed_at', 'review_notes'])]
 #[Hidden(['password', 'remember_token'])]
-class Affiliate extends Authenticatable
+class Affiliate extends Authenticatable implements AuditableContract
 {
     /** @use HasFactory<AffiliateFactory> */
-    use HasFactory, Notifiable;
+    use AuditableTrait, HasFactory, Notifiable;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'name',
+        'email',
+        'phone_number',
+        'code',
+        'status',
+        'reviewed_by_user_id',
+        'reviewed_at',
+        'review_notes',
+    ];
 
     protected static function newFactory(): AffiliateFactory
     {

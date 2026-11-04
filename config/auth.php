@@ -2,6 +2,7 @@
 
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\MinorProfile;
 use App\Modules\Identity\Models\User;
 
 return [
@@ -45,9 +46,29 @@ return [
             'provider' => 'users',
         ],
 
+        'cashier' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'barista' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        'pickup' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
         'customer' => [
             'driver' => 'session',
             'provider' => 'customers',
+        ],
+
+        'minor-profile' => [
+            'driver' => 'session',
+            'provider' => 'minor-profiles',
         ],
 
         'affiliate' => [
@@ -82,6 +103,11 @@ return [
         'customers' => [
             'driver' => 'eloquent',
             'model' => Customer::class,
+        ],
+
+        'minor-profiles' => [
+            'driver' => 'eloquent',
+            'model' => MinorProfile::class,
         ],
 
         'affiliates' => [

@@ -12,5 +12,9 @@ return [
             'label' => 'admin.event_landing_pages.umrah_2026_v1',
             'view' => 'pages.public.site.events.landings.umrah-2026',
         ],
+        'rabbaniyeen-v1' => [
+            'label' => 'admin.event_landing_pages.rabbaniyeen_v1',
+            'view' => 'pages.public.site.events.landings.rabbaniyeen-v1',
+        ],
     ],
 ];

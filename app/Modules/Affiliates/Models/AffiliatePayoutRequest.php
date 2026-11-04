@@ -6,6 +6,7 @@ use App\Casts\MoneyBaisaCast;
 use App\Enums\AffiliatePayoutRequestStatus;
 use App\Modules\Finance\Models\LedgerTransaction;
 use App\Modules\Identity\Models\User;
+use App\Support\HumanReference;
 use Brick\Money\Money;
 use Database\Factories\AffiliatePayoutRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -14,7 +15,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Str;
 
 /**
  * @property int $id
@@ -56,7 +56,7 @@ class AffiliatePayoutRequest extends Model
     protected static function booted(): void
     {
         static::creating(function (AffiliatePayoutRequest $payoutRequest): void {
-            $payoutRequest->reference ??= 'APO-'.Str::upper(Str::random(12));
+            $payoutRequest->reference ??= HumanReference::next('affiliate_payout');
         });
     }
 

@@ -5,7 +5,9 @@ namespace App\Modules\Store\Models;
 use App\Casts\MoneyBaisaCast;
 use App\Models\WebhookDelivery;
 use App\Modules\Store\States\Order\OrderState;
+use App\Support\HumanReference;
 use Brick\Money\Money;
+use Carbon\CarbonInterface;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,21 +17,61 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\ModelStates\HasStates;
 
 /**
  * @property OrderState $status
  * @property string $payment_token
+ * @property int|null $minor_profile_id
+ * @property string $payment_method
  * @property Carbon|null $pickup_at
  * @property-read Money $subtotal
  * @property-read Money $vat
  * @property-read Money $total
+ * @property int $regular_total_baisa
+ * @property int $discount_baisa
+ * @property string $pricing_tier
  */
-#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'status', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice'])]
-class Order extends Model
+#[Fillable(['reference', 'payment_token', 'idempotency_key', 'customer_id', 'minor_profile_id', 'status', 'payment_method', 'currency', 'customer_name', 'customer_phone', 'customer_email', 'recipient_name', 'recipient_phone', 'note', 'pickup_type', 'pickup_at', 'subtotal', 'subtotal_baisa', 'vat', 'vat_baisa', 'total', 'total_baisa', 'regular_total_baisa', 'discount_baisa', 'pricing_tier', 'vat_rate_percentage', 'seller_legal_name', 'seller_tax_number', 'seller_address', 'seller_phone', 'receipt_footer', 'paid_at', 'payment_reference', 'provider_invoice', 'cash_received_baisa', 'cash_change_baisa', 'pos_cashier_user_id', 'pos_request_hash'])]
+class Order extends Model implements AuditableContract
 {
+    public const SCHEDULED_PREPARATION_LEAD_MINUTES = 45;
+
     /** @use HasFactory<OrderFactory> */
-    use HasFactory, HasStates;
+    use AuditableTrait, HasFactory, HasStates;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'reference',
+        'customer_id',
+        'minor_profile_id',
+        'payment_method',
+        'status',
+        'currency',
+        'customer_name',
+        'customer_phone',
+        'customer_email',
+        'recipient_name',
+        'recipient_phone',
+        'note',
+        'pickup_type',
+        'pickup_at',
+        'subtotal_baisa',
+        'vat_baisa',
+        'total_baisa',
+        'regular_total_baisa',
+        'discount_baisa',
+        'pricing_tier',
+        'vat_rate_percentage',
+        'paid_at',
+        'payment_reference',
+        'cash_received_baisa',
+        'cash_change_baisa',
+    ];
 
     protected $table = 'store_orders';
 
@@ -44,12 +86,15 @@ class Order extends Model
         'subtotal_baisa' => 0,
         'vat_baisa' => 0,
         'total_baisa' => 0,
+        'regular_total_baisa' => 0,
+        'discount_baisa' => 0,
+        'pricing_tier' => 'standard',
     ];
 
     protected static function booted(): void
     {
         static::creating(function (Order $order): void {
-            $order->reference ??= 'BRH-ORD-'.Str::upper(Str::random(10));
+            $order->reference ??= HumanReference::next('order');
             $order->payment_token ??= (string) Str::uuid();
         });
     }
@@ -58,6 +103,12 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** @return HasMany<OrderRefundRequest, $this> */
+    public function refundRequests(): HasMany
+    {
+        return $this->hasMany(OrderRefundRequest::class);
     }
 
     /** @return HasMany<OrderStatusHistory, $this> */
@@ -89,8 +140,32 @@ class Order extends Model
             'vat_baisa' => 'integer',
             'total' => MoneyBaisaCast::of('total_baisa'),
             'total_baisa' => 'integer',
+            'regular_total_baisa' => 'integer',
+            'discount_baisa' => 'integer',
             'vat_rate_percentage' => 'integer',
+            'cash_received_baisa' => 'integer',
+            'cash_change_baisa' => 'integer',
             'paid_at' => 'datetime',
         ];
+    }
+
+    public function preparationOpensAt(): ?CarbonInterface
+    {
+        if ($this->pickup_type !== 'scheduled') {
+            return null;
+        }
+
+        return $this->pickup_at?->copy()->subMinutes(self::SCHEDULED_PREPARATION_LEAD_MINUTES);
+    }
+
+    public function canStartScheduledPreparation(): bool
+    {
+        if ($this->pickup_type !== 'scheduled') {
+            return true;
+        }
+
+        $opensAt = $this->preparationOpensAt();
+
+        return $opensAt !== null && now()->greaterThanOrEqualTo($opensAt);
     }
 }

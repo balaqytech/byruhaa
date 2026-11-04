@@ -14,6 +14,9 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="theme-color" content="#dff6ef">
+    @isset($robots)
+        <meta name="robots" content="{{ $robots }}">
+    @endisset
 
     @isset($metaImage)
         <meta property="og:image" content="{{ $metaImage }}">
@@ -32,21 +35,22 @@
         $navigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
-            ['label' => 'قهوة بيرحاء', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
+            ['label' => 'قهوة بيرحاء', 'route' => 'coffee', 'active' => 'coffee*', 'icon' => 'sparkles'],
             ['label' => 'المدونة', 'route' => 'blog.index', 'active' => 'blog.*', 'icon' => 'book-open-text'],
             ['label' => 'عن بِيرُحاء', 'route' => 'about', 'active' => 'about', 'icon' => 'information-circle'],
         ];
         $footerNavigationLinks = [
             ...$navigationLinks,
+            ['label' => 'تتبع طلبك', 'route' => 'store.orders.track', 'active' => 'store.orders.track*', 'icon' => 'check-list'],
             ['label' => 'تواصل معنا', 'route' => 'contact', 'active' => 'contact', 'icon' => 'mail-01'],
         ];
 
-        $accountRoute = auth('customer')->check() ? 'customer.dashboard' : 'login';
+        $accountRoute = auth('minor-profile')->check() ? 'minor.dashboard' : (auth('customer')->check() ? 'customer.dashboard' : 'login');
         $bottomNavigationLinks = [
             ['label' => 'الرئيسة', 'route' => 'home', 'active' => 'home', 'icon' => 'home-01'],
             ['label' => 'الفعاليات', 'route' => 'events.index', 'active' => 'events.*', 'icon' => 'calendar-03'],
-            ['label' => 'القهوة', 'route' => 'coffee', 'active' => 'coffee', 'icon' => 'sparkles'],
-            ['label' => 'حسابي', 'route' => $accountRoute, 'active' => 'customer.*', 'icon' => 'user-circle'],
+            ['label' => 'القهوة', 'route' => 'coffee', 'active' => 'coffee*', 'icon' => 'sparkles'],
+            ['label' => 'حسابي', 'route' => $accountRoute, 'active' => auth('minor-profile')->check() ? 'minor.*' : 'customer.*', 'icon' => 'user-circle'],
         ];
 
         $themeOptions = [
@@ -103,20 +107,44 @@
                     @endforeach
                 </div>
 
+                @auth('minor-profile')
+                    <a href="{{ route('minor.notifications.index') }}"
+                        class="relative inline-flex size-10 items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329]/68 transition hover:border-[#009060]/35 hover:bg-[#009060]/8 hover:text-[#009060] dark:border-white/10 dark:text-[#f7f1df]/68 dark:hover:bg-white/10 dark:hover:text-[#e0a800]"
+                        aria-label="الإشعارات{{ $minorUnreadNotificationsCount > 0 ? '، '.$minorUnreadNotificationsCount.' غير مقروءة' : '' }}"
+                        title="الإشعارات">
+                        <x-hugeicon name="notification-02" class="text-xl" />
+                        @if ($minorUnreadNotificationsCount > 0)
+                            <span class="absolute -end-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[#d89c00] px-1 text-[10px] font-bold leading-5 text-[#07120f] ring-2 ring-[#f6fbf8] dark:ring-[#07120f]">{{ $minorUnreadNotificationsCount > 99 ? '99+' : $minorUnreadNotificationsCount }}</span>
+                        @endif
+                    </a>
+                @endauth
+
                 @if (Route::has($accountRoute))
                     <a href="{{ route($accountRoute) }}"
                         class="inline-flex min-h-10 items-center gap-2 rounded-sm border border-[#009060]/18 px-4 py-2 text-sm font-semibold text-[#009060] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-[#e0a800]/24 dark:text-[#e0a800] dark:hover:bg-[#e0a800]/10">
-                        <x-hugeicon :name="auth('customer')->check() ? 'dashboard-square-01' : 'login-03'" class="text-lg" />
-                        <span>{{ auth('customer')->check() ? __('ui.labels.dashboard') : __('ui.actions.log_in') }}</span>
+                        <x-hugeicon :name="auth('customer')->check() || auth('minor-profile')->check() ? 'dashboard-square-01' : 'login-03'" class="text-lg" />
+                        <span>{{ auth('customer')->check() || auth('minor-profile')->check() ? __('ui.labels.dashboard') : __('ui.actions.log_in') }}</span>
                     </a>
                 @endif
             </div>
 
-            <label for="public-navigation-toggle"
-                class="ms-auto inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 lg:hidden dark:border-white/10 dark:text-[#f7f1df] dark:hover:bg-white/10"
-                aria-label="فتح القائمة">
-                <x-hugeicon name="menu-01" class="text-2xl" />
-            </label>
+            <div class="ms-auto flex items-center gap-2 lg:hidden">
+                @auth('minor-profile')
+                    <a href="{{ route('minor.notifications.index') }}"
+                        class="relative inline-flex size-11 items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-white/10 dark:text-[#f7f1df] dark:hover:bg-white/10"
+                        aria-label="الإشعارات{{ $minorUnreadNotificationsCount > 0 ? '، '.$minorUnreadNotificationsCount.' غير مقروءة' : '' }}">
+                        <x-hugeicon name="notification-02" class="text-2xl" />
+                        @if ($minorUnreadNotificationsCount > 0)
+                            <span class="absolute -end-1.5 -top-1.5 inline-flex min-w-5 items-center justify-center rounded-full bg-[#d89c00] px-1 text-[10px] font-bold leading-5 text-[#07120f] ring-2 ring-[#f6fbf8] dark:ring-[#07120f]">{{ $minorUnreadNotificationsCount > 99 ? '99+' : $minorUnreadNotificationsCount }}</span>
+                        @endif
+                    </a>
+                @endauth
+                <label for="public-navigation-toggle"
+                    class="inline-flex size-11 cursor-pointer items-center justify-center rounded-sm border border-[#009060]/18 text-[#123329] transition hover:border-[#009060]/35 hover:bg-[#009060]/8 dark:border-white/10 dark:text-[#f7f1df] dark:hover:bg-white/10"
+                    aria-label="فتح القائمة">
+                    <x-hugeicon name="menu-01" class="text-2xl" />
+                </label>
+            </div>
         </div>
 
         <nav class="hidden border-t border-[#009060]/12 bg-[#fbf9f1]/96 px-4 py-4 text-sm font-medium text-[#123329]/74 peer-checked:grid lg:peer-checked:hidden dark:border-white/10 dark:bg-[#07120f]/96 dark:text-[#f7f1df]/72"
@@ -157,7 +185,7 @@
                 @php
                     $isAccount = $link['label'] === 'حسابي';
                     $isActive = $isAccount
-                        ? request()->routeIs('customer.*') || request()->routeIs('login', 'register', 'password.*')
+                        ? request()->routeIs('customer.*') || request()->routeIs('minor.*') || request()->routeIs('login', 'register', 'password.*')
                         : request()->routeIs($link['active']);
                 @endphp
 
@@ -177,7 +205,7 @@
 
     <footer data-public-footer
         class="border-t border-[#2a8069]/12 bg-white/68 pb-28 dark:border-white/10 dark:bg-white/5 lg:pb-0">
-        <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.2fr_.8fr_.8fr] lg:px-8">
+        <div class="mx-auto grid w-full max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.2fr_.8fr_.8fr_1fr] lg:px-8">
             <div class="max-w-xl">
                 <div class="flex items-center gap-3">
                     <span
@@ -208,10 +236,6 @@
                     <a href="{{ route($link['route']) }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $link['label'] }}</a>
                 @endforeach
-                @foreach ($publishedPolicyPages ?? [] as $policy)
-                    <a href="{{ route('policies.show', ['page' => $policy->key]) }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $policy->title }}</a>
-                @endforeach
             </nav>
 
             <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62"
@@ -225,15 +249,22 @@
                     <a href="{{ route('register') }}"
                         class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.auth.create_account') }}</a>
                 @endif
-                @if (Route::has('affiliate.login'))
-                    <a href="{{ route('affiliate.login') }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.login_title') }}</a>
-                @endif
-                @if (Route::has('affiliate.register'))
-                    <a href="{{ route('affiliate.register') }}"
-                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ __('ui.affiliates.register_title') }}</a>
+                @if (config('byruhaa.minor_accounts.enabled', true) && Route::has('minor.login'))
+                    <a href="{{ route(auth('minor-profile')->check() ? 'minor.dashboard' : 'minor.login') }}"
+                        class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ auth('minor-profile')->check() ? 'لوحة حساب القائد' : 'دخول حساب القائد' }}</a>
                 @endif
             </nav>
+
+            @if (($publishedPolicyPages ?? collect())->isNotEmpty())
+                <nav class="grid content-start gap-3 text-sm text-[#123329]/62 dark:text-[#f7f1df]/62"
+                    aria-label="السياسات والشروط">
+                    <p class="font-heading text-base font-bold text-[#123329] dark:text-[#f7f1df]">السياسات والشروط</p>
+                    @foreach ($publishedPolicyPages as $policy)
+                        <a href="{{ route('policies.show', ['page' => $policy->key]) }}"
+                            class="transition hover:text-[#009060] dark:hover:text-[#e0a800]">{{ $policy->title }}</a>
+                    @endforeach
+                </nav>
+            @endif
         </div>
 
         <div class="border-t border-[#2a8069]/12 dark:border-white/10">

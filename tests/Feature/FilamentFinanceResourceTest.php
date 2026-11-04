@@ -26,6 +26,7 @@ use App\Modules\Finance\Models\PaymentRefund;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\User;
 use Filament\Actions\Testing\TestAction;
+use Filament\Support\Enums\Width;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
@@ -243,6 +244,11 @@ test('staff can list and view refunds with provider payloads', function () {
 });
 
 test('staff can list and view ledger accounts and transactions with entries', function () {
+    expect((new ViewLedgerAccount)->getMaxContentWidth())->toBe(Width::Full)
+        ->and((new ViewLedgerAccount)->hasCombinedRelationManagerTabsWithContent())->toBeFalse()
+        ->and((new ViewLedgerTransaction)->getMaxContentWidth())->toBe(Width::Full)
+        ->and((new ViewLedgerTransaction)->hasCombinedRelationManagerTabsWithContent())->toBeFalse();
+
     $staff = User::factory()->create();
     [$payment] = filamentFinancePaymentFixture([
         'reference' => 'PAY-LEDGER-VIEW',
@@ -256,23 +262,29 @@ test('staff can list and view ledger accounts and transactions with entries', fu
         ->get(LedgerAccountResource::getUrl('index'))
         ->assertOk()
         ->assertSee(LedgerAccount::THAWANI_CLEARING_CODE)
-        ->assertSee('Thawani clearing');
+        ->assertSee('حساب تسوية Thawani');
 
     $this->actingAs($staff, 'web')
         ->get(LedgerAccountResource::getUrl('view', ['record' => $account]))
         ->assertOk()
-        ->assertSee(__('admin.fields.entries'));
+        ->assertSee(__('admin.fields.entries'))
+        ->assertSee('الرصيد الحالي')
+        ->assertSee('OMR 7.000')
+        ->assertSee('حساب تسوية Thawani');
 
     $this->actingAs($staff, 'web')
         ->get(LedgerTransactionResource::getUrl('index'))
         ->assertOk()
         ->assertSee('LED-PAY-LEDGER-VIEW')
-        ->assertSee('PAY-LEDGER-VIEW');
+        ->assertSee('PAY-LEDGER-VIEW')
+        ->assertSee('دفعة Thawani');
 
     $this->actingAs($staff, 'web')
         ->get(LedgerTransactionResource::getUrl('view', ['record' => $transaction]))
         ->assertOk()
-        ->assertSee(__('admin.fields.entries'));
+        ->assertSee(__('admin.fields.entries'))
+        ->assertSee('حساب تسوية Thawani')
+        ->assertSee('دفعة Thawani');
 
     Livewire::test(LedgerAccountEntriesRelationManager::class, [
         'ownerRecord' => $account,
@@ -280,6 +292,7 @@ test('staff can list and view ledger accounts and transactions with entries', fu
     ])
         ->assertCanSeeTableRecords([$account->entries()->firstOrFail()])
         ->assertSee('LED-PAY-LEDGER-VIEW')
+        ->assertSee('دفعة PAY-LEDGER-VIEW')
         ->assertSee('OMR 7.000')
         ->assertTableHeaderActionsExistInOrder([])
         ->assertTableActionsExistInOrder([]);
@@ -291,6 +304,8 @@ test('staff can list and view ledger accounts and transactions with entries', fu
         ->assertCanSeeTableRecords($transaction->entries)
         ->assertSee(LedgerAccount::THAWANI_CLEARING_CODE)
         ->assertSee(LedgerAccount::CUSTOMER_DEPOSITS_CODE)
+        ->assertSee('حساب تسوية Thawani')
+        ->assertSee('دفعة PAY-LEDGER-VIEW')
         ->assertSee('OMR 7.000')
         ->assertTableHeaderActionsExistInOrder([])
         ->assertTableActionsExistInOrder([]);

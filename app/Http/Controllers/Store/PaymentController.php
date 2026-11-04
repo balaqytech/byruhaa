@@ -38,8 +38,8 @@ class PaymentController extends Controller
     {
         try {
             $customerId = $this->customerId($request);
-            $order = $resolveOrder->execute((string) $order->payment_token, $customerId);
-            $payment = $initiatePayment->execute($order, $customerId);
+            $order = $resolveOrder->execute((string) $order->payment_token, $customerId, $request->hasValidSignature());
+            $payment = $initiatePayment->execute($order, $customerId, null, $request->hasValidSignature());
         } catch (ValidationException $exception) {
             if (! $request->expectsJson()) {
                 return back()->withErrors($exception->errors());

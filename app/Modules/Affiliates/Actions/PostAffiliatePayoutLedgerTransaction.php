@@ -47,7 +47,6 @@ class PostAffiliatePayoutLedgerTransaction
             );
 
             $transaction = $payoutRequest->ledgerTransaction()->create([
-                'reference' => 'LED-'.$payoutRequest->reference,
                 'description' => 'Affiliate payout '.$payoutRequest->reference,
                 'occurred_at' => $payoutRequest->paid_at ?? now(),
                 'currency' => $payoutRequest->currency,

@@ -8,7 +8,7 @@ class Completed extends OrderState
 
     public function getLabel(): string
     {
-        return 'Completed';
+        return __('Completed');
     }
 
     public function getColor(): string

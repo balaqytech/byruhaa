@@ -3,6 +3,7 @@
 namespace App\Modules\Finance\Models;
 
 use App\Casts\MoneyBaisaCast;
+use App\Support\HumanReference;
 use Brick\Money\Money;
 use Database\Factories\LedgerTransactionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -40,6 +41,13 @@ class LedgerTransaction extends Model
     protected $attributes = [
         'currency' => 'OMR',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (LedgerTransaction $transaction): void {
+            $transaction->reference ??= HumanReference::next('ledger');
+        });
+    }
 
     /**
      * @return MorphTo<Model, $this>

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PublicPageSeeder::class,
             StoreCatalogSeeder::class,
+            ShieldSeeder::class,
         ]);
     }
 }

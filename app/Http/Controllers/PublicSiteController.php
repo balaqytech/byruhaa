@@ -8,6 +8,7 @@ use App\Enums\SeatAllocationState;
 use App\Modules\Events\Actions\BuildEventPriceTierOffer;
 use App\Modules\Events\Actions\RenderEventLandingPage;
 use App\Modules\Events\Models\Event;
+use App\Modules\Store\Actions\BrowseProduct;
 use App\Settings\AboutPageSettings;
 use App\Settings\ContactPageSettings;
 use Illuminate\Contracts\View\View;
@@ -71,6 +72,20 @@ class PublicSiteController extends Controller
             'title' => 'قهوة بيرحاء | بِيرُحاء إبراء',
             'metaDescription' => 'قهوة بيرحاء في إبراء: قائمة واضحة، أسعار نهائية شاملة الضريبة، واستلام سهل من الموقع.',
             'metaImage' => asset('images/coffee-byruha-hero.webp'),
+        ]);
+    }
+
+    public function coffeeProduct(string $slug, BrowseProduct $browseProduct): View
+    {
+        $product = $browseProduct->execute($slug);
+
+        return view('pages.public.site.store.product', [
+            'product' => $product,
+            'title' => $product->name.' | قهوة بيرحاء',
+            'metaDescription' => filled($product->description)
+                ? $product->description
+                : 'تعرّف على '.$product->name.' واختر الخيار المناسب قبل إضافته إلى سلتك.',
+            'metaImage' => $product->featuredImage?->getUrl() ?? asset('images/coffee-byruha-menu.webp'),
         ]);
     }
 

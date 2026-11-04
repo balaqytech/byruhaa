@@ -112,7 +112,7 @@ class PaymentsTable
             ->label(__('admin.actions.refund'))
             ->icon(Heroicon::OutlinedReceiptRefund)
             ->color('warning')
-            ->visible(fn (Payment $record): bool => $record->isRefundable())
+            ->visible(fn (Payment $record): bool => ! in_array($record->subject_type, ['wallet_topup', 'store_order'], true) && $record->isRefundable())
             ->modalHeading(__('admin.actions.refund_payment'))
             ->schema([
                 TextInput::make('amount')

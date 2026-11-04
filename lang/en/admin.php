@@ -6,6 +6,7 @@ return [
         'customer_management' => 'Customer Management',
         'finance' => 'Finance',
         'store' => 'Store',
+        'user_management' => 'User Management',
     ],
 
     'resources' => [
@@ -53,6 +54,11 @@ return [
             'label' => 'Customer',
             'plural_label' => 'Customers',
             'navigation_label' => 'Customers',
+        ],
+        'users' => [
+            'label' => 'User',
+            'plural_label' => 'Users',
+            'navigation_label' => 'Users',
         ],
         'discounts' => [
             'label' => 'Discount',
@@ -144,6 +150,7 @@ return [
     'event_landing_pages' => [
         'life_after_school_v1' => 'Life after school, version 1',
         'umrah_2026_v1' => 'Umrah 2026, version 1',
+        'rabbaniyeen_v1' => 'Rabbaniyeen, version 1',
     ],
 
     'event_infolist' => [
@@ -273,6 +280,11 @@ return [
 
     'fields' => [
         'amount' => 'Amount',
+        'allergens' => 'Allergens',
+        'author_name' => 'Author name',
+        'display_tag' => 'Display tag',
+        'short_name' => 'Short name',
+        'source_name' => 'Source name',
         'additional_info' => 'Additional info',
         'address' => 'Address',
         'area' => 'Area',
@@ -348,6 +360,7 @@ return [
         'paid_by' => 'Paid by',
         'paid_payouts' => 'Paid payouts',
         'password' => 'Password',
+        'permission_roles' => 'Permission roles',
         'payloads' => 'Payloads',
         'payment' => 'Payment',
         'product' => 'Product',
@@ -360,6 +373,10 @@ return [
         'percentage' => 'Percentage',
         'pending_payouts' => 'Pending payouts',
         'price' => 'Price',
+        'member_price' => 'Byruhaa member price',
+        'regular_unit_price' => 'Regular unit price',
+        'regular_total' => 'Total before member discount',
+        'pricing_tier' => 'Pricing tier',
         'processed_at' => 'Processed at',
         'posts' => 'Posts',
         'provider' => 'Provider',
@@ -370,6 +387,7 @@ return [
         'provider_status' => 'Provider status',
         'pickup_at' => 'Pickup time',
         'pickup_date' => 'Pickup date',
+        'has_member_price' => 'Has member price',
         'recipient' => 'Recipient',
         'recipient_phone' => 'Recipient phone',
         'reason' => 'Reason',
@@ -430,6 +448,19 @@ return [
         'wilaya' => 'Wilaya',
     ],
 
+    'user_form' => [
+        'sections' => [
+            'account' => 'Account',
+            'permissions' => 'Permissions and roles',
+        ],
+        'help' => [
+            'permission_roles' => 'Assign Shield roles to control this user’s Filament permissions.',
+        ],
+        'errors' => [
+            'last_super_admin' => 'The last super administrator cannot lose this role.',
+        ],
+    ],
+
     'filters' => [
         'refundable' => 'Refundable',
         'pickup_date' => 'Pickup date',
@@ -468,10 +499,77 @@ return [
     ],
 
     'store' => [
+        'product_tabs' => [
+            'details' => 'Details and description',
+            'media' => 'Photos and video',
+            'options' => 'Options and prices',
+        ],
+        'product_list_tabs' => [
+            'all' => 'All products',
+            'featured' => 'Featured',
+            'options_count' => 'Options',
+        ],
+        'category_media' => [
+            'image' => 'Category image',
+            'image_help' => 'Recommended: 900 × 1400 px (9:14). WebP preferred; JPEG or PNG also accepted, up to 5 MB.',
+            'invalid_image' => 'Choose a JPEG, PNG, or WebP image no larger than 5 MB.',
+        ],
+        'product_media' => [
+            'video' => 'Product video',
+            'video_help' => 'Optional. MP4 or WebM, up to 50 MB. It appears before the featured image in the catalog and product page.',
+            'gallery' => 'Product image gallery',
+            'gallery_help' => 'Up to 8 images, 10 MB each. Drag to set their display order.',
+            'invalid_video' => 'Select an MP4 or WebM video no larger than 50 MB.',
+            'invalid_image' => 'Select an image no larger than 10 MB.',
+        ],
+        'admin_order' => [
+            'quick_create_minor' => 'Quick create leader',
+            'birth_date' => 'Date of birth',
+            'school_name' => 'School',
+            'grade' => 'Grade',
+            'guardian_consent_confirmed' => 'I confirm the guardian approved creating this leader account and store purchases.',
+            'minor_created_pending' => 'The leader account was created and must be activated before it can be added to an order.',
+            'activation_link' => 'Activation link (valid for one day)',
+            'create_guest_order' => 'Create guest order',
+            'guest_details' => 'Guest details',
+            'guest' => 'Guest',
+            'quick_create_customer' => 'Quick create customer',
+            'minor_profile' => 'Minor account',
+            'minor_optional_help' => 'Leave empty for a customer order. Wallet payment is available only for a minor.',
+            'payment_method' => 'Payment method',
+            'direct_payment' => 'Direct payment (Thawani link)',
+            'minor_wallet' => 'Minor wallet',
+            'pickup_type' => 'Pickup type',
+            'wallet_requires_minor' => 'Select a minor account to pay with its wallet.',
+            'wallet_insufficient' => 'The leader’s wallet balance is insufficient. Top up the wallet or choose direct payment.',
+            'creation_failed' => 'Could not create the order',
+            'creation_failed_help' => 'An error occurred while saving the order. It was not confirmed and the wallet was not charged. Check the system configuration or contact technical support.',
+            'create_order' => 'Create order',
+            'confirmation' => 'Wallet orders are charged and confirmed immediately. Direct-payment orders wait for payment through the link shown on the order page.',
+            'payment_link' => 'Payment link',
+            'payment_link_unavailable' => 'No active payment link. The order may have expired or already been paid.',
+            'payment_window' => 'Direct-payment orders expire after :minutes minutes unless paid. Share the link promptly.',
+            'paid_at' => 'Paid at',
+            'payment_reference' => 'Payment reference',
+        ],
+        'order_tabs' => [
+            'customer_payment' => 'Customer & payment',
+            'pickup_notes' => 'Pickup & notes',
+        ],
+        'order_list_tabs' => [
+            'all' => 'All orders',
+            'pending_payment' => 'Awaiting payment',
+            'in_progress' => 'In progress',
+            'completed' => 'Completed',
+            'exceptions' => 'Exceptions & refunds',
+        ],
         'default_option_help' => 'Each product must keep exactly one default option. Saving a new default will replace the current one.',
         'price_includes_vat_help' => 'The entered price is the final customer price and includes 5% VAT.',
+        'member_price_help' => 'Optional. It must be positive and lower than the regular VAT-inclusive price.',
+        'member_price_must_be_lower' => 'The member price must be positive and lower than the regular price.',
         'featured_help' => 'Shows the product in the Best sellers tab while keeping it in its original category.',
         'sections' => [
+            'customer_payment' => 'Customer & payment',
             'identity' => 'Identity',
             'content' => 'Content',
             'media' => 'Media',
@@ -505,6 +603,10 @@ return [
             'immediate' => 'Immediate',
             'scheduled' => 'Scheduled',
         ],
+        'pricing_tiers' => [
+            'standard' => 'Standard',
+            'member' => 'Byruhaa member',
+        ],
         'actions' => [
             'change_status' => 'Change status',
             'adjust_stock' => 'Adjust stock',
@@ -529,6 +631,8 @@ return [
         ],
         'inventory' => [
             'history' => 'Inventory history',
+            'options_overview' => 'Options and inventory',
+            'options_overview_help' => 'Edit options and prices in the tab above. Adjust stock here and review every movement in the Inventory history tab.',
         ],
     ],
 

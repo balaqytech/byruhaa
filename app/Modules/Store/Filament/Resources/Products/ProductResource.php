@@ -5,6 +5,8 @@ namespace App\Modules\Store\Filament\Resources\Products;
 use App\Modules\Store\Filament\Resources\Products\Pages\CreateProduct;
 use App\Modules\Store\Filament\Resources\Products\Pages\EditProduct;
 use App\Modules\Store\Filament\Resources\Products\Pages\ListProducts;
+use App\Modules\Store\Filament\Resources\Products\RelationManagers\InventoryMovementsRelationManager;
+use App\Modules\Store\Filament\Resources\Products\RelationManagers\OptionsRelationManager;
 use App\Modules\Store\Filament\Resources\Products\Schemas\ProductForm;
 use App\Modules\Store\Filament\Resources\Products\Tables\ProductsTable;
 use App\Modules\Store\Models\Product;
@@ -13,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Tapp\FilamentAuditing\RelationManagers\AuditsRelationManager;
 use UnitEnum;
 
 class ProductResource extends Resource
@@ -49,6 +52,15 @@ class ProductResource extends Resource
     public static function getNavigationGroup(): string|UnitEnum|null
     {
         return __('admin.navigation.store');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            OptionsRelationManager::class,
+            InventoryMovementsRelationManager::class,
+            AuditsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

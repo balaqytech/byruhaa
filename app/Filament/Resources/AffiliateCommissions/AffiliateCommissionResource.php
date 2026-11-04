@@ -6,15 +6,15 @@ use App\Filament\Resources\AffiliateCommissions\Pages\ListAffiliateCommissions;
 use App\Filament\Resources\AffiliateCommissions\Pages\ViewAffiliateCommission;
 use App\Filament\Resources\AffiliateCommissions\Schemas\AffiliateCommissionInfolist;
 use App\Filament\Resources\AffiliateCommissions\Tables\AffiliateCommissionsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Affiliates\Models\AffiliateCommission;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class AffiliateCommissionResource extends Resource
+class AffiliateCommissionResource extends ShieldResource
 {
     protected static ?string $model = AffiliateCommission::class;
 

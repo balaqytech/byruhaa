@@ -36,11 +36,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
-### Git Flow branching strategy
-
-- This project uses the Git Flow branching strategy, with `main` reserved for production-ready code and `develop` used for integration.
-- When developing a new feature or module, create a separate branch from `develop` using the `feature/<short-description>` naming convention; do not develop directly on `main` or `develop`.
-
 ## Verification Scripts
 
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
@@ -49,19 +44,6 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Stick to existing directory structure; don't create new base folders without approval.
 - Do not change the application's dependencies without approval.
-
-### Approved modular-refactor conventions
-
-- For the approved modular refactor, use `app/Modules/<Context>` with simple feature-slice folders. Do not create additional top-level architecture folders or Composer packages.
-- Keep one Laravel application, one database, and one deployment. Do not introduce microservices or Event Sourcing for this refactor.
-- The active contexts are `Identity`, `Events`, `Finance`, `Affiliates`, and `Content`. This refactor only prepares boundaries for future Store and LMS work; implement those contexts only in their dedicated future feature work.
-- Keep root route files as compatibility entry points. Preserve existing route names, URIs, middleware, API Resources, request formats, response shapes, and status codes.
-- Register module providers explicitly in `bootstrap/providers.php`; avoid automatic module discovery when explicit registration is sufficient.
-- New code must not import another context's internal Models, Controllers, Filament Resources, or Services. Use Contracts, query services, DTOs, or after-commit domain events for cross-context communication.
-- Prefer constructor dependency injection and single-purpose Actions. Existing legacy `App\\` imports and `app()` calls may remain until their owning context is migrated; do not expand those patterns in new code.
-- Do not rename existing database tables or rewrite migrations that may have run. Inspect polymorphic types and serialized queued classes before changing namespaces.
-- Keep `App\\Support` and `App\\Contracts` small and genuinely cross-cutting; do not turn them into a shared business-model layer.
-- Record and compare baseline test, route, Pint, and Larastan results before attributing failures to a refactor.
 
 ## Frontend Bundling
 

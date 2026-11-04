@@ -1,6 +1,7 @@
 <?php
 
 use App\Settings\GeneralSettings;
+use Database\Seeders\PublicPageSeeder;
 
 test('public website remains available when coming soon mode is disabled', function () {
     expect(app(GeneralSettings::class)->coming_soon_enabled)->toBeFalse();
@@ -9,6 +10,8 @@ test('public website remains available when coming soon mode is disabled', funct
 });
 
 test('coming soon mode closes web pages but keeps admin api and health routes available', function () {
+    $this->seed(PublicPageSeeder::class);
+
     $settings = app(GeneralSettings::class);
     $settings->coming_soon_enabled = true;
     $settings->save();
@@ -17,11 +20,14 @@ test('coming soon mode closes web pages but keeps admin api and health routes av
         $this->get($url)
             ->assertServiceUnavailable()
             ->assertHeader('Retry-After', '3600')
-            ->assertSee('الموقع قريبًا')
-            ->assertSee('noindex, nofollow', false);
+            ->assertViewIs('coming-soon');
     }
 
     $this->get('/admin/login')->assertSuccessful();
+    $this->get(route('cashier.login'))->assertSuccessful();
+    $this->get(route('barista.login'))->assertSuccessful();
+    $this->get(route('pickup.login'))->assertSuccessful();
+    $this->get('/policies/privacy')->assertSuccessful();
     $this->getJson('/api/v1/events')->assertSuccessful();
     $this->get('/up')->assertSuccessful();
 });

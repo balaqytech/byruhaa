@@ -4,6 +4,7 @@ use App\Enums\BookingInstallmentState;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentState;
 use App\Enums\ThawaniWebhookEventStatus;
+use App\Jobs\UchatWebhookJob as CallWebhookJob;
 use App\Models\WebhookDelivery;
 use App\Modules\Affiliates\Models\Affiliate;
 use App\Modules\Affiliates\Models\AffiliateCommission;
@@ -30,9 +31,9 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
-use Spatie\WebhookServer\CallWebhookJob;
 
 beforeEach(function () {
+    config(['byruhaa.uchat.webhook_bearer_token' => 'outbound-test', 'byruhaa.uchat.webhook_signing_secret' => 'signing-test']);
     config([
         'payments.default' => 'thawani',
         'thawani.mode' => 'test',
@@ -527,7 +528,7 @@ test('thawani webhook rejects paid sessions with mismatched verification data', 
     Http::preventStrayRequests();
 
     config([
-        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/payment-paid',
     ]);
 
     Queue::fake();
@@ -567,7 +568,7 @@ test('duplicate thawani webhooks are idempotent for side effects', function () {
     Http::preventStrayRequests();
 
     config([
-        'byruhaa.webhooks.payment_paid_url' => 'https://partner.test/webhooks/payment-paid',
+        'byruhaa.uchat.webhook_url' => 'https://partner.test/webhooks/payment-paid',
     ]);
 
     [, $installment] = paymentInstallmentFixture(amountBaisa: 489000);

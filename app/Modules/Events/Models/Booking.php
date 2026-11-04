@@ -14,6 +14,7 @@ use App\Modules\Events\States\Contract\Signed;
 use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\User;
 use App\Services\Webhooks\ByruhaaWebhookSender;
+use App\Support\HumanReference;
 use Brick\Money\Money;
 use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,7 +27,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\ModelStates\HasStates;
 
 /**
@@ -55,10 +57,34 @@ use Spatie\ModelStates\HasStates;
  * @property-read Money $total
  */
 #[Fillable(['customer_id', 'event_id', 'reference', 'state', 'reviewed_by_user_id', 'reviewed_at', 'review_notes', 'cancellation_reason', 'unit_price', 'unit_price_baisa', 'currency', 'family_member_count', 'subtotal', 'subtotal_baisa', 'discount_id', 'coupon_id', 'coupon_code', 'discount_name', 'discount_amount', 'discount_amount_baisa', 'total', 'total_baisa'])]
-class Booking extends Model
+class Booking extends Model implements AuditableContract
 {
     /** @use HasFactory<BookingFactory> */
-    use HasFactory, HasStates;
+    use AuditableTrait, HasFactory, HasStates;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'customer_id',
+        'event_id',
+        'reference',
+        'state',
+        'reviewed_by_user_id',
+        'reviewed_at',
+        'review_notes',
+        'cancellation_reason',
+        'unit_price_baisa',
+        'currency',
+        'family_member_count',
+        'subtotal_baisa',
+        'discount_id',
+        'coupon_id',
+        'coupon_code',
+        'discount_name',
+        'discount_amount_baisa',
+        'total_baisa',
+    ];
 
     protected static function newFactory(): BookingFactory
     {
@@ -80,7 +106,7 @@ class Booking extends Model
     protected static function booted(): void
     {
         static::creating(function (Booking $booking): void {
-            $booking->reference ??= 'BRH-'.Str::upper(Str::random(8));
+            $booking->reference ??= HumanReference::next('booking');
         });
 
         static::updated(function (Booking $booking): void {
@@ -90,12 +116,11 @@ class Booking extends Model
 
             if ($booking->state instanceof Cancelled || $booking->state instanceof Rejected) {
                 app(CouponUsageService::class)->releaseForBooking($booking);
+                if ($booking->state instanceof Cancelled) {
+                    app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking);
+                }
                 DB::afterCommit(function () use ($booking): void {
                     app(ReleaseBookingSeats::class)->execute($booking);
-
-                    if ($booking->state instanceof Cancelled) {
-                        app(ByruhaaWebhookSender::class)->sendBookingCancelled($booking);
-                    }
                 });
             }
         });

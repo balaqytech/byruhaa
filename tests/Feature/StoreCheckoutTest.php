@@ -5,6 +5,7 @@ use App\Modules\Store\Actions\AddCartItem;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
+use Database\Seeders\PublicPageSeeder;
 use Livewire\Livewire;
 
 test('the dedicated checkout page is publicly reachable', function (): void {
@@ -14,6 +15,7 @@ test('the dedicated checkout page is publicly reachable', function (): void {
 });
 
 test('checkout page displays the current cart summary and customer form', function (): void {
+    $this->seed(PublicPageSeeder::class);
     $category = Category::factory()->create();
     $product = Product::factory()->active()->create([
         'category_id' => $category->id,
@@ -29,5 +31,11 @@ test('checkout page displays the current cart summary and customer form', functi
     Livewire::test(Checkout::class)
         ->assertSee('Checkout Coffee')
         ->assertSee('إتمام الطلب')
+        ->assertSee(route('policies.show', ['page' => 'pickup']), false)
+        ->assertSee(route('policies.show', ['page' => 'privacy']), false)
+        ->assertDontSee(route('policies.show', ['page' => 'wallet']), false)
+        ->set('paymentMethod', 'wallet')
+        ->assertSee(route('policies.show', ['page' => 'wallet']), false)
+        ->set('paymentMethod', 'thawani')
         ->assertSee('تأكيد الطلب والمتابعة إلى الدفع');
 });

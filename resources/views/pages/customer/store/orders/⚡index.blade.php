@@ -79,7 +79,7 @@ new #[Title('طلبات القهوة')] class extends Component {
                         </div>
                         <div class="mt-4 flex items-center justify-between gap-3 text-sm">
                             <span>{{ $order->pickup_type === 'scheduled' ? 'استلام مجدول' : 'استلام فوري' }}</span>
-                            <span class="font-semibold"><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></span>
+                            <span class="text-end font-semibold"><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" />@if ($order->discount_baisa > 0)<small class="block text-amber-700 dark:text-amber-300">وفّرت <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /></small>@endif</span>
                         </div>
                     </a>
                 @endforeach
@@ -103,7 +103,7 @@ new #[Title('طلبات القهوة')] class extends Component {
                                 <flux:table.cell dir="ltr">{{ $order->created_at->format('Y-m-d H:i') }}</flux:table.cell>
                                 <flux:table.cell>{{ $order->pickup_type === 'scheduled' ? 'مجدول · '.$order->pickup_at?->format('Y-m-d H:i') : 'فوري' }}</flux:table.cell>
                                 <flux:table.cell><flux:badge color="emerald">{{ $this->statusLabel($status) }}</flux:badge></flux:table.cell>
-                                <flux:table.cell><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" /></flux:table.cell>
+                                <flux:table.cell><x-money :amount-baisa="$order->total_baisa" :currency="$order->currency" />@if ($order->discount_baisa > 0)<small class="block text-amber-700 dark:text-amber-300">وفّرت <x-money :amount-baisa="$order->discount_baisa" :currency="$order->currency" /></small>@endif</flux:table.cell>
                                 <flux:table.cell align="end"><flux:button :href="route('customer.store.orders.show', $order->payment_token)" wire:navigate size="sm">فتح الطلب</flux:button></flux:table.cell>
                             </flux:table.row>
                         @endforeach

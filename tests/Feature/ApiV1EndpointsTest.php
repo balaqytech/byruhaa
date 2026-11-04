@@ -18,195 +18,61 @@ use App\Modules\Identity\Models\Customer;
 use App\Modules\Identity\Models\FamilyMember;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+
+beforeEach(function (): void {
+    config([
+        'byruhaa.uchat.api_token' => 'legacy-api-test-token',
+        'byruhaa.uchat.owner_key_secret' => 'legacy-api-test-owner-secret',
+    ]);
+    $this->withToken('legacy-api-test-token');
+});
 
 test('customers can be managed through the api and require a phone number', function () {
-    $this->postJson('/api/v1/customers', [
-        'name' => 'Mona Said',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('phone_number');
-
-    $createResponse = $this->postJson('/api/v1/customers', [
-        'name' => 'Mona Said',
-        'email' => 'mona@example.com',
-        'phone_number' => '91234567',
-        'civil_id' => '12345678',
-        'address' => 'House 12',
-        'wilaya' => 'Muscat',
-        'area' => 'Qurum',
-        'additional_info' => [
-            'preferred_language' => 'en',
-        ],
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    $createResponse
-        ->assertCreated()
-        ->assertJsonPath('data.name', 'Mona Said')
-        ->assertJsonPath('data.phone_number', '+96891234567')
-        ->assertJsonPath('data.civil_id', '12345678')
-        ->assertJsonPath('data.address', 'House 12')
-        ->assertJsonPath('data.wilaya', 'Muscat')
-        ->assertJsonPath('data.area', 'Qurum')
-        ->assertJsonPath('data.additional_info.preferred_language', 'en')
-        ->assertJsonPath('data.profile_complete', true)
-        ->assertJsonPath('data.missing_required_profile_fields', []);
-
-    $customer = Customer::firstOrFail();
-
-    $this->getJson('/api/v1/customers')
-        ->assertOk()
-        ->assertJsonPath('data.0.id', $customer->id);
-
-    $this->getJson("/api/v1/customers/{$customer->id}")
-        ->assertOk()
-        ->assertJsonPath('data.email', 'mona@example.com');
-
-    $internationalCreateResponse = $this->postJson('/api/v1/customers', [
-        'name' => 'International Customer',
-        'email' => 'international.api@example.com',
-        'phone_number' => '+14155552671',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
-
-    $internationalCreateResponse
-        ->assertCreated()
-        ->assertJsonPath('data.phone_number', '+14155552671');
-
-    $this->patchJson("/api/v1/customers/{$customer->id}", [
-        'name' => 'Mona Al Said',
-        'phone_number' => '92345678',
-        'area' => '',
-    ])
-        ->assertOk()
-        ->assertJsonPath('data.name', 'Mona Al Said')
-        ->assertJsonPath('data.phone_number', '+96892345678')
-        ->assertJsonPath('data.area', null)
-        ->assertJsonPath('data.profile_complete', false)
-        ->assertJsonPath('data.missing_required_profile_fields', ['area']);
-
-    $this->deleteJson("/api/v1/customers/{$customer->id}")
-        ->assertNoContent();
-
-    $this->assertModelMissing($customer);
+    $this->postJson('/api/v1/integrations/uchat/account', ['name' => 'Mona', 'password' => 'password', 'password_confirmation' => 'password'])->assertUnprocessable()->assertJsonValidationErrors('uchat_phone');
+    $this->withHeader('X-WhatsApp-Phone', '91234567')->postJson('/api/v1/integrations/uchat/account', [
+        'name' => 'Mona Said', 'email' => 'mona@example.com', 'civil_id' => '12345678', 'address' => 'House 12', 'wilaya' => 'Muscat', 'area' => 'Qurum', 'password' => 'password', 'password_confirmation' => 'password',
+    ])->assertCreated()->assertJsonPath('data.phone_number', '+96891234567')->assertJsonPath('data.profile_complete', true);
+    $customer = Customer::query()->sole();
+    $this->getJson('/api/v1/integrations/uchat/account')->assertOk()->assertJsonPath('data.id', $customer->id);
+    $this->patchJson('/api/v1/integrations/uchat/account', ['name' => 'Mona Al Said', 'area' => null])->assertOk()->assertJsonPath('data.name', 'Mona Al Said')->assertJsonPath('data.profile_complete', false);
+    $this->postJson('/api/v1/integrations/uchat/account/deletion-requests')->assertAccepted();
+    $this->assertModelExists($customer);
 });
 
 test('customers can be searched by phone', function () {
-    $matchingCustomer = Customer::factory()->create([
-        'phone_number' => '+96891234567',
-        'email' => 'phone-match@example.com',
-    ]);
-    Customer::factory()->create([
-        'phone_number' => '+96892345678',
-        'email' => 'other-phone@example.com',
-    ]);
-
-    $this->getJson('/api/v1/customers?phone=91234567')
-        ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.id', $matchingCustomer->id);
-
-    $this->getJson('/api/v1/customers?search=91234567')
-        ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.id', $matchingCustomer->id);
+    $matchingCustomer = Customer::factory()->create(['phone_number' => '+96891234567']);
+    Customer::factory()->create(['phone_number' => '+96892345678']);
+    $this->withHeader('X-WhatsApp-Phone', '91234567')->getJson('/api/v1/integrations/uchat/account')->assertOk()->assertJsonPath('data.id', $matchingCustomer->id);
+    $this->getJson('/api/v1/customers?phone=92345678')->assertNotFound();
 });
 
 test('customers can be searched by email', function () {
-    $matchingCustomer = Customer::factory()->create([
-        'email' => 'mona.search@example.com',
-    ]);
-    Customer::factory()->create([
-        'email' => 'salim.search@example.com',
-    ]);
-
-    $this->getJson('/api/v1/customers?email=mona.search@example.com')
-        ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.id', $matchingCustomer->id);
-
-    $this->getJson('/api/v1/customers?search=mona.search@example.com')
-        ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertJsonPath('data.0.id', $matchingCustomer->id);
+    Customer::factory()->create(['email' => 'other@example.com']);
+    $this->withHeader('X-WhatsApp-Phone', '91234567')->getJson('/api/v1/customers?email=other@example.com')->assertNotFound();
+    $this->getJson('/api/v1/integrations/uchat/account')->assertConflict()->assertJsonPath('code', 'customer_account_required');
 });
 
 test('customer profile completion validates required input', function () {
     $customer = Customer::factory()->incompleteProfile()->create();
-
-    $this->patchJson("/api/v1/customers/{$customer->id}/profile", [])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors([
-            'name',
-            'phone_number',
-            'civil_id',
-            'address',
-            'wilaya',
-            'area',
-        ]);
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->patchJson('/api/v1/integrations/uchat/account', ['name' => null, 'email' => 'invalid'])->assertUnprocessable()->assertJsonValidationErrors(['name', 'email']);
 });
 
 test('customer profile completion updates allowed fields', function () {
     $customer = Customer::factory()->incompleteProfile()->create();
-
-    $this->patchJson("/api/v1/customers/{$customer->id}/profile", [
-        'name' => 'Mona Profile',
-        'email' => 'profile@example.com',
-        'phone_number' => '91234567',
-        'civil_id' => '12345678',
-        'address' => 'House 12',
-        'wilaya' => 'Muscat',
-        'area' => 'Qurum',
-    ])
-        ->assertOk()
-        ->assertJsonPath('data.name', 'Mona Profile')
-        ->assertJsonPath('data.email', 'profile@example.com')
-        ->assertJsonPath('data.phone_number', '+96891234567')
-        ->assertJsonPath('data.profile_complete', true)
-        ->assertJsonPath('data.missing_required_profile_fields', []);
-
-    $customer->refresh();
-
-    expect($customer->name)->toBe('Mona Profile')
-        ->and($customer->email)->toBe('profile@example.com')
-        ->and($customer->phone_number)->toBe('+96891234567')
-        ->and($customer->civil_id)->toBe('12345678')
-        ->and($customer->address)->toBe('House 12')
-        ->and($customer->wilaya)->toBe('Muscat')
-        ->and($customer->area)->toBe('Qurum');
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->patchJson('/api/v1/integrations/uchat/account', [
+        'name' => 'Mona Profile', 'email' => 'profile@example.com', 'civil_id' => '12345678', 'address' => 'House 12', 'wilaya' => 'Muscat', 'area' => 'Qurum',
+    ])->assertOk()->assertJsonPath('data.profile_complete', true)->assertJsonPath('data.phone_number', $customer->phone_number);
+    expect($customer->fresh()->name)->toBe('Mona Profile');
 });
 
 test('customer profile completion rejects protected fields', function () {
-    $customer = Customer::factory()->create([
-        'name' => 'Original Customer',
-        'additional_info' => ['language' => 'en'],
-    ]);
-    $originalPassword = $customer->password;
-
-    $this->patchJson("/api/v1/customers/{$customer->id}/profile", [
-        'name' => 'Changed Customer',
-        'email' => 'changed@example.com',
-        'phone_number' => $customer->phone_number,
-        'civil_id' => $customer->civil_id,
-        'address' => $customer->address,
-        'wilaya' => $customer->wilaya,
-        'area' => $customer->area,
-        'additional_info' => ['language' => 'ar'],
-        'password' => 'new-password',
-        'status' => 'approved',
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors(['additional_info', 'password', 'status']);
-
-    $customer->refresh();
-
-    expect($customer->name)->toBe('Original Customer')
-        ->and($customer->additional_info)->toBe(['language' => 'en'])
-        ->and($customer->password)->toBe($originalPassword);
+    $customer = Customer::factory()->create();
+    $password = $customer->password;
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->patchJson('/api/v1/integrations/uchat/account', [
+        'password' => 'changed', 'additional_info' => ['role' => 'admin'], 'phone_verified_at' => now()->toJSON(),
+    ])->assertUnprocessable()->assertJsonValidationErrors(['password', 'additional_info', 'phone_verified_at']);
+    expect($customer->fresh()->password)->toBe($password);
 });
 
 test('customer bookings can be created listed and shown', function () {
@@ -219,7 +85,7 @@ test('customer bookings can be created listed and shown', function () {
     ]);
     $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
 
-    $createResponse = $this->postJson("/api/v1/customers/{$customer->id}/bookings", [
+    $createResponse = $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => $familyMembers->pluck('id')->all(),
     ]);
@@ -230,25 +96,25 @@ test('customer bookings can be created listed and shown', function () {
         ->assertJsonPath('data.event_id', $event->id)
         ->assertJsonPath('data.state', 'pending_review')
         ->assertJsonPath('data.family_member_count', 2)
-        ->assertJsonPath('data.unit_price', '12.000')
-        ->assertJsonPath('data.subtotal', '24.000')
-        ->assertJsonPath('data.discount_amount', '0.000')
-        ->assertJsonPath('data.total', '24.000')
-        ->assertJsonPath('data.event.price', '12.000')
-        ->assertJsonMissingPath('data.total_baisa');
+        ->assertJsonPath('data.unit_price_baisa', 12000)
+        ->assertJsonPath('data.subtotal_baisa', 24000)
+        ->assertJsonPath('data.discount_amount_baisa', 0)
+        ->assertJsonPath('data.total_baisa', 24000)
+        ->assertJsonPath('data.event.price_baisa', 12000)
+        ->assertJsonMissingPath('data.total');
 
-    $this->assertStringNotContainsString('_baisa', $createResponse->getContent());
+    $this->assertStringContainsString('_baisa', $createResponse->getContent());
 
     $booking = Booking::firstOrFail();
 
     expect($booking->state->getValue())->toBe('pending_review')
         ->and(EventContract::query()->count())->toBe(0);
 
-    $this->getJson("/api/v1/customers/{$customer->id}/bookings")
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->getJson('/api/v1/integrations/uchat/bookings')
         ->assertOk()
         ->assertJsonPath('data.0.id', $booking->id);
 
-    $this->getJson("/api/v1/customers/{$customer->id}/bookings/{$booking->id}")
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->getJson("/api/v1/integrations/uchat/bookings/{$booking->reference}")
         ->assertOk()
         ->assertJsonPath('data.reference', $booking->reference);
 });
@@ -263,7 +129,7 @@ test('customer booking is approved automatically when configured', function () {
     ]);
     $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
 
-    $createResponse = $this->postJson("/api/v1/customers/{$customer->id}/bookings", [
+    $createResponse = $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => $familyMembers->pluck('id')->all(),
     ]);
@@ -290,7 +156,7 @@ test('customer with incomplete profile cannot create a booking through the api',
     ]);
     $familyMembers = FamilyMember::factory()->count(2)->for($customer)->create();
 
-    $this->postJson("/api/v1/customers/{$customer->id}/bookings", [
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/bookings', [
         'event_id' => $event->id,
         'family_member_ids' => $familyMembers->pluck('id')->all(),
     ])
@@ -382,53 +248,16 @@ test('event show includes available discounts and payment plans', function () {
 
 test('customer payments can be managed through the api', function () {
     $customer = Customer::factory()->create();
-    $event = Event::factory()->create();
-    $booking = Booking::factory()->for($customer)->for($event)->create();
-    $schedule = BookingPaymentSchedule::factory()->for($booking)->create([
-        'event_payment_plan_id' => null,
-        'plan_name' => 'Full payment',
-    ]);
-    $installment = BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create([
-        'amount_baisa' => 2500,
-    ]);
-
-    $createResponse = $this->postJson("/api/v1/customers/{$customer->id}/payments", [
-        'booking_installment_id' => $installment->id,
-        'amount_baisa' => 2500,
-        'state' => PaymentState::Pending->value,
-    ]);
-
-    $createResponse
-        ->assertCreated()
-        ->assertJsonPath('data.booking_installment_id', $installment->id)
-        ->assertJsonPath('data.amount', '2.500')
-        ->assertJsonPath('data.booking_installment.amount', '2.500')
-        ->assertJsonMissingPath('data.amount_baisa');
-
-    $this->assertStringNotContainsString('_baisa', $createResponse->getContent());
-
-    $payment = Payment::firstOrFail();
-
-    $this->getJson("/api/v1/customers/{$customer->id}/payments")
-        ->assertOk()
-        ->assertJsonPath('data.0.id', $payment->id);
-
-    $this->getJson("/api/v1/customers/{$customer->id}/payments/{$payment->id}")
-        ->assertOk()
-        ->assertJsonPath('data.reference', $payment->reference);
-
-    $this->patchJson("/api/v1/customers/{$customer->id}/payments/{$payment->id}", [
-        'amount_baisa' => 3000,
-        'state' => PaymentState::Paid->value,
-    ])
-        ->assertOk()
-        ->assertJsonPath('data.amount', '3.000')
-        ->assertJsonPath('data.state', PaymentState::Paid->value);
-
-    $this->deleteJson("/api/v1/customers/{$customer->id}/payments/{$payment->id}")
-        ->assertNoContent();
-
-    $this->assertModelMissing($payment);
+    $booking = Booking::factory()->for($customer)->create();
+    $schedule = BookingPaymentSchedule::factory()->for($booking)->create();
+    $installment = BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create(['amount_baisa' => 2500]);
+    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create(['amount_baisa' => 2500]);
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->getJson('/api/v1/integrations/uchat/payments')->assertOk()->assertJsonPath('data.0.amount_baisa', 2500);
+    $this->getJson('/api/v1/integrations/uchat/payments/'.$payment->reference)->assertOk()->assertJsonMissingPath('data.request_payload')->assertJsonMissingPath('data.provider_session_id');
+    $this->postJson('/api/v1/integrations/uchat/payments', ['state' => 'paid'])->assertMethodNotAllowed();
+    $this->patchJson('/api/v1/integrations/uchat/payments/'.$payment->reference, ['state' => 'paid'])->assertMethodNotAllowed();
+    $this->deleteJson('/api/v1/integrations/uchat/payments/'.$payment->reference)->assertMethodNotAllowed();
+    $this->assertModelExists($payment);
 });
 
 test('customer can initiate a full booking payment through the api', function () {
@@ -445,15 +274,15 @@ test('customer can initiate a full booking payment through the api', function ()
 
     [$customer, $booking] = apiV1PayableBookingFixture(amountBaisa: 12000);
 
-    $response = $this->postJson("/api/v1/customers/{$customer->id}/bookings/{$booking->id}/payments");
+    $response = $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson("/api/v1/integrations/uchat/bookings/{$booking->reference}/payments");
 
     $response
         ->assertCreated()
-        ->assertJsonPath('data.amount', '12.000')
+        ->assertJsonPath('data.amount_baisa', 12000)
         ->assertJsonPath('data.checkout_url', 'https://uatcheckout.thawani.om/pay/checkout_api_full?key=test_publishable_key')
-        ->assertJsonPath('data.request_payload.products.0.unit_amount', '12.000')
-        ->assertJsonPath('data.booking_installment.amount', '12.000')
-        ->assertJsonMissingPath('data.amount_baisa');
+        ->assertJsonMissingPath('data.request_payload')
+        ->assertJsonPath('data.booking_installment.amount_baisa', 12000)
+        ->assertJsonMissingPath('data.amount');
 
     $schedule = $booking->refresh()->paymentSchedule()->with('installments.payments')->firstOrFail();
     $installment = $schedule->installments->first();
@@ -480,15 +309,15 @@ test('customer can settle a zero total booking payment through the api', functio
         'total_baisa' => 0,
     ])->save();
 
-    $response = $this->postJson("/api/v1/customers/{$customer->id}/bookings/{$booking->id}/payments");
+    $response = $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson("/api/v1/integrations/uchat/bookings/{$booking->reference}/payments");
 
     $response
         ->assertCreated()
-        ->assertJsonPath('data.amount', '0.000')
+        ->assertJsonPath('data.amount_baisa', 0)
         ->assertJsonPath('data.provider', 'manual')
         ->assertJsonPath('data.state', 'paid')
         ->assertJsonPath('data.checkout_url', null)
-        ->assertJsonPath('data.booking_installment.amount', '0.000')
+        ->assertJsonPath('data.booking_installment.amount_baisa', 0)
         ->assertJsonPath('data.booking_installment.state', 'paid');
 
     $schedule = $booking->refresh()->paymentSchedule()->with('installments.payments')->firstOrFail();
@@ -535,17 +364,17 @@ test('customer can select a payment plan and initiate first installment through 
         'due_date' => now()->addMonth()->toDateString(),
     ]);
 
-    $response = $this->postJson("/api/v1/customers/{$customer->id}/bookings/{$booking->id}/payments", [
+    $response = $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson("/api/v1/integrations/uchat/bookings/{$booking->reference}/payments", [
         'payment_plan_id' => $paymentPlan->id,
     ]);
 
     $response
         ->assertCreated()
-        ->assertJsonPath('data.amount', '6.000')
+        ->assertJsonPath('data.amount_baisa', 6000)
         ->assertJsonPath('data.checkout_url', 'https://uatcheckout.thawani.om/pay/checkout_api_plan?key=test_publishable_key')
-        ->assertJsonPath('data.request_payload.products.0.unit_amount', '6.000')
+        ->assertJsonMissingPath('data.request_payload')
         ->assertJsonPath('data.booking_installment.name', 'Deposit')
-        ->assertJsonPath('data.booking_installment.amount', '6.000');
+        ->assertJsonPath('data.booking_installment.amount_baisa', 6000);
 
     $schedule = $booking->refresh()->paymentSchedule()->with('installments.payments')->firstOrFail();
 
@@ -558,46 +387,17 @@ test('customer can select a payment plan and initiate first installment through 
 
 test('customer with incomplete profile cannot mutate payments through the api', function () {
     $customer = Customer::factory()->incompleteProfile()->create();
-    $event = Event::factory()->create();
-    $booking = Booking::factory()->for($customer)->for($event)->create();
-    $schedule = BookingPaymentSchedule::factory()->for($booking)->create([
-        'event_payment_plan_id' => null,
-        'plan_name' => 'Full payment',
-    ]);
-    $installment = BookingInstallment::factory()->for($schedule, 'paymentSchedule')->create([
-        'amount_baisa' => 2500,
-    ]);
-    $payment = Payment::factory()->for($installment, 'bookingInstallment')->create([
-        'amount_baisa' => 2500,
-        'state' => PaymentState::Pending,
-    ]);
-
-    $this->postJson("/api/v1/customers/{$customer->id}/payments", [
-        'booking_installment_id' => $installment->id,
-        'amount_baisa' => 2500,
-        'state' => PaymentState::Pending->value,
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('profile');
-
-    $this->patchJson("/api/v1/customers/{$customer->id}/payments/{$payment->id}", [
-        'amount_baisa' => 3000,
-    ])
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('profile');
-
-    $this->deleteJson("/api/v1/customers/{$customer->id}/payments/{$payment->id}")
-        ->assertUnprocessable()
-        ->assertJsonValidationErrors('profile');
-
-    expect(Payment::query()->count())->toBe(1)
-        ->and($payment->refresh()->amount_baisa)->toBe(2500);
+    $payment = Payment::factory()->create();
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->postJson('/api/v1/integrations/uchat/payments', ['state' => 'paid'])->assertMethodNotAllowed();
+    $this->patchJson('/api/v1/integrations/uchat/payments/'.$payment->reference, ['amount_baisa' => 3000])->assertMethodNotAllowed();
+    $this->deleteJson('/api/v1/integrations/uchat/payments/'.$payment->reference)->assertMethodNotAllowed();
+    $this->assertModelExists($payment);
 });
 
 test('customer family members can be managed through the api', function () {
     $customer = Customer::factory()->create();
 
-    $createResponse = $this->postJson("/api/v1/customers/{$customer->id}/family-members", [
+    $createResponse = $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/family-members', [
         'name' => 'Salim Said',
         'birth_date' => '2014-01-01',
         'school_name' => 'Muscat School',
@@ -613,15 +413,15 @@ test('customer family members can be managed through the api', function () {
 
     $familyMember = FamilyMember::firstOrFail();
 
-    $this->getJson("/api/v1/customers/{$customer->id}/family-members")
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->getJson('/api/v1/integrations/uchat/family-members')
         ->assertOk()
         ->assertJsonPath('data.0.id', $familyMember->id);
 
-    $this->getJson("/api/v1/customers/{$customer->id}/family-members/{$familyMember->id}")
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->getJson("/api/v1/integrations/uchat/family-members/{$familyMember->id}")
         ->assertOk()
         ->assertJsonPath('data.birth_date', '2014-01-01');
 
-    $this->patchJson("/api/v1/customers/{$customer->id}/family-members/{$familyMember->id}", [
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->patchJson("/api/v1/integrations/uchat/family-members/{$familyMember->id}", [
         'grade' => '7',
         'medical_notes' => 'Peanut allergy',
         'relationship_to_customer' => 'Brother',
@@ -631,7 +431,7 @@ test('customer family members can be managed through the api', function () {
         ->assertJsonPath('data.medical_notes', 'Peanut allergy')
         ->assertJsonPath('data.relationship_to_customer', 'Brother');
 
-    $this->deleteJson("/api/v1/customers/{$customer->id}/family-members/{$familyMember->id}")
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->deleteJson("/api/v1/integrations/uchat/family-members/{$familyMember->id}")
         ->assertNoContent();
 
     $this->assertModelMissing($familyMember);
@@ -643,20 +443,20 @@ test('customer with incomplete profile cannot mutate family members through the 
         'grade' => '6',
     ]);
 
-    $this->postJson("/api/v1/customers/{$customer->id}/family-members", [
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->postJson('/api/v1/integrations/uchat/family-members', [
         'name' => 'Salim Said',
         'birth_date' => '2014-01-01',
     ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('profile');
 
-    $this->patchJson("/api/v1/customers/{$customer->id}/family-members/{$familyMember->id}", [
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->patchJson("/api/v1/integrations/uchat/family-members/{$familyMember->id}", [
         'grade' => '7',
     ])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('profile');
 
-    $this->deleteJson("/api/v1/customers/{$customer->id}/family-members/{$familyMember->id}")
+    $this->withHeader('X-WhatsApp-Phone', $customer->phone_number)->withHeader('Idempotency-Key', (string) Str::uuid())->deleteJson("/api/v1/integrations/uchat/family-members/{$familyMember->id}")
         ->assertUnprocessable()
         ->assertJsonValidationErrors('profile');
 

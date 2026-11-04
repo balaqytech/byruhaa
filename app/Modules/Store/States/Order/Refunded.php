@@ -8,7 +8,7 @@ class Refunded extends OrderState
 
     public function getLabel(): string
     {
-        return 'Refunded';
+        return 'تم استرداد المبلغ';
     }
 
     public function getColor(): string

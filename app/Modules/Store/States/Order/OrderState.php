@@ -37,6 +37,12 @@ abstract class OrderState extends State implements HasColor, HasLabel
             ->allowTransition(Accepted::class, Cancelled::class)
             ->allowTransition(Preparing::class, Cancelled::class)
             ->allowTransition(Completed::class, RefundPending::class)
+            ->allowTransition(Confirmed::class, RefundPending::class)
+            ->allowTransition(Accepted::class, RefundPending::class)
+            ->allowTransition(Preparing::class, RefundPending::class)
+            ->allowTransition(ReadyForPickup::class, RefundPending::class)
+            ->allowTransition(Cancelled::class, RefundPending::class)
+            ->allowTransition(Rejected::class, RefundPending::class)
             ->allowTransition(RefundPending::class, Refunded::class);
     }
 }

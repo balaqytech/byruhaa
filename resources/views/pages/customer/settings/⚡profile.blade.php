@@ -38,17 +38,19 @@ new #[Title('إعدادات الملف الشخصي')] class extends Component {
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique(Customer::class)->ignore($customer->id)],
-            'phone_number' => ['required', 'string', 'phone:OM', Rule::unique(Customer::class)->ignore($customer->id)],
+            'phone_number' => ['required', 'string', 'phone:INTERNATIONAL,OM', Rule::unique(Customer::class)->ignore($customer->id)],
             'civil_id' => ['required', 'string', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'wilaya' => ['required', 'string', 'max:255'],
             'area' => ['required', 'string', 'max:255'],
         ]);
 
+        $phoneChanged = $customer->phone_number !== $validated['phone_number'];
         $customer->forceFill([
             'name' => $validated['name'],
             'email' => $validated['email'] ?: null,
             'phone_number' => $validated['phone_number'],
+            'phone_verified_at' => $phoneChanged ? null : $customer->phone_verified_at,
             'civil_id' => $validated['civil_id'],
             'address' => $validated['address'],
             'wilaya' => $validated['wilaya'],
@@ -73,6 +75,7 @@ new #[Title('إعدادات الملف الشخصي')] class extends Component {
             <flux:input wire:model="name" :label="__('ui.fields.name')" type="text" required autofocus autocomplete="name" />
             <flux:input wire:model="email" :label="__('ui.fields.email_address')" type="email" autocomplete="email" />
             <flux:input wire:model="phone_number" :label="__('ui.fields.phone_number')" type="tel" required autocomplete="tel" />
+
             <flux:input wire:model="civil_id" :label="__('ui.fields.civil_id')" required />
             <flux:input wire:model="address" :label="__('ui.fields.address')" required />
 
@@ -87,5 +90,6 @@ new #[Title('إعدادات الملف الشخصي')] class extends Component {
                 </flux:button>
             </div>
         </form>
+
     </x-pages::customer.settings.layout>
 </section>

@@ -53,7 +53,7 @@ class FloatingCart extends Component
         }
 
         try {
-            $cart = $this->resolveCart->execute($token, $this->customerId(), false);
+            $cart = $this->resolveCart->execute($token, $this->customerId(), false, $this->minorProfileId());
             $this->itemCount = (int) $cart->items()->sum('quantity');
             if ($this->itemCount === 0) {
                 $this->cartOpen = false;
@@ -138,7 +138,7 @@ class FloatingCart extends Component
         }
 
         try {
-            return $this->resolveCart->execute(session('store_cart_token'), $this->customerId(), false)
+            return $this->resolveCart->execute(session('store_cart_token'), $this->customerId(), false, $this->minorProfileId())
                 ->load('items.productOption.product.category');
         } catch (ValidationException) {
             return null;
@@ -147,7 +147,7 @@ class FloatingCart extends Component
 
     private function resolveExistingCart(): Cart
     {
-        return $this->resolveCart->execute(session('store_cart_token'), $this->customerId(), false)
+        return $this->resolveCart->execute(session('store_cart_token'), $this->customerId(), false, $this->minorProfileId())
             ->load('items.productOption.product.category');
     }
 
@@ -160,7 +160,24 @@ class FloatingCart extends Component
 
     private function customerId(): ?int
     {
+        $minorProfile = auth('minor-profile')->user();
+
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember');
+
+            return is_numeric($minorProfile->familyMember?->customer_id)
+                ? (int) $minorProfile->familyMember->customer_id
+                : null;
+        }
+
         $identifier = auth('customer')->user()?->getAuthIdentifier();
+
+        return is_numeric($identifier) ? (int) $identifier : null;
+    }
+
+    private function minorProfileId(): ?int
+    {
+        $identifier = auth('minor-profile')->user()?->getAuthIdentifier();
 
         return is_numeric($identifier) ? (int) $identifier : null;
     }

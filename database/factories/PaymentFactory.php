@@ -6,7 +6,6 @@ use App\Enums\PaymentState;
 use App\Modules\Events\Models\BookingInstallment;
 use App\Modules\Finance\Models\Payment;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Payment>
@@ -25,7 +24,6 @@ class PaymentFactory extends Factory
         return [
             'booking_installment_id' => BookingInstallment::factory(),
             'provider' => 'thawani',
-            'reference' => 'PAY-'.Str::upper(Str::random(12)),
             'amount_baisa' => 1000,
             'currency' => 'OMR',
             'state' => PaymentState::Pending,

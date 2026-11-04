@@ -5,7 +5,12 @@ use App\Http\Controllers\PublicSiteController;
 use App\Http\Controllers\Store\CartController;
 use App\Http\Controllers\Store\OrderController;
 use App\Http\Controllers\Store\PaymentController;
+use App\Http\Controllers\Store\TrackOrderController;
 use App\Http\Controllers\ThawaniPaymentReturnController;
+use App\Modules\Identity\Http\Controllers\PrintMinorPosCardController;
+use App\Modules\Identity\Http\Controllers\ShowMinorAvatarController;
+use App\Modules\Store\Http\Controllers\OrderCreditNoteController;
+use App\Modules\Store\Http\Controllers\WalletOrderController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__.'/public.php';
@@ -21,18 +26,38 @@ Route::middleware('signed')->group(function () {
 });
 
 require __DIR__.'/customer.php';
+require __DIR__.'/minor-profile.php';
+require __DIR__.'/staff-workspaces.php';
+
+Route::get('minor-profiles/{minorProfile}/avatar', ShowMinorAvatarController::class)
+    ->middleware('signed')
+    ->name('minor-profiles.avatar');
+
+Route::get('staff/pos-cards/{minorProfile}/print', PrintMinorPosCardController::class)
+    ->middleware('auth:web')
+    ->name('staff.pos-cards.print');
+
+Route::get('staff/store/orders/{order}/refunds/{refund}/credit-note', [OrderCreditNoteController::class, 'staff'])
+    ->middleware('auth:web')
+    ->name('staff.store.orders.refunds.credit-note');
 
 Route::prefix('store')->name('store.')->middleware('throttle:60,1')->group(function (): void {
     Route::get('checkout', [PublicSiteController::class, 'checkout'])->name('checkout');
+    Route::get('track-order', [TrackOrderController::class, 'show'])->name('orders.track');
+    Route::post('track-order', [TrackOrderController::class, 'lookup'])->middleware('throttle:5,1,store-tracking:')->name('orders.track.lookup');
     Route::get('cart', [CartController::class, 'show'])->name('cart.show');
     Route::post('cart/items', [CartController::class, 'add'])->name('cart.items.store');
     Route::scopeBindings()->patch('cart/{cart:token}/items/{item}', [CartController::class, 'update'])->name('cart.items.update');
     Route::scopeBindings()->delete('cart/{cart:token}/items/{item}', [CartController::class, 'remove'])->name('cart.items.destroy');
     Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
     Route::post('orders/{order:payment_token}/payment', [PaymentController::class, 'store'])->middleware('throttle:10,1')->name('orders.payment.store');
+    Route::get('orders/{order:payment_token}/payment', [PaymentController::class, 'store'])->middleware(['throttle:10,1', 'signed'])->name('orders.payment.link');
     Route::middleware('signed')->group(function (): void {
         Route::get('orders/{order:payment_token}/payment/success', [PaymentController::class, 'success'])->name('orders.payment.success');
         Route::get('orders/{order:payment_token}/payment/cancel', [PaymentController::class, 'cancel'])->name('orders.payment.cancel');
         Route::get('orders/{order:payment_token}/status', [PaymentController::class, 'status'])->name('orders.status');
     });
+    Route::get('orders/{order:payment_token}/wallet/confirm', [WalletOrderController::class, 'confirmPage'])
+        ->middleware(['signed', 'auth:customer'])
+        ->name('orders.wallet.confirm.link');
 });

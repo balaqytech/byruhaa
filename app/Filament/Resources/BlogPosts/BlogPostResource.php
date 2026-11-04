@@ -7,15 +7,15 @@ use App\Filament\Resources\BlogPosts\Pages\EditBlogPost;
 use App\Filament\Resources\BlogPosts\Pages\ListBlogPosts;
 use App\Filament\Resources\BlogPosts\Schemas\BlogPostForm;
 use App\Filament\Resources\BlogPosts\Tables\BlogPostsTable;
+use App\Filament\Resources\ShieldResource;
 use App\Modules\Content\Models\BlogPost;
 use BackedEnum;
-use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use UnitEnum;
 
-class BlogPostResource extends Resource
+class BlogPostResource extends ShieldResource
 {
     protected static ?string $model = BlogPost::class;
 

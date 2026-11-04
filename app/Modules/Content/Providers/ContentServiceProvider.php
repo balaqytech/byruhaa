@@ -5,6 +5,7 @@ namespace App\Modules\Content\Providers;
 use App\Modules\Content\Models\PublicPage;
 use App\Modules\Content\Policies\PublicPagePolicy;
 use App\Settings\GeneralSettings;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Support\ServiceProvider;
@@ -16,15 +17,21 @@ class ContentServiceProvider extends ServiceProvider
     {
         Gate::policy(PublicPage::class, PublicPagePolicy::class);
 
-        ViewFacade::composer('layouts.public', function (View $view): void {
+        ViewFacade::composer(['layouts.public', 'components.policy-links'], function (View $view): void {
             $view->with([
-                'publishedPolicyPages' => PublicPage::query()
-                    ->published()
-                    ->whereIn('key', PublicPage::FIXED_KEYS)
-                    ->orderBy('id')
-                    ->get(['key', 'title']),
+                'publishedPolicyPages' => $this->publishedPolicyPages(),
                 'siteIdentity' => app(GeneralSettings::class),
             ]);
         });
+    }
+
+    /** @return Collection<int, PublicPage> */
+    private function publishedPolicyPages(): Collection
+    {
+        return once(fn (): Collection => PublicPage::query()
+            ->published()
+            ->whereIn('key', PublicPage::FIXED_KEYS)
+            ->orderBy('id')
+            ->get(['key', 'title']));
     }
 }

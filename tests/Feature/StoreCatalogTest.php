@@ -22,17 +22,24 @@ test('catalog migrations create the store tables and required columns', function
 
     expect(Schema::getColumnListing('store_categories'))
         ->toContain('name')
+        ->toContain('short_name')
         ->toContain('slug')
+        ->toContain('image_id')
         ->toContain('is_active');
 
     expect(Schema::getColumnListing('store_products'))
         ->toContain('category_id')
+        ->toContain('source_name')
+        ->toContain('author_name')
+        ->toContain('display_tag')
+        ->toContain('allergens')
         ->toContain('featured_image_id')
         ->toContain('status');
 
     expect(Schema::getColumnListing('store_product_options'))
         ->toContain('sku')
         ->toContain('price_baisa')
+        ->toContain('member_price_baisa')
         ->toContain('image_id')
         ->toContain('is_default');
 });
@@ -150,7 +157,8 @@ test('the catalog exposes featured products in a separate tab without changing t
     Livewire::test(CoffeeStore::class)
         ->call('selectFeatured')
         ->assertSet('featuredOnly', true)
-        ->assertSee('الأكثر طلبًا')
+        ->assertSee('مختاراتنا')
+        ->assertSee('aria-pressed="true"', false)
         ->assertSee($featured->name)
         ->assertDontSee($regular->name)
         ->call('selectCategory', $category->id)
@@ -163,7 +171,7 @@ test('the featured tab is hidden when the catalog has no featured products', fun
     Product::factory()->active()->create(['category_id' => $category->id, 'is_featured' => false]);
 
     Livewire::test(CoffeeStore::class)
-        ->assertDontSee('الأكثر طلبًا')
+        ->assertDontSee('مختاراتنا')
         ->call('selectFeatured')
         ->assertSet('featuredOnly', false);
 });
@@ -181,6 +189,7 @@ test('the initial selector state uses the product default option', function (): 
     Livewire::test(CoffeeStore::class)
         ->assertSet('selectedOptions.'.$product->id, $default->id)
         ->assertSee($default->name)
+        ->assertSee('لا توجد صورة متاحة للمنتج')
         ->assertDontSee('wire:click="addToCart('.$alternative->id.')"', false);
 });
 
@@ -262,8 +271,10 @@ test('catalog image relationships use the existing media file model', function (
     $option = $product->defaultOption()->firstOrFail();
 
     expect($product->featuredImage())->toBeInstanceOf(BelongsTo::class)
+        ->and($product->video())->toBeInstanceOf(BelongsTo::class)
         ->and($option->image())->toBeInstanceOf(BelongsTo::class)
         ->and($product->featuredImage()->getRelated())->toBeInstanceOf(File::class)
+        ->and($product->video()->getRelated())->toBeInstanceOf(File::class)
         ->and($option->image()->getRelated())->toBeInstanceOf(File::class);
 });
 
@@ -280,12 +291,9 @@ test('store Filament resources expose create and edit routes without delete acti
         ->toContain('filament.admin.resources.products.index')
         ->toContain('filament.admin.resources.products.create')
         ->toContain('filament.admin.resources.products.edit')
-        ->toContain('filament.admin.resources.options.product-options.index')
-        ->toContain('filament.admin.resources.options.product-options.create')
-        ->toContain('filament.admin.resources.options.product-options.edit');
+        ->not->toContain('filament.admin.resources.options.product-options.index');
 
     expect($routeNames->filter(fn (string $name): bool => str_contains($name, 'filament.admin.resources.categories.delete')
-        || str_contains($name, 'filament.admin.resources.products.delete')
-        || str_contains($name, 'filament.admin.resources.options.product-options.delete'))->all())
+        || str_contains($name, 'filament.admin.resources.products.delete'))->all())
         ->toBeEmpty();
 });

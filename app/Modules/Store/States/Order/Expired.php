@@ -8,7 +8,7 @@ class Expired extends OrderState
 
     public function getLabel(): string
     {
-        return 'Expired';
+        return __('Expired');
     }
 
     public function getColor(): string

@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 /**
  * @property int $id
@@ -47,10 +49,33 @@ use Illuminate\Validation\ValidationException;
  * @property-read Collection<int, Discount> $availableDiscounts
  */
 #[Fillable(['name', 'slug', 'type', 'status', 'enrollment_status', 'landing_page_key', 'subtitle', 'excerpt', 'card_topics', 'description_html', 'contract_terms_html', 'participant_extra_fields', 'location', 'schedule_text', 'starts_at', 'ends_at', 'minimum_age', 'maximum_age', 'seat_capacity', 'price', 'price_baisa', 'currency'])]
-class Event extends Model
+class Event extends Model implements AuditableContract
 {
     /** @use HasFactory<EventFactory> */
-    use HasFactory;
+    use AuditableTrait, HasFactory;
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'name',
+        'slug',
+        'type',
+        'status',
+        'enrollment_status',
+        'landing_page_key',
+        'subtitle',
+        'excerpt',
+        'location',
+        'schedule_text',
+        'starts_at',
+        'ends_at',
+        'minimum_age',
+        'maximum_age',
+        'seat_capacity',
+        'price_baisa',
+        'currency',
+    ];
 
     protected static function newFactory(): EventFactory
     {

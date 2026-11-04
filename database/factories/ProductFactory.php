@@ -23,8 +23,12 @@ class ProductFactory extends Factory
         return [
             'category_id' => Category::factory(),
             'name' => $name,
+            'source_name' => null,
+            'author_name' => null,
+            'display_tag' => null,
             'slug' => Str::slug($name).'-'.Str::lower(Str::random(5)),
             'description' => fake()->optional()->paragraph(),
+            'allergens' => null,
             'featured_image_id' => null,
             'status' => ProductStatus::Draft,
             'sort_order' => fake()->numberBetween(0, 10),

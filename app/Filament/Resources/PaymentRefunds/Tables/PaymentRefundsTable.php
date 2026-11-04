@@ -88,7 +88,7 @@ class PaymentRefundsTable
             ->label('تأكيد الاسترداد اليدوي')
             ->icon(Heroicon::OutlinedCheckCircle)
             ->color('success')
-            ->visible(fn (PaymentRefund $record): bool => $record->state === PaymentRefundState::ManualRequired)
+            ->visible(fn (PaymentRefund $record): bool => $record->state === PaymentRefundState::ManualRequired && $record->payment->subject_type !== 'store_order')
             ->modalHeading('تأكيد وصول الاسترداد للعميل')
             ->modalDescription('استخدم هذا الإجراء فقط بعد تأكيد Thawani تنفيذ الاسترداد. سيُنشأ القيد المحاسبي ويُبلّغ العميل.')
             ->schema([

@@ -12,6 +12,8 @@ use App\Modules\Events\Models\Discount;
 use App\Modules\Events\Models\Event;
 use App\Modules\Events\Models\EventPaymentPlan;
 use App\Modules\Events\Models\EventPaymentPlanInstallment;
+use App\Modules\Identity\Models\Customer;
+use App\Modules\Identity\Models\MinorProfile;
 use App\Support\EventLandingPageRegistry;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
@@ -31,16 +33,19 @@ test('homepage loads', function () {
     $this->get(route('home'))
         ->assertSuccessful()
         ->assertSee('بِيرُحاء إبراء')
-        ->assertSee('مساحةٌ ينضج فيها الفتى بالفعل')
-        ->assertSee('يومٌ متوازن، وأثرٌ يمتد')
-        ->assertSee('التربية تبدأ بالصحبة، لا بالشعار')
+        ->assertSee('مؤسسة تربوية للفتيان من الصف السابع إلى الثاني عشر')
         ->assertSee($featuredEvent->name)
         ->assertSee(route('events.show', $featuredEvent), false)
         ->assertDontSee(route('customer.events.show', $featuredEvent), false)
         ->assertSee(route('events.index'), false)
         ->assertSee(route('coffee'), false)
-        ->assertSee('قهوة بيرحاء، بابٌ يومي للمكان')
+        ->assertSeeInOrder(['data-home-featured', 'data-home-coffee', 'data-home-events'], false)
+        ->assertSee('قهوة بيرحاء')
+        ->assertSee('فعاليات بيرحاء')
         ->assertSee(route('register'), false)
+        ->assertSee(route('minor.login'), false)
+        ->assertDontSee(route('affiliate.login'), false)
+        ->assertDontSee(route('affiliate.register'), false)
         ->assertSee('حسابي')
         ->assertSee('logo-dark.png', false)
         ->assertSee('data-icon="home-01"', false)
@@ -52,10 +57,9 @@ test('homepage loads', function () {
         ->assertSee('data-whatsapp-reveal-sentinel', false)
         ->assertSee('data-public-footer', false)
         ->assertSee('data-home-events-link', false)
-        ->assertSee('player.vimeo.com/video/1215490802', false)
-        ->assertSee('autoplay=1&amp;muted=1', false)
         ->assertSee('images/after-twelfth-omani-graduate-hero.png', false)
-        ->assertSee('x-on:load', false)
+        ->assertDontSee('يومٌ متوازن، وأثرٌ يمتد')
+        ->assertDontSee('اكتملت المقاعد')
         ->assertSee('جميع الحقوق محفوظة.')
         ->assertSee('تطوير')
         ->assertSee('ردء')
@@ -84,30 +88,75 @@ test('public event cards show their editorial card content', function () {
         ->assertSee('احجز الآن')
         ->assertDontSee($event->starts_at->format('Y-m-d'));
 
-    $this->get(route('home'))
-        ->assertSuccessful()
-        ->assertSee('مهارات الكلام والتعامل مع الناس')
-        ->assertSee('من الخميس عصرًا إلى السبت عصرًا · ٤٨ ساعة');
 });
 
 test('coffee page renders the database-backed public storefront', function () {
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.minor_accounts.enabled' => true]);
+
     expect(config('coffee.groups'))->toHaveCount(4)
         ->and(config('coffee.currency'))->toBe('OMR');
 
     $this->assertFileExists(public_path('images/coffee-byruha-hero.webp'));
+    $this->assertFileExists(public_path('images/coffee-byruha-hero-mobile.webp'));
     $this->assertFileExists(public_path('images/coffee-byruha-menu.webp'));
 
     $this->get(route('coffee'))
         ->assertSuccessful()
         ->assertViewIs('pages.public.site.coffee')
-        ->assertSee('قهوة بيرحاء')
-        ->assertSee('اطلب مسبقًا')
+        ->assertSee('ليس مقهى، بل عالم')
+        ->assertSeeInOrder(['تصفّح القائمة', 'اختر من قائمتنا', 'مكان يجمع يوم الفتى', 'حساب واحد، ومحفظة لكل ابن', 'زرنا في بيرحاء'])
+        ->assertSee('id="menu"', false)
+        ->assertSee('id="family-wallets"', false)
+        ->assertSee('راسل المساعد الذكي لإنشاء الحساب')
+        ->assertSee(rawurlencode('أرغب بالتحدث مع المساعد الذكي لإنشاء حساب وليّ الأمر وحساب القائد.'), false)
+        ->assertSee('أنشئ حساب وليّ الأمر')
+        ->assertSee(route('register'), false)
         ->assertSee('wire:id=', false)
+        ->assertSee('data-coffee-hero', false)
+        ->assertSee('min-h-[calc(100dvh-5rem)]', false)
+        ->assertSee('data-coffee-hero-media', false)
         ->assertSee('images/coffee-byruha-hero.webp', false)
+        ->assertSee('images/coffee-byruha-hero-mobile.webp', false)
         ->assertSee('images/coffee-byruha-menu.webp', false)
         ->assertSee('https://wa.me/96874155123', false)
-        ->assertSee('relative z-10 mt-4 max-w-md', false)
-        ->assertDontSee('-mt-6', false);
+        ->assertSee('data-coffee-location-map', false)
+        ->assertSee('www.google.com/maps/embed?pb=', false)
+        ->assertSee('title="موقع بيرحاء في إبراء على خرائط Google"', false)
+        ->assertSee('loading="lazy"', false)
+        ->assertSee('media="(max-width: 767px)"', false)
+        ->assertDontSee('الأكثر طلبًا');
+});
+
+test('coffee wallet call to action follows the signed in account', function (string $guard): void {
+    config(['byruhaa.wallets.enabled' => true, 'byruhaa.minor_accounts.enabled' => true]);
+
+    if ($guard === 'customer') {
+        $user = Customer::factory()->create();
+        $expectedUrl = route('customer.minor-profiles.index');
+        $expectedLabel = 'إدارة حسابات الأبناء';
+    } else {
+        $user = MinorProfile::factory()->create();
+        $expectedUrl = route('minor.dashboard').'#wallet';
+        $expectedLabel = 'اذهب إلى حسابي ومحفظتي';
+    }
+
+    $this->actingAs($user, $guard)
+        ->get(route('coffee'))
+        ->assertSuccessful()
+        ->assertSee($expectedUrl, false)
+        ->assertSee($expectedLabel);
+})->with(['customer', 'minor-profile']);
+
+test('coffee page hides wallet claims while the feature is disabled', function (): void {
+    config(['byruhaa.wallets.enabled' => false]);
+
+    $this->get(route('coffee'))
+        ->assertSuccessful()
+        ->assertDontSee('id="family-wallets"', false)
+        ->assertDontSee('راسل المساعد الذكي لإنشاء الحساب')
+        ->assertSee('data-coffee-location-map', false)
+        ->assertSee('تعرّف على المكان')
+        ->assertSee('لمتابعة الطلبات والفواتير');
 });
 
 test('umrah event is seeded with its canonical landing page data', function () {
@@ -144,7 +193,7 @@ test('umrah event is seeded with its canonical landing page data', function () {
         ->assertSee('ما الذي يبقى بعد أن تُطوى الحقائب؟')
         ->assertSee('ما يحمله القائد معه')
         ->assertSee('طواف الوداع بعد صلاة العصر')
-        ->assertSee('خصوصية القُصّر')
+        ->assertSee('خصوصية القادة')
         ->assertSee('الباقة الأولى')
         ->assertSee('380.000')
         ->assertSee('المتقدمة')
@@ -326,37 +375,22 @@ test('homepage features the nearest published event and hides drafts', function 
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSeeInOrder(['Nearest published event', 'مساحةٌ ينضج فيها الفتى بالفعل'])
+        ->assertSeeInOrder(['Nearest published event', 'قهوة بيرحاء', 'فعاليات بيرحاء'])
         ->assertSee(route('events.show', $nearestEvent), false)
         ->assertDontSee(route('customer.events.show', $nearestEvent), false)
         ->assertDontSee('Hidden draft event');
 });
 
-test('homepage shows the current price tier followed by the next tier', function () {
+test('homepage keeps price tier details on the event page', function () {
     $event = Event::query()->where('slug', 'after-twelfth-2026')->firstOrFail();
     $event->update(['status' => EventStatus::Published]);
-    $firstTier = $event->priceTiers()->firstOrFail();
-    $booking = Booking::factory()->for($event)->create();
-
-    BookingSeatAllocation::factory()->for($booking)->create([
-        'event_id' => $event->id,
-        'event_price_tier_id' => $firstTier->id,
-        'seat_count' => 3,
-        'state' => SeatAllocationState::Reserved,
-        'tier_name' => $firstTier->name,
-        'tier_unit_price_baisa' => $firstTier->price_baisa,
-    ]);
 
     $this->get(route('home'))
         ->assertSuccessful()
-        ->assertSeeInOrder([
-            'الباقة المتاحة الآن',
-            'الباقة الأولى',
-            'بقي 7 مقاعد',
-            'الباقة التالية',
-            'الباقة الثانية',
-            '69.000',
-        ]);
+        ->assertSee($event->name)
+        ->assertSee(route('events.show', $event), false)
+        ->assertDontSee('الباقة المتاحة الآن')
+        ->assertDontSee('الباقة التالية');
 });
 
 test('events page loads', function () {

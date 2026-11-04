@@ -65,6 +65,8 @@
                 viewable
             />
 
+            <x-policy-links :pages="['terms', 'privacy']" label="راجع قبل إنشاء الحساب" />
+
             <div class="flex items-center justify-end">
                 <flux:button type="submit" variant="primary" class="w-full" data-test="register-user-button">
                     {{ __('ui.actions.create_account') }}

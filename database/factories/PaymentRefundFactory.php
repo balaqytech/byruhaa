@@ -6,7 +6,6 @@ use App\Enums\PaymentRefundState;
 use App\Modules\Finance\Models\Payment;
 use App\Modules\Finance\Models\PaymentRefund;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<PaymentRefund>
@@ -24,7 +23,6 @@ class PaymentRefundFactory extends Factory
     {
         return [
             'payment_id' => Payment::factory(),
-            'reference' => 'REF-'.Str::upper(Str::random(12)),
             'amount_baisa' => 1000,
             'currency' => 'OMR',
             'state' => PaymentRefundState::Pending,

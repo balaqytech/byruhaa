@@ -8,10 +8,12 @@ use App\Modules\Store\Actions\QuoteCart;
 use App\Modules\Store\Actions\RemoveCartItem;
 use App\Modules\Store\Actions\ResolveCart;
 use App\Modules\Store\Actions\UpdateCartItem;
+use App\Modules\Store\Enums\PricingChannel;
 use App\Modules\Store\Models\Cart;
 use App\Modules\Store\Models\Category;
 use App\Modules\Store\Models\Product;
 use App\Modules\Store\Models\ProductOption;
+use App\Modules\Store\Services\PricingContextResolver;
 use App\Modules\Store\Settings\StoreSettings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
@@ -28,6 +30,8 @@ class CoffeeStore extends Component
     protected BrowseCatalog $browseCatalog;
 
     protected QuoteCart $quoteCart;
+
+    protected PricingContextResolver $pricingContexts;
 
     protected ResolveCart $resolveCart;
 
@@ -48,12 +52,18 @@ class CoffeeStore extends Component
 
     public ?string $cartToken = null;
 
-    public function boot(BrowseCatalog $browseCatalog, QuoteCart $quoteCart, ResolveCart $resolveCart, StoreSettings $settings): void
-    {
+    public function boot(
+        BrowseCatalog $browseCatalog,
+        QuoteCart $quoteCart,
+        ResolveCart $resolveCart,
+        StoreSettings $settings,
+        PricingContextResolver $pricingContexts,
+    ): void {
         $this->browseCatalog = $browseCatalog;
         $this->quoteCart = $quoteCart;
         $this->resolveCart = $resolveCart;
         $this->settings = $settings;
+        $this->pricingContexts = $pricingContexts;
     }
 
     public function mount(): void
@@ -79,7 +89,7 @@ class CoffeeStore extends Component
     public function addToCart(int $optionId, AddCartItem $addCartItem, ResolveCart $resolveCart): void
     {
         try {
-            $cart = $resolveCart->execute($this->cartToken, $this->customerId(), true);
+            $cart = $resolveCart->execute($this->cartToken, $this->customerId(), true, $this->minorProfileId());
             $option = ProductOption::query()->with('product.category')->findOrFail($optionId);
             $addCartItem->execute($cart, $option, 1);
             $this->rememberCart($cart);
@@ -149,6 +159,11 @@ class CoffeeStore extends Component
     public function render(): View
     {
         $catalog = $this->browseCatalog->execute();
+
+        if (! $this->featuredOnly && ! $catalog->contains('id', $this->categoryId)) {
+            $this->categoryId = $catalog->first()?->getKey();
+        }
+
         $this->initializeSelectedOptions($catalog);
 
         $featuredCatalog = $catalog
@@ -169,11 +184,19 @@ class CoffeeStore extends Component
 
         if ($this->featuredOnly && $featuredCatalog->isEmpty()) {
             $this->featuredOnly = false;
+            $this->categoryId = $catalog->first()?->getKey();
         }
 
-        $displayCatalog = $this->featuredOnly ? $featuredCatalog : $catalog;
+        $displayCatalog = $this->featuredOnly
+            ? $featuredCatalog
+            : $catalog->where('id', $this->categoryId)->values();
         $cart = $this->loadCart();
         $quote = null;
+        $pricingContext = $this->pricingContexts->forIdentity(
+            $this->customerId(),
+            $this->minorProfileId(),
+            PricingChannel::Storefront,
+        );
 
         if ($cart?->items->isNotEmpty()) {
             try {
@@ -191,7 +214,25 @@ class CoffeeStore extends Component
             'cart' => $cart,
             'quote' => $quote,
             'orderingEnabled' => $this->settings->ordering_enabled,
+            'categoryVisuals' => $this->categoryVisuals(),
+            'memberPricingEligible' => $pricingContext->isMember(),
+            'hasMemberOffers' => $catalog->flatMap->products->flatMap->options->contains(fn (ProductOption $option): bool => $option->member_price_baisa !== null),
         ]);
+    }
+
+    /** @return array<string, array{from: string, to: string}> */
+    private function categoryVisuals(): array
+    {
+        return [
+            'fresh' => ['from' => '#0E7C7B', 'to' => '#0B3F3E'],
+            'frozen' => ['from' => '#2C5A7A', 'to' => '#10263A'],
+            'sweets' => ['from' => '#7A3E2E', 'to' => '#2E150F'],
+            'cold' => ['from' => '#1F3352', 'to' => '#0A1424'],
+            'hot' => ['from' => '#5A3A1E', 'to' => '#24160A'],
+            'tools' => ['from' => '#3B3F45', 'to' => '#15181C'],
+            'antiques' => ['from' => '#6B5321', 'to' => '#2E2410'],
+            'books' => ['from' => '#16263F', 'to' => '#6B5321'],
+        ];
     }
 
     /** @param Collection<int, Category> $catalog */
@@ -224,7 +265,7 @@ class CoffeeStore extends Component
         }
 
         try {
-            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+            return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId())
                 ->load('items.productOption.product.category');
         } catch (ValidationException) {
             return null;
@@ -233,7 +274,7 @@ class CoffeeStore extends Component
 
     private function resolveExistingCart(): Cart
     {
-        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false)
+        return $this->resolveCart->execute($this->cartToken, $this->customerId(), false, $this->minorProfileId())
             ->load('items.productOption.product.category');
     }
 
@@ -245,7 +286,24 @@ class CoffeeStore extends Component
 
     private function customerId(): ?int
     {
+        $minorProfile = auth('minor-profile')->user();
+
+        if ($minorProfile !== null) {
+            $minorProfile->loadMissing('familyMember');
+
+            return is_numeric($minorProfile->familyMember?->customer_id)
+                ? (int) $minorProfile->familyMember->customer_id
+                : null;
+        }
+
         $identifier = auth('customer')->user()?->getAuthIdentifier();
+
+        return is_numeric($identifier) ? (int) $identifier : null;
+    }
+
+    private function minorProfileId(): ?int
+    {
+        $identifier = auth('minor-profile')->user()?->getAuthIdentifier();
 
         return is_numeric($identifier) ? (int) $identifier : null;
     }

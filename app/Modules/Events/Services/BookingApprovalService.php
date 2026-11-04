@@ -47,10 +47,10 @@ class BookingApprovalService
                 ]);
             }
 
+            $this->webhookSender->sendBookingApproved($booking);
+
             return $booking->refresh();
         });
-
-        $this->webhookSender->sendBookingApproved($booking);
 
         return $booking;
     }

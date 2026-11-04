@@ -8,7 +8,7 @@ class Rejected extends OrderState
 
     public function getLabel(): string
     {
-        return 'Rejected';
+        return __('Rejected');
     }
 
     public function getColor(): string

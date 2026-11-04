@@ -1,3 +1,5 @@
+> Current unified contract: [UChat integration reference](uchat.md). Account, Minor Profiles and Wallet now live directly under /api/v1/integrations/uchat.
+
 # UChat Store Integration
 
 The Store assistant API is versioned under `/api/v1/integrations/uchat/store`.
@@ -7,13 +9,13 @@ The Store assistant API is versioned under `/api/v1/integrations/uchat/store`.
 Every request requires:
 
 ```text
-Authorization: Bearer ${UCHAT_STORE_API_TOKEN}
+Authorization: Bearer ${UCHAT_API_TOKEN}
 X-WhatsApp-Phone: 91234567
 ```
 
 The phone header is normalized by Identity and is the only customer identity accepted by this integration. A matching customer is associated automatically; otherwise the cart and order remain a guest flow. The API token is never returned or logged.
 
-The integration fails closed unless both `UCHAT_STORE_API_TOKEN` and `UCHAT_STORE_OWNER_KEY_SECRET` are set. The owner-key secret is dedicated to UChat and is never derived from `APP_KEY`. Requests are throttled per source IP and integration fingerprint; changing the WhatsApp phone header does not bypass the limit.
+Bearer authentication requires `UCHAT_API_TOKEN`; cart ownership operations additionally require `UCHAT_STORE_OWNER_KEY_SECRET`. The owner-key secret is dedicated to UChat and is never derived from `APP_KEY`. Requests are throttled per source IP and integration fingerprint; changing the WhatsApp phone header does not bypass the limit.
 
 ## Endpoints
 
@@ -63,12 +65,12 @@ If a webhook URL is set, all three outbound values are required: URL, Bearer tok
 ## Environment
 
 ```text
-UCHAT_STORE_API_TOKEN=
-UCHAT_STORE_WEBHOOK_URL=
-UCHAT_STORE_WEBHOOK_BEARER_TOKEN=
-UCHAT_STORE_WEBHOOK_SIGNING_SECRET=
+UCHAT_API_TOKEN=
+UCHAT_WEBHOOK_URL=
+UCHAT_WEBHOOK_BEARER_TOKEN=
+UCHAT_WEBHOOK_SIGNING_SECRET=
 UCHAT_STORE_OWNER_KEY_SECRET=
-UCHAT_STORE_RATE_LIMIT=60
+UCHAT_RATE_LIMIT=60
 ```
 
 UChat carts created before the dedicated owner-key secret was configured are not migrated. Since the integration has not launched, they may be abandoned and recreated after staging configuration.

@@ -14,11 +14,13 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string|null $uuid
  * @property string $event
+ * @property string $delivery_key
  * @property string $webhook_url
  * @property string $webhook_url_hash
  * @property string $webhookable_type
  * @property int $webhookable_id
  * @property array<string, mixed> $payload
+ * @property array<string, mixed>|null $dispatch_payload
  * @property WebhookDeliveryStatus $status
  * @property int $attempts
  * @property Carbon|null $queued_at
@@ -30,9 +32,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $error_type
  * @property string|null $error_message
  */
-#[Fillable(['uuid', 'event', 'webhook_url', 'webhook_url_hash', 'webhookable_type', 'webhookable_id', 'payload', 'status', 'attempts', 'queued_at', 'delivered_at', 'failed_at', 'final_failed_at', 'response_status', 'response_body', 'error_type', 'error_message'])]
+#[Fillable(['uuid', 'event', 'delivery_key', 'webhook_url', 'webhook_url_hash', 'webhookable_type', 'webhookable_id', 'payload', 'dispatch_payload', 'status', 'attempts', 'queued_at', 'delivered_at', 'failed_at', 'final_failed_at', 'response_status', 'response_body', 'error_type', 'error_message'])]
 class WebhookDelivery extends Model
 {
+    protected $hidden = ['dispatch_payload'];
+
     /** @use HasFactory<WebhookDeliveryFactory> */
     use HasFactory;
 
@@ -51,6 +55,7 @@ class WebhookDelivery extends Model
     {
         return [
             'payload' => 'array',
+            'dispatch_payload' => 'encrypted:array',
             'status' => WebhookDeliveryStatus::class,
             'attempts' => 'integer',
             'queued_at' => 'datetime',

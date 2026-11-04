@@ -4,34 +4,73 @@ namespace App\Modules\Store\Models;
 
 use App\Modules\Store\Enums\ProductStatus;
 use Database\Factories\ProductFactory;
+use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
+use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Slimani\MediaManager\Models\File;
 
 /**
  * @property int $id
  * @property int $category_id
  * @property string $name
+ * @property string|null $source_name
+ * @property string|null $author_name
+ * @property string|null $display_tag
  * @property string $slug
  * @property string|null $description
+ * @property string|null $long_description
+ * @property array<int, string>|null $allergens
  * @property int|null $featured_image_id
+ * @property int|null $video_id
+ * @property array<int, int|string>|null $gallery_image_ids
  * @property ProductStatus $status
  * @property int $sort_order
  * @property bool $is_featured
  * @property int $featured_sort_order
  */
-#[Fillable(['category_id', 'name', 'slug', 'description', 'featured_image_id', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
-class Product extends Model
+#[Fillable(['category_id', 'name', 'source_name', 'author_name', 'display_tag', 'slug', 'description', 'long_description', 'allergens', 'featured_image_id', 'video_id', 'gallery_image_ids', 'status', 'sort_order', 'is_featured', 'featured_sort_order'])]
+class Product extends Model implements AuditableContract, HasRichContent
 {
     protected $table = 'store_products';
 
     /** @use HasFactory<ProductFactory> */
-    use HasFactory;
+    use AuditableTrait, HasFactory, InteractsWithRichContent;
+
+    public function setUpRichContent(): void
+    {
+        $this->registerRichContent('long_description');
+    }
+
+    /**
+     * @var array<int, string>
+     */
+    protected $auditInclude = [
+        'category_id',
+        'name',
+        'source_name',
+        'author_name',
+        'display_tag',
+        'slug',
+        'description',
+        'long_description',
+        'allergens',
+        'featured_image_id',
+        'video_id',
+        'gallery_image_ids',
+        'status',
+        'sort_order',
+        'is_featured',
+        'featured_sort_order',
+    ];
 
     protected static function newFactory(): ProductFactory
     {
@@ -58,6 +97,12 @@ class Product extends Model
         return $this->hasMany(ProductOption::class)->orderBy('sort_order');
     }
 
+    /** @return HasManyThrough<InventoryMovement, ProductOption, $this> */
+    public function inventoryMovements(): HasManyThrough
+    {
+        return $this->hasManyThrough(InventoryMovement::class, ProductOption::class);
+    }
+
     /** @return HasOne<ProductOption, $this> */
     public function defaultOption(): HasOne
     {
@@ -68,6 +113,12 @@ class Product extends Model
     public function featuredImage(): BelongsTo
     {
         return $this->belongsTo(File::class, 'featured_image_id');
+    }
+
+    /** @return BelongsTo<File, $this> */
+    public function video(): BelongsTo
+    {
+        return $this->belongsTo(File::class, 'video_id');
     }
 
     public function isPublishable(): bool
@@ -108,6 +159,8 @@ class Product extends Model
     {
         return [
             'status' => ProductStatus::class,
+            'allergens' => 'array',
+            'gallery_image_ids' => 'array',
             'sort_order' => 'integer',
             'is_featured' => 'boolean',
             'featured_sort_order' => 'integer',

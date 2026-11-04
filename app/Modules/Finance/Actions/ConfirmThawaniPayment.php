@@ -117,6 +117,7 @@ class ConfirmThawaniPayment
                     $this->postAffiliateCommissionForPayment->execute($payment);
                 }
                 $becamePaid = true;
+                $this->webhookSender->sendPaymentPaid($payment);
             }
 
             return $payment->refresh();
@@ -130,10 +131,6 @@ class ConfirmThawaniPayment
             }
         } elseif ($paidVerificationError === null && in_array($payment->state, [PaymentState::Cancelled, PaymentState::Failed], true)) {
             $this->releaseBookingSeats->execute($payment, true);
-        }
-
-        if ($becamePaid) {
-            $this->webhookSender->sendPaymentPaid($payment);
         }
 
         if ($paidVerificationError !== null) {
