@@ -147,6 +147,7 @@ test('cashier and barista use separate login sessions and role permissions', fun
 });
 
 test('barista board shows active orders without granting access to cashier or admin', function (): void {
+    $this->option->product->update(['source_name' => 'محمصة بيرحاء']);
     $barista = User::factory()->create();
     $baristaPermission = Permission::findOrCreate('View:BaristaBoard', 'web');
     $baristaRole = Role::findOrCreate('pos_barista', 'web');
@@ -161,7 +162,7 @@ test('barista board shows active orders without granting access to cashier or ad
     $this->get(route('cashier.terminal'))->assertRedirect(route('cashier.login'));
     $this->actingAs($barista, 'web')->get('/admin')->assertForbidden();
 
-    Livewire::test(BaristaBoard::class)->assertSee($order->reference)->assertSee($this->option->product->name);
+    Livewire::test(BaristaBoard::class)->assertSee($order->reference)->assertSee($this->option->product->name)->assertSee('(محمصة بيرحاء)');
     Livewire::test('store.barista-board')->assertSee($order->reference);
     Livewire::test(BaristaBoard::class)->call('startPreparing', $order->id)->assertForbidden();
 
@@ -245,6 +246,7 @@ test('scheduled orders stay upcoming and cannot enter preparation until the 45 m
 });
 
 test('pickup attendant alone confirms handoff and records the actor and time', function (): void {
+    $this->option->product->update(['source_name' => 'محمصة بيرحاء']);
     $this->seed(StaffWorkspaceRolesSeeder::class);
     $attendant = User::factory()->create();
     $attendant->syncRoles(Role::findByName('pos_pickup_attendant', 'web'));
@@ -258,7 +260,7 @@ test('pickup attendant alone confirms handoff and records the actor and time', f
     $this->post(route('pickup.login.store'), ['email' => $attendant->email, 'password' => 'password'])
         ->assertRedirect(route('pickup.orders'));
     $this->assertAuthenticatedAs($attendant, 'pickup');
-    Livewire::test('store.pickup-board')->assertSee($order->reference);
+    Livewire::test('store.pickup-board')->assertSee($order->reference)->assertSee('(محمصة بيرحاء)');
     Livewire::test(PickupBoard::class)->set('search', $order->reference)->assertSee($order->reference);
     Livewire::test(PickupBoard::class)
         ->assertSee('wire:click="completeOrder('.$order->id.')"', false)
