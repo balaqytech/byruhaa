@@ -60,7 +60,7 @@ class BaristaBoard extends Component
         abort_unless($barista instanceof User && $barista->can('View:BaristaBoard'), 403);
 
         $orders = Order::query()
-            ->with('items')
+            ->with('items.productOption.product')
             ->whereIn('status', ['confirmed', 'accepted', 'preparing', 'ready_for_pickup'])
             ->orderBy('created_at')
             ->get();

@@ -30,7 +30,7 @@
                 @endif
                 <ul class="mt-4 flex-1 space-y-2 border-t border-[#e9eee7] pt-3 text-sm dark:border-white/10">
                     @foreach ($order->items as $item)
-                        <li wire:key="pickup-item-{{ $item->id }}">{{ $item->quantity }} × {{ $item->product_name }} @if ($item->option_name) · {{ $item->option_name }} @endif</li>
+                        <li wire:key="pickup-item-{{ $item->id }}">{{ $item->quantity }} × {{ $item->product_name }} @if (filled($item->productOption?->product?->source_name)) <span class="text-[#718677] dark:text-[#adc2b3]">({{ $item->productOption->product->source_name }})</span> @endif @if ($item->option_name) · {{ $item->option_name }} @endif</li>
                     @endforeach
                 </ul>
                 @if ($canComplete)

@@ -37,7 +37,7 @@
                             @endif
                             <ul class="mt-4 space-y-2 border-t border-[#e9eee7] pt-3 dark:border-white/10">
                                 @foreach ($order->items as $item)
-                                    <li wire:key="barista-item-{{ $item->id }}" class="flex items-start gap-3 text-sm"><span class="grid size-6 shrink-0 place-items-center rounded-md bg-[#eaf3df] font-bold text-[#2d643f] dark:bg-emerald-800/40 dark:text-emerald-100">{{ $item->quantity }}</span><span>{{ $item->product_name }} @if ($item->option_name) <span class="text-[#718677] dark:text-[#adc2b3]">· {{ $item->option_name }}</span> @endif @if ($item->note) <span class="mt-1 block text-xs text-[#8b6b45] dark:text-amber-200">{{ $item->note }}</span> @endif</span></li>
+                                    <li wire:key="barista-item-{{ $item->id }}" class="flex items-start gap-3 text-sm"><span class="grid size-6 shrink-0 place-items-center rounded-md bg-[#eaf3df] font-bold text-[#2d643f] dark:bg-emerald-800/40 dark:text-emerald-100">{{ $item->quantity }}</span><span>{{ $item->product_name }} @if (filled($item->productOption?->product?->source_name)) <span class="text-[#718677] dark:text-[#adc2b3]">({{ $item->productOption->product->source_name }})</span> @endif @if ($item->option_name) <span class="text-[#718677] dark:text-[#adc2b3]">· {{ $item->option_name }}</span> @endif @if ($item->note) <span class="mt-1 block text-xs text-[#8b6b45] dark:text-amber-200">{{ $item->note }}</span> @endif</span></li>
                                 @endforeach
                             </ul>
                             @if ($order->pickup_at)

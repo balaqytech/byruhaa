@@ -44,7 +44,7 @@ class PickupBoard extends Component
 
         return view('livewire.store.pickup-board', [
             'orders' => Order::query()
-                ->with('items')
+                ->with('items.productOption.product')
                 ->where('status', 'ready_for_pickup')
                 ->when(trim($this->search) !== '', fn (Builder $query): Builder => $query->where('reference', trim($this->search)))
                 ->orderBy('created_at')
