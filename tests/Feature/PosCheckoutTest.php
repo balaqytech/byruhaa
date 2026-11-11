@@ -403,7 +403,7 @@ test('cashier terminal requires a visible total review before QR wallet payment'
 test('cashier catalog opens by category and searches across every category', function (): void {
     $firstCategory = $this->option->product->category;
     $firstCategory->update(['name' => 'المشروبات', 'sort_order' => 0]);
-    $this->option->product->update(['name' => 'قهوة خاصة']);
+    $this->option->product->update(['name' => 'قهوة خاصة', 'source_name' => 'محمصة بيرحاء']);
 
     $secondCategory = Category::factory()->create(['name' => 'الحلويات', 'sort_order' => 100]);
     $dessert = Product::factory()->active()->for($secondCategory)->create(['name' => 'كعكة التمر']);
@@ -413,6 +413,7 @@ test('cashier catalog opens by category and searches across every category', fun
     Livewire::test(PosTerminal::class)
         ->assertSet('selectedCategoryId', $firstCategory->id)
         ->assertSee('قهوة خاصة')
+        ->assertSee('المصدر: محمصة بيرحاء')
         ->assertDontSee('كعكة التمر')
         ->assertSee('المشروبات')
         ->assertSee('الحلويات')
@@ -421,6 +422,10 @@ test('cashier catalog opens by category and searches across every category', fun
         ->assertSee('كعكة التمر')
         ->assertDontSee('قهوة خاصة')
         ->set('search', 'قهوة خاصة')
+        ->assertSet('selectedCategoryId', null)
+        ->assertSee('قهوة خاصة')
+        ->assertDontSee('كعكة التمر')
+        ->set('search', 'محمصة بيرحاء')
         ->assertSet('selectedCategoryId', null)
         ->assertSee('قهوة خاصة')
         ->assertDontSee('كعكة التمر')

@@ -28,12 +28,12 @@
                         <button type="button" wire:key="pos-category-{{ $category->id }}" wire:click="selectCategory({{ $category->id }})" aria-pressed="{{ $selectedCategoryId === $category->id ? 'true' : 'false' }}" class="min-h-11 shrink-0 rounded-full border px-4 text-sm font-bold transition {{ $selectedCategoryId === $category->id ? 'border-[#204d3a] bg-[#204d3a] text-white' : 'border-[#d7e0d4] bg-[#f7f9f5] hover:border-[#73a886] dark:border-white/15 dark:bg-[#10211c]' }}">{{ $category->name }}</button>
                     @endforeach
                 </div>
-                <label for="product-search" class="mt-6 block text-sm font-bold">ابحث عن منتج أو رمز الصنف</label>
-                <input id="product-search" wire:model.live.debounce.250ms="search" type="search" class="mt-2 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-4 py-3 text-base outline-none transition focus:border-[#5a9a70] focus:ring-2 focus:ring-[#5a9a70]/20 dark:border-white/15 dark:bg-[#0d1c19]" placeholder="ابحث في جميع التصنيفات بالاسم أو SKU" />
+                <label for="product-search" class="mt-6 block text-sm font-bold">ابحث عن منتج أو مصدر أو رمز الصنف</label>
+                <input id="product-search" wire:model.live.debounce.250ms="search" type="search" class="mt-2 w-full rounded-xl border border-[#d5dfd3] bg-[#f7f9f5] px-4 py-3 text-base outline-none transition focus:border-[#5a9a70] focus:ring-2 focus:ring-[#5a9a70]/20 dark:border-white/15 dark:bg-[#0d1c19]" placeholder="ابحث في جميع التصنيفات بالمنتج أو المصدر أو SKU" />
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                     @forelse ($catalog as $option)
                         <button type="button" wire:key="pos-option-{{ $option->id }}" wire:click="addOption({{ $option->id }})" wire:loading.attr="disabled" aria-label="إضافة {{ $option->product->name }}، {{ $option->name }} إلى الطلب" class="group flex min-h-28 flex-col justify-between rounded-xl border border-[#dde5da] bg-[#fbfcf8] p-3 text-right transition hover:border-[#73a886] hover:bg-[#f1f8ea] hover:shadow-sm focus-visible:outline-2 focus-visible:outline-[#3b8261] disabled:opacity-60 dark:border-white/10 dark:bg-[#10211c] dark:hover:bg-[#1c3b2d] sm:p-4">
-                            <span class="font-semibold leading-6">{{ $option->product->name }}</span>
+                            <span><span class="block font-semibold leading-6">{{ $option->product->name }}</span>@if (filled($option->product->source_name)) <span class="mt-1 block text-xs text-[#697e70] dark:text-[#adc2b3]">المصدر: {{ $option->product->source_name }}</span> @endif</span>
                             <span class="mt-3 flex items-end justify-between gap-2 text-xs text-[#697e70] dark:text-[#adc2b3]"><span>{{ $option->name }}<br><span class="text-[11px]">السعر الأساسي</span></span><strong class="whitespace-nowrap text-sm text-[#204d37] dark:text-[#bfe8bc]" dir="ltr">{{ number_format($option->price_baisa / 1000, 3) }} ر.ع</strong></span>
                         </button>
                     @empty
