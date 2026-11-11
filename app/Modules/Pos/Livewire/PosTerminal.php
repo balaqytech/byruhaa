@@ -137,7 +137,9 @@ class PosTerminal extends Component
                 $term = '%'.trim($this->search).'%';
                 $search->where('name', 'like', $term)
                     ->orWhere('sku', 'like', $term)
-                    ->orWhereHas('product', fn (Builder $product): Builder => $product->where('name', 'like', $term));
+                    ->orWhereHas('product', fn (Builder $product): Builder => $product
+                        ->where('name', 'like', $term)
+                        ->orWhere('source_name', 'like', $term));
             }))
             ->orderBy('id')
             ->limit(50)
