@@ -65,6 +65,13 @@ test('visitors can read the National Day offer and open the WhatsApp assistant',
     preg_match_all('/<a\s+href="([^"]+)"/', $main[1] ?? '', $links);
 
     expect($links[1])->toHaveCount(9)->each->toBe($assistantUrl);
+
+    foreach (['quran', 'book', 'study', 'cinema', 'field', 'drink'] as $gift) {
+        $imagePath = 'images/national-day-56/f-'.$gift.'.jpg';
+
+        $response->assertSee('src="'.asset($imagePath).'"', false);
+        expect(getimagesize(public_path($imagePath))[2])->toBe(IMAGETYPE_JPEG);
+    }
 });
 
 test('public event cards show their editorial card content', function () {
