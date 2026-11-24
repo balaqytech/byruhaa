@@ -46,6 +46,16 @@ test('homepage loads with three destination cards and assistant help', function 
     expect(substr_count($response->getContent(), 'data-home-destination='))->toBe(3);
 });
 
+test('visitors can read the National Day offer and contact Byruhaa', function (): void {
+    $this->get(route('national-day-56'))
+        ->assertOk()
+        ->assertSee('lang="ar" dir="rtl"', false)
+        ->assertSeeInOrder(['٦ هدايا', '٣٠ ر.ع', 'كيف أحفظ القرآن؟', 'تلقين الصبيان', 'أسرار التفوق الدراسي', 'سينما بيرحاء', 'ملعب بيرحاء', 'مشروب بارد أو ساخن'])
+        ->assertSee(route('contact'), false)
+        ->assertDontSee('[رابط فتح المحفظة]')
+        ->assertDontSee('٥٦ من ٥٦');
+});
+
 test('public event cards show their editorial card content', function () {
     $event = Event::factory()->create([
         'name' => 'ماذا أقول؟ وماذا أؤثر؟',
