@@ -46,14 +46,25 @@ test('homepage loads with three destination cards and assistant help', function 
     expect(substr_count($response->getContent(), 'data-home-destination='))->toBe(3);
 });
 
-test('visitors can read the National Day offer and contact Byruhaa', function (): void {
-    $this->get(route('national-day-56'))
+test('visitors can read the National Day offer and open the WhatsApp assistant', function (): void {
+    $assistantUrl = 'https://wa.me/'.config('coffee.whatsapp_number').'?text='.rawurlencode('أرغب بالتحدث مع المساعد الذكي عن عرض العيد الوطني ٥٦.');
+
+    $response = $this->get(route('national-day-56'))
         ->assertOk()
         ->assertSee('lang="ar" dir="rtl"', false)
-        ->assertSeeInOrder(['٦ هدايا', '٣٠ ر.ع', 'كيف أحفظ القرآن؟', 'تلقين الصبيان', 'أسرار التفوق الدراسي', 'سينما بيرحاء', 'ملعب بيرحاء', 'مشروب بارد أو ساخن'])
-        ->assertSee(route('contact'), false)
+        ->assertSee('data-public-header', false)
+        ->assertSee('data-public-footer', false)
+        ->assertSee('لأول ٥٦ مشتركًا فقط')
+        ->assertSeeInOrder(['٦ هدايا', '٣٠ ر.ع', 'كيف أحفظ القرآن؟', 'تلقين الصبيان', 'أسرار التفوق الدراسي', 'سينما بيرحاء', 'ملعب بيرحاء', 'شراب بارد أو ساخن', '٣ خطوات فقط', 'احسبها بذكاء'])
+        ->assertSee('href="'.$assistantUrl.'" target="_blank" rel="noopener noreferrer" data-whatsapp-floating-button', false)
+        ->assertDontSee('data-whatsapp-reveal-sentinel', false)
         ->assertDontSee('[رابط فتح المحفظة]')
         ->assertDontSee('٥٦ من ٥٦');
+
+    preg_match('/<main\b[^>]*>(.*?)<\/main>/s', $response->getContent(), $main);
+    preg_match_all('/<a\s+href="([^"]+)"/', $main[1] ?? '', $links);
+
+    expect($links[1])->toHaveCount(9)->each->toBe($assistantUrl);
 });
 
 test('public event cards show their editorial card content', function () {
