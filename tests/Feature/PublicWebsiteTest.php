@@ -46,6 +46,47 @@ test('homepage loads with three destination cards and assistant help', function 
     expect(substr_count($response->getContent(), 'data-home-destination='))->toBe(3);
 });
 
+test('the National Day offer is the homepage until midnight in Oman at the end of November', function (): void {
+    $this->travelTo(Carbon::parse('2026-11-30 23:59:59', 'Asia/Muscat'));
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertViewIs('pages.public.site.national-day-56')
+        ->assertDontSee('<meta name="robots" content="noindex">', false);
+
+    $this->travelTo(Carbon::parse('2026-12-01 00:00:00', 'Asia/Muscat'));
+    $this->get(route('home'))->assertOk()->assertViewIs('pages.public.site.home');
+    $this->get(route('national-day-56'))->assertOk()->assertViewIs('pages.public.site.national-day-56');
+});
+
+test('visitors can read the National Day offer and open the WhatsApp assistant', function (): void {
+    $assistantUrl = 'https://wa.me/'.config('coffee.whatsapp_number').'?text='.rawurlencode('أرغب بالتحدث مع المساعد الذكي عن عرض العيد الوطني ٥٦.');
+
+    $response = $this->get(route('national-day-56'))
+        ->assertOk()
+        ->assertSee('<meta property="og:image" content="'.asset('images/national-day-56/sharing.jpg').'">', false)
+        ->assertSee('lang="ar" dir="rtl"', false)
+        ->assertSee('data-public-header', false)
+        ->assertSee('data-public-footer', false)
+        ->assertSee('لأول ٥٦ مشتركًا فقط')
+        ->assertSeeInOrder(['٦ هدايا', '٣٠ ر.ع', 'كيف أحفظ القرآن؟', 'تلقين الصبيان', 'أسرار التفوق الدراسي', 'سينما بيرحاء', 'ملعب بيرحاء', 'شراب بارد أو ساخن', '٣ خطوات فقط', 'احسبها بذكاء'])
+        ->assertSee('href="'.$assistantUrl.'" target="_blank" rel="noopener noreferrer" data-whatsapp-floating-button', false)
+        ->assertDontSee('data-whatsapp-reveal-sentinel', false)
+        ->assertDontSee('[رابط فتح المحفظة]')
+        ->assertDontSee('٥٦ من ٥٦');
+
+    preg_match('/<main\b[^>]*>(.*?)<\/main>/s', $response->getContent(), $main);
+    preg_match_all('/<a\s+href="([^"]+)"/', $main[1] ?? '', $links);
+
+    expect($links[1])->toHaveCount(9)->each->toBe($assistantUrl);
+
+    foreach (['quran', 'book', 'study', 'cinema', 'field', 'drink'] as $gift) {
+        $imagePath = 'images/national-day-56/f-'.$gift.'.jpg';
+
+        $response->assertSee('src="'.asset($imagePath).'"', false);
+        expect(getimagesize(public_path($imagePath))[2])->toBe(IMAGETYPE_JPEG);
+    }
+});
+
 test('public event cards show their editorial card content', function () {
     $event = Event::factory()->create([
         'name' => 'ماذا أقول؟ وماذا أؤثر؟',

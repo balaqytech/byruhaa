@@ -11,6 +11,7 @@ use App\Modules\Store\Actions\BrowseProduct;
 use App\Settings\AboutPageSettings;
 use App\Settings\ContactPageSettings;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Slimani\MediaManager\Models\File;
 
 class PublicSiteController extends Controller
@@ -22,6 +23,13 @@ class PublicSiteController extends Controller
 
     public function home(): View
     {
+        $omanTime = now('Asia/Muscat');
+
+        if ($omanTime->gte(Carbon::parse('2026-11-25 00:00:00', 'Asia/Muscat'))
+            && $omanTime->lt(Carbon::parse('2026-12-01 00:00:00', 'Asia/Muscat'))) {
+            return view('pages.public.site.national-day-56');
+        }
+
         return view('pages.public.site.home', [
             'rabbaniyeen' => Event::query()
                 ->where('slug', 'rabbaniyeen')
