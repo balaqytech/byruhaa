@@ -51,6 +51,7 @@ test('visitors can read the National Day offer and open the WhatsApp assistant',
 
     $response = $this->get(route('national-day-56'))
         ->assertOk()
+        ->assertSee('<meta property="og:image" content="'.asset('images/national-day-56/sharing.png').'">', false)
         ->assertSee('lang="ar" dir="rtl"', false)
         ->assertSee('data-public-header', false)
         ->assertSee('data-public-footer', false)
