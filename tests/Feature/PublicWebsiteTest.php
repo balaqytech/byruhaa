@@ -46,6 +46,18 @@ test('homepage loads with three destination cards and assistant help', function 
     expect(substr_count($response->getContent(), 'data-home-destination='))->toBe(3);
 });
 
+test('the National Day offer is the homepage until midnight in Oman at the end of November', function (): void {
+    $this->travelTo(Carbon::parse('2026-11-30 23:59:59', 'Asia/Muscat'));
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertViewIs('pages.public.site.national-day-56')
+        ->assertDontSee('<meta name="robots" content="noindex">', false);
+
+    $this->travelTo(Carbon::parse('2026-12-01 00:00:00', 'Asia/Muscat'));
+    $this->get(route('home'))->assertOk()->assertViewIs('pages.public.site.home');
+    $this->get(route('national-day-56'))->assertOk()->assertViewIs('pages.public.site.national-day-56');
+});
+
 test('visitors can read the National Day offer and open the WhatsApp assistant', function (): void {
     $assistantUrl = 'https://wa.me/'.config('coffee.whatsapp_number').'?text='.rawurlencode('أرغب بالتحدث مع المساعد الذكي عن عرض العيد الوطني ٥٦.');
 

@@ -2,7 +2,7 @@
     'title' => 'عرض العيد الوطني ٥٦',
     'metaDescription' => 'ست هدايا من قهوة بيرحاء بمناسبة العيد الوطني ٥٦. تعرّف على تفاصيل العرض.',
     'metaImage' => asset('images/national-day-56/sharing.jpg'),
-    'robots' => 'noindex',
+    'robots' => request()->routeIs('home') ? null : 'noindex',
 ])
 
 @section('content')
