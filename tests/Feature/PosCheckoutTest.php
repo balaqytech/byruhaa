@@ -309,6 +309,7 @@ test('only card managers can issue and print a card from the minors resource', f
         ->assertSee('<svg', false)
         ->assertSee($this->minor->familyMember->name)
         ->assertSee('minor-profiles/'.$this->minor->id.'/avatar?', false)
+        ->assertSee('object-fit: contain;', false)
         ->assertSee('الوجه الخلفي')
         ->assertSee('بيانات التواصل عند فقدان البطاقة')
         ->assertSee($this->minor->guardian()->phone_number)

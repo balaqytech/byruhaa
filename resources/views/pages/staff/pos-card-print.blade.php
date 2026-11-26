@@ -23,7 +23,7 @@
         .front { display: grid; grid-template-columns: 30% minmax(0, 1fr) 29%; background: radial-gradient(ellipse at 5% 100%, #e8d9b1, transparent 55%), var(--cream); }
         .photo { display: grid; grid-template-rows: 1fr auto; gap: 1.4cqw; min-height: 0; padding: 6cqw 3cqw 3.7cqw 0; }
         .portrait { display: grid; place-items: center; min-height: 0; overflow: hidden; border: .43cqw solid #b78930; border-radius: 4cqw; background: #e3d8b9; font-size: 8cqw; font-weight: 900; }
-        .portrait img { width: 100%; height: 100%; min-height: 0; object-fit: cover; object-position: center 40%; }
+        .portrait img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
         .code { font: 700 3cqw ui-monospace, monospace; letter-spacing: .04em; }
         .identity { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 1.45cqw; min-width: 0; padding: 3.2cqw 2cqw; }
         .brand { display: flex; align-items: center; justify-content: center; gap: 1.3cqw; }
