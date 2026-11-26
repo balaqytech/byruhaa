@@ -318,6 +318,15 @@ test('only card managers can issue and print a card from the minors resource', f
 
     expect(substr_count($printedCard->getContent(), 'aria-label="رمز QR لبطاقة الشراء"'))->toBe(2);
 
+    $printedCard->assertSee('size: A4 portrait;', false)->assertSee('?format=card-pdf', false);
+
+    $this->get(route('staff.pos-cards.print', [$this->minor, 'format' => 'card-pdf']))
+        ->assertOk()
+        ->assertHeader('Cache-Control', 'no-store, private')
+        ->assertSee('size: 85.6mm 54mm;', false)
+        ->assertSee('.face + .face { break-before: page; }', false)
+        ->assertDontSee('size: A4 portrait;', false);
+
     $credential = $this->minor->posCredential->fresh();
     expect($credential->getRawOriginal('token_ciphertext'))->not->toBe($credential->token_ciphertext);
 
