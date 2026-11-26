@@ -1,3 +1,6 @@
+@php
+    $cardPdf = request()->query('format') === 'card-pdf';
+@endphp
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -52,7 +55,15 @@
         .contact { display: grid; grid-template-columns: 1.2fr 1fr; align-items: center; margin-top: .65cqw; border: .19cqw solid var(--gold); border-radius: 1.25cqw; padding: .55cqw 1.65cqw; font-size: 2.35cqw; }
         .contact b { border-inline-start: .18cqw solid var(--gold); text-align: center; }
         .back footer { display: flex; justify-content: space-between; align-items: end; font-size: 2.35cqw; }
-        @page { size: A4 portrait; margin: 14mm; }
+        @page {
+            @if ($cardPdf)
+                size: 85.6mm 54mm;
+                margin: 0;
+            @else
+                size: A4 portrait;
+                margin: 14mm;
+            @endif
+        }
         @media print {
             body { background: white; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             .sheet { max-width: none; padding: 0; }
@@ -60,6 +71,10 @@
             .pair { gap: 14mm; }
             .face { width: 85.6mm; break-inside: avoid; }
             .card { height: 54mm; box-shadow: none; }
+            @if ($cardPdf)
+                .pair { display: block; }
+                .face + .face { break-before: page; }
+            @endif
         }
     </style>
 </head>
@@ -71,7 +86,16 @@
     <main class="sheet">
         <header class="toolbar">
             <div><h1>بطاقة القائد</h1><p>وجها البطاقة بالمقاس الفعلي 85.6 × 54 مم</p></div>
-            <button type="button" class="print" onclick="window.print()">طباعة وجهي البطاقة</button>
+            <div>
+                @if ($cardPdf)
+                    <button type="button" class="print" onclick="window.print()">حفظ PDF / طباعة</button>
+                    <a class="print" href="{{ url()->current() }}">العودة إلى A4</a>
+                    <p>اختر «حفظ بتنسيق PDF» في نافذة الطباعة، واضبط المقياس على ١٠٠٪.</p>
+                @else
+                    <button type="button" class="print" onclick="window.print()">طباعة A4</button>
+                    <a class="print" href="{{ url()->current() }}?format=card-pdf">PDF للمطبعة · صفحتان</a>
+                @endif
+            </div>
         </header>
         <div class="pair">
             <section class="face" aria-label="الوجه الأمامي">
