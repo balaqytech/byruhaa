@@ -304,13 +304,18 @@ test('only card managers can issue and print a card from the minors resource', f
         ->callAction(TestAction::make('issuePosCard')->table($this->minor))
         ->assertActionVisible(TestAction::make('printPosCard')->table($this->minor));
 
-    $this->get(route('staff.pos-cards.print', $this->minor))
+    $printedCard = $this->get(route('staff.pos-cards.print', $this->minor))
         ->assertSuccessful()
         ->assertSee('<svg', false)
         ->assertSee($this->minor->familyMember->name)
         ->assertSee('minor-profiles/'.$this->minor->id.'/avatar?', false)
         ->assertSee('الوجه الخلفي')
+        ->assertSee('بيانات التواصل عند فقدان البطاقة')
+        ->assertSee($this->minor->guardian()->phone_number)
+        ->assertSee('+'.config('coffee.whatsapp_number'))
         ->assertSee($this->minor->member_code);
+
+    expect(substr_count($printedCard->getContent(), 'aria-label="رمز QR لبطاقة الشراء"'))->toBe(2);
 
     $credential = $this->minor->posCredential->fresh();
     expect($credential->getRawOriginal('token_ciphertext'))->not->toBe($credential->token_ciphertext);
